@@ -1,10 +1,14 @@
 <?php
 
+use App\Http\Controllers\Auth\FacebookController;
+use App\Http\Controllers\Auth\InstagramController;
 use App\Http\Controllers\Auth\LinkedInController;
 use App\Http\Controllers\Auth\LinkedInPageController;
 use App\Http\Controllers\Auth\SocialController;
+use App\Http\Controllers\Auth\ThreadsController;
 use App\Http\Controllers\Auth\TikTokController;
 use App\Http\Controllers\Auth\XController;
+use App\Http\Controllers\Auth\YouTubeController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PostController;
@@ -20,6 +24,14 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
+Route::get('/privacy', function () {
+    return Inertia::render('legal/Privacy');
+})->name('privacy');
+
+Route::get('/terms', function () {
+    return Inertia::render('legal/Terms');
+})->name('terms');
+
 Route::get('dashboard', function () {
     return redirect()->route('workspaces.index');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -27,6 +39,10 @@ Route::get('dashboard', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     // Workspaces
     Route::resource('workspaces', WorkspaceController::class);
+    Route::get('workspaces/{workspace}/settings', [WorkspaceController::class, 'settings'])
+        ->name('workspaces.settings');
+    Route::put('workspaces/{workspace}/settings', [WorkspaceController::class, 'updateSettings'])
+        ->name('workspaces.settings.update');
 
     // Social Accounts
     Route::get('workspaces/{workspace}/accounts', [SocialController::class, 'index'])
@@ -61,6 +77,42 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('social.tiktok.connect');
     Route::get('accounts/tiktok/callback', [TikTokController::class, 'callback'])
         ->name('social.tiktok.callback');
+
+    // YouTube
+    Route::get('workspaces/{workspace}/connect/youtube', [YouTubeController::class, 'connect'])
+        ->name('social.youtube.connect');
+    Route::get('accounts/youtube/callback', [YouTubeController::class, 'callback'])
+        ->name('social.youtube.callback');
+    Route::get('accounts/youtube/select', [YouTubeController::class, 'selectChannel'])
+        ->name('social.youtube.select-channel');
+    Route::post('accounts/youtube/select', [YouTubeController::class, 'select'])
+        ->name('social.youtube.select');
+
+    // Facebook
+    Route::get('workspaces/{workspace}/connect/facebook', [FacebookController::class, 'connect'])
+        ->name('social.facebook.connect');
+    Route::get('accounts/facebook/callback', [FacebookController::class, 'callback'])
+        ->name('social.facebook.callback');
+    Route::get('accounts/facebook/select', [FacebookController::class, 'selectPage'])
+        ->name('social.facebook.select-page');
+    Route::post('accounts/facebook/select', [FacebookController::class, 'select'])
+        ->name('social.facebook.select');
+
+    // Instagram
+    Route::get('workspaces/{workspace}/connect/instagram', [InstagramController::class, 'connect'])
+        ->name('social.instagram.connect');
+    Route::get('accounts/instagram/callback', [InstagramController::class, 'callback'])
+        ->name('social.instagram.callback');
+    Route::get('accounts/instagram/select', [InstagramController::class, 'selectAccount'])
+        ->name('social.instagram.select-account');
+    Route::post('accounts/instagram/select', [InstagramController::class, 'select'])
+        ->name('social.instagram.select');
+
+    // Threads
+    Route::get('workspaces/{workspace}/connect/threads', [ThreadsController::class, 'connect'])
+        ->name('social.threads.connect');
+    Route::get('accounts/threads/callback', [ThreadsController::class, 'callback'])
+        ->name('social.threads.callback');
 
     // Calendar
     Route::get('workspaces/{workspace}/calendar', [PostController::class, 'calendar'])

@@ -8,10 +8,7 @@ use App\Models\SocialAccount;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Socialite\Facades\Socialite;
@@ -45,7 +42,7 @@ class SocialController extends Controller
 
     public function disconnect(Workspace $workspace, SocialAccount $account): RedirectResponse
     {
-        $this->authorize('update', $workspace);
+        $this->authorize('manageAccounts', $workspace);
 
         if ($account->workspace_id !== $workspace->id) {
             abort(403);
@@ -53,7 +50,10 @@ class SocialController extends Controller
 
         $account->delete();
 
-        return back()->with('success', 'Conta desconectada com sucesso!');
+        session()->flash('flash.banner', 'Account disconnected successfully!');
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
     }
 
     protected function redirectToProvider(Workspace $workspace, string $driver, array $scopes): SymfonyResponse
@@ -76,20 +76,26 @@ class SocialController extends Controller
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Sessão expirada. Tente novamente.');
+            session()->flash('flash.banner', 'Session expired. Please try again.');
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('workspaces.index');
         }
 
         $workspace = Workspace::find($workspaceId);
 
-        if (! $workspace || ! $request->user()->can('update', $workspace)) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Workspace não encontrado.');
+        if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
+            session()->flash('flash.banner', 'Workspace not found.');
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('workspaces.index');
         }
 
         if ($workspace->hasConnectedPlatform($platform->value)) {
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Esta plataforma já está conectada.');
+            session()->flash('flash.banner', 'This platform is already connected.');
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('workspaces.accounts', $workspace);
         }
 
         try {
@@ -110,16 +116,20 @@ class SocialController extends Controller
 
             session()->forget('social_connect_workspace');
 
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('success', 'Conta conectada com sucesso!');
+            session()->flash('flash.banner', 'Account connected successfully!');
+            session()->flash('flash.bannerStyle', 'success');
+
+            return redirect()->route('workspaces.accounts', $workspace);
         } catch (\Exception $e) {
             Log::error('Social OAuth Error', [
                 'platform' => $platform->value,
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Erro ao conectar conta. Tente novamente.');
+            session()->flash('flash.banner', 'Error connecting account. Please try again.');
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('workspaces.accounts', $workspace);
         }
     }
 }

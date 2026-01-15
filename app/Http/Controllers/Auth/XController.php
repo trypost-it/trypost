@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class XController extends SocialController
 {
-    protected string $driver = 'twitter';
+    protected string $driver = 'x';
 
     protected SocialPlatform $platform = SocialPlatform::X;
 
@@ -18,15 +18,16 @@ class XController extends SocialController
         'tweet.read',
         'tweet.write',
         'users.read',
+        'media.write',
         'offline.access',
     ];
 
     public function connect(Request $request, Workspace $workspace): Response
     {
-        $this->authorize('update', $workspace);
+        $this->authorize('manageAccounts', $workspace);
 
         if ($workspace->hasConnectedPlatform($this->platform->value)) {
-            return back()->with('error', 'Esta plataforma já está conectada.');
+            return back()->with('error', 'This platform is already connected.');
         }
 
         return $this->redirectToProvider($workspace, $this->driver, $this->scopes);

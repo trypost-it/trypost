@@ -56,26 +56,31 @@ const breadcrumbs: BreadcrumbItemType[] = [
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight">{{ workspace.name }}</h1>
                     <p class="text-muted-foreground">
-                        Dashboard do workspace
+                        Workspace dashboard
                     </p>
                 </div>
                 <div class="flex gap-2">
+                    <Link :href="`/workspaces/${workspace.id}/settings`">
+                        <Button variant="ghost" size="icon">
+                            <Settings class="h-4 w-4" />
+                        </Button>
+                    </Link>
                     <Link :href="`/workspaces/${workspace.id}/members`">
                         <Button variant="outline">
                             <UserPlus class="mr-2 h-4 w-4" />
-                            Equipe
+                            Team
                         </Button>
                     </Link>
                     <Link :href="`/workspaces/${workspace.id}/accounts`">
                         <Button variant="outline">
                             <Users class="mr-2 h-4 w-4" />
-                            Contas
+                            Accounts
                         </Button>
                     </Link>
                     <Link :href="`/workspaces/${workspace.id}/calendar`">
                         <Button>
                             <Calendar class="mr-2 h-4 w-4" />
-                            Calendário
+                            Calendar
                         </Button>
                     </Link>
                 </div>

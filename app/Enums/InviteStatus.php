@@ -12,10 +12,10 @@ enum InviteStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending => 'Pendente',
-            self::Accepted => 'Aceito',
-            self::Expired => 'Expirado',
-            self::Cancelled => 'Cancelado',
+            self::Pending => 'Pending',
+            self::Accepted => 'Accepted',
+            self::Expired => 'Expired',
+            self::Cancelled => 'Cancelled',
         };
     }
 

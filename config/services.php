@@ -48,7 +48,7 @@ return [
         'redirect_page' => env('LINKEDIN_PAGE_CLIENT_REDIRECT'),
     ],
 
-    'twitter' => [
+    'x' => [
         'client_id' => env('X_CLIENT_ID'),
         'client_secret' => env('X_CLIENT_SECRET'),
         'redirect' => env('X_CLIENT_REDIRECT'),
@@ -58,6 +58,27 @@ return [
         'client_id' => env('TIKTOK_CLIENT_ID'),
         'client_secret' => env('TIKTOK_CLIENT_SECRET'),
         'redirect' => env('TIKTOK_CLIENT_REDIRECT'),
+    ],
+
+    // Google OAuth (used for YouTube)
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_CLIENT_REDIRECT'),
+    ],
+
+    // Facebook (used for Facebook Pages and Instagram)
+    'facebook' => [
+        'client_id' => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect' => env('FACEBOOK_CLIENT_REDIRECT'),
+    ],
+
+    // Threads
+    'threads' => [
+        'client_id' => env('THREADS_CLIENT_ID'),
+        'client_secret' => env('THREADS_CLIENT_SECRET'),
+        'redirect' => env('THREADS_CLIENT_REDIRECT'),
     ],
 
     'stripe' => [

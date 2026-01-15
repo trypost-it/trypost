@@ -1,4 +1,5 @@
 import '../css/app.css';
+import './echo';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -6,8 +7,13 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 
 import { initializeTheme } from './composables/useAppearance';
+import { configureEcho } from '@laravel/echo-vue';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+configureEcho({
+    broadcaster: 'reverb',
+});
+
+const appName = import.meta.env.VITE_APP_NAME || 'TryPost.it';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

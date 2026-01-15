@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\InviteStatus;
 use App\Enums\WorkspaceRole;
 use App\Http\Requests\StoreWorkspaceInviteRequest;
 use App\Models\Workspace;
@@ -17,7 +16,7 @@ class WorkspaceInviteController extends Controller
 {
     public function index(Workspace $workspace): Response
     {
-        $this->authorize('update', $workspace);
+        $this->authorize('manageTeam', $workspace);
 
         return Inertia::render('workspaces/Invites', [
             'workspace' => $workspace,
@@ -25,12 +24,15 @@ class WorkspaceInviteController extends Controller
                 ->with('inviter')
                 ->latest()
                 ->get(),
-            'members' => $workspace->members()->get()->map(fn ($member) => [
-                'id' => $member->id,
-                'name' => $member->name,
-                'email' => $member->email,
-                'role' => $member->pivot->role,
-            ]),
+            'members' => $workspace->members()
+                ->where('user_id', '!=', $workspace->user_id)
+                ->get()
+                ->map(fn ($member) => [
+                    'id' => $member->id,
+                    'name' => $member->name,
+                    'email' => $member->email,
+                    'role' => $member->pivot->role,
+                ]),
             'owner' => [
                 'id' => $workspace->owner->id,
                 'name' => $workspace->owner->name,
@@ -48,7 +50,7 @@ class WorkspaceInviteController extends Controller
 
     public function store(StoreWorkspaceInviteRequest $request, Workspace $workspace): RedirectResponse
     {
-        $this->authorize('update', $workspace);
+        $this->authorize('manageTeam', $workspace);
 
         $existingInvite = $workspace->invites()
             ->where('email', $request->email)
@@ -57,13 +59,13 @@ class WorkspaceInviteController extends Controller
 
         if ($existingInvite) {
             return back()->withErrors([
-                'email' => 'Já existe um convite pendente para este email.',
+                'email' => 'A pending invite already exists for this email.',
             ]);
         }
 
         if ($workspace->members()->where('email', $request->email)->exists()) {
             return back()->withErrors([
-                'email' => 'Este usuário já é membro do workspace.',
+                'email' => 'This user is already a member of the workspace.',
             ]);
         }
 
@@ -75,12 +77,12 @@ class WorkspaceInviteController extends Controller
 
         $invite->notify(new WorkspaceInviteNotification($invite));
 
-        return back()->with('success', 'Convite enviado com sucesso!');
+        return back()->with('success', 'Invite sent successfully!');
     }
 
     public function destroy(Workspace $workspace, WorkspaceInvite $invite): RedirectResponse
     {
-        $this->authorize('update', $workspace);
+        $this->authorize('manageTeam', $workspace);
 
         if ($invite->workspace_id !== $workspace->id) {
             abort(404);
@@ -88,7 +90,7 @@ class WorkspaceInviteController extends Controller
 
         $invite->cancel();
 
-        return back()->with('success', 'Convite cancelado.');
+        return back()->with('success', 'Invite cancelled.');
     }
 
     public function accept(Request $request, string $token): RedirectResponse
@@ -98,11 +100,11 @@ class WorkspaceInviteController extends Controller
         if (! $invite->isValid()) {
             if ($invite->isExpired()) {
                 return redirect()->route('workspaces.index')
-                    ->withErrors(['invite' => 'Este convite expirou.']);
+                    ->withErrors(['invite' => 'This invite has expired.']);
             }
 
             return redirect()->route('workspaces.index')
-                ->withErrors(['invite' => 'Este convite não é mais válido.']);
+                ->withErrors(['invite' => 'This invite is no longer valid.']);
         }
 
         $user = $request->user();
@@ -111,30 +113,30 @@ class WorkspaceInviteController extends Controller
             session(['pending_invite_token' => $token]);
 
             return redirect()->route('login')
-                ->with('message', 'Faça login para aceitar o convite.');
+                ->with('message', 'Please log in to accept the invite.');
         }
 
         if ($invite->workspace->hasMember($user)) {
             return redirect()->route('workspaces.show', $invite->workspace)
-                ->with('message', 'Você já é membro deste workspace.');
+                ->with('message', 'You are already a member of this workspace.');
         }
 
         $invite->accept($user);
 
         return redirect()->route('workspaces.show', $invite->workspace)
-            ->with('success', 'Você agora é membro do workspace!');
+            ->with('success', 'You are now a member of the workspace!');
     }
 
     public function removeMember(Workspace $workspace, string $userId): RedirectResponse
     {
-        $this->authorize('update', $workspace);
+        $this->authorize('manageTeam', $workspace);
 
         if ($workspace->user_id === $userId) {
-            return back()->withErrors(['member' => 'Não é possível remover o dono do workspace.']);
+            return back()->withErrors(['member' => 'Cannot remove the workspace owner.']);
         }
 
         $workspace->members()->detach($userId);
 
-        return back()->with('success', 'Membro removido com sucesso.');
+        return back()->with('success', 'Member removed successfully.');
     }
 }

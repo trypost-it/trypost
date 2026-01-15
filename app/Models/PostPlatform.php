@@ -17,6 +17,7 @@ class PostPlatform extends Model
     protected $fillable = [
         'post_id',
         'social_account_id',
+        'enabled',
         'platform',
         'content',
         'status',
@@ -30,6 +31,7 @@ class PostPlatform extends Model
     protected function casts(): array
     {
         return [
+            'enabled' => 'boolean',
             'platform' => SocialPlatform::class,
             'published_at' => 'datetime',
             'meta' => 'array',

@@ -6,8 +6,6 @@ use App\Enums\MediaType;
 use App\Http\Requests\StoreMediaRequest;
 use App\Models\PostMedia;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class MediaController extends Controller
 {
@@ -18,12 +16,11 @@ class MediaController extends Controller
 
         $type = $this->getMediaType($mimeType);
 
-        $path = $file->store('media/' . now()->format('Y/m'), 'r2');
+        $path = $file->store('media/'.now()->format('Y-m'));
 
         $media = PostMedia::create([
-            'post_platform_id' => null,
+            'post_platform_id' => $request->input('post_platform_id'),
             'type' => $type,
-            'disk' => 'r2',
             'path' => $path,
             'original_filename' => $file->getClientOriginalName(),
             'mime_type' => $mimeType,

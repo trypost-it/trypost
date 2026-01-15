@@ -15,10 +15,11 @@ class PostMedia extends Model
     /** @use HasFactory<\Database\Factories\PostMediaFactory> */
     use HasFactory, HasUuids;
 
+    protected $appends = ['url'];
+
     protected $fillable = [
         'post_platform_id',
         'type',
-        'disk',
         'path',
         'original_filename',
         'mime_type',
@@ -45,13 +46,13 @@ class PostMedia extends Model
     protected function url(): Attribute
     {
         return Attribute::make(
-            get: fn () => Storage::disk($this->disk)->url($this->path),
+            get: fn () => Storage::url($this->path),
         );
     }
 
     public function getTemporaryUrl(int $expirationMinutes = 60): string
     {
-        return Storage::disk($this->disk)->temporaryUrl(
+        return Storage::temporaryUrl(
             $this->path,
             now()->addMinutes($expirationMinutes)
         );
@@ -59,7 +60,7 @@ class PostMedia extends Model
 
     public function delete(): bool
     {
-        Storage::disk($this->disk)->delete($this->path);
+        Storage::delete($this->path);
 
         return parent::delete();
     }

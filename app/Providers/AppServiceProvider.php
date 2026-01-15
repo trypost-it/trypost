@@ -2,17 +2,16 @@
 
 namespace App\Providers;
 
+use App\Socialite\LinkedInPageExtendSocialite;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use App\Socialite\LinkedInPageExtendSocialite;
 use SocialiteProviders\LinkedIn\LinkedInExtendSocialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\TikTok\TikTokExtendSocialite;
-use SocialiteProviders\Twitter\TwitterExtendSocialite;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -38,7 +37,6 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(SocialiteWasCalled::class, LinkedInExtendSocialite::class);
         Event::listen(SocialiteWasCalled::class, LinkedInPageExtendSocialite::class);
         Event::listen(SocialiteWasCalled::class, TikTokExtendSocialite::class);
-        Event::listen(SocialiteWasCalled::class, TwitterExtendSocialite::class);
     }
 
     protected function configureDefaults(): void

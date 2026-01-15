@@ -32,7 +32,7 @@ class WorkspaceController extends Controller
         // First workspace is free, subsequent ones require subscription
         if ($user->ownedWorkspacesCount() > 0 && ! $user->hasActiveSubscription()) {
             return redirect()->route('billing.index')
-                ->with('message', 'Assine para criar mais workspaces.');
+                ->with('message', 'Subscribe to create more workspaces.');
         }
 
         return Inertia::render('workspaces/Create');
@@ -45,12 +45,10 @@ class WorkspaceController extends Controller
         // First workspace is free, subsequent ones require subscription
         if ($user->ownedWorkspacesCount() > 0 && ! $user->hasActiveSubscription()) {
             return redirect()->route('billing.index')
-                ->with('message', 'Assine para criar mais workspaces.');
+                ->with('message', 'Subscribe to create more workspaces.');
         }
 
         $workspace = $user->workspaces()->create($request->validated());
-
-        $workspace->members()->attach($user->id, ['role' => 'owner']);
 
         // Increment subscription quantity if user has subscription
         if ($user->hasActiveSubscription()) {
@@ -58,7 +56,7 @@ class WorkspaceController extends Controller
         }
 
         return redirect()->route('workspaces.show', $workspace)
-            ->with('success', 'Workspace criado com sucesso!');
+            ->with('success', 'Workspace created successfully!');
     }
 
     public function show(Request $request, Workspace $workspace): Response
@@ -98,7 +96,33 @@ class WorkspaceController extends Controller
         $workspace->update($request->validated());
 
         return redirect()->route('workspaces.show', $workspace)
-            ->with('success', 'Workspace atualizado com sucesso!');
+            ->with('success', 'Workspace updated successfully!');
+    }
+
+    public function settings(Workspace $workspace): Response
+    {
+        $this->authorize('update', $workspace);
+
+        $timezones = collect(timezone_identifiers_list())
+            ->mapWithKeys(fn ($tz) => [$tz => $tz])
+            ->toArray();
+
+        return Inertia::render('workspaces/Settings', [
+            'workspace' => $workspace,
+            'timezones' => $timezones,
+        ]);
+    }
+
+    public function updateSettings(UpdateWorkspaceRequest $request, Workspace $workspace): RedirectResponse
+    {
+        $this->authorize('update', $workspace);
+
+        $workspace->update($request->validated());
+
+        session()->flash('flash.banner', 'Settings updated successfully!');
+        session()->flash('flash.bannerStyle', 'success');
+
+        return redirect()->route('workspaces.settings', $workspace);
     }
 
     public function destroy(Request $request, Workspace $workspace): RedirectResponse
@@ -115,6 +139,6 @@ class WorkspaceController extends Controller
         }
 
         return redirect()->route('workspaces.index')
-            ->with('success', 'Workspace excluído com sucesso!');
+            ->with('success', 'Workspace deleted successfully!');
     }
 }

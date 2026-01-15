@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import { Check, ExternalLink, Trash2 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -36,6 +37,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
+
 const breadcrumbs: BreadcrumbItemType[] = [
     {
         title: 'Workspaces',
@@ -46,15 +49,15 @@ const breadcrumbs: BreadcrumbItemType[] = [
         href: `/workspaces/${props.workspace.id}`,
     },
     {
-        title: 'Contas',
+        title: 'Accounts',
         href: `/workspaces/${props.workspace.id}/accounts`,
     },
 ];
 
 const disconnect = (accountId: string) => {
-    if (confirm('Tem certeza que deseja desconectar esta conta?')) {
-        router.delete(`/workspaces/${props.workspace.id}/accounts/${accountId}`);
-    }
+    deleteModal.value?.open({
+        url: `/workspaces/${props.workspace.id}/accounts/${accountId}`,
+    });
 };
 
 const getPlatformLogo = (platform: string): string => {
@@ -94,14 +97,14 @@ const getProfileUrl = (platform: string, username: string | null): string | null
 </script>
 
 <template>
-    <Head title="Contas Conectadas" />
+    <Head title="Connected Accounts" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-8 p-6">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight">Contas Conectadas</h1>
+                <h1 class="text-2xl font-bold tracking-tight">Connected Accounts</h1>
                 <p class="text-muted-foreground">
-                    Conecte suas redes sociais para agendar e publicar posts
+                    Connect your social networks to schedule and publish posts
                 </p>
             </div>
 
@@ -135,7 +138,7 @@ const getProfileUrl = (platform: string, username: string | null): string | null
                                 @{{ platform.account.username || platform.account.display_name }}
                             </p>
                             <p v-else class="text-sm text-muted-foreground">
-                                Não conectado
+                                Not connected
                             </p>
                         </div>
                     </div>
@@ -160,14 +163,14 @@ const getProfileUrl = (platform: string, username: string | null): string | null
                                     :href="getProfileUrl(platform.value, platform.account.username)!"
                                     target="_blank"
                                     class="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                                    title="Ver perfil"
+                                    title="View profile"
                                 >
                                     <ExternalLink class="h-4 w-4" />
                                 </a>
                                 <button
                                     @click="disconnect(platform.account.id)"
                                     class="p-2 text-muted-foreground hover:text-red-600 transition-colors"
-                                    title="Desconectar"
+                                    title="Disconnect"
                                 >
                                     <Trash2 class="h-4 w-4" />
                                 </button>
@@ -179,7 +182,7 @@ const getProfileUrl = (platform: string, username: string | null): string | null
                     <div v-else class="border-t px-4 py-3">
                         <Link :href="`/workspaces/${workspace.id}/connect/${platform.value}`">
                             <Button variant="outline" class="w-full" size="sm">
-                                Conectar
+                                Connect
                             </Button>
                         </Link>
                     </div>
@@ -187,4 +190,12 @@ const getProfileUrl = (platform: string, username: string | null): string | null
             </div>
         </div>
     </AppLayout>
+
+    <ConfirmDeleteModal
+        ref="deleteModal"
+        title="Disconnect Account"
+        description="Are you sure you want to disconnect this account? You can reconnect it at any time."
+        action="Disconnect"
+        cancel="Cancel"
+    />
 </template>

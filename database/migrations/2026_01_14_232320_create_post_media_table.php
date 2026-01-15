@@ -15,7 +15,6 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('post_platform_id');
             $table->string('type');
-            $table->string('disk')->default('r2');
             $table->string('path');
             $table->string('original_filename');
             $table->string('mime_type');

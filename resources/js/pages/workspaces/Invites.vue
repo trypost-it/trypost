@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { UserPlus, Users, Mail, Clock, Trash2, Crown, User } from 'lucide-vue-next';
+import { UserPlus, Users, Mail, Clock, Trash2, Crown, User, Shield } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
@@ -58,7 +58,7 @@ const breadcrumbs: BreadcrumbItemType[] = [
         href: `/workspaces/${props.workspace.id}`,
     },
     {
-        title: 'Equipe',
+        title: 'Team',
         href: `/workspaces/${props.workspace.id}/members`,
     },
 ];
@@ -78,7 +78,7 @@ function submitInvite() {
 }
 
 function cancelInvite(inviteId: string) {
-    if (confirm('Tem certeza que deseja cancelar este convite?')) {
+    if (confirm('Are you sure you want to cancel this invite?')) {
         router.delete(`/workspaces/${props.workspace.id}/invites/${inviteId}`, {
             preserveScroll: true,
         });
@@ -86,7 +86,7 @@ function cancelInvite(inviteId: string) {
 }
 
 function removeMember(memberId: string) {
-    if (confirm('Tem certeza que deseja remover este membro?')) {
+    if (confirm('Are you sure you want to remove this member?')) {
         router.delete(`/workspaces/${props.workspace.id}/members/${memberId}`, {
             preserveScroll: true,
         });
@@ -94,9 +94,9 @@ function removeMember(memberId: string) {
 }
 
 function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
+    return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
         year: 'numeric',
     });
 }
@@ -110,18 +110,23 @@ function getStatusColor(color: string): string {
     };
     return colors[color] || 'bg-gray-100 text-gray-800';
 }
+
+function getRoleIcon(role: string) {
+    if (role === 'admin') return Shield;
+    return User;
+}
 </script>
 
 <template>
-    <Head :title="`Equipe - ${workspace.name}`" />
+    <Head :title="`Team - ${workspace.name}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Equipe</h1>
+                    <h1 class="text-2xl font-bold tracking-tight">Team</h1>
                     <p class="text-muted-foreground">
-                        Gerencie os membros e convites do workspace
+                        Manage members and invites for this workspace
                     </p>
                 </div>
             </div>
@@ -131,10 +136,10 @@ function getStatusColor(color: string): string {
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
                             <UserPlus class="h-5 w-5" />
-                            Convidar Membro
+                            Invite Member
                         </CardTitle>
                         <CardDescription>
-                            Envie um convite por email para adicionar colaboradores
+                            Send an email invite to add collaborators
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -145,7 +150,7 @@ function getStatusColor(color: string): string {
                                     id="email"
                                     v-model="form.email"
                                     type="email"
-                                    placeholder="colaborador@email.com"
+                                    placeholder="collaborator@email.com"
                                     :class="{ 'border-red-500': form.errors.email }"
                                 />
                                 <p v-if="form.errors.email" class="text-sm text-red-500">
@@ -154,10 +159,10 @@ function getStatusColor(color: string): string {
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="role">Papel</Label>
+                                <Label for="role">Role</Label>
                                 <Select v-model="form.role">
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Selecione um papel" />
+                                        <SelectValue placeholder="Select a role" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem
@@ -173,7 +178,7 @@ function getStatusColor(color: string): string {
 
                             <Button type="submit" :disabled="form.processing" class="w-full">
                                 <Mail class="mr-2 h-4 w-4" />
-                                Enviar Convite
+                                Send Invite
                             </Button>
                         </form>
                     </CardContent>
@@ -183,15 +188,15 @@ function getStatusColor(color: string): string {
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
                             <Clock class="h-5 w-5" />
-                            Convites Pendentes
+                            Pending Invites
                         </CardTitle>
                         <CardDescription>
-                            Convites aguardando aceitação
+                            Invites awaiting acceptance
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div v-if="invites.length === 0" class="text-center py-6 text-muted-foreground">
-                            Nenhum convite pendente
+                            No pending invites
                         </div>
                         <div v-else class="space-y-3">
                             <div
@@ -210,7 +215,7 @@ function getStatusColor(color: string): string {
                                         </Badge>
                                     </div>
                                     <p class="text-xs text-muted-foreground mt-1">
-                                        Expira em {{ formatDate(invite.expires_at) }}
+                                        Expires {{ formatDate(invite.expires_at) }}
                                     </p>
                                 </div>
                                 <Button
@@ -231,10 +236,10 @@ function getStatusColor(color: string): string {
                 <CardHeader>
                     <CardTitle class="flex items-center gap-2">
                         <Users class="h-5 w-5" />
-                        Membros
+                        Members
                     </CardTitle>
                     <CardDescription>
-                        Pessoas com acesso a este workspace
+                        People with access to this workspace
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -249,7 +254,7 @@ function getStatusColor(color: string): string {
                                     <p class="text-sm text-muted-foreground">{{ owner.email }}</p>
                                 </div>
                             </div>
-                            <Badge>Proprietário</Badge>
+                            <Badge>Owner</Badge>
                         </div>
 
                         <div
@@ -259,7 +264,7 @@ function getStatusColor(color: string): string {
                         >
                             <div class="flex items-center gap-3">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-                                    <User class="h-5 w-5" />
+                                    <component :is="getRoleIcon(member.role)" class="h-5 w-5" />
                                 </div>
                                 <div>
                                     <p class="font-medium">{{ member.name }}</p>
@@ -267,7 +272,7 @@ function getStatusColor(color: string): string {
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <Badge variant="outline">{{ member.role }}</Badge>
+                                <Badge variant="outline" class="capitalize">{{ member.role }}</Badge>
                                 <Button
                                     variant="ghost"
                                     size="icon"
@@ -279,7 +284,7 @@ function getStatusColor(color: string): string {
                         </div>
 
                         <div v-if="members.length === 0" class="text-center py-6 text-muted-foreground">
-                            Nenhum membro além do proprietário
+                            No members besides the owner
                         </div>
                     </div>
                 </CardContent>

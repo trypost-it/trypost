@@ -31,10 +31,10 @@ class LinkedInPageController extends SocialController
 
     public function connect(Request $request, Workspace $workspace): SymfonyResponse
     {
-        $this->authorize('update', $workspace);
+        $this->authorize('manageAccounts', $workspace);
 
         if ($workspace->hasConnectedPlatform($this->platform->value)) {
-            return back()->with('error', 'Esta plataforma já está conectada.');
+            return back()->with('error', 'This platform is already connected.');
         }
 
         session(['social_connect_workspace' => $workspace->id]);
@@ -56,14 +56,14 @@ class LinkedInPageController extends SocialController
 
         if (! $workspaceId) {
             return redirect()->route('workspaces.index')
-                ->with('error', 'Sessão expirada. Tente novamente.');
+                ->with('error', 'Session expired. Please try again.');
         }
 
         $workspace = Workspace::find($workspaceId);
 
-        if (! $workspace || ! $request->user()->can('update', $workspace)) {
+        if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
             return redirect()->route('workspaces.index')
-                ->with('error', 'Workspace não encontrado.');
+                ->with('error', 'Workspace not found.');
         }
 
         try {
@@ -81,7 +81,7 @@ class LinkedInPageController extends SocialController
                 session()->forget('social_connect_workspace');
 
                 return redirect()->route('workspaces.accounts', $workspace)
-                    ->with('error', 'Você não é administrador de nenhuma página do LinkedIn.');
+                    ->with('error', 'You are not an administrator of any LinkedIn page.');
             }
 
             // Store data in session and redirect to selection page
@@ -105,7 +105,7 @@ class LinkedInPageController extends SocialController
             ]);
 
             return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Erro ao conectar conta. Tente novamente.');
+                ->with('error', 'Error connecting account. Please try again.');
         }
     }
 
@@ -115,14 +115,14 @@ class LinkedInPageController extends SocialController
 
         if (! $pendingData) {
             return redirect()->route('workspaces.index')
-                ->with('error', 'Sessão expirada. Tente novamente.');
+                ->with('error', 'Session expired. Please try again.');
         }
 
         $workspace = Workspace::find($pendingData['workspace_id']);
 
-        if (! $workspace || ! $request->user()->can('update', $workspace)) {
+        if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
             return redirect()->route('workspaces.index')
-                ->with('error', 'Workspace não encontrado.');
+                ->with('error', 'Workspace not found.');
         }
 
         return Inertia::render('accounts/LinkedInPageSelect', [
@@ -144,14 +144,14 @@ class LinkedInPageController extends SocialController
 
         if (! $pendingData) {
             return redirect()->route('workspaces.index')
-                ->with('error', 'Sessão expirada. Tente novamente.');
+                ->with('error', 'Session expired. Please try again.');
         }
 
         $workspace = Workspace::find($pendingData['workspace_id']);
 
-        if (! $workspace || ! $request->user()->can('update', $workspace)) {
+        if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
             return redirect()->route('workspaces.index')
-                ->with('error', 'Workspace não encontrado.');
+                ->with('error', 'Workspace not found.');
         }
 
         try {
@@ -176,14 +176,14 @@ class LinkedInPageController extends SocialController
             session()->forget(['social_connect_workspace', 'linkedin_page_pending']);
 
             return redirect()->route('workspaces.accounts', $workspace)
-                ->with('success', 'LinkedIn Page conectada com sucesso!');
+                ->with('success', 'LinkedIn Page connected successfully!');
         } catch (\Exception $e) {
             Log::error('LinkedIn Page selection error', [
                 'error' => $e->getMessage(),
             ]);
 
             return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Erro ao conectar página. Tente novamente.');
+                ->with('error', 'Error connecting page. Please try again.');
         }
     }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PostStatus;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
+use App\Jobs\PublishPost;
 use App\Models\Post;
 use App\Models\Workspace;
 use Carbon\Carbon;
@@ -34,46 +35,68 @@ class PostController extends Controller
     {
         $this->authorize('view', $workspace);
 
-        $month = $request->input('month', now()->month);
-        $year = $request->input('year', now()->year);
+        $tz = $workspace->timezone;
 
-        $startOfMonth = Carbon::create($year, $month, 1)->startOfMonth();
-        $endOfMonth = Carbon::create($year, $month, 1)->endOfMonth();
+        $weekStart = $request->input('week')
+            ? Carbon::parse($request->input('week'), $tz)->startOfWeek()
+            : Carbon::now($tz)->startOfWeek();
+
+        $weekEnd = $weekStart->copy()->endOfWeek();
+
+        // Convert to UTC for database query
+        $weekStartUtc = $weekStart->copy()->utc();
+        $weekEndUtc = $weekEnd->copy()->utc();
 
         $posts = $workspace->posts()
             ->with(['postPlatforms.socialAccount'])
-            ->whereBetween('scheduled_at', [$startOfMonth, $endOfMonth])
+            ->whereBetween('scheduled_at', [$weekStartUtc, $weekEndUtc])
             ->orderBy('scheduled_at')
             ->get()
-            ->groupBy(fn ($post) => $post->scheduled_at?->format('Y-m-d'));
-
-        $socialAccounts = $workspace->socialAccounts;
+            ->groupBy(fn ($post) => $post->scheduled_at?->setTimezone($tz)->format('Y-m-d'));
 
         return Inertia::render('posts/Calendar', [
             'workspace' => $workspace,
             'posts' => $posts,
-            'socialAccounts' => $socialAccounts,
-            'currentMonth' => $month,
-            'currentYear' => $year,
+            'currentWeekStart' => $weekStart->format('Y-m-d'),
         ]);
     }
 
-    public function create(Request $request, Workspace $workspace): Response|RedirectResponse
+    public function create(Request $request, Workspace $workspace): RedirectResponse
     {
         $this->authorize('view', $workspace);
 
         $socialAccounts = $workspace->socialAccounts;
 
         if ($socialAccounts->isEmpty()) {
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Conecte pelo menos uma rede social antes de criar um post.');
+            session()->flash('flash.banner', 'Connect at least one social network before creating a post.');
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('workspaces.accounts', $workspace);
         }
 
-        return Inertia::render('posts/Create', [
-            'workspace' => $workspace,
-            'socialAccounts' => $socialAccounts,
-            'scheduledDate' => $request->input('date'),
+        // Create a draft post - default to today if no date provided
+        $date = $request->input('date') ?: Carbon::now($workspace->timezone)->format('Y-m-d');
+        $scheduledAt = Carbon::parse($date, $workspace->timezone)
+            ->setTime(9, 0)
+            ->utc();
+
+        $post = $workspace->posts()->create([
+            'user_id' => $request->user()->id,
+            'status' => PostStatus::Draft,
+            'scheduled_at' => $scheduledAt,
         ]);
+
+        // Create post_platforms for each connected account
+        foreach ($socialAccounts as $account) {
+            $post->postPlatforms()->create([
+                'social_account_id' => $account->id,
+                'platform' => $account->platform->value,
+                'content' => '',
+                'status' => 'pending',
+            ]);
+        }
+
+        return redirect()->route('workspaces.posts.edit', [$workspace, $post]);
     }
 
     public function store(StorePostRequest $request, Workspace $workspace): RedirectResponse
@@ -105,8 +128,10 @@ class PostController extends Controller
             ? 'workspaces.calendar'
             : 'workspaces.posts.index';
 
-        return redirect()->route($route, $workspace)
-            ->with('success', 'Post criado com sucesso!');
+        session()->flash('flash.banner', 'Post created successfully!');
+        session()->flash('flash.bannerStyle', 'success');
+
+        return redirect()->route($route, $workspace);
     }
 
     public function show(Workspace $workspace, Post $post): Response
@@ -134,17 +159,33 @@ class PostController extends Controller
         }
 
         if ($post->status === PostStatus::Published) {
-            return redirect()->route('workspaces.posts.show', [$workspace, $post])
-                ->with('error', 'Posts publicados não podem ser editados.');
+            session()->flash('flash.banner', 'Published posts cannot be edited.');
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('workspaces.posts.show', [$workspace, $post]);
         }
 
         $post->load(['postPlatforms.socialAccount', 'postPlatforms.media']);
         $socialAccounts = $workspace->socialAccounts;
 
+        $platformConfigs = $socialAccounts->mapWithKeys(function ($account) {
+            $platform = $account->platform;
+
+            return [
+                $account->id => [
+                    'maxContentLength' => $platform->maxContentLength(),
+                    'maxImages' => $platform->maxImages(),
+                    'allowedMediaTypes' => array_map(fn ($type) => $type->value, $platform->allowedMediaTypes()),
+                    'supportsTextOnly' => $platform->supportsTextOnly(),
+                ],
+            ];
+        });
+
         return Inertia::render('posts/Edit', [
             'workspace' => $workspace,
             'post' => $post,
             'socialAccounts' => $socialAccounts,
+            'platformConfigs' => $platformConfigs,
         ]);
     }
 
@@ -157,24 +198,53 @@ class PostController extends Controller
         }
 
         if ($post->status === PostStatus::Published) {
-            return back()->with('error', 'Posts publicados não podem ser editados.');
+            session()->flash('flash.banner', 'Published posts cannot be edited.');
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return back();
         }
 
+        $scheduledAt = $post->scheduled_at;
+        if ($request->has('scheduled_at') && $request->input('scheduled_at')) {
+            $scheduledAt = Carbon::parse($request->input('scheduled_at'), $workspace->timezone)->utc();
+        }
+
+        $status = $request->input('status', $post->status);
+
         $post->update([
-            'status' => $request->input('status', $post->status),
-            'scheduled_at' => $request->input('scheduled_at', $post->scheduled_at),
+            'status' => $status === 'publishing' ? PostStatus::Publishing : $status,
+            'scheduled_at' => $scheduledAt,
         ]);
+
+        // Get selected platform IDs
+        $selectedPlatformIds = collect($request->input('platforms', []))->pluck('id')->toArray();
+
+        // Update all platforms - disable those not selected, update content for selected ones
+        $post->postPlatforms()->update(['enabled' => false]);
 
         foreach ($request->input('platforms', []) as $platformData) {
             $post->postPlatforms()
                 ->where('id', $platformData['id'])
                 ->update([
+                    'enabled' => true,
                     'content' => $platformData['content'],
                 ]);
         }
 
-        return redirect()->route('workspaces.posts.show', [$workspace, $post])
-            ->with('success', 'Post atualizado com sucesso!');
+        // Dispatch publish job if publishing now
+        if ($status === 'publishing') {
+            PublishPost::dispatch($post);
+
+            session()->flash('flash.banner', 'Post is being published!');
+            session()->flash('flash.bannerStyle', 'success');
+
+            return redirect()->route('workspaces.posts.show', [$workspace, $post]);
+        }
+
+        session()->flash('flash.banner', 'Post updated successfully!');
+        session()->flash('flash.bannerStyle', 'success');
+
+        return redirect()->route('workspaces.posts.show', [$workspace, $post]);
     }
 
     public function destroy(Workspace $workspace, Post $post): RedirectResponse
@@ -187,7 +257,9 @@ class PostController extends Controller
 
         $post->delete();
 
-        return redirect()->route('workspaces.calendar', $workspace)
-            ->with('success', 'Post excluído com sucesso!');
+        session()->flash('flash.banner', 'Post deleted successfully!');
+        session()->flash('flash.bannerStyle', 'success');
+
+        return redirect()->route('workspaces.calendar', $workspace);
     }
 }

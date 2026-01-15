@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\WorkspaceRole;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +17,7 @@ class Workspace extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'timezone',
     ];
 
     public function owner(): BelongsTo

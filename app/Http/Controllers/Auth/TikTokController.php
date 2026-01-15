@@ -24,10 +24,10 @@ class TikTokController extends SocialController
 
     public function connect(Request $request, Workspace $workspace): Response
     {
-        $this->authorize('update', $workspace);
+        $this->authorize('manageAccounts', $workspace);
 
         if ($workspace->hasConnectedPlatform($this->platform->value)) {
-            return back()->with('error', 'Esta plataforma já está conectada.');
+            return back()->with('error', 'This platform is already connected.');
         }
 
         return $this->redirectToProvider($workspace, $this->driver, $this->scopes);
@@ -39,19 +39,19 @@ class TikTokController extends SocialController
 
         if (! $workspaceId) {
             return redirect()->route('workspaces.index')
-                ->with('error', 'Sessão expirada. Tente novamente.');
+                ->with('error', 'Session expired. Please try again.');
         }
 
         $workspace = Workspace::find($workspaceId);
 
-        if (! $workspace || ! $request->user()->can('update', $workspace)) {
+        if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
             return redirect()->route('workspaces.index')
-                ->with('error', 'Workspace não encontrado.');
+                ->with('error', 'Workspace not found.');
         }
 
         if ($workspace->hasConnectedPlatform($this->platform->value)) {
             return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Esta plataforma já está conectada.');
+                ->with('error', 'This platform is already connected.');
         }
 
         try {
@@ -84,14 +84,14 @@ class TikTokController extends SocialController
             session()->forget('social_connect_workspace');
 
             return redirect()->route('workspaces.accounts', $workspace)
-                ->with('success', 'Conta conectada com sucesso!');
+                ->with('success', 'Account connected successfully!');
         } catch (\Exception $e) {
             Log::error('TikTok OAuth Error', [
                 'error' => $e->getMessage(),
             ]);
 
             return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Erro ao conectar conta. Tente novamente.');
+                ->with('error', 'Error connecting account. Please try again.');
         }
     }
 }

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next';
+import dayjs from '@/dayjs';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { type BreadcrumbItemType } from '@/types';
 
 interface PostPlatform {
@@ -27,224 +27,213 @@ interface Post {
     post_platforms: PostPlatform[];
 }
 
-interface SocialAccount {
-    id: string;
-    platform: string;
-    display_name: string;
-}
-
 interface Workspace {
     id: string;
     name: string;
+    timezone: string;
 }
 
 interface Props {
     workspace: Workspace;
     posts: Record<string, Post[]>;
-    socialAccounts: SocialAccount[];
-    currentMonth: number;
-    currentYear: number;
+    currentWeekStart: string;
 }
 
 const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    {
-        title: 'Workspaces',
-        href: '/workspaces',
-    },
-    {
-        title: props.workspace.name,
-        href: `/workspaces/${props.workspace.id}`,
-    },
-    {
-        title: 'Calendário',
-        href: `/workspaces/${props.workspace.id}/calendar`,
-    },
+    { title: 'Workspaces', href: '/workspaces' },
+    { title: props.workspace.name, href: `/workspaces/${props.workspace.id}` },
+    { title: 'Calendar', href: `/workspaces/${props.workspace.id}/calendar` },
 ];
 
-const monthNames = [
-    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-];
+const weekStart = computed(() => dayjs(props.currentWeekStart));
 
-const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-
-const currentDate = computed(() => new Date(props.currentYear, props.currentMonth - 1, 1));
-
-const daysInMonth = computed(() => {
-    return new Date(props.currentYear, props.currentMonth, 0).getDate();
-});
-
-const firstDayOfMonth = computed(() => {
-    return new Date(props.currentYear, props.currentMonth - 1, 1).getDay();
-});
-
-const calendarDays = computed(() => {
-    const days: (number | null)[] = [];
-
-    for (let i = 0; i < firstDayOfMonth.value; i++) {
-        days.push(null);
+const weekDays = computed(() => {
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+        days.push(weekStart.value.add(i, 'day'));
     }
-
-    for (let i = 1; i <= daysInMonth.value; i++) {
-        days.push(i);
-    }
-
     return days;
 });
 
-const getPostsForDay = (day: number): Post[] => {
-    const dateKey = `${props.currentYear}-${String(props.currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+const headerTitle = computed(() => {
+    const start = weekStart.value;
+    const end = weekStart.value.add(6, 'day');
+
+    if (start.month() === end.month()) {
+        return `${start.format('MMMM D')} - ${end.format('D, YYYY')}`;
+    }
+    return `${start.format('MMM D')} - ${end.format('MMM D, YYYY')}`;
+});
+
+const getPostsForDay = (day: dayjs.Dayjs): Post[] => {
+    const dateKey = day.format('YYYY-MM-DD');
     return props.posts[dateKey] || [];
 };
 
-const navigateMonth = (direction: number) => {
-    let newMonth = props.currentMonth + direction;
-    let newYear = props.currentYear;
-
-    if (newMonth > 12) {
-        newMonth = 1;
-        newYear++;
-    } else if (newMonth < 1) {
-        newMonth = 12;
-        newYear--;
-    }
-
+const navigateWeek = (direction: number) => {
+    const newStart = weekStart.value.add(direction * 7, 'day');
     router.get(`/workspaces/${props.workspace.id}/calendar`, {
-        month: newMonth,
-        year: newYear,
+        week: newStart.format('YYYY-MM-DD'),
     }, {
         preserveState: true,
     });
 };
 
+const goToToday = () => {
+    router.get(`/workspaces/${props.workspace.id}/calendar`, {}, {
+        preserveState: true,
+    });
+};
+
+const isToday = (day: dayjs.Dayjs): boolean => {
+    return day.isSame(dayjs(), 'day');
+};
+
 const getStatusColor = (status: string): string => {
     const colors: Record<string, string> = {
-        draft: 'bg-gray-400',
-        scheduled: 'bg-blue-500',
-        publishing: 'bg-yellow-500',
-        published: 'bg-green-500',
-        failed: 'bg-red-500',
+        draft: 'bg-gray-100 border-gray-300 text-gray-700',
+        scheduled: 'bg-blue-50 border-blue-300 text-blue-700',
+        publishing: 'bg-yellow-50 border-yellow-300 text-yellow-700',
+        published: 'bg-green-50 border-green-300 text-green-700',
+        partially_published: 'bg-orange-50 border-orange-300 text-orange-700',
+        failed: 'bg-red-50 border-red-300 text-red-700',
     };
-    return colors[status] || 'bg-gray-400';
+    return colors[status] || 'bg-gray-100 border-gray-300 text-gray-700';
 };
 
-const getPlatformEmoji = (platform: string): string => {
-    const emojis: Record<string, string> = {
-        linkedin: '💼',
-        twitter: '𝕏',
-        tiktok: '🎵',
+const getPlatformLogo = (platform: string): string => {
+    const logos: Record<string, string> = {
+        'linkedin': '/images/accounts/linkedin.png',
+        'linkedin-page': '/images/accounts/linkedin.png',
+        'x': '/images/accounts/x.png',
+        'tiktok': '/images/accounts/tiktok.png',
+        'youtube': '/images/accounts/youtube.png',
+        'facebook': '/images/accounts/facebook.png',
+        'instagram': '/images/accounts/instagram.png',
+        'threads': '/images/accounts/threads.png',
     };
-    return emojis[platform] || '🌐';
+    return logos[platform] || '/images/accounts/default.png';
 };
 
-const isToday = (day: number): boolean => {
-    const today = new Date();
-    return (
-        day === today.getDate() &&
-        props.currentMonth === today.getMonth() + 1 &&
-        props.currentYear === today.getFullYear()
-    );
+const getPostUrl = (post: Post): string => {
+    const base = `/workspaces/${props.workspace.id}/posts/${post.id}`;
+    return post.status === 'draft' || post.status === 'scheduled' ? `${base}/edit` : base;
+};
+
+const formatTime = (scheduledAt: string): string => {
+    return dayjs.utc(scheduledAt).tz(props.workspace.timezone).format('h:mm A');
 };
 </script>
 
 <template>
-    <Head title="Calendário" />
+    <Head title="Calendar" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-4 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Calendário</h1>
-                    <p class="text-muted-foreground">
-                        Visualize e agende seus posts
-                    </p>
+        <div class="flex flex-col h-full">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-1">
+                        <Button variant="outline" size="icon" @click="navigateWeek(-1)">
+                            <ChevronLeft class="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="icon" @click="navigateWeek(1)">
+                            <ChevronRight class="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <Button variant="outline" size="sm" @click="goToToday">
+                        Today
+                    </Button>
+                    <h1 class="text-lg font-semibold">
+                        {{ headerTitle }}
+                    </h1>
                 </div>
                 <Link :href="`/workspaces/${workspace.id}/posts/create`">
                     <Button>
                         <Plus class="mr-2 h-4 w-4" />
-                        Novo Post
+                        New Post
                     </Button>
                 </Link>
             </div>
 
-            <Card>
-                <CardContent class="p-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <Button variant="outline" size="icon" @click="navigateMonth(-1)">
-                            <ChevronLeft class="h-4 w-4" />
-                        </Button>
-                        <h2 class="text-lg font-semibold">
-                            {{ monthNames[currentMonth - 1] }} {{ currentYear }}
-                        </h2>
-                        <Button variant="outline" size="icon" @click="navigateMonth(1)">
-                            <ChevronRight class="h-4 w-4" />
-                        </Button>
+            <!-- Week Grid -->
+            <div class="flex-1 grid grid-cols-7 divide-x overflow-hidden">
+                <div
+                    v-for="day in weekDays"
+                    :key="day.format('YYYY-MM-DD')"
+                    class="flex flex-col min-h-0"
+                    :class="{ 'bg-primary/5': isToday(day) }"
+                >
+                    <!-- Day Header -->
+                    <div class="flex flex-col items-center py-3 border-b bg-muted/30">
+                        <span class="text-xs font-medium text-muted-foreground uppercase">
+                            {{ day.format('ddd') }}
+                        </span>
+                        <span
+                            class="mt-1 flex items-center justify-center w-8 h-8 text-sm font-semibold rounded-full"
+                            :class="{
+                                'bg-primary text-primary-foreground': isToday(day),
+                                'text-foreground': !isToday(day),
+                            }"
+                        >
+                            {{ day.format('D') }}
+                        </span>
                     </div>
 
-                    <div class="grid grid-cols-7 gap-px bg-muted rounded-lg overflow-hidden">
-                        <div
-                            v-for="dayName in dayNames"
-                            :key="dayName"
-                            class="bg-background p-2 text-center text-sm font-medium text-muted-foreground"
+                    <!-- Day Content -->
+                    <div class="flex-1 overflow-y-auto p-2 space-y-2">
+                        <!-- Add Post Button -->
+                        <Link
+                            :href="`/workspaces/${workspace.id}/posts/create?date=${day.format('YYYY-MM-DD')}`"
+                            class="flex items-center justify-center p-2 rounded border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors"
                         >
-                            {{ dayName }}
-                        </div>
+                            <Plus class="h-4 w-4" />
+                        </Link>
 
-                        <div
-                            v-for="(day, index) in calendarDays"
-                            :key="index"
-                            class="bg-background min-h-[100px] p-1"
-                            :class="{ 'opacity-50': !day }"
+                        <!-- Posts -->
+                        <Link
+                            v-for="post in getPostsForDay(day)"
+                            :key="post.id"
+                            :href="getPostUrl(post)"
+                            class="block"
                         >
-                            <div v-if="day" class="h-full">
-                                <div class="flex items-center justify-between mb-1">
+                            <div
+                                class="p-2 rounded border text-sm transition-all hover:ring-2 hover:ring-primary hover:ring-offset-1"
+                                :class="getStatusColor(post.status)"
+                            >
+                                <!-- Time -->
+                                <div class="text-xs font-medium mb-1">
+                                    {{ formatTime(post.scheduled_at) }}
+                                </div>
+
+                                <!-- Platforms -->
+                                <div class="flex -space-x-1 mb-1.5">
+                                    <img
+                                        v-for="pp in post.post_platforms.slice(0, 4)"
+                                        :key="pp.id"
+                                        :src="getPlatformLogo(pp.platform)"
+                                        :alt="pp.platform"
+                                        class="h-5 w-5 rounded-full ring-2 ring-white"
+                                    />
                                     <span
-                                        class="text-sm font-medium"
-                                        :class="{
-                                            'bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center': isToday(day)
-                                        }"
+                                        v-if="post.post_platforms.length > 4"
+                                        class="flex items-center justify-center h-5 w-5 rounded-full bg-muted text-[10px] font-medium ring-2 ring-white"
                                     >
-                                        {{ day }}
+                                        +{{ post.post_platforms.length - 4 }}
                                     </span>
-                                    <Link
-                                        :href="`/workspaces/${workspace.id}/posts/create?date=${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`"
-                                        class="opacity-0 hover:opacity-100 transition-opacity"
-                                    >
-                                        <Button variant="ghost" size="icon" class="h-6 w-6">
-                                            <Plus class="h-3 w-3" />
-                                        </Button>
-                                    </Link>
                                 </div>
 
-                                <div class="space-y-1">
-                                    <Link
-                                        v-for="post in getPostsForDay(day)"
-                                        :key="post.id"
-                                        :href="`/workspaces/${workspace.id}/posts/${post.id}`"
-                                        class="block"
-                                    >
-                                        <div
-                                            class="text-xs p-1 rounded truncate hover:bg-accent transition-colors"
-                                            :class="getStatusColor(post.status)"
-                                        >
-                                            <span class="text-white flex items-center gap-1">
-                                                <span v-for="pp in post.post_platforms" :key="pp.id">
-                                                    {{ getPlatformEmoji(pp.platform) }}
-                                                </span>
-                                                <span class="truncate">
-                                                    {{ post.post_platforms[0]?.content?.substring(0, 20) || 'Sem conteúdo' }}
-                                                </span>
-                                            </span>
-                                        </div>
-                                    </Link>
-                                </div>
+                                <!-- Content Preview -->
+                                <p class="text-xs line-clamp-2 opacity-80">
+                                    {{ post.post_platforms[0]?.content || 'No content' }}
+                                </p>
                             </div>
-                        </div>
+                        </Link>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         </div>
     </AppLayout>
 </template>

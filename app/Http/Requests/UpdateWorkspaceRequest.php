@@ -15,14 +15,17 @@ class UpdateWorkspaceRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'timezone' => ['required', 'string', 'timezone:all'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'name.required' => 'O nome do workspace é obrigatório.',
-            'name.max' => 'O nome do workspace deve ter no máximo 255 caracteres.',
+            'name.required' => 'The workspace name is required.',
+            'name.max' => 'The workspace name must be at most 255 characters.',
+            'timezone.required' => 'Please select a timezone.',
+            'timezone.timezone' => 'Please select a valid timezone.',
         ];
     }
 }

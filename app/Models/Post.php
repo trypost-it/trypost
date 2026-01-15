@@ -85,6 +85,14 @@ class Post extends Model
         ]);
     }
 
+    public function markAsPartiallyPublished(): void
+    {
+        $this->update([
+            'status' => PostStatus::PartiallyPublished,
+            'published_at' => now(),
+        ]);
+    }
+
     public function markAsFailed(): void
     {
         $this->update(['status' => PostStatus::Failed]);

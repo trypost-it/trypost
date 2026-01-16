@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Socialite\InstagramExtendSocialite;
 use App\Socialite\LinkedInPageExtendSocialite;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -34,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
 
     protected function configureSocialite(): void
     {
+        Event::listen(SocialiteWasCalled::class, InstagramExtendSocialite::class);
         Event::listen(SocialiteWasCalled::class, LinkedInExtendSocialite::class);
         Event::listen(SocialiteWasCalled::class, LinkedInPageExtendSocialite::class);
         Event::listen(SocialiteWasCalled::class, TikTokExtendSocialite::class);

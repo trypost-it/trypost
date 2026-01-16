@@ -16,13 +16,22 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class SocialController extends Controller
 {
+    protected SocialPlatform $platform;
+
+    protected function ensurePlatformEnabled(): void
+    {
+        if (isset($this->platform) && ! $this->platform->isEnabled()) {
+            abort(403, 'This platform is currently unavailable.');
+        }
+    }
+
     public function index(Workspace $workspace): Response
     {
         $this->authorize('view', $workspace);
 
         $connectedAccounts = $workspace->socialAccounts;
 
-        $platforms = collect(SocialPlatform::cases())->map(function ($platform) use ($connectedAccounts) {
+        $platforms = collect(SocialPlatform::enabled())->map(function ($platform) use ($connectedAccounts) {
             $connected = $connectedAccounts->firstWhere('platform', $platform);
 
             return [
@@ -32,7 +41,7 @@ class SocialController extends Controller
                 'connected' => $connected !== null,
                 'account' => $connected,
             ];
-        });
+        })->values();
 
         return Inertia::render('accounts/Index', [
             'workspace' => $workspace,

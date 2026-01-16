@@ -22,11 +22,11 @@ class FacebookController extends SocialController
         'pages_show_list',
         'pages_read_engagement',
         'pages_manage_posts',
-        'pages_read_user_content',
     ];
 
     public function connect(Request $request, Workspace $workspace): Response
     {
+        $this->ensurePlatformEnabled();
         $this->authorize('manageAccounts', $workspace);
 
         if ($workspace->hasConnectedPlatform($this->platform->value)) {

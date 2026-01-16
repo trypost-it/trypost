@@ -31,6 +31,7 @@ class LinkedInPageController extends SocialController
 
     public function connect(Request $request, Workspace $workspace): SymfonyResponse
     {
+        $this->ensurePlatformEnabled();
         $this->authorize('manageAccounts', $workspace);
 
         if ($workspace->hasConnectedPlatform($this->platform->value)) {

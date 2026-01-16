@@ -73,7 +73,7 @@ class ThreadsPublisher
 
     private function publishImagePost(string $userId, string $accessToken, string $content, $media): array
     {
-        Log::info('Threads publishing image post', ['user_id' => $userId]);
+        Log::info('Threads publishing image post', ['user_id' => $userId, 'image_url' => $media->url]);
 
         // Step 1: Create container
         $containerResponse = Http::post("{$this->baseUrl}/{$userId}/threads", [
@@ -93,7 +93,12 @@ class ThreadsPublisher
 
         $containerId = $containerResponse->json()['id'];
 
-        // Step 2: Publish
+        Log::info('Threads image container created', ['container_id' => $containerId]);
+
+        // Step 2: Wait for image processing
+        $this->waitForMediaProcessing($containerId, $accessToken);
+
+        // Step 3: Publish
         return $this->publishContainer($userId, $accessToken, $containerId);
     }
 
@@ -164,10 +169,8 @@ class ThreadsPublisher
 
             $childId = $containerResponse->json()['id'];
 
-            // Wait for video processing if needed
-            if ($isVideo) {
-                $this->waitForMediaProcessing($childId, $accessToken);
-            }
+            // Wait for media processing (both images and videos)
+            $this->waitForMediaProcessing($childId, $accessToken);
 
             $childContainers[] = $childId;
         }
@@ -234,32 +237,45 @@ class ThreadsPublisher
     {
         for ($i = 0; $i < $maxAttempts; $i++) {
             $statusResponse = Http::get("{$this->baseUrl}/{$containerId}", [
-                'fields' => 'status',
+                'fields' => 'status,error_message',
                 'access_token' => $accessToken,
             ]);
 
             if ($statusResponse->failed()) {
+                Log::warning('Threads status check failed', [
+                    'container_id' => $containerId,
+                    'attempt' => $i,
+                    'body' => $statusResponse->body(),
+                ]);
                 sleep(3);
 
                 continue;
             }
 
-            $status = $statusResponse->json()['status'] ?? 'UNKNOWN';
+            $data = $statusResponse->json();
+            $status = $data['status'] ?? 'UNKNOWN';
 
-            Log::info('Threads media processing status', ['status' => $status, 'attempt' => $i]);
+            Log::info('Threads media processing status', [
+                'container_id' => $containerId,
+                'status' => $status,
+                'attempt' => $i,
+                'response' => $data,
+            ]);
 
             if ($status === 'FINISHED') {
                 return;
             }
 
             if ($status === 'ERROR') {
-                throw new \Exception('Threads media processing failed');
+                $errorMessage = $data['error_message'] ?? 'Unknown error';
+                throw new \Exception('Threads media processing failed: '.$errorMessage);
             }
 
             sleep(3);
         }
 
-        Log::warning('Threads media processing timeout, proceeding anyway');
+        Log::warning('Threads media processing timeout', ['container_id' => $containerId]);
+        throw new \Exception('Threads media processing timeout after '.$maxAttempts.' attempts');
     }
 
     private function refreshToken(SocialAccount $account): void

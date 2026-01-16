@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import { useEcho } from '@laravel/echo-vue';
 import { Clock, CheckCircle, AlertCircle, Loader2, FileText, ExternalLink, Pencil } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
 import dayjs from '@/dayjs';
 
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -65,6 +67,29 @@ interface Props {
 
 const props = defineProps<Props>();
 
+// Reactive state for real-time updates
+const post = ref(props.post);
+
+// Listen for status updates via WebSocket
+useEcho(
+    `posts.${props.post.id}`,
+    'PostPlatformStatusUpdated',
+    (e: { post_platform: { id: string; status: string; platform_url: string | null; error_message: string | null; published_at: string | null }; post: { id: string; status: string; published_at: string | null } }) => {
+        // Update post platform status
+        const platformIndex = post.value.post_platforms.findIndex(pp => pp.id === e.post_platform.id);
+        if (platformIndex !== -1) {
+            post.value.post_platforms[platformIndex].status = e.post_platform.status;
+            post.value.post_platforms[platformIndex].platform_url = e.post_platform.platform_url;
+            post.value.post_platforms[platformIndex].error_message = e.post_platform.error_message;
+            post.value.post_platforms[platformIndex].published_at = e.post_platform.published_at;
+        }
+
+        // Update post status
+        post.value.status = e.post.status;
+        post.value.published_at = e.post.published_at;
+    },
+);
+
 const breadcrumbs: BreadcrumbItemType[] = [
     { title: 'Workspaces', href: '/workspaces' },
     { title: props.workspace.name, href: `/workspaces/${props.workspace.id}` },
@@ -117,8 +142,8 @@ const formatDateTime = (date: string | null): string => {
     return dayjs.utc(date).tz(props.workspace.timezone).format('MMM D, YYYY [at] h:mm A');
 };
 
-const canEdit = ['draft', 'scheduled'].includes(props.post.status);
-const enabledPlatforms = props.post.post_platforms.filter(pp => pp.enabled);
+const canEdit = computed(() => ['draft', 'scheduled'].includes(post.value.status));
+const enabledPlatforms = computed(() => post.value.post_platforms.filter(pp => pp.enabled));
 </script>
 
 <template>

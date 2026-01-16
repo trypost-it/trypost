@@ -24,6 +24,7 @@ class XController extends SocialController
 
     public function connect(Request $request, Workspace $workspace): Response
     {
+        $this->ensurePlatformEnabled();
         $this->authorize('manageAccounts', $workspace);
 
         if ($workspace->hasConnectedPlatform($this->platform->value)) {

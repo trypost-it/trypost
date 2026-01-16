@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\SocialPlatform;
+use App\Events\PostPlatformStatusUpdated;
 use App\Models\PostPlatform;
 use App\Services\Social\FacebookPublisher;
 use App\Services\Social\InstagramPublisher;
@@ -29,6 +30,7 @@ class PublishToSocialPlatform implements ShouldQueue
     public function handle(): void
     {
         $this->postPlatform->markAsPublishing();
+        $this->broadcastStatus();
 
         try {
             $publisher = $this->getPublisher();
@@ -47,6 +49,14 @@ class PublishToSocialPlatform implements ShouldQueue
 
         // Always check and update post status after each platform finishes
         $this->updatePostStatus();
+
+        // Broadcast final status
+        $this->broadcastStatus();
+    }
+
+    private function broadcastStatus(): void
+    {
+        PostPlatformStatusUpdated::dispatch($this->postPlatform->fresh());
     }
 
     private function getPublisher(): LinkedInPublisher|LinkedInPagePublisher|XPublisher|TikTokPublisher|YouTubePublisher|FacebookPublisher|InstagramPublisher|ThreadsPublisher

@@ -67,11 +67,18 @@ return [
         'redirect' => env('GOOGLE_CLIENT_REDIRECT'),
     ],
 
-    // Facebook (used for Facebook Pages and Instagram)
+    // Facebook Pages
     'facebook' => [
         'client_id' => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
         'redirect' => env('FACEBOOK_CLIENT_REDIRECT'),
+    ],
+
+    // Instagram
+    'instagram' => [
+        'client_id' => env('INSTAGRAM_CLIENT_ID'),
+        'client_secret' => env('INSTAGRAM_CLIENT_SECRET'),
+        'redirect' => env('INSTAGRAM_CLIENT_REDIRECT'),
     ],
 
     // Threads

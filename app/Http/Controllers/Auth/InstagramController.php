@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class InstagramController extends SocialController
 {
-    protected string $driver = 'facebook';
+    protected string $driver = 'instagram';
 
     protected SocialPlatform $platform = SocialPlatform::Instagram;
 
@@ -27,6 +27,7 @@ class InstagramController extends SocialController
 
     public function connect(Request $request, Workspace $workspace): Response
     {
+        $this->ensurePlatformEnabled();
         $this->authorize('manageAccounts', $workspace);
 
         if ($workspace->hasConnectedPlatform($this->platform->value)) {

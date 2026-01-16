@@ -91,4 +91,19 @@ enum SocialPlatform: string
             self::Threads => true,
         };
     }
+
+    public function isEnabled(): bool
+    {
+        return config("trypost.platforms.{$this->value}.enabled", true);
+    }
+
+    /**
+     * Get all enabled platforms.
+     *
+     * @return array<self>
+     */
+    public static function enabled(): array
+    {
+        return array_filter(self::cases(), fn (self $platform) => $platform->isEnabled());
+    }
 }

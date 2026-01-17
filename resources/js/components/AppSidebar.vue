@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { Calendar, Check, ChevronsUpDown, CreditCard, LogOut, Plus, Settings, Share2, Sparkles, Users } from 'lucide-vue-next';
+import { Calendar, Check, ChevronsUpDown, CreditCard, Hash, LogOut, Plus, Settings, Share2, Sparkles, Tag, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -28,6 +28,8 @@ import {
 } from '@/components/ui/sidebar';
 import { useInitials } from '@/composables/useInitials';
 import { accounts, calendar, logout, members, settings } from '@/routes';
+import { index as hashtags } from '@/routes/hashtags';
+import { index as labels } from '@/routes/labels';
 import { index as billing } from '@/routes/billing';
 import { edit as editProfile } from '@/routes/profile';
 import { create as createWorkspaceRoute, switchMethod } from '@/routes/workspaces';
@@ -55,6 +57,16 @@ const mainNavItems: NavItem[] = [
         title: 'Accounts',
         href: accounts.url(),
         icon: Share2,
+    },
+    {
+        title: 'Hashtags',
+        href: hashtags.url(),
+        icon: Hash,
+    },
+    {
+        title: 'Labels',
+        href: labels.url(),
+        icon: Tag,
     },
     {
         title: 'Members',

@@ -2,6 +2,7 @@
 
 namespace App\Services\Social;
 
+use App\Enums\PostPlatform\ContentType;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -41,10 +42,20 @@ class LinkedInPublisher
         $this->accessToken = $account->access_token;
 
         $personUrn = "urn:li:person:{$account->platform_user_id}";
+        $contentType = $postPlatform->content_type;
 
+        return match ($contentType) {
+            ContentType::LinkedInCarousel => $this->publishCarousel($personUrn, $postPlatform->content, $postPlatform->media),
+            ContentType::LinkedInPost => $this->publishPost($personUrn, $postPlatform->content, $postPlatform->media),
+            default => throw new \Exception("Unsupported LinkedIn content type: {$contentType?->value}"),
+        };
+    }
+
+    private function publishPost(string $personUrn, string $content, $media): array
+    {
         $payload = [
             'author' => $personUrn,
-            'commentary' => $postPlatform->content,
+            'commentary' => $content,
             'visibility' => 'PUBLIC',
             'distribution' => [
                 'feedDistribution' => 'MAIN_FEED',
@@ -53,8 +64,6 @@ class LinkedInPublisher
             ],
             'lifecycleState' => 'PUBLISHED',
         ];
-
-        $media = $postPlatform->media;
 
         if ($media->isNotEmpty()) {
             $firstMedia = $media->first();
@@ -76,6 +85,73 @@ class LinkedInPublisher
 
         if ($response->failed()) {
             Log::error('LinkedIn post creation failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            $this->handleApiError($response, 'LinkedIn API error');
+        }
+
+        $postId = $response->header('x-restli-id');
+
+        return [
+            'id' => $postId ?? 'unknown',
+            'url' => $postId ? "https://www.linkedin.com/feed/update/{$postId}" : null,
+        ];
+    }
+
+    private function publishCarousel(string $personUrn, string $content, $mediaCollection): array
+    {
+        Log::info('LinkedIn publishing carousel', [
+            'owner' => $personUrn,
+            'media_count' => $mediaCollection->count(),
+        ]);
+
+        // Upload images and build carousel items
+        $carouselItems = [];
+
+        foreach ($mediaCollection as $media) {
+            if (! str_starts_with($media->mime_type, 'image/')) {
+                continue;
+            }
+
+            $imageUrn = $this->uploadImage($media, $personUrn);
+
+            if ($imageUrn) {
+                $carouselItems[] = [
+                    'altText' => $media->original_filename ?? 'Carousel image',
+                    'media' => $imageUrn,
+                ];
+            }
+        }
+
+        if (empty($carouselItems)) {
+            throw new \Exception('No valid images for LinkedIn carousel');
+        }
+
+        $payload = [
+            'author' => $personUrn,
+            'commentary' => $content,
+            'visibility' => 'PUBLIC',
+            'distribution' => [
+                'feedDistribution' => 'MAIN_FEED',
+                'targetEntities' => [],
+                'thirdPartyDistributionChannels' => [],
+            ],
+            'lifecycleState' => 'PUBLISHED',
+            'content' => [
+                'multiImage' => [
+                    'images' => $carouselItems,
+                ],
+            ],
+        ];
+
+        Log::info('LinkedIn creating carousel post', ['payload' => $payload]);
+
+        $response = $this->getHttpClient()
+            ->post("{$this->baseUrl}/rest/posts", $payload);
+
+        if ($response->failed()) {
+            Log::error('LinkedIn carousel post creation failed', [
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);

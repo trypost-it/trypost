@@ -2,6 +2,7 @@
 
 namespace App\Services\Social;
 
+use App\Enums\PostPlatform\ContentType;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use Illuminate\Http\Client\Response;
@@ -37,10 +38,21 @@ class FacebookPublisher
         $accessToken = $account->access_token;
 
         $media = $postPlatform->media;
+        $contentType = $postPlatform->content_type;
 
+        return match ($contentType) {
+            ContentType::FacebookReel => $this->publishReel($pageId, $accessToken, $postPlatform->content, $media->first()),
+            ContentType::FacebookStory => $this->publishStory($pageId, $accessToken, $media->first()),
+            ContentType::FacebookPost => $this->publishPost($pageId, $accessToken, $postPlatform->content, $media),
+            default => throw new \Exception("Unsupported Facebook content type: {$contentType?->value}"),
+        };
+    }
+
+    private function publishPost(string $pageId, string $accessToken, string $content, $media): array
+    {
         // Text only post
         if ($media->isEmpty()) {
-            return $this->publishTextPost($pageId, $accessToken, $postPlatform->content);
+            return $this->publishTextPost($pageId, $accessToken, $content);
         }
 
         $firstMedia = $media->first();
@@ -48,16 +60,16 @@ class FacebookPublisher
         $isImage = str_starts_with($firstMedia->mime_type, 'image/');
 
         if ($isVideo) {
-            return $this->publishVideoPost($pageId, $accessToken, $postPlatform->content, $firstMedia);
+            return $this->publishVideoPost($pageId, $accessToken, $content, $firstMedia);
         }
 
         if ($isImage) {
             // Single or multiple images
             if ($media->count() === 1) {
-                return $this->publishSingleImagePost($pageId, $accessToken, $postPlatform->content, $firstMedia);
+                return $this->publishSingleImagePost($pageId, $accessToken, $content, $firstMedia);
             }
 
-            return $this->publishMultiImagePost($pageId, $accessToken, $postPlatform->content, $media);
+            return $this->publishMultiImagePost($pageId, $accessToken, $content, $media);
         }
 
         throw new \Exception('Unsupported media type for Facebook');
@@ -208,6 +220,147 @@ class FacebookPublisher
             'id' => $videoId,
             'url' => "https://www.facebook.com/{$pageId}/videos/{$videoId}",
         ];
+    }
+
+    private function publishReel(string $pageId, string $accessToken, string $content, $media): array
+    {
+        Log::info('Facebook publishing reel', ['page_id' => $pageId]);
+
+        // Upload video as reel
+        $response = Http::post("{$this->baseUrl}/{$pageId}/video_reels", [
+            'upload_phase' => 'start',
+            'access_token' => $accessToken,
+        ]);
+
+        if ($response->failed()) {
+            Log::error('Facebook reel upload start failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            $this->handleApiError($response, 'Facebook API error');
+        }
+
+        $data = $response->json();
+        $videoId = $data['video_id'];
+
+        // Upload the video file
+        $uploadResponse = Http::post("{$this->baseUrl}/{$videoId}", [
+            'upload_phase' => 'transfer',
+            'video_file_chunk' => $media->url,
+            'access_token' => $accessToken,
+        ]);
+
+        if ($uploadResponse->failed()) {
+            Log::error('Facebook reel upload transfer failed', [
+                'body' => $uploadResponse->body(),
+            ]);
+            $this->handleApiError($uploadResponse, 'Facebook API error');
+        }
+
+        // Finish and publish the reel
+        $finishResponse = Http::post("{$this->baseUrl}/{$pageId}/video_reels", [
+            'upload_phase' => 'finish',
+            'video_id' => $videoId,
+            'video_state' => 'PUBLISHED',
+            'description' => $content,
+            'access_token' => $accessToken,
+        ]);
+
+        if ($finishResponse->failed()) {
+            Log::error('Facebook reel finish failed', [
+                'body' => $finishResponse->body(),
+            ]);
+            $this->handleApiError($finishResponse, 'Facebook API error');
+        }
+
+        $finishData = $finishResponse->json();
+        $reelId = $finishData['id'] ?? $videoId;
+
+        return [
+            'id' => $reelId,
+            'url' => "https://www.facebook.com/reel/{$reelId}",
+        ];
+    }
+
+    private function publishStory(string $pageId, string $accessToken, $media): array
+    {
+        Log::info('Facebook publishing story', ['page_id' => $pageId]);
+
+        $isVideo = str_starts_with($media->mime_type, 'video/');
+
+        if ($isVideo) {
+            // Video story
+            $response = Http::post("{$this->baseUrl}/{$pageId}/video_stories", [
+                'upload_phase' => 'start',
+                'access_token' => $accessToken,
+            ]);
+
+            if ($response->failed()) {
+                $this->handleApiError($response, 'Facebook API error');
+            }
+
+            $videoId = $response->json()['video_id'];
+
+            // Transfer the video
+            Http::post("{$this->baseUrl}/{$videoId}", [
+                'upload_phase' => 'transfer',
+                'video_file_chunk' => $media->url,
+                'access_token' => $accessToken,
+            ]);
+
+            // Finish the story
+            $finishResponse = Http::post("{$this->baseUrl}/{$pageId}/video_stories", [
+                'upload_phase' => 'finish',
+                'video_id' => $videoId,
+                'access_token' => $accessToken,
+            ]);
+
+            if ($finishResponse->failed()) {
+                $this->handleApiError($finishResponse, 'Facebook API error');
+            }
+
+            $storyId = $finishResponse->json()['post_id'] ?? $videoId;
+
+            return [
+                'id' => $storyId,
+                'url' => "https://www.facebook.com/stories/{$pageId}/{$storyId}",
+            ];
+        }
+
+        // Image story
+        $response = Http::post("{$this->baseUrl}/{$pageId}/photo_stories", [
+            'photo_id' => $this->uploadUnpublishedPhoto($pageId, $accessToken, $media),
+            'access_token' => $accessToken,
+        ]);
+
+        if ($response->failed()) {
+            Log::error('Facebook photo story failed', [
+                'body' => $response->body(),
+            ]);
+            $this->handleApiError($response, 'Facebook API error');
+        }
+
+        $storyId = $response->json()['post_id'] ?? $response->json()['id'];
+
+        return [
+            'id' => $storyId,
+            'url' => "https://www.facebook.com/stories/{$pageId}/{$storyId}",
+        ];
+    }
+
+    private function uploadUnpublishedPhoto(string $pageId, string $accessToken, $media): string
+    {
+        $response = Http::post("{$this->baseUrl}/{$pageId}/photos", [
+            'url' => $media->url,
+            'published' => 'false',
+            'access_token' => $accessToken,
+        ]);
+
+        if ($response->failed()) {
+            $this->handleApiError($response, 'Facebook API error');
+        }
+
+        return $response->json()['id'];
     }
 
     private function handleApiError(Response $response, string $context): void

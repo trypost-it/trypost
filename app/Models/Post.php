@@ -19,6 +19,7 @@ class Post extends Model
         'workspace_id',
         'user_id',
         'status',
+        'synced',
         'scheduled_at',
         'published_at',
     ];
@@ -27,6 +28,7 @@ class Post extends Model
     {
         return [
             'status' => PostStatus::class,
+            'synced' => 'boolean',
             'scheduled_at' => 'datetime',
             'published_at' => 'datetime',
         ];

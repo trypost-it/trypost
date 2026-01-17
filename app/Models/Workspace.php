@@ -53,6 +53,16 @@ class Workspace extends Model
         return $this->invites()->pending();
     }
 
+    public function hashtags(): HasMany
+    {
+        return $this->hasMany(WorkspaceHashtag::class);
+    }
+
+    public function labels(): HasMany
+    {
+        return $this->hasMany(WorkspaceLabel::class);
+    }
+
     public function hasMember(User $user): bool
     {
         return $this->user_id === $user->id || $this->members()->where('user_id', $user->id)->exists();

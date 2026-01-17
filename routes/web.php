@@ -14,7 +14,9 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\WorkspaceController;
+use App\Http\Controllers\WorkspaceHashtagController;
 use App\Http\Controllers\WorkspaceInviteController;
+use App\Http\Controllers\WorkspaceLabelController;
 use App\Http\Middleware\EnsureUserSetupIsComplete;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -116,6 +118,7 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
 
     // Media
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
+    Route::post('media/{media}/duplicate', [MediaController::class, 'duplicate'])->name('media.duplicate');
     Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 
     // Members
@@ -123,6 +126,22 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::post('invites', [WorkspaceInviteController::class, 'store'])->name('invites.store');
     Route::delete('invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('invites.destroy');
     Route::delete('members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('members.remove');
+
+    // Hashtags
+    Route::get('hashtags', [WorkspaceHashtagController::class, 'index'])->name('hashtags.index');
+    Route::get('hashtags/create', [WorkspaceHashtagController::class, 'create'])->name('hashtags.create');
+    Route::post('hashtags', [WorkspaceHashtagController::class, 'store'])->name('hashtags.store');
+    Route::get('hashtags/{hashtag}/edit', [WorkspaceHashtagController::class, 'edit'])->name('hashtags.edit');
+    Route::put('hashtags/{hashtag}', [WorkspaceHashtagController::class, 'update'])->name('hashtags.update');
+    Route::delete('hashtags/{hashtag}', [WorkspaceHashtagController::class, 'destroy'])->name('hashtags.destroy');
+
+    // Labels
+    Route::get('labels', [WorkspaceLabelController::class, 'index'])->name('labels.index');
+    Route::get('labels/create', [WorkspaceLabelController::class, 'create'])->name('labels.create');
+    Route::post('labels', [WorkspaceLabelController::class, 'store'])->name('labels.store');
+    Route::get('labels/{label}/edit', [WorkspaceLabelController::class, 'edit'])->name('labels.edit');
+    Route::put('labels/{label}', [WorkspaceLabelController::class, 'update'])->name('labels.update');
+    Route::delete('labels/{label}', [WorkspaceLabelController::class, 'destroy'])->name('labels.destroy');
 
     // Billing
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index');

@@ -2,6 +2,7 @@
 
 namespace App\Services\Social;
 
+use App\Enums\PostPlatform\ContentType;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use Illuminate\Http\Client\Response;
@@ -43,19 +44,16 @@ class InstagramPublisher
         }
 
         $firstMedia = $media->first();
-        $isVideo = str_starts_with($firstMedia->mime_type, 'video/');
+        $contentType = $postPlatform->content_type;
 
-        // Single media
-        if ($media->count() === 1) {
-            if ($isVideo) {
-                return $this->publishReel($instagramId, $accessToken, $postPlatform->content, $firstMedia);
-            }
-
-            return $this->publishSingleImage($instagramId, $accessToken, $postPlatform->content, $firstMedia);
-        }
-
-        // Multiple media - carousel
-        return $this->publishCarousel($instagramId, $accessToken, $postPlatform->content, $media);
+        return match ($contentType) {
+            ContentType::InstagramReel => $this->publishReel($instagramId, $accessToken, $postPlatform->content, $firstMedia),
+            ContentType::InstagramStory => $this->publishStory($instagramId, $accessToken, $firstMedia),
+            ContentType::InstagramFeed => $media->count() > 1
+                ? $this->publishCarousel($instagramId, $accessToken, $postPlatform->content, $media)
+                : $this->publishSingleImage($instagramId, $accessToken, $postPlatform->content, $firstMedia),
+            default => throw new \Exception("Unsupported Instagram content type: {$contentType?->value}"),
+        };
     }
 
     private function publishSingleImage(string $instagramId, string $accessToken, string $content, $media): array
@@ -109,6 +107,45 @@ class InstagramPublisher
         $this->waitForMediaProcessing($containerId, $accessToken);
 
         // Step 2: Publish container
+        return $this->publishContainer($instagramId, $accessToken, $containerId);
+    }
+
+    private function publishStory(string $instagramId, string $accessToken, $media): array
+    {
+        Log::info('Instagram publishing story', ['instagram_id' => $instagramId]);
+
+        $isVideo = str_starts_with($media->mime_type, 'video/');
+
+        $params = [
+            'media_type' => 'STORIES',
+            'access_token' => $accessToken,
+        ];
+
+        if ($isVideo) {
+            $params['video_url'] = $media->url;
+        } else {
+            $params['image_url'] = $media->url;
+        }
+
+        // Step 1: Create story container
+        $containerResponse = Http::post("{$this->baseUrl}/{$instagramId}/media", $params);
+
+        if ($containerResponse->failed()) {
+            Log::error('Instagram story container creation failed', [
+                'status' => $containerResponse->status(),
+                'body' => $containerResponse->body(),
+            ]);
+            $this->handleApiError($containerResponse, 'Instagram API error');
+        }
+
+        $containerId = $containerResponse->json()['id'];
+
+        // Wait for video processing if needed
+        if ($isVideo) {
+            $this->waitForMediaProcessing($containerId, $accessToken);
+        }
+
+        // Step 2: Publish story container
         return $this->publishContainer($instagramId, $accessToken, $containerId);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PostPlatform\ContentType;
 use App\Enums\PostStatus;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
@@ -100,6 +101,7 @@ class PostController extends Controller
         $post = $workspace->posts()->create([
             'user_id' => $request->user()->id,
             'status' => PostStatus::Draft,
+            'synced' => true,
             'scheduled_at' => $scheduledAt,
         ]);
 
@@ -109,7 +111,9 @@ class PostController extends Controller
                 'social_account_id' => $account->id,
                 'platform' => $account->platform->value,
                 'content' => '',
+                'content_type' => ContentType::defaultFor($account->platform),
                 'status' => 'pending',
+                'enabled' => true,
             ]);
         }
 
@@ -129,6 +133,7 @@ class PostController extends Controller
         $post = $workspace->posts()->create([
             'user_id' => $request->user()->id,
             'status' => $request->input('status', PostStatus::Draft),
+            'synced' => $request->input('synced', true),
             'scheduled_at' => $request->input('scheduled_at'),
         ]);
 
@@ -137,7 +142,9 @@ class PostController extends Controller
                 'social_account_id' => $platformData['social_account_id'],
                 'platform' => $platformData['platform'],
                 'content' => $platformData['content'],
+                'content_type' => $platformData['content_type'] ?? null,
                 'status' => 'pending',
+                'enabled' => $platformData['enabled'] ?? true,
             ]);
 
             if (! empty($platformData['media_ids'])) {
@@ -254,6 +261,7 @@ class PostController extends Controller
 
         $post->update([
             'status' => $status === 'publishing' ? PostStatus::Publishing : $status,
+            'synced' => $request->input('synced', $post->synced),
             'scheduled_at' => $scheduledAt,
         ]);
 
@@ -269,6 +277,7 @@ class PostController extends Controller
                 ->update([
                     'enabled' => true,
                     'content' => $platformData['content'],
+                    'content_type' => $platformData['content_type'] ?? null,
                 ]);
         }
 
@@ -282,10 +291,19 @@ class PostController extends Controller
             return redirect()->route('posts.show', $post);
         }
 
-        session()->flash('flash.banner', 'Post updated successfully!');
+        // Redirect to show page for schedule action
+        if ($status === 'scheduled') {
+            session()->flash('flash.banner', 'Post scheduled successfully!');
+            session()->flash('flash.bannerStyle', 'success');
+
+            return redirect()->route('posts.show', $post);
+        }
+
+        // Stay on edit page for save action
+        session()->flash('flash.banner', 'Post saved!');
         session()->flash('flash.bannerStyle', 'success');
 
-        return redirect()->route('posts.show', $post);
+        return back();
     }
 
     public function destroy(Request $request, Post $post): RedirectResponse

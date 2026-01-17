@@ -16,6 +16,7 @@ return new class extends Migration
             $table->uuid('workspace_id');
             $table->uuid('user_id');
             $table->string('status')->default('draft');
+            $table->boolean('synced');
             $table->timestamp('scheduled_at')->nullable();
             $table->timestamp('published_at')->nullable();
             $table->timestamps();

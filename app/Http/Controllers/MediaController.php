@@ -44,6 +44,36 @@ class MediaController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function duplicate(PostMedia $media): JsonResponse
+    {
+        $postPlatformIds = request()->input('post_platform_ids', []);
+
+        $duplicates = [];
+
+        foreach ($postPlatformIds as $postPlatformId) {
+            $duplicate = PostMedia::create([
+                'post_platform_id' => $postPlatformId,
+                'type' => $media->type,
+                'path' => $media->path,
+                'original_filename' => $media->original_filename,
+                'mime_type' => $media->mime_type,
+                'size' => $media->size,
+                'order' => $media->order,
+                'meta' => $media->meta,
+            ]);
+
+            $duplicates[] = [
+                'id' => $duplicate->id,
+                'post_platform_id' => $duplicate->post_platform_id,
+                'url' => $duplicate->url,
+                'type' => $duplicate->type->value,
+                'original_filename' => $duplicate->original_filename,
+            ];
+        }
+
+        return response()->json($duplicates);
+    }
+
     private function getMediaType(string $mimeType): MediaType
     {
         if (str_starts_with($mimeType, 'image/')) {

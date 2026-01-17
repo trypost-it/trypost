@@ -17,7 +17,7 @@ test('new users can register', function () {
 
     $response->assertSessionHasNoErrors();
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('onboarding.step1', absolute: false));
 });
 
 test('new users get a default workspace on registration', function () {
@@ -31,5 +31,5 @@ test('new users get a default workspace on registration', function () {
 
     expect($user)->not->toBeNull();
     expect($user->workspaces)->toHaveCount(1);
-    expect($user->workspaces->first()->name)->toBe('Meu Workspace');
+    expect($user->workspaces->first()->name)->toBe('My Workspace');
 });

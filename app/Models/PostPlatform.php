@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialPlatform;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,6 +21,7 @@ class PostPlatform extends Model
         'enabled',
         'platform',
         'content',
+        'content_type',
         'status',
         'platform_post_id',
         'platform_url',
@@ -33,6 +35,7 @@ class PostPlatform extends Model
         return [
             'enabled' => 'boolean',
             'platform' => SocialPlatform::class,
+            'content_type' => ContentType::class,
             'published_at' => 'datetime',
             'meta' => 'array',
         ];

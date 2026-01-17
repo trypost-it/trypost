@@ -2,6 +2,7 @@
 
 namespace App\Services\Social;
 
+use App\Enums\PostPlatform\ContentType;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -47,10 +48,20 @@ class LinkedInPagePublisher
         }
 
         $organizationUrn = "urn:li:organization:{$organizationId}";
+        $contentType = $postPlatform->content_type;
 
+        return match ($contentType) {
+            ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $postPlatform->content, $postPlatform->media, $account),
+            ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $postPlatform->content, $postPlatform->media, $account),
+            default => throw new \Exception("Unsupported LinkedIn Page content type: {$contentType?->value}"),
+        };
+    }
+
+    private function publishPost(string $organizationUrn, string $content, $media, $account): array
+    {
         $payload = [
             'author' => $organizationUrn,
-            'commentary' => $postPlatform->content,
+            'commentary' => $content,
             'visibility' => 'PUBLIC',
             'distribution' => [
                 'feedDistribution' => 'MAIN_FEED',
@@ -59,8 +70,6 @@ class LinkedInPagePublisher
             ],
             'lifecycleState' => 'PUBLISHED',
         ];
-
-        $media = $postPlatform->media;
 
         if ($media->isNotEmpty()) {
             $firstMedia = $media->first();
@@ -82,6 +91,79 @@ class LinkedInPagePublisher
 
         if ($response->failed()) {
             Log::error('LinkedIn Page post creation failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            $this->handleApiError($response, 'LinkedIn Page API error');
+        }
+
+        $postId = $response->header('x-restli-id');
+
+        // Build company page URL
+        $username = $account->username;
+        $postUrl = $username
+            ? "https://www.linkedin.com/company/{$username}/posts/"
+            : "https://www.linkedin.com/feed/update/{$postId}";
+
+        return [
+            'id' => $postId ?? 'unknown',
+            'url' => $postId ? $postUrl : null,
+        ];
+    }
+
+    private function publishCarousel(string $organizationUrn, string $content, $mediaCollection, $account): array
+    {
+        Log::info('LinkedIn Page publishing carousel', [
+            'owner' => $organizationUrn,
+            'media_count' => $mediaCollection->count(),
+        ]);
+
+        // Upload images and build carousel items
+        $carouselItems = [];
+
+        foreach ($mediaCollection as $media) {
+            if (! str_starts_with($media->mime_type, 'image/')) {
+                continue;
+            }
+
+            $imageUrn = $this->uploadImage($media, $organizationUrn);
+
+            if ($imageUrn) {
+                $carouselItems[] = [
+                    'altText' => $media->original_filename ?? 'Carousel image',
+                    'media' => $imageUrn,
+                ];
+            }
+        }
+
+        if (empty($carouselItems)) {
+            throw new \Exception('No valid images for LinkedIn Page carousel');
+        }
+
+        $payload = [
+            'author' => $organizationUrn,
+            'commentary' => $content,
+            'visibility' => 'PUBLIC',
+            'distribution' => [
+                'feedDistribution' => 'MAIN_FEED',
+                'targetEntities' => [],
+                'thirdPartyDistributionChannels' => [],
+            ],
+            'lifecycleState' => 'PUBLISHED',
+            'content' => [
+                'multiImage' => [
+                    'images' => $carouselItems,
+                ],
+            ],
+        ];
+
+        Log::info('LinkedIn Page creating carousel post', ['payload' => $payload]);
+
+        $response = $this->getHttpClient()
+            ->post("{$this->baseUrl}/rest/posts", $payload);
+
+        if ($response->failed()) {
+            Log::error('LinkedIn Page carousel post creation failed', [
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);

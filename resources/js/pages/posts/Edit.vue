@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import { Clock, AlertCircle, Trash2, Send, Link2, MoreHorizontal, Plus } from 'lucide-vue-next';
+import axios from 'axios';
 import dayjs from '@/dayjs';
 import { PlatformPreview } from '@/components/posts/previews';
 
@@ -41,6 +42,7 @@ import DatePicker from '@/components/DatePicker.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import { calendar } from '@/routes';
 import { destroy as destroyPost, update as updatePost } from '@/routes/posts';
+import { store as storeMedia, destroy as destroyMedia, duplicate as duplicateMedia } from '@/routes/medias';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -161,6 +163,10 @@ const getLocalSchedule = () => {
 const { date: initialDate, time: initialTime } = getLocalSchedule();
 const scheduledDate = ref(initialDate);
 const scheduledTime = ref(initialTime);
+
+const timezoneAbbr = computed(() => {
+    return dayjs().tz(props.workspace.timezone).format('z');
+});
 
 // Helpers
 const getPlatformLogo = (platform: string): string => {
@@ -441,14 +447,10 @@ const isSingleMediaPlatform = (platformId: string): boolean => {
 };
 
 const clearPlatformMedia = async (platformId: string) => {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const media = platformMedia.value[platformId] || [];
 
     for (const m of media) {
-        await fetch(`/media/${m.id}`, {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': csrfToken },
-        });
+        await axios.delete(destroyMedia.url({ modelId: platformId, media: m.id }));
     }
 
     platformMedia.value[platformId] = [];
@@ -459,8 +461,6 @@ const handleFileUpload = async (event: Event, postPlatformId: string) => {
     const files = input.files;
 
     if (!files || files.length === 0) return;
-
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
     // Get other platforms to duplicate to (if synced)
     const otherPlatformIds = synced.value
@@ -482,44 +482,37 @@ const handleFileUpload = async (event: Event, postPlatformId: string) => {
         try {
             // 1. Upload once to the current platform
             const formData = new FormData();
-            formData.append('file', file);
-            formData.append('post_platform_id', postPlatformId);
+            formData.append('media', file);
+            formData.append('model', 'App\\Models\\PostPlatform');
+            formData.append('model_id', postPlatformId);
 
-            const response = await fetch('/media', {
-                method: 'POST',
-                body: formData,
-                headers: { 'X-CSRF-TOKEN': csrfToken },
-            });
+            const response = await axios.post(storeMedia.url(), formData);
+            const data = response.data;
 
-            if (response.ok) {
-                const data = await response.json();
+            // Add to current platform (use spread for reactivity)
+            const currentMedia = platformMedia.value[postPlatformId] || [];
+            platformMedia.value[postPlatformId] = [...currentMedia, data];
 
-                // Add to current platform (use spread for reactivity)
-                const currentMedia = platformMedia.value[postPlatformId] || [];
-                platformMedia.value[postPlatformId] = [...currentMedia, data];
+            // 2. If synced, duplicate to other platforms
+            if (otherPlatformIds.length > 0) {
+                const targets = otherPlatformIds.map(id => ({
+                    model: 'App\\Models\\PostPlatform',
+                    model_id: id,
+                }));
 
-                // 2. If synced, duplicate to other platforms
-                if (otherPlatformIds.length > 0) {
-                    const duplicateResponse = await fetch(`/media/${data.id}/duplicate`, {
-                        method: 'POST',
-                        body: JSON.stringify({ post_platform_ids: otherPlatformIds }),
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                        },
-                    });
+                const duplicateResponse = await axios.post(
+                    duplicateMedia.url({ media: data.id }),
+                    { targets }
+                );
 
-                    if (duplicateResponse.ok) {
-                        const duplicates = await duplicateResponse.json();
-                        for (const dup of duplicates) {
-                            // For single-media platforms, clear first
-                            if (isSingleMediaPlatform(dup.post_platform_id)) {
-                                await clearPlatformMedia(dup.post_platform_id);
-                            }
-                            const existingMedia = platformMedia.value[dup.post_platform_id] || [];
-                            platformMedia.value[dup.post_platform_id] = [...existingMedia, dup];
-                        }
+                const duplicates = duplicateResponse.data;
+                for (const dup of duplicates) {
+                    // For single-media platforms, clear first
+                    if (isSingleMediaPlatform(dup.mediable_id)) {
+                        await clearPlatformMedia(dup.mediable_id);
                     }
+                    const existingMedia = platformMedia.value[dup.mediable_id] || [];
+                    platformMedia.value[dup.mediable_id] = [...existingMedia, dup];
                 }
             }
         } catch (error) {
@@ -557,12 +550,7 @@ const removeMedia = async (postPlatformId: string, mediaId: string) => {
             );
 
             // Delete from server
-            await fetch(`/media/${mediaInPlatform.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
+            await axios.delete(destroyMedia.url({ modelId: targetId, media: mediaInPlatform.id }));
         }
     }
 };
@@ -709,6 +697,9 @@ const deletePost = () => {
                             v-model="scheduledTime"
                             class="w-[100px] h-9"
                         />
+                        <span class="text-xs text-muted-foreground">
+                            {{ timezoneAbbr }}
+                        </span>
                     </div>
 
                     <span class="text-muted-foreground">|</span>

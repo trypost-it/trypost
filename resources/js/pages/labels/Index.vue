@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { Plus, Tag, Pencil, Trash2 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
+import CreateDialog from '@/components/labels/CreateDialog.vue';
+import EditDialog from '@/components/labels/EditDialog.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { index as labelsIndex, create as labelsCreate, edit as labelsEdit, destroy as labelsDestroy } from '@/routes/labels';
+import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { index as labelsIndex, destroy as labelsDestroy } from '@/routes/labels';
 import { type BreadcrumbItemType } from '@/types';
 
 interface Workspace {
@@ -27,13 +29,21 @@ interface Props {
     labels: Label[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
+const isCreateDialogOpen = ref(false);
+const isEditDialogOpen = ref(false);
+const editingLabel = ref<Label | null>(null);
 
 const breadcrumbs: BreadcrumbItemType[] = [
     { title: 'Labels', href: labelsIndex.url() },
 ];
+
+const openEditDialog = (label: Label) => {
+    editingLabel.value = label;
+    isEditDialogOpen.value = true;
+};
 
 const handleDelete = (labelId: string) => {
     deleteModal.value?.open({
@@ -54,12 +64,10 @@ const handleDelete = (labelId: string) => {
                         Create labels to organize and categorize your posts
                     </p>
                 </div>
-                <Link :href="labelsCreate.url()">
-                    <Button>
-                        <Plus class="mr-2 h-4 w-4" />
-                        New Label
-                    </Button>
-                </Link>
+                <Button @click="isCreateDialogOpen = true">
+                    <Plus class="mr-2 h-4 w-4" />
+                    New Label
+                </Button>
             </div>
 
             <div v-if="labels.length === 0" class="flex flex-col items-center justify-center py-16">
@@ -70,12 +78,10 @@ const handleDelete = (labelId: string) => {
                 <p class="text-muted-foreground mb-4 text-center max-w-sm">
                     Create labels to organize and categorize your posts
                 </p>
-                <Link :href="labelsCreate.url()">
-                    <Button>
-                        <Plus class="mr-2 h-4 w-4" />
-                        Create your first label
-                    </Button>
-                </Link>
+                <Button @click="isCreateDialogOpen = true">
+                    <Plus class="mr-2 h-4 w-4" />
+                    Create your first label
+                </Button>
             </div>
 
             <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -90,11 +96,14 @@ const handleDelete = (labelId: string) => {
                                 <CardTitle class="text-lg">{{ label.name }}</CardTitle>
                             </div>
                             <div class="flex items-center gap-1">
-                                <Link :href="labelsEdit.url(label.id)">
-                                    <Button variant="ghost" size="icon" class="h-8 w-8">
-                                        <Pencil class="h-4 w-4" />
-                                    </Button>
-                                </Link>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="h-8 w-8"
+                                    @click="openEditDialog(label)"
+                                >
+                                    <Pencil class="h-4 w-4" />
+                                </Button>
                                 <Button
                                     variant="ghost"
                                     size="icon"
@@ -110,6 +119,9 @@ const handleDelete = (labelId: string) => {
             </div>
         </div>
     </AppLayout>
+
+    <CreateDialog v-model:open="isCreateDialogOpen" />
+    <EditDialog v-model:open="isEditDialogOpen" :label="editingLabel" />
 
     <ConfirmDeleteModal
         ref="deleteModal"

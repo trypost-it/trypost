@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums;
+namespace App\Enums\WorkspaceInvite;
 
-enum InviteStatus: string
+enum Status: string
 {
     case Pending = 'pending';
     case Accepted = 'accepted';

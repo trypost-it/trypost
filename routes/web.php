@@ -96,9 +96,9 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::post('workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');
     Route::delete('workspaces/{workspace}', [WorkspaceController::class, 'destroy'])->name('workspaces.destroy');
 
-    // Current workspace routes (no {workspace} in URL)
-    Route::get('settings', [WorkspaceController::class, 'settings'])->name('settings');
-    Route::put('settings', [WorkspaceController::class, 'updateSettings'])->name('settings.update');
+    // Current workspace settings
+    Route::get('settings/workspace', [WorkspaceController::class, 'settings'])->name('workspace.settings');
+    Route::put('settings/workspace', [WorkspaceController::class, 'updateSettings'])->name('workspace.settings.update');
 
     // Social Accounts
     Route::get('accounts', [SocialController::class, 'index'])->name('accounts');
@@ -117,29 +117,25 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
 
     // Media
-    Route::post('media', [MediaController::class, 'store'])->name('media.store');
-    Route::post('media/{media}/duplicate', [MediaController::class, 'duplicate'])->name('media.duplicate');
-    Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
+    Route::post('medias', [MediaController::class, 'store'])->name('medias.store');
+    Route::post('medias/{media}/duplicate', [MediaController::class, 'duplicate'])->name('medias.duplicate');
+    Route::delete('medias/{modelId}/{media}', [MediaController::class, 'destroy'])->name('medias.destroy');
 
-    // Members
-    Route::get('members', [WorkspaceInviteController::class, 'index'])->name('members');
-    Route::post('invites', [WorkspaceInviteController::class, 'store'])->name('invites.store');
-    Route::delete('invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('invites.destroy');
-    Route::delete('members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('members.remove');
+    // Members (Settings)
+    Route::get('settings/members', [WorkspaceInviteController::class, 'index'])->name('members');
+    Route::post('settings/members/invites', [WorkspaceInviteController::class, 'store'])->name('invites.store');
+    Route::delete('settings/members/invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('invites.destroy');
+    Route::delete('settings/members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('members.remove');
 
     // Hashtags
     Route::get('hashtags', [WorkspaceHashtagController::class, 'index'])->name('hashtags.index');
-    Route::get('hashtags/create', [WorkspaceHashtagController::class, 'create'])->name('hashtags.create');
     Route::post('hashtags', [WorkspaceHashtagController::class, 'store'])->name('hashtags.store');
-    Route::get('hashtags/{hashtag}/edit', [WorkspaceHashtagController::class, 'edit'])->name('hashtags.edit');
     Route::put('hashtags/{hashtag}', [WorkspaceHashtagController::class, 'update'])->name('hashtags.update');
     Route::delete('hashtags/{hashtag}', [WorkspaceHashtagController::class, 'destroy'])->name('hashtags.destroy');
 
     // Labels
     Route::get('labels', [WorkspaceLabelController::class, 'index'])->name('labels.index');
-    Route::get('labels/create', [WorkspaceLabelController::class, 'create'])->name('labels.create');
     Route::post('labels', [WorkspaceLabelController::class, 'store'])->name('labels.store');
-    Route::get('labels/{label}/edit', [WorkspaceLabelController::class, 'edit'])->name('labels.edit');
     Route::put('labels/{label}', [WorkspaceLabelController::class, 'update'])->name('labels.update');
     Route::delete('labels/{label}', [WorkspaceLabelController::class, 'destroy'])->name('labels.destroy');
 

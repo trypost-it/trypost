@@ -5,7 +5,8 @@ import { Plus, Calendar, Users, Settings } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { accounts, calendar, settings } from '@/routes';
+import { accounts, calendar } from '@/routes';
+import { settings } from '@/routes/workspace';
 import { create as createWorkspace, index as workspacesIndex, switchMethod } from '@/routes/workspaces';
 import { type BreadcrumbItemType } from '@/types';
 

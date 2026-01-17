@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Enums\InviteStatus;
-use App\Enums\WorkspaceRole;
+use App\Enums\UserWorkspace\Role;
+use App\Enums\WorkspaceInvite\Status as InviteStatus;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -26,7 +26,7 @@ class WorkspaceInviteFactory extends Factory
             'invited_by' => User::factory(),
             'email' => fake()->unique()->safeEmail(),
             'token' => Str::random(64),
-            'role' => WorkspaceRole::Member,
+            'role' => Role::Member,
             'status' => InviteStatus::Pending,
             'expires_at' => now()->addDays(7),
         ];

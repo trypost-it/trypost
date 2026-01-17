@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Listeners\StripeEventListener;
+use App\Models\Subscription;
+use App\Models\SubscriptionItem;
 use App\Socialite\InstagramProvider;
 use App\Socialite\LinkedInPageExtendSocialite;
 use Carbon\CarbonImmutable;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Cashier\Cashier;
 use Laravel\Cashier\Events\WebhookReceived;
 use Laravel\Socialite\Facades\Socialite;
 use SocialiteProviders\Facebook\FacebookExtendSocialite;
@@ -36,6 +39,9 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureSocialite();
         $this->configureStripeWebhooks();
+
+        Cashier::useSubscriptionModel(Subscription::class);
+        Cashier::useSubscriptionItemModel(SubscriptionItem::class);
     }
 
     protected function configureStripeWebhooks(): void

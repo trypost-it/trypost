@@ -2,7 +2,7 @@
 
 namespace App\Enums\PostPlatform;
 
-use App\Enums\SocialPlatform;
+use App\Enums\SocialAccount\Platform as SocialPlatform;
 
 enum ContentType: string
 {

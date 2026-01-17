@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PostStatus;
+use App\Enums\Post\Status as PostStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +17,7 @@ class StorePostRequest extends FormRequest
     {
         return [
             'status' => ['required', Rule::enum(PostStatus::class)],
-            'scheduled_at' => ['required_if:status,' . PostStatus::Scheduled->value, 'nullable', 'date', 'after:now'],
+            'scheduled_at' => ['required_if:status,'.PostStatus::Scheduled->value, 'nullable', 'date', 'after:now'],
             'platforms' => ['required', 'array', 'min:1'],
             'platforms.*.social_account_id' => ['required', 'uuid', 'exists:social_accounts,id'],
             'platforms.*.platform' => ['required', 'string'],

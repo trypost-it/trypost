@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('post_medias', function (Blueprint $table) {
+        Schema::create('medias', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('post_platform_id')->nullable();
+            $table->uuidMorphs('mediable');
+            $table->string('collection')->default('default');
             $table->string('type');
             $table->string('path');
             $table->string('original_filename');
@@ -23,7 +24,7 @@ return new class extends Migration
             $table->json('meta')->nullable();
             $table->timestamps();
 
-            $table->foreign('post_platform_id')->references('id')->on('post_platforms')->cascadeOnDelete();
+            $table->index(['mediable_type', 'mediable_id', 'collection']);
         });
     }
 
@@ -32,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('post_medias');
+        Schema::dropIfExists('medias');
     }
 };

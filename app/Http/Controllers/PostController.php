@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Post\Status as PostStatus;
 use App\Enums\PostPlatform\ContentType;
-use App\Enums\PostStatus;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Jobs\PublishPost;
@@ -48,20 +48,28 @@ class PostController extends Controller
         $this->authorize('view', $workspace);
 
         $tz = $workspace->timezone;
+        $view = $request->input('view', 'week');
 
+        // Week view
         $weekStart = $request->input('week')
             ? Carbon::parse($request->input('week'), $tz)->startOfWeek()
             : Carbon::now($tz)->startOfWeek();
-
         $weekEnd = $weekStart->copy()->endOfWeek();
 
-        // Convert to UTC for database query
-        $weekStartUtc = $weekStart->copy()->utc();
-        $weekEndUtc = $weekEnd->copy()->utc();
+        // Month view
+        $monthDate = $request->input('month')
+            ? Carbon::parse($request->input('month'), $tz)->startOfMonth()
+            : Carbon::now($tz)->startOfMonth();
+        $monthStart = $monthDate->copy()->startOfMonth()->startOfWeek();
+        $monthEnd = $monthDate->copy()->endOfMonth()->endOfWeek();
+
+        // Get posts for both views (we query the larger range to cover both)
+        $rangeStart = $view === 'month' ? $monthStart : $weekStart;
+        $rangeEnd = $view === 'month' ? $monthEnd : $weekEnd;
 
         $posts = $workspace->posts()
             ->with(['postPlatforms.socialAccount'])
-            ->whereBetween('scheduled_at', [$weekStartUtc, $weekEndUtc])
+            ->whereBetween('scheduled_at', [$rangeStart->copy()->utc(), $rangeEnd->copy()->utc()])
             ->orderBy('scheduled_at')
             ->get()
             ->groupBy(fn ($post) => $post->scheduled_at?->setTimezone($tz)->format('Y-m-d'));
@@ -70,6 +78,8 @@ class PostController extends Controller
             'workspace' => $workspace,
             'posts' => $posts,
             'currentWeekStart' => $weekStart->format('Y-m-d'),
+            'currentMonth' => $monthDate->format('Y-m-d'),
+            'view' => $view,
         ]);
     }
 

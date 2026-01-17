@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { Calendar, Check, ChevronsUpDown, CreditCard, Hash, LogOut, Plus, Settings, Share2, Sparkles, Tag, Users } from 'lucide-vue-next';
+import { Calendar, Check, ChevronsUpDown, Hash, LogOut, Plus, Settings, Share2, Tag } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,17 +27,21 @@ import {
     SidebarRail,
 } from '@/components/ui/sidebar';
 import { useInitials } from '@/composables/useInitials';
-import { accounts, calendar, logout, members, settings } from '@/routes';
+import { accounts, calendar, logout } from '@/routes';
 import { index as hashtags } from '@/routes/hashtags';
 import { index as labels } from '@/routes/labels';
-import { index as billing } from '@/routes/billing';
 import { edit as editProfile } from '@/routes/profile';
+import { settings as workspaceSettings } from '@/routes/workspace';
 import { create as createWorkspaceRoute, switchMethod } from '@/routes/workspaces';
 import type { NavItem } from '@/types';
 
 interface Workspace {
     id: string;
     name: string;
+    logo: {
+        url: string;
+        media_id: string | null;
+    };
 }
 
 const page = usePage();
@@ -69,13 +73,8 @@ const mainNavItems: NavItem[] = [
         icon: Tag,
     },
     {
-        title: 'Members',
-        href: members.url(),
-        icon: Users,
-    },
-    {
         title: 'Settings',
-        href: settings.url(),
+        href: workspaceSettings.url(),
         icon: Settings,
     },
 ];
@@ -110,9 +109,11 @@ function handleLogout() {
                                 size="lg"
                                 class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                             >
-                                <div class="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                                    <Sparkles class="size-4" />
-                                </div>
+                                <img
+                                    :src="currentWorkspace?.logo.url"
+                                    :alt="currentWorkspace?.name"
+                                    class="size-8 rounded-lg object-cover"
+                                />
                                 <div class="grid flex-1 text-left text-sm leading-tight">
                                     <span class="truncate font-semibold">{{ currentWorkspace?.name || 'Select workspace' }}</span>
                                     <span class="truncate text-xs text-muted-foreground">Workspace</span>
@@ -135,9 +136,11 @@ function handleLogout() {
                                 class="cursor-pointer gap-2 p-2"
                                 @click="switchWorkspace(workspace)"
                             >
-                                <div class="flex size-6 items-center justify-center rounded-sm border bg-background">
-                                    <Sparkles class="size-4 shrink-0" />
-                                </div>
+                                <img
+                                    :src="workspace.logo.url"
+                                    :alt="workspace.name"
+                                    class="size-6 rounded-sm object-cover"
+                                />
                                 <span class="truncate">{{ workspace.name }}</span>
                                 <Check v-if="currentWorkspace?.id === workspace.id" class="ml-auto size-4" />
                             </DropdownMenuItem>
@@ -186,7 +189,7 @@ function handleLogout() {
                                 class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                             >
                                 <Avatar class="h-8 w-8 rounded-lg">
-                                    <AvatarImage v-if="auth.user.avatar" :src="auth.user.avatar" :alt="auth.user.name" />
+                                    <AvatarImage v-if="auth.user.avatar?.url" :src="auth.user.avatar?.url" :alt="auth.user.name" />
                                     <AvatarFallback class="rounded-lg">
                                         {{ getInitials(auth.user.name) }}
                                     </AvatarFallback>
@@ -207,7 +210,7 @@ function handleLogout() {
                             <DropdownMenuLabel class="p-0 font-normal">
                                 <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                                     <Avatar class="h-8 w-8 rounded-lg">
-                                        <AvatarImage v-if="auth.user.avatar" :src="auth.user.avatar" :alt="auth.user.name" />
+                                        <AvatarImage v-if="auth.user.avatar?.url" :src="auth.user.avatar?.url" :alt="auth.user.name" />
                                         <AvatarFallback class="rounded-lg">
                                             {{ getInitials(auth.user.name) }}
                                         </AvatarFallback>
@@ -223,13 +226,7 @@ function handleLogout() {
                                 <DropdownMenuItem as-child>
                                     <Link class="cursor-pointer" :href="editProfile()">
                                         <Settings class="mr-2 size-4" />
-                                        Account Settings
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem as-child>
-                                    <Link class="cursor-pointer" :href="billing.url()">
-                                        <CreditCard class="mr-2 size-4" />
-                                        Billing
+                                        Settings
                                     </Link>
                                 </DropdownMenuItem>
                             </DropdownMenuGroup>

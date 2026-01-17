@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\SocialPlatform;
+use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\User\Persona;
 use App\Enums\User\Setup;
 use Illuminate\Http\RedirectResponse;

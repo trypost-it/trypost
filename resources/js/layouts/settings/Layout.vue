@@ -2,17 +2,18 @@
 import { Link } from '@inertiajs/vue3';
 
 import Heading from '@/components/Heading.vue';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { useActiveUrl } from '@/composables/useActiveUrl';
 import { toUrl } from '@/lib/utils';
+import { members } from '@/routes';
 import { edit as editAppearance } from '@/routes/appearance';
+import { index as billing } from '@/routes/billing';
 import { edit as editProfile } from '@/routes/profile';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
+import { settings as workspaceSettings } from '@/routes/workspace';
 import { type NavItem } from '@/types';
 
-const sidebarNavItems: NavItem[] = [
+const navItems: NavItem[] = [
     {
         title: 'Profile',
         href: editProfile(),
@@ -29,6 +30,18 @@ const sidebarNavItems: NavItem[] = [
         title: 'Appearance',
         href: editAppearance(),
     },
+    {
+        title: 'Workspace',
+        href: workspaceSettings(),
+    },
+    {
+        title: 'Members',
+        href: members(),
+    },
+    {
+        title: 'Billing',
+        href: billing(),
+    },
 ];
 
 const { urlIsActive } = useActiveUrl();
@@ -36,41 +49,34 @@ const { urlIsActive } = useActiveUrl();
 
 <template>
     <div class="px-4 py-6">
-        <Heading
-            title="Settings"
-            description="Manage your profile and account settings"
-        />
+        <div class="flex flex-col items-center gap-6">
+            <Heading
+                title="Settings"
+                description="Manage your profile and account settings"
+                class="w-full max-w-2xl"
+            />
 
-        <div class="flex flex-col lg:flex-row lg:space-x-12">
-            <aside class="w-full max-w-xl lg:w-48">
-                <nav
-                    class="flex flex-col space-y-1 space-x-0"
-                    aria-label="Settings"
+            <nav
+                class="inline-flex h-9 w-full max-w-2xl items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground"
+                aria-label="Settings"
+            >
+                <Link
+                    v-for="item in navItems"
+                    :key="toUrl(item.href)"
+                    :href="item.href"
+                    :class="[
+                        'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                        urlIsActive(item.href)
+                            ? 'bg-background text-foreground shadow'
+                            : 'hover:bg-background/50 hover:text-foreground',
+                    ]"
                 >
-                    <Button
-                        v-for="item in sidebarNavItems"
-                        :key="toUrl(item.href)"
-                        variant="ghost"
-                        :class="[
-                            'w-full justify-start',
-                            { 'bg-muted': urlIsActive(item.href) },
-                        ]"
-                        as-child
-                    >
-                        <Link :href="item.href">
-                            <component :is="item.icon" class="h-4 w-4" />
-                            {{ item.title }}
-                        </Link>
-                    </Button>
-                </nav>
-            </aside>
+                    {{ item.title }}
+                </Link>
+            </nav>
 
-            <Separator class="my-6 lg:hidden" />
-
-            <div class="flex-1 md:max-w-2xl">
-                <section class="max-w-xl space-y-12">
-                    <slot />
-                </section>
+            <div class="w-full max-w-2xl">
+                <slot />
             </div>
         </div>
     </div>

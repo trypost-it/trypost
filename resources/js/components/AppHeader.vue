@@ -150,7 +150,7 @@ const mainNavItems: NavItem[] = [
                             <Button variant="ghost" size="icon"
                                 class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary">
                                 <Avatar class="size-8 overflow-hidden rounded-full">
-                                    <AvatarImage v-if="auth.user.avatar" :src="auth.user.avatar"
+                                    <AvatarImage v-if="auth.user.avatar?.url" :src="auth.user.avatar?.url"
                                         :alt="auth.user.name" />
                                     <AvatarFallback
                                         class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">

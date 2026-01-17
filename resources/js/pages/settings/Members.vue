@@ -2,18 +2,19 @@
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { UserPlus, Users, Mail, Clock, Trash2, Crown, User, Shield } from 'lucide-vue-next';
 
-import AppLayout from '@/layouts/AppLayout.vue';
+import HeadingSmall from '@/components/HeadingSmall.vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import AppLayout from '@/layouts/AppLayout.vue';
+import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { members } from '@/routes';
 import { destroy as destroyInvite, store as storeInvite } from '@/routes/invites';
 import { remove as removeMember } from '@/routes/members';
-import { type BreadcrumbItemType } from '@/types';
+import { type BreadcrumbItem } from '@/types';
 
 interface Workspace {
     id: string;
@@ -51,7 +52,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const breadcrumbs: BreadcrumbItemType[] = [
+const breadcrumbItems: BreadcrumbItem[] = [
     { title: 'Members', href: members.url() },
 ];
 
@@ -110,20 +111,18 @@ function getRoleIcon(role: string) {
 </script>
 
 <template>
-    <Head :title="`Team - ${workspace.name}`" />
+    <AppLayout :breadcrumbs="breadcrumbItems">
+        <Head title="Members" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Team</h1>
-                    <p class="text-muted-foreground">
-                        Manage members and invites for this workspace
-                    </p>
-                </div>
-            </div>
+        <h1 class="sr-only">Members</h1>
 
-            <div class="grid gap-6 lg:grid-cols-2">
+        <SettingsLayout>
+            <div class="flex flex-col space-y-6">
+                <HeadingSmall
+                    title="Team members"
+                    description="Manage members and invites for this workspace"
+                />
+
                 <Card>
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
@@ -222,65 +221,65 @@ function getRoleIcon(role: string) {
                         </div>
                     </CardContent>
                 </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="flex items-center gap-2">
+                            <Users class="h-5 w-5" />
+                            Members
+                        </CardTitle>
+                        <CardDescription>
+                            People with access to this workspace
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 rounded-lg border bg-muted/50">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                                        <Crown class="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">{{ owner.name }}</p>
+                                        <p class="text-sm text-muted-foreground">{{ owner.email }}</p>
+                                    </div>
+                                </div>
+                                <Badge>Owner</Badge>
+                            </div>
+
+                            <div
+                                v-for="member in members"
+                                :key="member.id"
+                                class="flex items-center justify-between p-3 rounded-lg border"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                                        <component :is="getRoleIcon(member.role)" class="h-5 w-5" />
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">{{ member.name }}</p>
+                                        <p class="text-sm text-muted-foreground">{{ member.email }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <Badge variant="outline" class="capitalize">{{ member.role }}</Badge>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        @click="handleRemoveMember(member.id)"
+                                    >
+                                        <Trash2 class="h-4 w-4 text-red-500" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div v-if="members.length === 0" class="text-center py-6 text-muted-foreground">
+                                No members besides the owner
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle class="flex items-center gap-2">
-                        <Users class="h-5 w-5" />
-                        Members
-                    </CardTitle>
-                    <CardDescription>
-                        People with access to this workspace
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between p-3 rounded-lg border bg-muted/50">
-                            <div class="flex items-center gap-3">
-                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                                    <Crown class="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <p class="font-medium">{{ owner.name }}</p>
-                                    <p class="text-sm text-muted-foreground">{{ owner.email }}</p>
-                                </div>
-                            </div>
-                            <Badge>Owner</Badge>
-                        </div>
-
-                        <div
-                            v-for="member in members"
-                            :key="member.id"
-                            class="flex items-center justify-between p-3 rounded-lg border"
-                        >
-                            <div class="flex items-center gap-3">
-                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
-                                    <component :is="getRoleIcon(member.role)" class="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <p class="font-medium">{{ member.name }}</p>
-                                    <p class="text-sm text-muted-foreground">{{ member.email }}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <Badge variant="outline" class="capitalize">{{ member.role }}</Badge>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    @click="handleRemoveMember(member.id)"
-                                >
-                                    <Trash2 class="h-4 w-4 text-red-500" />
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div v-if="members.length === 0" class="text-center py-6 text-muted-foreground">
-                            No members besides the owner
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+        </SettingsLayout>
     </AppLayout>
 </template>

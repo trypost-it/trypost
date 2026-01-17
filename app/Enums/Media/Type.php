@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums;
+namespace App\Enums\Media;
 
-enum MediaType: string
+enum Type: string
 {
     case Image = 'image';
     case Video = 'video';

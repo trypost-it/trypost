@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { Plus, Hash, Pencil, Trash2 } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
+import CreateDialog from '@/components/hashtags/CreateDialog.vue';
+import EditDialog from '@/components/hashtags/EditDialog.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { index as hashtagsIndex, create as hashtagsCreate, edit as hashtagsEdit, destroy as hashtagsDestroy } from '@/routes/hashtags';
+import { index as hashtagsIndex, destroy as hashtagsDestroy } from '@/routes/hashtags';
 import { type BreadcrumbItemType } from '@/types';
 
 interface Workspace {
@@ -27,13 +29,21 @@ interface Props {
     hashtags: Hashtag[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
+const isCreateDialogOpen = ref(false);
+const isEditDialogOpen = ref(false);
+const editingHashtag = ref<Hashtag | null>(null);
 
 const breadcrumbs: BreadcrumbItemType[] = [
     { title: 'Hashtags', href: hashtagsIndex.url() },
 ];
+
+const openEditDialog = (hashtag: Hashtag) => {
+    editingHashtag.value = hashtag;
+    isEditDialogOpen.value = true;
+};
 
 const handleDelete = (hashtagId: string) => {
     deleteModal.value?.open({
@@ -58,12 +68,10 @@ const getHashtagCount = (hashtags: string): number => {
                         Create hashtag groups to quickly add to your posts
                     </p>
                 </div>
-                <Link :href="hashtagsCreate.url()">
-                    <Button>
-                        <Plus class="mr-2 h-4 w-4" />
-                        New Group
-                    </Button>
-                </Link>
+                <Button @click="isCreateDialogOpen = true">
+                    <Plus class="mr-2 h-4 w-4" />
+                    New Group
+                </Button>
             </div>
 
             <div v-if="hashtags.length === 0" class="flex flex-col items-center justify-center py-16">
@@ -74,12 +82,10 @@ const getHashtagCount = (hashtags: string): number => {
                 <p class="text-muted-foreground mb-4 text-center max-w-sm">
                     Create hashtag groups to quickly add popular hashtags to your posts
                 </p>
-                <Link :href="hashtagsCreate.url()">
-                    <Button>
-                        <Plus class="mr-2 h-4 w-4" />
-                        Create your first group
-                    </Button>
-                </Link>
+                <Button @click="isCreateDialogOpen = true">
+                    <Plus class="mr-2 h-4 w-4" />
+                    Create your first group
+                </Button>
             </div>
 
             <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -88,11 +94,14 @@ const getHashtagCount = (hashtags: string): number => {
                         <div class="flex items-center justify-between">
                             <CardTitle class="text-lg">{{ hashtag.name }}</CardTitle>
                             <div class="flex items-center gap-1">
-                                <Link :href="hashtagsEdit.url(hashtag.id)">
-                                    <Button variant="ghost" size="icon" class="h-8 w-8">
-                                        <Pencil class="h-4 w-4" />
-                                    </Button>
-                                </Link>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="h-8 w-8"
+                                    @click="openEditDialog(hashtag)"
+                                >
+                                    <Pencil class="h-4 w-4" />
+                                </Button>
                                 <Button
                                     variant="ghost"
                                     size="icon"
@@ -116,6 +125,9 @@ const getHashtagCount = (hashtags: string): number => {
             </div>
         </div>
     </AppLayout>
+
+    <CreateDialog v-model:open="isCreateDialogOpen" />
+    <EditDialog v-model:open="isEditDialogOpen" :hashtag="editingHashtag" />
 
     <ConfirmDeleteModal
         ref="deleteModal"

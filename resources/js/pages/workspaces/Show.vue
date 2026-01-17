@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Calendar, Users, FileText, CheckCircle, Clock, AlertCircle, UserPlus, Settings } from 'lucide-vue-next';
+import { Calendar, Users, FileText, CheckCircle, Clock, AlertCircle, Settings } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { accounts, calendar, members, settings } from '@/routes';
+import { accounts, calendar } from '@/routes';
+import { settings } from '@/routes/workspace';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -57,12 +58,6 @@ const breadcrumbs: BreadcrumbItemType[] = [
                     <Link :href="settings.url()">
                         <Button variant="ghost" size="icon">
                             <Settings class="h-4 w-4" />
-                        </Button>
-                    </Link>
-                    <Link :href="members.url()">
-                        <Button variant="outline">
-                            <UserPlus class="mr-2 h-4 w-4" />
-                            Team
                         </Button>
                     </Link>
                     <Link :href="accounts.url()">

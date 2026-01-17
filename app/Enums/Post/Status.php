@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums;
+namespace App\Enums\Post;
 
-enum PostStatus: string
+enum Status: string
 {
     case Draft = 'draft';
     case Scheduled = 'scheduled';

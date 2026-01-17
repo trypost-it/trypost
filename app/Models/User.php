@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\User\Persona;
 use App\Enums\User\Setup;
+use App\Models\Traits\HasMedia;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,10 +16,10 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use Billable, HasFactory, HasUuids, Notifiable, TwoFactorAuthenticatable;
+    use Billable, HasFactory, HasMedia, HasUuids, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -45,6 +46,21 @@ class User extends Authenticatable
         'two_factor_recovery_codes',
         'remember_token',
     ];
+
+    protected $appends = ['avatar'];
+
+    /**
+     * @return array{url: string, media_id: string|null}
+     */
+    public function getAvatarAttribute(): array
+    {
+        $media = $this->getFirstMedia('avatar');
+
+        return [
+            'url' => $media?->url ?? $this->getFallbackAvatarUrl($this->name),
+            'media_id' => $media?->id,
+        ];
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -75,8 +91,7 @@ class User extends Authenticatable
      */
     public function memberWorkspaces(): BelongsToMany
     {
-        return $this->belongsToMany(Workspace::class, 'workspace_members')
-            ->using(WorkspaceMember::class)
+        return $this->belongsToMany(Workspace::class)
             ->withPivot('role')
             ->withTimestamps();
     }

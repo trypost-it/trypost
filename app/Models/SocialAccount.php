@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\SocialPlatform;
-use App\Enums\Status;
+use App\Enums\SocialAccount\Platform as SocialPlatform;
+use App\Enums\SocialAccount\Status;
 use App\Notifications\AccountDisconnectedNotification;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;

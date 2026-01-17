@@ -6,6 +6,7 @@ import dayjs from '@/dayjs';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { calendar } from '@/routes';
 import { create as createPost, edit as editPost, show as showPost } from '@/routes/posts';
 import { type BreadcrumbItemType } from '@/types';
@@ -39,6 +40,8 @@ interface Props {
     workspace: Workspace;
     posts: Record<string, Post[]>;
     currentWeekStart: string;
+    currentMonth: string;
+    view: 'week' | 'month';
 }
 
 const props = defineProps<Props>();
@@ -47,6 +50,7 @@ const breadcrumbs: BreadcrumbItemType[] = [
     { title: 'Calendar', href: calendar.url() },
 ];
 
+// Week view computed
 const weekStart = computed(() => dayjs(props.currentWeekStart));
 
 const weekDays = computed(() => {
@@ -57,7 +61,7 @@ const weekDays = computed(() => {
     return days;
 });
 
-const headerTitle = computed(() => {
+const weekHeaderTitle = computed(() => {
     const start = weekStart.value;
     const end = weekStart.value.add(6, 'day');
 
@@ -67,6 +71,40 @@ const headerTitle = computed(() => {
     return `${start.format('MMM D')} - ${end.format('MMM D, YYYY')}`;
 });
 
+// Month view computed
+const monthDate = computed(() => dayjs(props.currentMonth));
+
+const monthHeaderTitle = computed(() => {
+    return monthDate.value.format('MMMM YYYY');
+});
+
+const calendarDays = computed(() => {
+    const start = monthDate.value.startOf('month').startOf('week');
+    const end = monthDate.value.endOf('month').endOf('week');
+    const days = [];
+    let current = start;
+
+    while (current.isBefore(end) || current.isSame(end, 'day')) {
+        days.push(current);
+        current = current.add(1, 'day');
+    }
+
+    return days;
+});
+
+const calendarWeeks = computed(() => {
+    const weeks = [];
+    for (let i = 0; i < calendarDays.value.length; i += 7) {
+        weeks.push(calendarDays.value.slice(i, i + 7));
+    }
+    return weeks;
+});
+
+// Header title based on view
+const headerTitle = computed(() => {
+    return props.view === 'month' ? monthHeaderTitle.value : weekHeaderTitle.value;
+});
+
 const getPostsForDay = (day: dayjs.Dayjs): Post[] => {
     const dateKey = day.format('YYYY-MM-DD');
     return props.posts[dateKey] || [];
@@ -74,19 +112,44 @@ const getPostsForDay = (day: dayjs.Dayjs): Post[] => {
 
 const navigateWeek = (direction: number) => {
     const newStart = weekStart.value.add(direction * 7, 'day');
-    router.get(calendar.url({ query: { week: newStart.format('YYYY-MM-DD') } }), {}, {
+    router.get(calendar.url({ query: { view: 'week', week: newStart.format('YYYY-MM-DD') } }), {}, {
         preserveState: true,
     });
 };
 
+const navigateMonth = (direction: number) => {
+    const newMonth = monthDate.value.add(direction, 'month');
+    router.get(calendar.url({ query: { view: 'month', month: newMonth.format('YYYY-MM-DD') } }), {}, {
+        preserveState: true,
+    });
+};
+
+const navigate = (direction: number) => {
+    if (props.view === 'month') {
+        navigateMonth(direction);
+    } else {
+        navigateWeek(direction);
+    }
+};
+
 const goToToday = () => {
-    router.get(calendar.url(), {}, {
+    router.get(calendar.url({ query: { view: props.view } }), {}, {
+        preserveState: true,
+    });
+};
+
+const switchView = (view: string) => {
+    router.get(calendar.url({ query: { view } }), {}, {
         preserveState: true,
     });
 };
 
 const isToday = (day: dayjs.Dayjs): boolean => {
     return day.isSame(dayjs(), 'day');
+};
+
+const isCurrentMonth = (day: dayjs.Dayjs): boolean => {
+    return day.month() === monthDate.value.month();
 };
 
 const getStatusColor = (status: string): string => {
@@ -135,10 +198,10 @@ const formatTime = (scheduledAt: string): string => {
             <div class="flex items-center justify-between p-4 border-b">
                 <div class="flex items-center gap-4">
                     <div class="flex items-center gap-1">
-                        <Button variant="outline" size="icon" @click="navigateWeek(-1)">
+                        <Button variant="outline" size="icon" @click="navigate(-1)">
                             <ChevronLeft class="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="icon" @click="navigateWeek(1)">
+                        <Button variant="outline" size="icon" @click="navigate(1)">
                             <ChevronRight class="h-4 w-4" />
                         </Button>
                     </div>
@@ -149,16 +212,24 @@ const formatTime = (scheduledAt: string): string => {
                         {{ headerTitle }}
                     </h1>
                 </div>
-                <Link :href="createPost.url()">
-                    <Button>
-                        <Plus class="mr-2 h-4 w-4" />
-                        New Post
-                    </Button>
-                </Link>
+                <div class="flex items-center gap-4">
+                    <Tabs :default-value="view" @update:model-value="switchView">
+                        <TabsList>
+                            <TabsTrigger value="week">Week</TabsTrigger>
+                            <TabsTrigger value="month">Month</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                    <Link :href="createPost.url()">
+                        <Button>
+                            <Plus class="mr-2 h-4 w-4" />
+                            New Post
+                        </Button>
+                    </Link>
+                </div>
             </div>
 
-            <!-- Week Grid -->
-            <div class="flex-1 grid grid-cols-7 divide-x overflow-hidden">
+            <!-- Week View -->
+            <div v-if="view === 'week'" class="flex-1 grid grid-cols-7 divide-x overflow-hidden">
                 <div
                     v-for="day in weekDays"
                     :key="day.format('YYYY-MM-DD')"
@@ -230,6 +301,100 @@ const formatTime = (scheduledAt: string): string => {
                                 </p>
                             </div>
                         </Link>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Month View -->
+            <div v-else class="flex-1 flex flex-col overflow-hidden border-l">
+                <!-- Weekday Headers -->
+                <div class="grid grid-cols-7 divide-x border-b bg-muted/30">
+                    <div
+                        v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']"
+                        :key="day"
+                        class="py-3 text-center text-xs font-medium text-muted-foreground uppercase"
+                    >
+                        {{ day }}
+                    </div>
+                </div>
+
+                <!-- Calendar Grid -->
+                <div
+                    class="flex-1 grid divide-y"
+                    :style="{ gridTemplateRows: `repeat(${calendarWeeks.length}, minmax(0, 1fr))` }"
+                >
+                    <div
+                        v-for="(week, weekIndex) in calendarWeeks"
+                        :key="weekIndex"
+                        class="grid grid-cols-7 divide-x min-h-0"
+                    >
+                        <div
+                            v-for="day in week"
+                            :key="day.format('YYYY-MM-DD')"
+                            class="flex flex-col p-2 min-h-0 overflow-hidden group"
+                            :class="{
+                                'bg-primary/5': isToday(day),
+                                'bg-muted/30': !isCurrentMonth(day),
+                            }"
+                        >
+                            <!-- Day Header -->
+                            <div class="flex items-center justify-between mb-2">
+                                <span
+                                    class="flex items-center justify-center w-7 h-7 text-sm font-medium rounded-full"
+                                    :class="{
+                                        'bg-primary text-primary-foreground': isToday(day),
+                                        'text-muted-foreground': !isCurrentMonth(day),
+                                        'text-foreground': isCurrentMonth(day) && !isToday(day),
+                                    }"
+                                >
+                                    {{ day.format('D') }}
+                                </span>
+                                <Link
+                                    :href="createPost.url({ query: { date: day.format('YYYY-MM-DD') } })"
+                                    class="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all"
+                                >
+                                    <Plus class="h-4 w-4" />
+                                </Link>
+                            </div>
+
+                            <!-- Posts -->
+                            <div class="flex-1 overflow-y-auto space-y-1 min-h-0">
+                                <Link
+                                    v-for="post in getPostsForDay(day).slice(0, 3)"
+                                    :key="post.id"
+                                    :href="getPostUrl(post)"
+                                    class="block"
+                                >
+                                    <div
+                                        class="flex items-center justify-between gap-1.5 px-2 py-1 rounded border text-xs transition-colors hover:brightness-95"
+                                        :class="getStatusColor(post.status)"
+                                    >
+                                        <span class="font-medium shrink-0">{{ formatTime(post.scheduled_at) }}</span>
+                                        <div class="flex -space-x-1 shrink-0">
+                                            <img
+                                                v-for="pp in post.post_platforms.slice(0, post.post_platforms.length > 4 ? 3 : 4)"
+                                                :key="pp.id"
+                                                :src="getPlatformLogo(pp.platform)"
+                                                :alt="pp.platform"
+                                                class="h-4 w-4 rounded-full ring-1 ring-white"
+                                            />
+                                            <span
+                                                v-if="post.post_platforms.length > 4"
+                                                class="flex items-center justify-center h-4 w-4 rounded-full bg-muted text-[9px] font-medium ring-1 ring-white"
+                                            >
+                                                +{{ post.post_platforms.length - 3 }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </Link>
+                                <div
+                                    v-if="getPostsForDay(day).length > 3"
+                                    class="text-xs text-muted-foreground px-2 py-0.5"
+                                >
+                                    +{{ getPostsForDay(day).length - 3 }} more
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

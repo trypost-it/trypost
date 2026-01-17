@@ -2,25 +2,27 @@
 
 namespace App\Models;
 
-use App\Enums\MediaType;
+use App\Enums\Media\Type as MediaType;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Facades\Storage;
 
-class PostMedia extends Model
+class Media extends Model
 {
-    /** @use HasFactory<\Database\Factories\PostMediaFactory> */
+    /** @use HasFactory<\Database\Factories\MediaFactory> */
     use HasFactory, HasUuids;
 
-    protected $table = 'post_medias';
+    protected $table = 'medias';
 
     protected $appends = ['url'];
 
     protected $fillable = [
-        'post_platform_id',
+        'mediable_id',
+        'mediable_type',
+        'collection',
         'type',
         'path',
         'original_filename',
@@ -40,9 +42,9 @@ class PostMedia extends Model
         ];
     }
 
-    public function postPlatform(): BelongsTo
+    public function mediable(): MorphTo
     {
-        return $this->belongsTo(PostPlatform::class);
+        return $this->morphTo();
     }
 
     protected function url(): Attribute

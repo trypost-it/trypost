@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\InviteStatus;
-use App\Enums\WorkspaceRole;
+use App\Enums\UserWorkspace\Role;
+use App\Enums\WorkspaceInvite\Status as InviteStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,7 +37,7 @@ class WorkspaceInvite extends Model
     protected function casts(): array
     {
         return [
-            'role' => WorkspaceRole::class,
+            'role' => Role::class,
             'status' => InviteStatus::class,
             'expires_at' => 'datetime',
             'accepted_at' => 'datetime',

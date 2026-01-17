@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('subscription_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('subscription_id');
+            $table->uuid('id')->primary();
+            $table->foreignUuid('subscription_id')->constrained()->cascadeOnDelete();
             $table->string('stripe_id')->unique();
             $table->string('meter_id')->nullable();
             $table->string('stripe_product');

@@ -2,32 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\MediaType;
 use App\Http\Requests\StoreMediaRequest;
-use App\Models\PostMedia;
+use App\Models\Media;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class MediaController extends Controller
 {
     public function store(StoreMediaRequest $request): JsonResponse
     {
-        $file = $request->file('file');
-        $mimeType = $file->getMimeType();
+        $modelClass = $request->input('model');
+        $modelId = $request->input('model_id');
+        $collection = $request->input('collection', 'default');
 
-        $type = $this->getMediaType($mimeType);
+        $model = $modelClass::findOrFail($modelId);
 
-        $path = $file->store('media/'.now()->format('Y-m'));
-
-        $media = PostMedia::create([
-            'post_platform_id' => $request->input('post_platform_id'),
-            'type' => $type,
-            'path' => $path,
-            'original_filename' => $file->getClientOriginalName(),
-            'mime_type' => $mimeType,
-            'size' => $file->getSize(),
-            'order' => 0,
-            'meta' => $this->getMediaMeta($file, $type),
-        ]);
+        $media = $model->addMedia(
+            $request->file('media'),
+            $collection
+        );
 
         return response()->json([
             'id' => $media->id,
@@ -37,22 +30,32 @@ class MediaController extends Controller
         ]);
     }
 
-    public function destroy(PostMedia $media): JsonResponse
+    public function destroy(string $modelId, Media $media): JsonResponse
     {
+        if ($media->mediable_id !== $modelId) {
+            abort(403);
+        }
+
         $media->delete();
 
         return response()->json(['success' => true]);
     }
 
-    public function duplicate(PostMedia $media): JsonResponse
+    public function duplicate(Media $media, Request $request): JsonResponse
     {
-        $postPlatformIds = request()->input('post_platform_ids', []);
+        $targets = $request->input('targets', []);
 
         $duplicates = [];
 
-        foreach ($postPlatformIds as $postPlatformId) {
-            $duplicate = PostMedia::create([
-                'post_platform_id' => $postPlatformId,
+        foreach ($targets as $target) {
+            $modelClass = $target['model'];
+            $modelId = $target['model_id'];
+            $collection = $target['collection'] ?? $media->collection;
+
+            $model = $modelClass::findOrFail($modelId);
+
+            $duplicate = $model->media()->create([
+                'collection' => $collection,
                 'type' => $media->type,
                 'path' => $media->path,
                 'original_filename' => $media->original_filename,
@@ -64,7 +67,8 @@ class MediaController extends Controller
 
             $duplicates[] = [
                 'id' => $duplicate->id,
-                'post_platform_id' => $duplicate->post_platform_id,
+                'mediable_id' => $duplicate->mediable_id,
+                'mediable_type' => $duplicate->mediable_type,
                 'url' => $duplicate->url,
                 'type' => $duplicate->type->value,
                 'original_filename' => $duplicate->original_filename,
@@ -72,33 +76,5 @@ class MediaController extends Controller
         }
 
         return response()->json($duplicates);
-    }
-
-    private function getMediaType(string $mimeType): MediaType
-    {
-        if (str_starts_with($mimeType, 'image/')) {
-            return MediaType::Image;
-        }
-
-        if (str_starts_with($mimeType, 'video/')) {
-            return MediaType::Video;
-        }
-
-        return MediaType::Document;
-    }
-
-    private function getMediaMeta($file, MediaType $type): array
-    {
-        $meta = [];
-
-        if ($type === MediaType::Image) {
-            $imageInfo = @getimagesize($file->getPathname());
-            if ($imageInfo) {
-                $meta['width'] = $imageInfo[0];
-                $meta['height'] = $imageInfo[1];
-            }
-        }
-
-        return $meta;
     }
 }

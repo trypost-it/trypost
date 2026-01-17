@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Enums;
+namespace App\Enums\UserWorkspace;
 
-enum WorkspaceRole: string
+enum Role: string
 {
     case Owner = 'owner';
     case Admin = 'admin';

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\WorkspaceRole;
+use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use App\Http\Requests\StoreWorkspaceInviteRequest;
 use App\Models\WorkspaceInvite;
 use App\Notifications\WorkspaceInviteNotification;
@@ -23,7 +23,7 @@ class WorkspaceInviteController extends Controller
 
         $this->authorize('manageTeam', $workspace);
 
-        return Inertia::render('workspaces/Invites', [
+        return Inertia::render('settings/Members', [
             'workspace' => $workspace,
             'invites' => $workspace->invites()
                 ->with('inviter')

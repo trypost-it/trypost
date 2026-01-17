@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Enums\SocialPlatform;
-use App\Enums\Status;
+use App\Enums\SocialAccount\Platform as SocialPlatform;
+use App\Enums\SocialAccount\Status;
 use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\Workspace;

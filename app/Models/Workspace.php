@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasMedia;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,13 +13,28 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Workspace extends Model
 {
     /** @use HasFactory<\Database\Factories\WorkspaceFactory> */
-    use HasFactory, HasUuids;
+    use HasFactory, HasMedia, HasUuids;
 
     protected $fillable = [
         'user_id',
         'name',
         'timezone',
     ];
+
+    protected $appends = ['logo'];
+
+    /**
+     * @return array{url: string, media_id: string|null}
+     */
+    public function getLogoAttribute(): array
+    {
+        $media = $this->getFirstMedia('logo');
+
+        return [
+            'url' => $media?->url ?? $this->getFallbackAvatarUrl($this->name),
+            'media_id' => $media?->id,
+        ];
+    }
 
     public function owner(): BelongsTo
     {
@@ -27,8 +43,7 @@ class Workspace extends Model
 
     public function members(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'workspace_members')
-            ->using(WorkspaceMember::class)
+        return $this->belongsToMany(User::class)
             ->withPivot('role')
             ->withTimestamps();
     }

@@ -5,6 +5,7 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import DeleteUser from '@/components/DeleteUser.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
+import PhotoUpload from '@/components/PhotoUpload.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,6 +45,18 @@ const user = page.props.auth.user;
                     title="Profile information"
                     description="Update your name and email address"
                 />
+
+                <div class="grid gap-2">
+                    <Label>Avatar</Label>
+                    <PhotoUpload
+                        :model-id="user.id"
+                        model-type="App\Models\User"
+                        :photo="user.avatar"
+                        collection="avatar"
+                        :reload-only="['auth']"
+                        rounded="full"
+                    />
+                </div>
 
                 <Form
                     v-bind="ProfileController.update.form()"

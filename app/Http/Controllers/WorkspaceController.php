@@ -107,7 +107,7 @@ class WorkspaceController extends Controller
             ->mapWithKeys(fn ($tz) => [$tz => $tz])
             ->toArray();
 
-        return Inertia::render('workspaces/Settings', [
+        return Inertia::render('settings/Workspace', [
             'workspace' => $workspace,
             'timezones' => $timezones,
         ]);
@@ -132,7 +132,7 @@ class WorkspaceController extends Controller
         session()->flash('flash.banner', 'Settings updated successfully!');
         session()->flash('flash.bannerStyle', 'success');
 
-        return redirect()->route('settings');
+        return redirect()->route('workspace.settings');
     }
 
     /**

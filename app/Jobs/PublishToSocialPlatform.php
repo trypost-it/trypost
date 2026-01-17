@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Enums\SocialPlatform;
+use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Events\PostPlatformStatusUpdated;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;

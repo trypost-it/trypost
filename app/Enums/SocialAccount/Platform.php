@@ -1,8 +1,10 @@
 <?php
 
-namespace App\Enums;
+namespace App\Enums\SocialAccount;
 
-enum SocialPlatform: string
+use App\Enums\Media\Type as MediaType;
+
+enum Platform: string
 {
     case LinkedIn = 'linkedin';
     case LinkedInPage = 'linkedin-page';

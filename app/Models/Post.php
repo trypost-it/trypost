@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\PostStatus;
+use App\Enums\Post\Status as PostStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

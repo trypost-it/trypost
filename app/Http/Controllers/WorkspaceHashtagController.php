@@ -26,21 +26,6 @@ class WorkspaceHashtagController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response|RedirectResponse
-    {
-        $workspace = $request->user()->currentWorkspace;
-
-        if (! $workspace) {
-            return redirect()->route('workspaces.create');
-        }
-
-        $this->authorize('view', $workspace);
-
-        return Inertia::render('hashtags/Create', [
-            'workspace' => $workspace,
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
@@ -62,26 +47,6 @@ class WorkspaceHashtagController extends Controller
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('hashtags.index');
-    }
-
-    public function edit(Request $request, WorkspaceHashtag $hashtag): Response|RedirectResponse
-    {
-        $workspace = $request->user()->currentWorkspace;
-
-        if (! $workspace) {
-            return redirect()->route('workspaces.create');
-        }
-
-        $this->authorize('view', $workspace);
-
-        if ($hashtag->workspace_id !== $workspace->id) {
-            abort(404);
-        }
-
-        return Inertia::render('hashtags/Edit', [
-            'workspace' => $workspace,
-            'hashtag' => $hashtag,
-        ]);
     }
 
     public function update(Request $request, WorkspaceHashtag $hashtag): RedirectResponse

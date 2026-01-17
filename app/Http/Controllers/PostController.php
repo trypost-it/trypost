@@ -7,7 +7,6 @@ use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Jobs\PublishPost;
 use App\Models\Post;
-use App\Models\Workspace;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,8 +15,14 @@ use Inertia\Response;
 
 class PostController extends Controller
 {
-    public function index(Workspace $workspace): Response
+    public function index(Request $request): Response|RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('view', $workspace);
 
         $posts = $workspace->posts()
@@ -31,8 +36,14 @@ class PostController extends Controller
         ]);
     }
 
-    public function calendar(Request $request, Workspace $workspace): Response
+    public function calendar(Request $request): Response|RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('view', $workspace);
 
         $tz = $workspace->timezone;
@@ -61,8 +72,14 @@ class PostController extends Controller
         ]);
     }
 
-    public function create(Request $request, Workspace $workspace): RedirectResponse
+    public function create(Request $request): RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('view', $workspace);
 
         $socialAccounts = $workspace->socialAccounts;
@@ -71,7 +88,7 @@ class PostController extends Controller
             session()->flash('flash.banner', 'Connect at least one social network before creating a post.');
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('workspaces.accounts', $workspace);
+            return redirect()->route('accounts');
         }
 
         // Create a draft post - default to today if no date provided
@@ -96,11 +113,17 @@ class PostController extends Controller
             ]);
         }
 
-        return redirect()->route('workspaces.posts.edit', [$workspace, $post]);
+        return redirect()->route('posts.edit', $post);
     }
 
-    public function store(StorePostRequest $request, Workspace $workspace): RedirectResponse
+    public function store(StorePostRequest $request): RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('view', $workspace);
 
         $post = $workspace->posts()->create([
@@ -125,17 +148,23 @@ class PostController extends Controller
         }
 
         $route = $request->input('status') === PostStatus::Scheduled->value
-            ? 'workspaces.calendar'
-            : 'workspaces.posts.index';
+            ? 'calendar'
+            : 'posts.index';
 
         session()->flash('flash.banner', 'Post created successfully!');
         session()->flash('flash.bannerStyle', 'success');
 
-        return redirect()->route($route, $workspace);
+        return redirect()->route($route);
     }
 
-    public function show(Workspace $workspace, Post $post): Response
+    public function show(Request $request, Post $post): Response|RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('view', $workspace);
 
         if ($post->workspace_id !== $workspace->id) {
@@ -150,8 +179,14 @@ class PostController extends Controller
         ]);
     }
 
-    public function edit(Workspace $workspace, Post $post): Response|RedirectResponse
+    public function edit(Request $request, Post $post): Response|RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('view', $workspace);
 
         if ($post->workspace_id !== $workspace->id) {
@@ -162,7 +197,7 @@ class PostController extends Controller
             session()->flash('flash.banner', 'Published posts cannot be edited.');
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('workspaces.posts.show', [$workspace, $post]);
+            return redirect()->route('posts.show', $post);
         }
 
         $post->load(['postPlatforms.socialAccount', 'postPlatforms.media']);
@@ -189,8 +224,14 @@ class PostController extends Controller
         ]);
     }
 
-    public function update(UpdatePostRequest $request, Workspace $workspace, Post $post): RedirectResponse
+    public function update(UpdatePostRequest $request, Post $post): RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('view', $workspace);
 
         if ($post->workspace_id !== $workspace->id) {
@@ -238,17 +279,23 @@ class PostController extends Controller
             session()->flash('flash.banner', 'Post is being published!');
             session()->flash('flash.bannerStyle', 'success');
 
-            return redirect()->route('workspaces.posts.show', [$workspace, $post]);
+            return redirect()->route('posts.show', $post);
         }
 
         session()->flash('flash.banner', 'Post updated successfully!');
         session()->flash('flash.bannerStyle', 'success');
 
-        return redirect()->route('workspaces.posts.show', [$workspace, $post]);
+        return redirect()->route('posts.show', $post);
     }
 
-    public function destroy(Workspace $workspace, Post $post): RedirectResponse
+    public function destroy(Request $request, Post $post): RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('view', $workspace);
 
         if ($post->workspace_id !== $workspace->id) {
@@ -260,6 +307,6 @@ class PostController extends Controller
         session()->flash('flash.banner', 'Post deleted successfully!');
         session()->flash('flash.bannerStyle', 'success');
 
-        return redirect()->route('workspaces.calendar', $workspace);
+        return redirect()->route('calendar');
     }
 }

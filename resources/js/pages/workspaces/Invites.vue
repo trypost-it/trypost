@@ -10,6 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { members } from '@/routes';
+import { destroy as destroyInvite, store as storeInvite } from '@/routes/invites';
+import { remove as removeMember } from '@/routes/members';
 import { type BreadcrumbItemType } from '@/types';
 
 interface Workspace {
@@ -49,18 +52,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    {
-        title: 'Workspaces',
-        href: '/workspaces',
-    },
-    {
-        title: props.workspace.name,
-        href: `/workspaces/${props.workspace.id}`,
-    },
-    {
-        title: 'Team',
-        href: `/workspaces/${props.workspace.id}/members`,
-    },
+    { title: 'Members', href: members.url() },
 ];
 
 const form = useForm({
@@ -69,7 +61,7 @@ const form = useForm({
 });
 
 function submitInvite() {
-    form.post(`/workspaces/${props.workspace.id}/invites`, {
+    form.post(storeInvite.url(), {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
@@ -79,15 +71,15 @@ function submitInvite() {
 
 function cancelInvite(inviteId: string) {
     if (confirm('Are you sure you want to cancel this invite?')) {
-        router.delete(`/workspaces/${props.workspace.id}/invites/${inviteId}`, {
+        router.delete(destroyInvite.url(inviteId), {
             preserveScroll: true,
         });
     }
 }
 
-function removeMember(memberId: string) {
+function handleRemoveMember(memberId: string) {
     if (confirm('Are you sure you want to remove this member?')) {
-        router.delete(`/workspaces/${props.workspace.id}/members/${memberId}`, {
+        router.delete(removeMember.url(memberId), {
             preserveScroll: true,
         });
     }
@@ -276,7 +268,7 @@ function getRoleIcon(role: string) {
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    @click="removeMember(member.id)"
+                                    @click="handleRemoveMember(member.id)"
                                 >
                                     <Trash2 class="h-4 w-4 text-red-500" />
                                 </Button>

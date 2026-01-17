@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('content')->nullable();
             $table->string('status')->default('pending');
             $table->string('platform_post_id')->nullable();
+            $table->boolean('enabled');
             $table->string('platform_url')->nullable();
             $table->text('error_message')->nullable();
             $table->timestamp('published_at')->nullable();

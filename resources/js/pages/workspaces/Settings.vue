@@ -24,18 +24,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    {
-        title: 'Workspaces',
-        href: '/workspaces',
-    },
-    {
-        title: props.workspace.name,
-        href: `/workspaces/${props.workspace.id}`,
-    },
-    {
-        title: 'Settings',
-        href: `/workspaces/${props.workspace.id}/settings`,
-    },
+    { title: 'Settings', href: '/settings' },
 ];
 
 const form = useForm({
@@ -44,7 +33,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.put(`/workspaces/${props.workspace.id}/settings`);
+    form.put('/settings');
 };
 </script>
 

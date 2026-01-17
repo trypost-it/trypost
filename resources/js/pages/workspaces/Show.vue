@@ -5,6 +5,7 @@ import { Calendar, Users, FileText, CheckCircle, Clock, AlertCircle, UserPlus, S
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { accounts, calendar, members, settings } from '@/routes';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -36,14 +37,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    {
-        title: 'Workspaces',
-        href: '/workspaces',
-    },
-    {
-        title: props.workspace.name,
-        href: `/workspaces/${props.workspace.id}`,
-    },
+    { title: 'Calendar', href: calendar.url() },
 ];
 </script>
 
@@ -60,24 +54,24 @@ const breadcrumbs: BreadcrumbItemType[] = [
                     </p>
                 </div>
                 <div class="flex gap-2">
-                    <Link :href="`/workspaces/${workspace.id}/settings`">
+                    <Link :href="settings.url()">
                         <Button variant="ghost" size="icon">
                             <Settings class="h-4 w-4" />
                         </Button>
                     </Link>
-                    <Link :href="`/workspaces/${workspace.id}/members`">
+                    <Link :href="members.url()">
                         <Button variant="outline">
                             <UserPlus class="mr-2 h-4 w-4" />
                             Team
                         </Button>
                     </Link>
-                    <Link :href="`/workspaces/${workspace.id}/accounts`">
+                    <Link :href="accounts.url()">
                         <Button variant="outline">
                             <Users class="mr-2 h-4 w-4" />
                             Accounts
                         </Button>
                     </Link>
-                    <Link :href="`/workspaces/${workspace.id}/calendar`">
+                    <Link :href="calendar.url()">
                         <Button>
                             <Calendar class="mr-2 h-4 w-4" />
                             Calendar
@@ -135,7 +129,7 @@ const breadcrumbs: BreadcrumbItemType[] = [
                     <p class="mt-2 text-sm text-muted-foreground">
                         Conecte suas redes sociais para começar a agendar posts.
                     </p>
-                    <Link :href="`/workspaces/${workspace.id}/accounts`" class="mt-4">
+                    <Link :href="accounts.url()" class="mt-4">
                         <Button>
                             <Users class="mr-2 h-4 w-4" />
                             Conectar Contas

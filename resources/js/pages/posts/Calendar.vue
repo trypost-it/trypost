@@ -6,6 +6,8 @@ import dayjs from '@/dayjs';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
+import { calendar } from '@/routes';
+import { create as createPost, edit as editPost, show as showPost } from '@/routes/posts';
 import { type BreadcrumbItemType } from '@/types';
 
 interface PostPlatform {
@@ -42,9 +44,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Workspaces', href: '/workspaces' },
-    { title: props.workspace.name, href: `/workspaces/${props.workspace.id}` },
-    { title: 'Calendar', href: `/workspaces/${props.workspace.id}/calendar` },
+    { title: 'Calendar', href: calendar.url() },
 ];
 
 const weekStart = computed(() => dayjs(props.currentWeekStart));
@@ -74,15 +74,13 @@ const getPostsForDay = (day: dayjs.Dayjs): Post[] => {
 
 const navigateWeek = (direction: number) => {
     const newStart = weekStart.value.add(direction * 7, 'day');
-    router.get(`/workspaces/${props.workspace.id}/calendar`, {
-        week: newStart.format('YYYY-MM-DD'),
-    }, {
+    router.get(calendar.url({ query: { week: newStart.format('YYYY-MM-DD') } }), {}, {
         preserveState: true,
     });
 };
 
 const goToToday = () => {
-    router.get(`/workspaces/${props.workspace.id}/calendar`, {}, {
+    router.get(calendar.url(), {}, {
         preserveState: true,
     });
 };
@@ -118,8 +116,9 @@ const getPlatformLogo = (platform: string): string => {
 };
 
 const getPostUrl = (post: Post): string => {
-    const base = `/workspaces/${props.workspace.id}/posts/${post.id}`;
-    return post.status === 'draft' || post.status === 'scheduled' ? `${base}/edit` : base;
+    return post.status === 'draft' || post.status === 'scheduled'
+        ? editPost.url(post.id)
+        : showPost.url(post.id);
 };
 
 const formatTime = (scheduledAt: string): string => {
@@ -150,7 +149,7 @@ const formatTime = (scheduledAt: string): string => {
                         {{ headerTitle }}
                     </h1>
                 </div>
-                <Link :href="`/workspaces/${workspace.id}/posts/create`">
+                <Link :href="createPost.url()">
                     <Button>
                         <Plus class="mr-2 h-4 w-4" />
                         New Post
@@ -186,7 +185,7 @@ const formatTime = (scheduledAt: string): string => {
                     <div class="flex-1 overflow-y-auto p-2 space-y-2">
                         <!-- Add Post Button -->
                         <Link
-                            :href="`/workspaces/${workspace.id}/posts/create?date=${day.format('YYYY-MM-DD')}`"
+                            :href="createPost.url({ query: { date: day.format('YYYY-MM-DD') } })"
                             class="flex items-center justify-center p-2 rounded border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors"
                         >
                             <Plus class="h-4 w-4" />

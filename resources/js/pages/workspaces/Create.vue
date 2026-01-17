@@ -9,14 +9,7 @@ import { Label } from '@/components/ui/label';
 import { type BreadcrumbItemType } from '@/types';
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    {
-        title: 'Workspaces',
-        href: '/workspaces',
-    },
-    {
-        title: 'Criar',
-        href: '/workspaces/create',
-    },
+    { title: 'Create Workspace', href: '/workspaces/create' },
 ];
 
 const form = useForm({

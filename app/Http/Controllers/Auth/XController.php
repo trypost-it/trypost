@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Enums\SocialPlatform;
-use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
 class XController extends SocialController
@@ -22,19 +22,30 @@ class XController extends SocialController
         'offline.access',
     ];
 
-    public function connect(Request $request, Workspace $workspace): Response
+    public function connect(Request $request): Response|RedirectResponse
     {
         $this->ensurePlatformEnabled();
+
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('manageAccounts', $workspace);
 
-        if ($workspace->hasConnectedPlatform($this->platform->value)) {
+        $existingAccount = $workspace->socialAccounts()
+            ->where('platform', $this->platform->value)
+            ->first();
+
+        if ($existingAccount && ! $existingAccount->isDisconnected()) {
             return back()->with('error', 'This platform is already connected.');
         }
 
-        return $this->redirectToProvider($workspace, $this->driver, $this->scopes);
+        return $this->redirectToProvider($request, $this->driver, $this->scopes);
     }
 
-    public function callback(Request $request): RedirectResponse
+    public function callback(Request $request): View
     {
         return $this->handleCallback($request, $this->platform, $this->driver);
     }

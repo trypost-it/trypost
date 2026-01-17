@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { home } from '@/routes';
+import { home, privacy, terms } from '@/routes';
 
 defineProps<{
     title?: string;
@@ -42,13 +42,13 @@ defineProps<{
                     </p>
                     <nav class="flex items-center gap-6">
                         <Link
-                            href="/privacy"
+                            :href="privacy.url()"
                             class="text-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
                             Privacy Policy
                         </Link>
                         <Link
-                            href="/terms"
+                            :href="terms.url()"
                             class="text-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
                             Terms of Service

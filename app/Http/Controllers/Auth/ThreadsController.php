@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Enums\SocialPlatform;
+use App\Enums\Status;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -22,16 +24,30 @@ class ThreadsController extends SocialController
         'threads_read_replies',
     ];
 
-    public function connect(Request $request, Workspace $workspace): Response
+    public function connect(Request $request): Response|RedirectResponse
     {
         $this->ensurePlatformEnabled();
+
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('manageAccounts', $workspace);
 
-        if ($workspace->hasConnectedPlatform($this->platform->value)) {
+        $existingAccount = $workspace->socialAccounts()
+            ->where('platform', $this->platform->value)
+            ->first();
+
+        if ($existingAccount && ! $existingAccount->isDisconnected()) {
             return back()->with('error', 'This platform is already connected.');
         }
 
-        session(['social_connect_workspace' => $workspace->id]);
+        session([
+            'social_connect_workspace' => $workspace->id,
+            'social_reconnect_id' => $existingAccount?->id,
+        ]);
 
         $state = bin2hex(random_bytes(16));
         session(['threads_oauth_state' => $state]);
@@ -47,31 +63,39 @@ class ThreadsController extends SocialController
         return Inertia::location("https://threads.net/oauth/authorize?{$params}");
     }
 
-    public function callback(Request $request): RedirectResponse
+    public function callback(Request $request): View
     {
         $workspaceId = session('social_connect_workspace');
         $savedState = session('threads_oauth_state');
 
         if (! $workspaceId) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Session expired. Please try again.');
+            session()->forget(['threads_oauth_state', 'social_reconnect_id']);
+
+            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
         }
 
         if ($request->state !== $savedState) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Invalid state. Please try again.');
+            session()->forget(['threads_oauth_state', 'social_reconnect_id']);
+
+            return $this->popupCallback(false, 'Invalid state. Please try again.', $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Workspace not found.');
+            session()->forget(['threads_oauth_state', 'social_reconnect_id']);
+
+            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
         }
 
-        if ($workspace->hasConnectedPlatform($this->platform->value)) {
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'This platform is already connected.');
+        $reconnectId = session('social_reconnect_id');
+        $existingAccount = $reconnectId ? $workspace->socialAccounts()->find($reconnectId) : null;
+
+        // If account exists and is connected, don't allow duplicate
+        if (! $existingAccount && $workspace->hasConnectedPlatform($this->platform->value)) {
+            session()->forget(['threads_oauth_state', 'social_reconnect_id']);
+
+            return $this->popupCallback(false, 'This platform is already connected.', $this->platform->value);
         }
 
         try {
@@ -128,6 +152,26 @@ class ThreadsController extends SocialController
             $profile = $profileResponse->json();
             $avatarPath = uploadFromUrl($profile['threads_profile_picture_url'] ?? null);
 
+            if ($existingAccount) {
+                // Reconnect existing account
+                $existingAccount->update([
+                    'platform_user_id' => $profile['id'],
+                    'username' => $profile['username'],
+                    'display_name' => $profile['name'] ?? $profile['username'],
+                    'avatar_url' => $avatarPath,
+                    'access_token' => $longLivedToken,
+                    'refresh_token' => null,
+                    'token_expires_at' => $expiresIn ? now()->addSeconds($expiresIn) : null,
+                    'scopes' => $this->scopes,
+                ]);
+                $existingAccount->markAsConnected();
+
+                session()->forget(['threads_oauth_state', 'social_reconnect_id']);
+
+                return $this->popupCallback(true, 'Threads account reconnected!', $this->platform->value);
+            }
+
+            // Create new account
             $workspace->socialAccounts()->create([
                 'platform' => $this->platform->value,
                 'platform_user_id' => $profile['id'],
@@ -138,20 +182,21 @@ class ThreadsController extends SocialController
                 'refresh_token' => null,
                 'token_expires_at' => $expiresIn ? now()->addSeconds($expiresIn) : null,
                 'scopes' => $this->scopes,
+                'status' => Status::Connected,
             ]);
 
-            session()->forget(['social_connect_workspace', 'threads_oauth_state']);
+            session()->forget(['threads_oauth_state', 'social_reconnect_id']);
 
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('success', 'Threads account connected successfully!');
+            return $this->popupCallback(true, 'Threads account connected!', $this->platform->value);
         } catch (\Exception $e) {
             Log::error('Threads OAuth Error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Error connecting account. Please try again.');
+            session()->forget(['threads_oauth_state', 'social_reconnect_id']);
+
+            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
         }
     }
 }

@@ -2,12 +2,32 @@
 
 namespace App\Services\Social;
 
+use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class FacebookPublisher
 {
+    /**
+     * Meta Graph API error codes that indicate token issues.
+     *
+     * @see https://developers.facebook.com/docs/graph-api/guides/error-handling
+     */
+    private const TOKEN_ERROR_CODES = [
+        190, // Invalid OAuth access token
+    ];
+
+    private const TOKEN_ERROR_SUBCODES = [
+        458, // App not installed
+        459, // User checkpointed
+        460, // Password changed
+        463, // Session expired
+        464, // Unconfirmed user
+        467, // Invalid access token
+    ];
+
     private string $baseUrl = 'https://graph.facebook.com/v21.0';
 
     public function publish(PostPlatform $postPlatform): array
@@ -57,7 +77,7 @@ class FacebookPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            throw new \Exception('Facebook API error: '.$response->body());
+            $this->handleApiError($response, 'Facebook API error');
         }
 
         $data = $response->json();
@@ -84,7 +104,7 @@ class FacebookPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            throw new \Exception('Facebook API error: '.$response->body());
+            $this->handleApiError($response, 'Facebook API error');
         }
 
         $data = $response->json();
@@ -150,7 +170,7 @@ class FacebookPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            throw new \Exception('Facebook API error: '.$response->body());
+            $this->handleApiError($response, 'Facebook API error');
         }
 
         $data = $response->json();
@@ -178,7 +198,7 @@ class FacebookPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            throw new \Exception('Facebook API error: '.$response->body());
+            $this->handleApiError($response, 'Facebook API error');
         }
 
         $data = $response->json();
@@ -188,5 +208,28 @@ class FacebookPublisher
             'id' => $videoId,
             'url' => "https://www.facebook.com/{$pageId}/videos/{$videoId}",
         ];
+    }
+
+    private function handleApiError(Response $response, string $context): void
+    {
+        $body = $response->json() ?? [];
+        $error = $body['error'] ?? [];
+        $errorCode = $error['code'] ?? null;
+        $errorSubcode = $error['error_subcode'] ?? null;
+        $errorType = $error['type'] ?? null;
+        $message = $error['message'] ?? $response->body();
+
+        $isTokenError = $errorType === 'OAuthException'
+            || in_array($errorCode, self::TOKEN_ERROR_CODES)
+            || in_array($errorSubcode, self::TOKEN_ERROR_SUBCODES);
+
+        if ($isTokenError) {
+            throw new TokenExpiredException(
+                "{$context}: {$message}",
+                $errorCode ? (string) $errorCode : null
+            );
+        }
+
+        throw new \Exception("{$context}: {$message}");
     }
 }

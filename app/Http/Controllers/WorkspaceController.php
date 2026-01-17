@@ -12,19 +12,27 @@ use Inertia\Response;
 
 class WorkspaceController extends Controller
 {
+    /**
+     * List all workspaces.
+     */
     public function index(Request $request): Response
     {
-        $workspaces = $request->user()
-            ->workspaces()
+        $user = $request->user();
+
+        $workspaces = $user->workspaces()
             ->withCount(['socialAccounts', 'posts'])
             ->latest()
             ->get();
 
         return Inertia::render('workspaces/Index', [
             'workspaces' => $workspaces,
+            'currentWorkspaceId' => $user->current_workspace_id,
         ]);
     }
 
+    /**
+     * Show create workspace form.
+     */
     public function create(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
@@ -38,6 +46,9 @@ class WorkspaceController extends Controller
         return Inertia::render('workspaces/Create');
     }
 
+    /**
+     * Store a new workspace.
+     */
     public function store(StoreWorkspaceRequest $request): RedirectResponse
     {
         $user = $request->user();
@@ -50,57 +61,46 @@ class WorkspaceController extends Controller
 
         $workspace = $user->workspaces()->create($request->validated());
 
+        // Set as current workspace
+        $user->switchWorkspace($workspace);
+
         // Increment subscription quantity if user has subscription
         if ($user->hasActiveSubscription()) {
             $user->incrementWorkspaceQuantity();
         }
 
-        return redirect()->route('workspaces.show', $workspace)
+        return redirect()->route('calendar')
             ->with('success', 'Workspace created successfully!');
     }
 
-    public function show(Request $request, Workspace $workspace): Response
+    /**
+     * Switch to a different workspace.
+     */
+    public function switch(Request $request, Workspace $workspace): RedirectResponse
     {
-        $this->authorize('view', $workspace);
+        $user = $request->user();
 
-        $workspace->load(['socialAccounts', 'posts' => function ($query) {
-            $query->latest()->take(5);
-        }]);
+        if (! $user->belongsToWorkspace($workspace)) {
+            abort(403);
+        }
 
-        $stats = [
-            'total_posts' => $workspace->posts()->count(),
-            'scheduled_posts' => $workspace->posts()->scheduled()->count(),
-            'published_posts' => $workspace->posts()->published()->count(),
-            'connected_accounts' => $workspace->socialAccounts()->count(),
-        ];
+        $user->switchWorkspace($workspace);
 
-        return Inertia::render('workspaces/Show', [
-            'workspace' => $workspace,
-            'stats' => $stats,
-        ]);
+        return redirect()->route('calendar');
     }
 
-    public function edit(Workspace $workspace): Response
+    /**
+     * Show workspace settings.
+     */
+    public function settings(Request $request): Response|RedirectResponse
     {
-        $this->authorize('update', $workspace);
+        $user = $request->user();
+        $workspace = $user->currentWorkspace;
 
-        return Inertia::render('workspaces/Edit', [
-            'workspace' => $workspace,
-        ]);
-    }
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
 
-    public function update(UpdateWorkspaceRequest $request, Workspace $workspace): RedirectResponse
-    {
-        $this->authorize('update', $workspace);
-
-        $workspace->update($request->validated());
-
-        return redirect()->route('workspaces.show', $workspace)
-            ->with('success', 'Workspace updated successfully!');
-    }
-
-    public function settings(Workspace $workspace): Response
-    {
         $this->authorize('update', $workspace);
 
         $timezones = collect(timezone_identifiers_list())
@@ -113,8 +113,18 @@ class WorkspaceController extends Controller
         ]);
     }
 
-    public function updateSettings(UpdateWorkspaceRequest $request, Workspace $workspace): RedirectResponse
+    /**
+     * Update workspace settings.
+     */
+    public function updateSettings(UpdateWorkspaceRequest $request): RedirectResponse
     {
+        $user = $request->user();
+        $workspace = $user->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('update', $workspace);
 
         $workspace->update($request->validated());
@@ -122,14 +132,22 @@ class WorkspaceController extends Controller
         session()->flash('flash.banner', 'Settings updated successfully!');
         session()->flash('flash.bannerStyle', 'success');
 
-        return redirect()->route('workspaces.settings', $workspace);
+        return redirect()->route('settings');
     }
 
+    /**
+     * Delete a workspace.
+     */
     public function destroy(Request $request, Workspace $workspace): RedirectResponse
     {
         $this->authorize('delete', $workspace);
 
         $user = $request->user();
+
+        // If deleting current workspace, clear it
+        if ($user->current_workspace_id === $workspace->id) {
+            $user->update(['current_workspace_id' => null]);
+        }
 
         $workspace->delete();
 
@@ -138,7 +156,7 @@ class WorkspaceController extends Controller
             $user->decrementWorkspaceQuantity();
         }
 
-        return redirect()->route('workspaces.index')
+        return redirect()->route('dashboard')
             ->with('success', 'Workspace deleted successfully!');
     }
 }

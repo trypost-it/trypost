@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarDays, Clock, Share2, Sparkles, CheckCircle } from 'lucide-vue-next';
 
-import { login, register } from '@/routes';
+import { calendar, login, privacy, register, terms } from '@/routes';
 import { Button } from '@/components/ui/button';
 
 withDefaults(
@@ -64,10 +64,10 @@ const platforms = [
                 <nav class="flex items-center gap-3">
                     <Link
                         v-if="$page.props.auth.user"
-                        href="/workspaces"
+                        :href="calendar.url()"
                         class="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
-                        Dashboard
+                        Calendar
                     </Link>
                     <template v-else>
                         <Link :href="login()">
@@ -207,13 +207,13 @@ const platforms = [
                     </div>
                     <nav class="flex items-center gap-6">
                         <Link
-                            href="/privacy"
+                            :href="privacy.url()"
                             class="text-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
                             Privacy Policy
                         </Link>
                         <Link
-                            href="/terms"
+                            :href="terms.url()"
                             class="text-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
                             Terms of Service

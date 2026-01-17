@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\WorkspaceRole;
 use App\Http\Requests\StoreWorkspaceInviteRequest;
-use App\Models\Workspace;
 use App\Models\WorkspaceInvite;
 use App\Notifications\WorkspaceInviteNotification;
 use Illuminate\Http\RedirectResponse;
@@ -14,8 +13,14 @@ use Inertia\Response;
 
 class WorkspaceInviteController extends Controller
 {
-    public function index(Workspace $workspace): Response
+    public function index(Request $request): Response|RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('manageTeam', $workspace);
 
         return Inertia::render('workspaces/Invites', [
@@ -48,8 +53,14 @@ class WorkspaceInviteController extends Controller
         ]);
     }
 
-    public function store(StoreWorkspaceInviteRequest $request, Workspace $workspace): RedirectResponse
+    public function store(StoreWorkspaceInviteRequest $request): RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('manageTeam', $workspace);
 
         $existingInvite = $workspace->invites()
@@ -80,8 +91,14 @@ class WorkspaceInviteController extends Controller
         return back()->with('success', 'Invite sent successfully!');
     }
 
-    public function destroy(Workspace $workspace, WorkspaceInvite $invite): RedirectResponse
+    public function destroy(Request $request, WorkspaceInvite $invite): RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('manageTeam', $workspace);
 
         if ($invite->workspace_id !== $workspace->id) {
@@ -99,11 +116,11 @@ class WorkspaceInviteController extends Controller
 
         if (! $invite->isValid()) {
             if ($invite->isExpired()) {
-                return redirect()->route('workspaces.index')
+                return redirect()->route('dashboard')
                     ->withErrors(['invite' => 'This invite has expired.']);
             }
 
-            return redirect()->route('workspaces.index')
+            return redirect()->route('dashboard')
                 ->withErrors(['invite' => 'This invite is no longer valid.']);
         }
 
@@ -117,18 +134,30 @@ class WorkspaceInviteController extends Controller
         }
 
         if ($invite->workspace->hasMember($user)) {
-            return redirect()->route('workspaces.show', $invite->workspace)
+            // Switch to this workspace
+            $user->switchWorkspace($invite->workspace);
+
+            return redirect()->route('calendar')
                 ->with('message', 'You are already a member of this workspace.');
         }
 
         $invite->accept($user);
 
-        return redirect()->route('workspaces.show', $invite->workspace)
+        // Switch to the new workspace
+        $user->switchWorkspace($invite->workspace);
+
+        return redirect()->route('calendar')
             ->with('success', 'You are now a member of the workspace!');
     }
 
-    public function removeMember(Workspace $workspace, string $userId): RedirectResponse
+    public function removeMember(Request $request, string $userId): RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('manageTeam', $workspace);
 
         if ($workspace->user_id === $userId) {

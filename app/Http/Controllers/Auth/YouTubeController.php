@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Enums\SocialPlatform;
+use App\Enums\Status;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Laravel\Socialite\Facades\Socialite;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -22,39 +24,55 @@ class YouTubeController extends SocialController
         'https://www.googleapis.com/auth/youtube.force-ssl',
     ];
 
-    public function connect(Request $request, Workspace $workspace): Response
+    public function connect(Request $request): Response|RedirectResponse
     {
         $this->ensurePlatformEnabled();
+
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('manageAccounts', $workspace);
 
-        if ($workspace->hasConnectedPlatform($this->platform->value)) {
+        $existingAccount = $workspace->socialAccounts()
+            ->where('platform', $this->platform->value)
+            ->first();
+
+        if ($existingAccount && ! $existingAccount->isDisconnected()) {
             return back()->with('error', 'This platform is already connected.');
         }
 
-        session(['social_connect_workspace' => $workspace->id]);
+        session([
+            'social_connect_workspace' => $workspace->id,
+            'social_reconnect_id' => $existingAccount?->id,
+            'social_connect_onboarding' => $request->boolean('onboarding'),
+        ]);
 
-        return $this->redirectToGoogle($workspace);
+        return $this->redirectToGoogle();
     }
 
-    public function callback(Request $request): RedirectResponse
+    public function callback(Request $request): View|RedirectResponse
     {
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Session expired. Please try again.');
+            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Workspace not found.');
+            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
         }
 
-        if ($workspace->hasConnectedPlatform($this->platform->value)) {
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'This platform is already connected.');
+        $reconnectId = session('social_reconnect_id');
+        $existingAccount = $reconnectId ? $workspace->socialAccounts()->find($reconnectId) : null;
+
+        // If account exists and is connected, don't allow duplicate
+        if (! $existingAccount && $workspace->hasConnectedPlatform($this->platform->value)) {
+            return $this->popupCallback(false, 'This platform is already connected.', $this->platform->value);
         }
 
         try {
@@ -64,8 +82,7 @@ class YouTubeController extends SocialController
             $channels = $this->fetchChannels($socialUser->token);
 
             if (empty($channels)) {
-                return redirect()->route('workspaces.accounts', $workspace)
-                    ->with('error', 'No YouTube channels found. Please create a channel first.');
+                return $this->popupCallback(false, 'No YouTube channels found. Please create a channel first.', $this->platform->value);
             }
 
             // If only one channel, connect directly (most common case)
@@ -73,26 +90,50 @@ class YouTubeController extends SocialController
                 $channel = $channels[0];
                 $avatarPath = uploadFromUrl($channel['thumbnail']);
 
+                if ($existingAccount) {
+                    // Reconnect existing account
+                    $existingAccount->update([
+                        'platform_user_id' => $channel['id'],
+                        'username' => ltrim($channel['custom_url'] ?? $channel['id'], '@'),
+                        'display_name' => $channel['title'],
+                        'avatar_url' => $avatarPath,
+                        'access_token' => $socialUser->token,
+                        'refresh_token' => $socialUser->refreshToken,
+                        'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
+                        'scopes' => $this->scopes,
+                        'meta' => [
+                            'channel_id' => $channel['id'],
+                            'google_user_id' => $socialUser->getId(),
+                        ],
+                    ]);
+                    $existingAccount->markAsConnected();
+
+                    session()->forget('social_reconnect_id');
+
+                    return $this->popupCallback(true, 'YouTube channel reconnected!', $this->platform->value);
+                }
+
+                // Create new account
                 $workspace->socialAccounts()->create([
                     'platform' => $this->platform->value,
                     'platform_user_id' => $channel['id'],
-                    'username' => $channel['custom_url'] ?? $channel['id'],
+                    'username' => ltrim($channel['custom_url'] ?? $channel['id'], '@'),
                     'display_name' => $channel['title'],
                     'avatar_url' => $avatarPath,
                     'access_token' => $socialUser->token,
                     'refresh_token' => $socialUser->refreshToken,
                     'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
                     'scopes' => $this->scopes,
+                    'status' => Status::Connected,
                     'meta' => [
                         'channel_id' => $channel['id'],
                         'google_user_id' => $socialUser->getId(),
                     ],
                 ]);
 
-                session()->forget('social_connect_workspace');
+                session()->forget('social_reconnect_id');
 
-                return redirect()->route('workspaces.accounts', $workspace)
-                    ->with('success', 'YouTube channel connected successfully!');
+                return $this->popupCallback(true, 'YouTube channel connected!', $this->platform->value);
             }
 
             // Multiple channels - store data and show selection screen
@@ -102,6 +143,7 @@ class YouTubeController extends SocialController
                     'refresh_token' => $socialUser->refreshToken,
                     'expires_in' => $socialUser->expiresIn,
                     'user_id' => $socialUser->getId(),
+                    'reconnect_id' => $reconnectId,
                 ],
             ]);
 
@@ -112,8 +154,7 @@ class YouTubeController extends SocialController
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Error connecting account. Please try again.');
+            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
         }
     }
 
@@ -123,14 +164,14 @@ class YouTubeController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $oauthData || ! $workspaceId) {
-            return redirect()->route('workspaces.index')
+            return redirect()->route('dashboard')
                 ->with('error', 'Session expired. Please try again.');
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace) {
-            return redirect()->route('workspaces.index')
+            return redirect()->route('dashboard')
                 ->with('error', 'Workspace not found.');
         }
 
@@ -138,9 +179,11 @@ class YouTubeController extends SocialController
         $channels = $this->fetchChannels($oauthData['access_token']);
 
         if (empty($channels)) {
-            session()->forget(['youtube_oauth', 'social_connect_workspace']);
+            $redirectRoute = $this->getRedirectRoute();
+            $this->forgetSocialConnectSession();
+            session()->forget('youtube_oauth');
 
-            return redirect()->route('workspaces.accounts', $workspace)
+            return redirect()->route($redirectRoute)
                 ->with('error', 'No YouTube channels found. Please create a channel first.');
         }
 
@@ -150,7 +193,7 @@ class YouTubeController extends SocialController
         ]);
     }
 
-    public function select(Request $request): RedirectResponse
+    public function select(Request $request): View
     {
         $request->validate([
             'channel_id' => 'required|string',
@@ -160,15 +203,13 @@ class YouTubeController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $oauthData || ! $workspaceId) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Session expired. Please try again.');
+            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Workspace not found.');
+            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
         }
 
         try {
@@ -176,43 +217,70 @@ class YouTubeController extends SocialController
             $selectedChannel = collect($channels)->firstWhere('id', $request->channel_id);
 
             if (! $selectedChannel) {
-                return redirect()->route('social.youtube.select-channel')
-                    ->with('error', 'Channel not found.');
+                return $this->popupCallback(false, 'Channel not found.', $this->platform->value);
             }
 
             $avatarPath = uploadFromUrl($selectedChannel['thumbnail']);
+            $reconnectId = $oauthData['reconnect_id'] ?? null;
 
+            if ($reconnectId) {
+                // Reconnect existing account
+                $existingAccount = $workspace->socialAccounts()->find($reconnectId);
+
+                if ($existingAccount) {
+                    $existingAccount->update([
+                        'platform_user_id' => $selectedChannel['id'],
+                        'username' => ltrim($selectedChannel['custom_url'] ?? $selectedChannel['id'], '@'),
+                        'display_name' => $selectedChannel['title'],
+                        'avatar_url' => $avatarPath,
+                        'access_token' => $oauthData['access_token'],
+                        'refresh_token' => $oauthData['refresh_token'],
+                        'token_expires_at' => $oauthData['expires_in'] ? now()->addSeconds($oauthData['expires_in']) : null,
+                        'scopes' => $this->scopes,
+                        'meta' => [
+                            'channel_id' => $selectedChannel['id'],
+                            'google_user_id' => $oauthData['user_id'],
+                        ],
+                    ]);
+                    $existingAccount->markAsConnected();
+
+                    session()->forget(['youtube_oauth', 'social_reconnect_id']);
+
+                    return $this->popupCallback(true, 'YouTube channel reconnected!', $this->platform->value);
+                }
+            }
+
+            // Create new account
             $workspace->socialAccounts()->create([
                 'platform' => $this->platform->value,
                 'platform_user_id' => $selectedChannel['id'],
-                'username' => $selectedChannel['custom_url'] ?? $selectedChannel['id'],
+                'username' => ltrim($selectedChannel['custom_url'] ?? $selectedChannel['id'], '@'),
                 'display_name' => $selectedChannel['title'],
                 'avatar_url' => $avatarPath,
                 'access_token' => $oauthData['access_token'],
                 'refresh_token' => $oauthData['refresh_token'],
                 'token_expires_at' => $oauthData['expires_in'] ? now()->addSeconds($oauthData['expires_in']) : null,
                 'scopes' => $this->scopes,
+                'status' => Status::Connected,
                 'meta' => [
                     'channel_id' => $selectedChannel['id'],
                     'google_user_id' => $oauthData['user_id'],
                 ],
             ]);
 
-            session()->forget(['youtube_oauth', 'social_connect_workspace']);
+            session()->forget(['youtube_oauth', 'social_reconnect_id']);
 
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('success', 'YouTube channel connected successfully!');
+            return $this->popupCallback(true, 'YouTube channel connected!', $this->platform->value);
         } catch (\Exception $e) {
             Log::error('YouTube channel selection error', [
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Error connecting channel. Please try again.');
+            return $this->popupCallback(false, 'Error connecting channel. Please try again.', $this->platform->value);
         }
     }
 
-    private function redirectToGoogle(Workspace $workspace): Response
+    private function redirectToGoogle(): Response
     {
         return \Inertia\Inertia::location(
             Socialite::driver($this->driver)

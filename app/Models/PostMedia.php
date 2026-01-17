@@ -15,6 +15,8 @@ class PostMedia extends Model
     /** @use HasFactory<\Database\Factories\PostMediaFactory> */
     use HasFactory, HasUuids;
 
+    protected $table = 'post_medias';
+
     protected $appends = ['url'];
 
     protected $fillable = [

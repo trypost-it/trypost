@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Enums\SocialPlatform;
+use App\Enums\Status;
 use App\Http\Controllers\Controller;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Socialite\Facades\Socialite;
@@ -25,8 +27,14 @@ class SocialController extends Controller
         }
     }
 
-    public function index(Workspace $workspace): Response
+    public function index(Request $request): Response|RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('view', $workspace);
 
         $connectedAccounts = $workspace->socialAccounts;
@@ -49,8 +57,14 @@ class SocialController extends Controller
         ]);
     }
 
-    public function disconnect(Workspace $workspace, SocialAccount $account): RedirectResponse
+    public function disconnect(Request $request, SocialAccount $account): RedirectResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('manageAccounts', $workspace);
 
         if ($account->workspace_id !== $workspace->id) {
@@ -65,9 +79,16 @@ class SocialController extends Controller
         return back();
     }
 
-    protected function redirectToProvider(Workspace $workspace, string $driver, array $scopes): SymfonyResponse
+    protected function redirectToProvider(Request $request, string $driver, array $scopes): SymfonyResponse
     {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         session(['social_connect_workspace' => $workspace->id]);
+        session(['social_connect_onboarding' => $request->boolean('onboarding')]);
 
         return Inertia::location(
             Socialite::driver($driver)
@@ -81,36 +102,50 @@ class SocialController extends Controller
         Request $request,
         SocialPlatform $platform,
         string $driver
-    ): RedirectResponse {
+    ): View {
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            session()->flash('flash.banner', 'Session expired. Please try again.');
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return redirect()->route('workspaces.index');
+            return $this->popupCallback(false, 'Session expired. Please try again.', $platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            session()->flash('flash.banner', 'Workspace not found.');
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return redirect()->route('workspaces.index');
-        }
-
-        if ($workspace->hasConnectedPlatform($platform->value)) {
-            session()->flash('flash.banner', 'This platform is already connected.');
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return redirect()->route('workspaces.accounts', $workspace);
+            return $this->popupCallback(false, 'Workspace not found.', $platform->value);
         }
 
         try {
             $socialUser = Socialite::driver($driver)->user();
+            $existingAccount = $workspace->socialAccounts()
+                ->where('platform', $platform->value)
+                ->first();
+
+            // If account exists and is connected, don't allow duplicate
+            if ($existingAccount && ! $existingAccount->isDisconnected()) {
+                return $this->popupCallback(false, 'This platform is already connected.', $platform->value);
+            }
+
             $avatarPath = uploadFromUrl($socialUser->getAvatar());
 
+            if ($existingAccount) {
+                // Reconnect existing account
+                $existingAccount->update([
+                    'platform_user_id' => $socialUser->getId(),
+                    'username' => $socialUser->getNickname(),
+                    'display_name' => $socialUser->getName(),
+                    'avatar_url' => $avatarPath,
+                    'access_token' => $socialUser->token,
+                    'refresh_token' => $socialUser->refreshToken,
+                    'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
+                    'scopes' => $socialUser->approvedScopes ?? null,
+                ]);
+                $existingAccount->markAsConnected();
+
+                return $this->popupCallback(true, 'Account reconnected!', $platform->value);
+            }
+
+            // Create new account
             $workspace->socialAccounts()->create([
                 'platform' => $platform->value,
                 'platform_user_id' => $socialUser->getId(),
@@ -121,24 +156,41 @@ class SocialController extends Controller
                 'refresh_token' => $socialUser->refreshToken,
                 'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
                 'scopes' => $socialUser->approvedScopes ?? null,
+                'status' => Status::Connected,
             ]);
 
-            session()->forget('social_connect_workspace');
-
-            session()->flash('flash.banner', 'Account connected successfully!');
-            session()->flash('flash.bannerStyle', 'success');
-
-            return redirect()->route('workspaces.accounts', $workspace);
+            return $this->popupCallback(true, 'Account connected!', $platform->value);
         } catch (\Exception $e) {
             Log::error('Social OAuth Error', [
                 'platform' => $platform->value,
                 'error' => $e->getMessage(),
             ]);
 
-            session()->flash('flash.banner', 'Error connecting account. Please try again.');
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return redirect()->route('workspaces.accounts', $workspace);
+            return $this->popupCallback(false, 'Error connecting account. Please try again.', $platform->value);
         }
+    }
+
+    protected function forgetSocialConnectSession(): void
+    {
+        session()->forget(['social_connect_workspace', 'social_connect_onboarding']);
+    }
+
+    protected function getRedirectRoute(): string
+    {
+        return session('social_connect_onboarding', false) ? 'onboarding.step2' : 'accounts';
+    }
+
+    /**
+     * Return a view that closes the popup and notifies the parent window.
+     */
+    protected function popupCallback(bool $success, string $message, ?string $platform = null): View
+    {
+        $this->forgetSocialConnectSession();
+
+        return view('auth.social-callback', [
+            'success' => $success,
+            'message' => $message,
+            'platform' => $platform,
+        ]);
     }
 }

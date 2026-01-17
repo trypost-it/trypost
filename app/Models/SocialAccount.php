@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Enums\SocialPlatform;
+use App\Enums\Status;
+use App\Notifications\AccountDisconnectedNotification;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class SocialAccount extends Model
@@ -28,6 +31,9 @@ class SocialAccount extends Model
         'token_expires_at',
         'scopes',
         'meta',
+        'status',
+        'error_message',
+        'disconnected_at',
     ];
 
     protected $hidden = [
@@ -39,9 +45,11 @@ class SocialAccount extends Model
     {
         return [
             'platform' => SocialPlatform::class,
+            'status' => Status::class,
             'access_token' => 'encrypted',
             'refresh_token' => 'encrypted',
             'token_expires_at' => 'datetime',
+            'disconnected_at' => 'datetime',
             'scopes' => 'array',
             'meta' => 'array',
         ];
@@ -76,5 +84,43 @@ class SocialAccount extends Model
         return Attribute::make(
             get: fn (?string $value) => $value ? Storage::url($value) : null,
         );
+    }
+
+    public function markAsDisconnected(string $errorMessage): void
+    {
+        $lock = Cache::lock("social_account_disconnect:{$this->id}", 10);
+
+        if ($lock->get()) {
+            try {
+                $this->refresh();
+                $wasConnected = $this->status !== Status::Disconnected;
+
+                $this->update([
+                    'status' => Status::Disconnected,
+                    'error_message' => $errorMessage,
+                    'disconnected_at' => now(),
+                ]);
+
+                if ($wasConnected) {
+                    $this->workspace->owner->notify(new AccountDisconnectedNotification($this));
+                }
+            } finally {
+                $lock->release();
+            }
+        }
+    }
+
+    public function markAsConnected(): void
+    {
+        $this->update([
+            'status' => Status::Connected,
+            'error_message' => null,
+            'disconnected_at' => null,
+        ]);
+    }
+
+    public function isDisconnected(): bool
+    {
+        return $this->status === Status::Disconnected || $this->status === Status::TokenExpired;
     }
 }

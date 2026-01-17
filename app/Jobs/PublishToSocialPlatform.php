@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\SocialPlatform;
 use App\Events\PostPlatformStatusUpdated;
+use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Services\Social\FacebookPublisher;
 use App\Services\Social\InstagramPublisher;
@@ -37,6 +38,16 @@ class PublishToSocialPlatform implements ShouldQueue
             $result = $publisher->publish($this->postPlatform);
 
             $this->postPlatform->markAsPublished($result['id'], $result['url'] ?? null);
+        } catch (TokenExpiredException $e) {
+            Log::error('Token expired while publishing to social platform', [
+                'post_platform_id' => $this->postPlatform->id,
+                'platform' => $this->postPlatform->platform->value,
+                'error' => $e->getMessage(),
+                'platform_error_code' => $e->platformErrorCode,
+            ]);
+
+            $this->postPlatform->markAsFailed($e->getMessage());
+            $this->postPlatform->socialAccount->markAsDisconnected($e->getMessage());
         } catch (\Exception $e) {
             Log::error('Failed to publish to social platform', [
                 'post_platform_id' => $this->postPlatform->id,

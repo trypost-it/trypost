@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('post_media', function (Blueprint $table) {
+        Schema::create('post_medias', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('post_platform_id');
+            $table->uuid('post_platform_id')->nullable();
             $table->string('type');
             $table->string('path');
             $table->string('original_filename');
@@ -32,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('post_media');
+        Schema::dropIfExists('post_medias');
     }
 };

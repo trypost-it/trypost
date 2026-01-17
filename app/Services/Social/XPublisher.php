@@ -2,14 +2,25 @@
 
 namespace App\Services\Social;
 
+use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class XPublisher
 {
+    /**
+     * X/Twitter API error titles that indicate token issues.
+     *
+     * @see https://developer.twitter.com/en/support/twitter-api/error-troubleshooting
+     */
+    private const TOKEN_ERROR_TITLES = [
+        'Unauthorized',
+    ];
+
     private string $baseUrl = 'https://api.x.com';
 
     private string $accessToken;
@@ -61,11 +72,18 @@ class XPublisher
         Log::info('Posting tweet', ['data' => $data]);
 
         $response = $this->getHttpClient()
-            ->post("{$this->baseUrl}/2/tweets", $data)
-            ->throw()
-            ->json();
+            ->post("{$this->baseUrl}/2/tweets", $data);
 
-        $tweetId = $response['data']['id'] ?? null;
+        if ($response->failed()) {
+            Log::error('X post creation failed', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            $this->handleApiError($response, 'X API error');
+        }
+
+        $responseData = $response->json();
+        $tweetId = $responseData['data']['id'] ?? null;
 
         return [
             'id' => $tweetId ?? 'unknown',
@@ -131,7 +149,7 @@ class XPublisher
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
-                throw new \Exception('Failed to upload media: '.$response->status().' - '.$response->body());
+                $this->handleApiError($response, 'Failed to upload media');
             }
 
             $responseData = $response->json();
@@ -175,7 +193,7 @@ class XPublisher
                 'status' => $initResponse->status(),
                 'body' => $initResponse->body(),
             ]);
-            throw new \Exception('Failed to initialize chunked upload: '.$initResponse->body());
+            $this->handleApiError($initResponse, 'Failed to initialize chunked upload');
         }
 
         $initData = $initResponse->json();
@@ -212,7 +230,7 @@ class XPublisher
                     'body' => $appendResponse->body(),
                     'segment' => $index,
                 ]);
-                throw new \Exception('Failed to append chunk: '.$appendResponse->body());
+                $this->handleApiError($appendResponse, 'Failed to append chunk');
             }
         }
 
@@ -228,7 +246,7 @@ class XPublisher
                 'status' => $finalizeResponse->status(),
                 'body' => $finalizeResponse->body(),
             ]);
-            throw new \Exception('Failed to finalize chunked upload: '.$finalizeResponse->body());
+            $this->handleApiError($finalizeResponse, 'Failed to finalize chunked upload');
         }
 
         $finalizeData = $finalizeResponse->json();
@@ -307,7 +325,7 @@ class XPublisher
     private function refreshToken(SocialAccount $account): void
     {
         if (! $account->refresh_token) {
-            throw new \Exception('No refresh token available for X account');
+            throw new TokenExpiredException('No refresh token available for X account');
         }
 
         $response = Http::asForm()->post("{$this->baseUrl}/2/oauth2/token", [
@@ -317,7 +335,7 @@ class XPublisher
         ]);
 
         if ($response->failed()) {
-            throw new \Exception('Failed to refresh X token: '.$response->body());
+            $this->handleApiError($response, 'Failed to refresh X token');
         }
 
         $data = $response->json();
@@ -327,5 +345,21 @@ class XPublisher
             'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
             'token_expires_at' => now()->addSeconds($data['expires_in'] ?? 7200),
         ]);
+    }
+
+    private function handleApiError(Response $response, string $context): void
+    {
+        $body = $response->json() ?? [];
+        $errorTitle = $body['title'] ?? null;
+        $message = $body['detail'] ?? $response->body();
+
+        if ($response->status() === 401 || in_array($errorTitle, self::TOKEN_ERROR_TITLES)) {
+            throw new TokenExpiredException(
+                "{$context}: {$message}",
+                $errorTitle
+            );
+        }
+
+        throw new \Exception("{$context}: {$message}");
     }
 }

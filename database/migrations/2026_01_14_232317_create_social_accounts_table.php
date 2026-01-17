@@ -24,6 +24,9 @@ return new class extends Migration
             $table->timestamp('token_expires_at')->nullable();
             $table->json('scopes')->nullable();
             $table->json('meta')->nullable();
+            $table->string('status');
+            $table->text('error_message')->nullable();
+            $table->timestamp('disconnected_at')->nullable();
             $table->timestamps();
 
             $table->foreign('workspace_id')->references('id')->on('workspaces')->cascadeOnDelete();

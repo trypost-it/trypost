@@ -2,14 +2,33 @@
 
 namespace App\Services\Social;
 
+use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class TikTokPublisher
 {
+    /**
+     * TikTok API error codes that indicate token issues.
+     *
+     * @see https://developers.tiktok.com/doc/tiktok-api-v2-error-handling
+     */
+    private const TOKEN_ERROR_CODES = [
+        'access_token_invalid',
+        'access_token_expired',
+        'token_expired',
+    ];
+
+    private const TOKEN_ERROR_NUMERIC_CODES = [
+        10001, // Invalid Access Token
+        10002, // Access Token Expired
+        10003, // Invalid Client Key
+    ];
+
     private string $baseUrl = 'https://open.tiktokapis.com/v2';
 
     private string $accessToken;
@@ -59,6 +78,7 @@ class TikTokPublisher
     {
         Log::info('TikTok publishing video', [
             'video_url' => $media->url,
+            'media_full_url' => $media->full_url ?? $media->url,
             'content' => $postPlatform->content,
         ]);
 
@@ -66,7 +86,7 @@ class TikTokPublisher
             ->post("{$this->baseUrl}/post/publish/video/init/", [
                 'post_info' => [
                     'title' => $postPlatform->content,
-                    'privacy_level' => 'PUBLIC_TO_EVERYONE',
+                    'privacy_level' => 'SELF_ONLY',
                     'disable_duet' => false,
                     'disable_comment' => false,
                     'disable_stitch' => false,
@@ -82,7 +102,7 @@ class TikTokPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            throw new \Exception('TikTok API error: '.$response->body());
+            $this->handleApiError($response, 'TikTok API error');
         }
 
         $data = $response->json();
@@ -117,6 +137,7 @@ class TikTokPublisher
         }
 
         Log::info('TikTok publishing photos', [
+            'photo_urls' => $photoUrls,
             'photo_count' => count($photoUrls),
             'content' => $postPlatform->content,
         ]);
@@ -125,7 +146,7 @@ class TikTokPublisher
             ->post("{$this->baseUrl}/post/publish/content/init/", [
                 'post_info' => [
                     'title' => $postPlatform->content,
-                    'privacy_level' => 'PUBLIC_TO_EVERYONE',
+                    'privacy_level' => 'SELF_ONLY',
                     'disable_comment' => false,
                 ],
                 'source_info' => [
@@ -142,7 +163,7 @@ class TikTokPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            throw new \Exception('TikTok API error: '.$response->body());
+            $this->handleApiError($response, 'TikTok API error');
         }
 
         $data = $response->json();
@@ -223,7 +244,7 @@ class TikTokPublisher
     private function refreshToken(SocialAccount $account): void
     {
         if (! $account->refresh_token) {
-            throw new \Exception('No refresh token available for TikTok account');
+            throw new TokenExpiredException('No refresh token available for TikTok account');
         }
 
         $response = Http::asForm()->post('https://open.tiktokapis.com/v2/oauth/token/', [
@@ -235,7 +256,7 @@ class TikTokPublisher
 
         if ($response->failed()) {
             Log::error('TikTok token refresh failed', ['body' => $response->body()]);
-            throw new \Exception('Failed to refresh TikTok token: '.$response->body());
+            $this->handleApiError($response, 'Failed to refresh TikTok token');
         }
 
         $data = $response->json();
@@ -247,5 +268,27 @@ class TikTokPublisher
         ]);
 
         Log::info('TikTok token refreshed successfully');
+    }
+
+    private function handleApiError(Response $response, string $context): void
+    {
+        $body = $response->json() ?? [];
+        $error = $body['error'] ?? [];
+        $errorCode = $error['code'] ?? $body['error']['code'] ?? null;
+        $errorMessage = $error['message'] ?? $body['error']['message'] ?? $response->body();
+
+        // TikTok can return error codes as strings or numeric codes
+        $isTokenError = in_array($errorCode, self::TOKEN_ERROR_CODES)
+            || in_array((int) $errorCode, self::TOKEN_ERROR_NUMERIC_CODES)
+            || $response->status() === 401;
+
+        if ($isTokenError) {
+            throw new TokenExpiredException(
+                "{$context}: {$errorMessage}",
+                is_string($errorCode) ? $errorCode : (string) $errorCode
+            );
+        }
+
+        throw new \Exception("{$context}: {$errorMessage}");
     }
 }

@@ -13,6 +13,8 @@ import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import DatePicker from '@/components/DatePicker.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
+import { calendar } from '@/routes';
+import { destroy as destroyPost, update as updatePost } from '@/routes/posts';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -71,9 +73,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Workspaces', href: '/workspaces' },
-    { title: props.workspace.name, href: `/workspaces/${props.workspace.id}` },
-    { title: 'Calendar', href: `/workspaces/${props.workspace.id}/calendar` },
+    { title: 'Calendar', href: calendar.url() },
     { title: 'Edit Post', href: '#' },
 ];
 
@@ -295,7 +295,7 @@ const submit = (status: string = 'scheduled') => {
 
     isSubmitting.value = true;
 
-    router.put(`/workspaces/${props.workspace.id}/posts/${props.post.id}`, {
+    router.put(updatePost.url(props.post.id), {
         status,
         scheduled_at,
         platforms,
@@ -308,7 +308,7 @@ const submit = (status: string = 'scheduled') => {
 
 const deletePost = () => {
     deleteModal.value?.open({
-        url: `/workspaces/${props.workspace.id}/posts/${props.post.id}`,
+        url: destroyPost.url(props.post.id),
     });
 };
 </script>

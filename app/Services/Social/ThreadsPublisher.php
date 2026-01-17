@@ -2,13 +2,33 @@
 
 namespace App\Services\Social;
 
+use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ThreadsPublisher
 {
+    /**
+     * Meta Graph API error codes that indicate token issues.
+     *
+     * @see https://developers.facebook.com/docs/threads/error-handling
+     */
+    private const TOKEN_ERROR_CODES = [
+        190, // Invalid OAuth access token
+    ];
+
+    private const TOKEN_ERROR_SUBCODES = [
+        458, // App not installed
+        459, // User checkpointed
+        460, // Password changed
+        463, // Session expired
+        464, // Unconfirmed user
+        467, // Invalid access token
+    ];
+
     private string $baseUrl = 'https://graph.threads.net/v1.0';
 
     public function publish(PostPlatform $postPlatform): array
@@ -62,7 +82,7 @@ class ThreadsPublisher
                 'status' => $containerResponse->status(),
                 'body' => $containerResponse->body(),
             ]);
-            throw new \Exception('Threads API error: '.$containerResponse->body());
+            $this->handleApiError($containerResponse, 'Threads API error');
         }
 
         $containerId = $containerResponse->json()['id'];
@@ -88,7 +108,7 @@ class ThreadsPublisher
                 'status' => $containerResponse->status(),
                 'body' => $containerResponse->body(),
             ]);
-            throw new \Exception('Threads API error: '.$containerResponse->body());
+            $this->handleApiError($containerResponse, 'Threads API error');
         }
 
         $containerId = $containerResponse->json()['id'];
@@ -119,7 +139,7 @@ class ThreadsPublisher
                 'status' => $containerResponse->status(),
                 'body' => $containerResponse->body(),
             ]);
-            throw new \Exception('Threads API error: '.$containerResponse->body());
+            $this->handleApiError($containerResponse, 'Threads API error');
         }
 
         $containerId = $containerResponse->json()['id'];
@@ -191,7 +211,7 @@ class ThreadsPublisher
             Log::error('Threads carousel container creation failed', [
                 'body' => $carouselResponse->body(),
             ]);
-            throw new \Exception('Threads API error: '.$carouselResponse->body());
+            $this->handleApiError($carouselResponse, 'Threads API error');
         }
 
         $carouselId = $carouselResponse->json()['id'];
@@ -212,7 +232,7 @@ class ThreadsPublisher
                 'status' => $publishResponse->status(),
                 'body' => $publishResponse->body(),
             ]);
-            throw new \Exception('Threads publish error: '.$publishResponse->body());
+            $this->handleApiError($publishResponse, 'Threads publish error');
         }
 
         $mediaId = $publishResponse->json()['id'];
@@ -288,7 +308,7 @@ class ThreadsPublisher
 
         if ($response->failed()) {
             Log::error('Threads token refresh failed', ['body' => $response->body()]);
-            throw new \Exception('Failed to refresh Threads token: '.$response->body());
+            $this->handleApiError($response, 'Failed to refresh Threads token');
         }
 
         $data = $response->json();
@@ -299,5 +319,28 @@ class ThreadsPublisher
         ]);
 
         Log::info('Threads token refreshed successfully');
+    }
+
+    private function handleApiError(Response $response, string $context): void
+    {
+        $body = $response->json() ?? [];
+        $error = $body['error'] ?? [];
+        $errorCode = $error['code'] ?? null;
+        $errorSubcode = $error['error_subcode'] ?? null;
+        $errorType = $error['type'] ?? null;
+        $message = $error['message'] ?? $response->body();
+
+        $isTokenError = $errorType === 'OAuthException'
+            || in_array($errorCode, self::TOKEN_ERROR_CODES)
+            || in_array($errorSubcode, self::TOKEN_ERROR_SUBCODES);
+
+        if ($isTokenError) {
+            throw new TokenExpiredException(
+                "{$context}: {$message}",
+                $errorCode ? (string) $errorCode : null
+            );
+        }
+
+        throw new \Exception("{$context}: {$message}");
     }
 }

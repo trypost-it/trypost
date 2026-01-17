@@ -88,9 +88,4 @@ return [
         'redirect' => env('THREADS_CLIENT_REDIRECT'),
     ],
 
-    'stripe' => [
-        'price_id' => env('STRIPE_PRICE_ID'),
-        'workspace_price' => env('STRIPE_WORKSPACE_PRICE', 2000), // $20.00 in cents
-    ],
-
 ];

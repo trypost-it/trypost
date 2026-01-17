@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import type { InertiaLinkProps } from '@inertiajs/vue3';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Briefcase, Menu } from 'lucide-vue-next';
+import { Calendar, Menu, Settings, Share2, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +28,7 @@ import {
 } from '@/components/ui/sheet';
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useActiveUrl } from '@/composables/useActiveUrl';
+import { calendar } from '@/routes';
 import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
@@ -40,6 +42,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const page = usePage();
 const auth = computed(() => page.props.auth);
+const currentWorkspace = computed(() => page.props.currentWorkspace);
 const { urlIsActive } = useActiveUrl();
 
 function activeItemStyles(url: NonNullable<InertiaLinkProps['href']>) {
@@ -50,9 +53,24 @@ function activeItemStyles(url: NonNullable<InertiaLinkProps['href']>) {
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Workspaces',
-        href: '/workspaces',
-        icon: Briefcase,
+        title: 'Calendar',
+        href: '/calendar',
+        icon: Calendar,
+    },
+    {
+        title: 'Accounts',
+        href: '/accounts',
+        icon: Share2,
+    },
+    {
+        title: 'Members',
+        href: '/members',
+        icon: Users,
+    },
+    {
+        title: 'Settings',
+        href: '/settings',
+        icon: Settings,
     },
 ];
 </script>
@@ -62,7 +80,7 @@ const mainNavItems: NavItem[] = [
         <div class="border-b border-sidebar-border/80">
             <div class="mx-auto flex h-16 items-center px-4 md:max-w-7xl">
                 <!-- Mobile Menu -->
-                <div class="lg:hidden">
+                <div v-if="currentWorkspace" class="lg:hidden">
                     <Sheet>
                         <SheetTrigger :as-child="true">
                             <Button variant="ghost" size="icon" class="mr-2 h-9 w-9">
@@ -78,27 +96,35 @@ const mainNavItems: NavItem[] = [
                                     class="hidden dark:block h-8 w-auto" />
                             </SheetHeader>
                             <div class="flex h-full flex-1 flex-col justify-between space-y-4 py-6">
-                                <nav class="-mx-3 space-y-1">
-                                    <Link v-for="item in mainNavItems" :key="item.title" :href="item.href"
-                                        class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
-                                        :class="activeItemStyles(item.href)">
-                                        <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
-                                        {{ item.title }}
-                                    </Link>
-                                </nav>
+                                <div class="space-y-4">
+                                    <WorkspaceSwitcher />
+                                    <nav class="-mx-3 space-y-1">
+                                        <Link v-for="item in mainNavItems" :key="item.title" :href="item.href"
+                                            class="flex items-center gap-x-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent"
+                                            :class="activeItemStyles(item.href)">
+                                            <component v-if="item.icon" :is="item.icon" class="h-5 w-5" />
+                                            {{ item.title }}
+                                        </Link>
+                                    </nav>
+                                </div>
                             </div>
                         </SheetContent>
                     </Sheet>
                 </div>
 
-                <Link href="/workspaces" class="flex items-center gap-x-2">
+                <Link :href="calendar.url()" class="flex items-center gap-x-2">
                     <img src="/images/trypost/logo-light.png" alt="TryPost" class="dark:hidden h-8 w-auto" />
                     <img src="/images/trypost/logo-dark.png" alt="TryPost" class="hidden dark:block h-8 w-auto" />
                 </Link>
 
+                <!-- Workspace Switcher - Desktop -->
+                <div v-if="currentWorkspace" class="ml-6 hidden lg:block">
+                    <WorkspaceSwitcher />
+                </div>
+
                 <!-- Desktop Menu -->
-                <div class="hidden h-full lg:flex lg:flex-1">
-                    <NavigationMenu class="ml-10 flex h-full items-stretch">
+                <div v-if="currentWorkspace" class="hidden h-full lg:flex lg:flex-1">
+                    <NavigationMenu class="ml-6 flex h-full items-stretch">
                         <NavigationMenuList class="flex h-full items-stretch space-x-2">
                             <NavigationMenuItem v-for="(item, index) in mainNavItems" :key="index"
                                 class="relative flex h-full items-center">

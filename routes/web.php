@@ -11,9 +11,11 @@ use App\Http\Controllers\Auth\XController;
 use App\Http\Controllers\Auth\YouTubeController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\WorkspaceController;
 use App\Http\Controllers\WorkspaceInviteController;
+use App\Http\Middleware\EnsureUserSetupIsComplete;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -32,112 +34,98 @@ Route::get('/terms', function () {
     return Inertia::render('legal/Terms');
 })->name('terms');
 
-Route::get('dashboard', function () {
-    return redirect()->route('workspaces.index');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
+// Subscription selection (requires auth but not subscription)
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Workspaces
-    Route::resource('workspaces', WorkspaceController::class);
-    Route::get('workspaces/{workspace}/settings', [WorkspaceController::class, 'settings'])
-        ->name('workspaces.settings');
-    Route::put('workspaces/{workspace}/settings', [WorkspaceController::class, 'updateSettings'])
-        ->name('workspaces.settings.update');
+    Route::get('subscribe', [BillingController::class, 'subscribe'])->name('subscribe');
+    Route::post('billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
+    Route::get('billing/processing', [BillingController::class, 'processing'])->name('billing.processing');
+});
+
+// Onboarding routes (requires auth but not subscription or setup complete)
+Route::middleware(['auth', 'verified'])->prefix('onboarding')->group(function () {
+    Route::get('step1', [OnboardingController::class, 'step1'])->name('onboarding.step1');
+    Route::post('step1', [OnboardingController::class, 'storeStep1'])->name('onboarding.step1.store');
+    Route::get('step2', [OnboardingController::class, 'step2'])->name('onboarding.step2');
+    Route::post('step2', [OnboardingController::class, 'storeStep2'])->name('onboarding.step2.store');
+    Route::get('complete', [OnboardingController::class, 'complete'])->name('onboarding.complete');
+});
+
+// Social Connect routes (requires auth but not subscription - needed for onboarding)
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('connect/linkedin', [LinkedInController::class, 'connect'])->name('social.linkedin.connect');
+    Route::get('accounts/linkedin/callback', [LinkedInController::class, 'callback'])->name('social.linkedin.callback');
+
+    Route::get('connect/linkedin-page', [LinkedInPageController::class, 'connect'])->name('social.linkedin-page.connect');
+    Route::get('accounts/linkedin-page/callback', [LinkedInPageController::class, 'callback'])->name('social.linkedin-page.callback');
+    Route::get('accounts/linkedin-page/select', [LinkedInPageController::class, 'selectPage'])->name('social.linkedin-page.select-page');
+    Route::post('accounts/linkedin-page/select', [LinkedInPageController::class, 'select'])->name('social.linkedin-page.select');
+
+    Route::get('connect/x', [XController::class, 'connect'])->name('social.x.connect');
+    Route::get('accounts/x/callback', [XController::class, 'callback'])->name('social.x.callback');
+
+    Route::get('connect/tiktok', [TikTokController::class, 'connect'])->name('social.tiktok.connect');
+    Route::get('accounts/tiktok/callback', [TikTokController::class, 'callback'])->name('social.tiktok.callback');
+
+    Route::get('connect/youtube', [YouTubeController::class, 'connect'])->name('social.youtube.connect');
+    Route::get('accounts/youtube/callback', [YouTubeController::class, 'callback'])->name('social.youtube.callback');
+    Route::get('accounts/youtube/select', [YouTubeController::class, 'selectChannel'])->name('social.youtube.select-channel');
+    Route::post('accounts/youtube/select', [YouTubeController::class, 'select'])->name('social.youtube.select');
+
+    Route::get('connect/facebook', [FacebookController::class, 'connect'])->name('social.facebook.connect');
+    Route::get('accounts/facebook/callback', [FacebookController::class, 'callback'])->name('social.facebook.callback');
+    Route::get('accounts/facebook/select', [FacebookController::class, 'selectPage'])->name('social.facebook.select-page');
+    Route::post('accounts/facebook/select', [FacebookController::class, 'select'])->name('social.facebook.select');
+
+    Route::get('connect/instagram', [InstagramController::class, 'connect'])->name('social.instagram.connect');
+    Route::get('accounts/instagram/callback', [InstagramController::class, 'callback'])->name('social.instagram.callback');
+    Route::get('accounts/instagram/select', [InstagramController::class, 'selectAccount'])->name('social.instagram.select-account');
+    Route::post('accounts/instagram/select', [InstagramController::class, 'select'])->name('social.instagram.select');
+
+    Route::get('connect/threads', [ThreadsController::class, 'connect'])->name('social.threads.connect');
+    Route::get('accounts/threads/callback', [ThreadsController::class, 'callback'])->name('social.threads.callback');
+});
+
+// Routes that require active subscription and completed onboarding
+Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::class])->group(function () {
+    // Workspaces management
+    Route::get('workspaces', [WorkspaceController::class, 'index'])->name('workspaces.index');
+    Route::get('workspaces/create', [WorkspaceController::class, 'create'])->name('workspaces.create');
+    Route::post('workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
+    Route::post('workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');
+    Route::delete('workspaces/{workspace}', [WorkspaceController::class, 'destroy'])->name('workspaces.destroy');
+
+    // Current workspace routes (no {workspace} in URL)
+    Route::get('settings', [WorkspaceController::class, 'settings'])->name('settings');
+    Route::put('settings', [WorkspaceController::class, 'updateSettings'])->name('settings.update');
 
     // Social Accounts
-    Route::get('workspaces/{workspace}/accounts', [SocialController::class, 'index'])
-        ->name('workspaces.accounts');
-    Route::delete('workspaces/{workspace}/accounts/{account}', [SocialController::class, 'disconnect'])
-        ->name('workspaces.disconnect');
-
-    // LinkedIn
-    Route::get('workspaces/{workspace}/connect/linkedin', [LinkedInController::class, 'connect'])
-        ->name('social.linkedin.connect');
-    Route::get('accounts/linkedin/callback', [LinkedInController::class, 'callback'])
-        ->name('social.linkedin.callback');
-
-    // LinkedIn Page
-    Route::get('workspaces/{workspace}/connect/linkedin-page', [LinkedInPageController::class, 'connect'])
-        ->name('social.linkedin-page.connect');
-    Route::get('accounts/linkedin-page/callback', [LinkedInPageController::class, 'callback'])
-        ->name('social.linkedin-page.callback');
-    Route::get('accounts/linkedin-page/select', [LinkedInPageController::class, 'selectPage'])
-        ->name('social.linkedin-page.select-page');
-    Route::post('accounts/linkedin-page/select', [LinkedInPageController::class, 'select'])
-        ->name('social.linkedin-page.select');
-
-    // X (Twitter)
-    Route::get('workspaces/{workspace}/connect/x', [XController::class, 'connect'])
-        ->name('social.x.connect');
-    Route::get('accounts/x/callback', [XController::class, 'callback'])
-        ->name('social.x.callback');
-
-    // TikTok
-    Route::get('workspaces/{workspace}/connect/tiktok', [TikTokController::class, 'connect'])
-        ->name('social.tiktok.connect');
-    Route::get('accounts/tiktok/callback', [TikTokController::class, 'callback'])
-        ->name('social.tiktok.callback');
-
-    // YouTube
-    Route::get('workspaces/{workspace}/connect/youtube', [YouTubeController::class, 'connect'])
-        ->name('social.youtube.connect');
-    Route::get('accounts/youtube/callback', [YouTubeController::class, 'callback'])
-        ->name('social.youtube.callback');
-    Route::get('accounts/youtube/select', [YouTubeController::class, 'selectChannel'])
-        ->name('social.youtube.select-channel');
-    Route::post('accounts/youtube/select', [YouTubeController::class, 'select'])
-        ->name('social.youtube.select');
-
-    // Facebook
-    Route::get('workspaces/{workspace}/connect/facebook', [FacebookController::class, 'connect'])
-        ->name('social.facebook.connect');
-    Route::get('accounts/facebook/callback', [FacebookController::class, 'callback'])
-        ->name('social.facebook.callback');
-    Route::get('accounts/facebook/select', [FacebookController::class, 'selectPage'])
-        ->name('social.facebook.select-page');
-    Route::post('accounts/facebook/select', [FacebookController::class, 'select'])
-        ->name('social.facebook.select');
-
-    // Instagram
-    Route::get('workspaces/{workspace}/connect/instagram', [InstagramController::class, 'connect'])
-        ->name('social.instagram.connect');
-    Route::get('accounts/instagram/callback', [InstagramController::class, 'callback'])
-        ->name('social.instagram.callback');
-    Route::get('accounts/instagram/select', [InstagramController::class, 'selectAccount'])
-        ->name('social.instagram.select-account');
-    Route::post('accounts/instagram/select', [InstagramController::class, 'select'])
-        ->name('social.instagram.select');
-
-    // Threads
-    Route::get('workspaces/{workspace}/connect/threads', [ThreadsController::class, 'connect'])
-        ->name('social.threads.connect');
-    Route::get('accounts/threads/callback', [ThreadsController::class, 'callback'])
-        ->name('social.threads.callback');
+    Route::get('accounts', [SocialController::class, 'index'])->name('accounts');
+    Route::delete('accounts/{account}', [SocialController::class, 'disconnect'])->name('accounts.disconnect');
 
     // Calendar
-    Route::get('workspaces/{workspace}/calendar', [PostController::class, 'calendar'])
-        ->name('workspaces.calendar');
+    Route::get('calendar', [PostController::class, 'calendar'])->name('calendar');
 
     // Posts
-    Route::resource('workspaces.posts', PostController::class);
+    Route::get('posts', [PostController::class, 'index'])->name('posts.index');
+    Route::get('posts/create', [PostController::class, 'create'])->name('posts.create');
+    Route::post('posts', [PostController::class, 'store'])->name('posts.store');
+    Route::get('posts/{post}', [PostController::class, 'show'])->name('posts.show');
+    Route::get('posts/{post}/edit', [PostController::class, 'edit'])->name('posts.edit');
+    Route::put('posts/{post}', [PostController::class, 'update'])->name('posts.update');
+    Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
 
     // Media
     Route::post('media', [MediaController::class, 'store'])->name('media.store');
     Route::delete('media/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
 
-    // Workspace Invites & Members
-    Route::get('workspaces/{workspace}/members', [WorkspaceInviteController::class, 'index'])
-        ->name('workspaces.members');
-    Route::post('workspaces/{workspace}/invites', [WorkspaceInviteController::class, 'store'])
-        ->name('workspaces.invites.store');
-    Route::delete('workspaces/{workspace}/invites/{invite}', [WorkspaceInviteController::class, 'destroy'])
-        ->name('workspaces.invites.destroy');
-    Route::delete('workspaces/{workspace}/members/{user}', [WorkspaceInviteController::class, 'removeMember'])
-        ->name('workspaces.members.remove');
+    // Members
+    Route::get('members', [WorkspaceInviteController::class, 'index'])->name('members');
+    Route::post('invites', [WorkspaceInviteController::class, 'store'])->name('invites.store');
+    Route::delete('invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('invites.destroy');
+    Route::delete('members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('members.remove');
 
     // Billing
     Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
-    Route::post('billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
     Route::get('billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
 });
 

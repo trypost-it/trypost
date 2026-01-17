@@ -2,14 +2,33 @@
 
 namespace App\Services\Social;
 
+use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class YouTubePublisher
 {
+    /**
+     * Google/YouTube API error codes that indicate token issues.
+     *
+     * @see https://developers.google.com/youtube/v3/docs/errors
+     */
+    private const TOKEN_ERROR_CODES = [
+        'invalid_grant',
+        'invalid_token',
+        'unauthorized',
+    ];
+
+    private const TOKEN_ERROR_REASONS = [
+        'authError',
+        'forbidden',
+        'unauthorized',
+    ];
+
     private string $baseUrl = 'https://www.googleapis.com';
 
     private string $accessToken;
@@ -87,7 +106,7 @@ class YouTubePublisher
                 'status' => $initResponse->status(),
                 'body' => $initResponse->body(),
             ]);
-            throw new \Exception('YouTube API error: '.$initResponse->body());
+            $this->handleApiError($initResponse, 'YouTube API error');
         }
 
         $uploadUrl = $initResponse->header('Location');
@@ -113,7 +132,7 @@ class YouTubePublisher
                 'status' => $uploadResponse->status(),
                 'body' => $uploadResponse->body(),
             ]);
-            throw new \Exception('YouTube upload error: '.$uploadResponse->body());
+            $this->handleApiError($uploadResponse, 'YouTube upload error');
         }
 
         $data = $uploadResponse->json();
@@ -154,7 +173,7 @@ class YouTubePublisher
     private function refreshToken(SocialAccount $account): void
     {
         if (! $account->refresh_token) {
-            throw new \Exception('No refresh token available for YouTube account');
+            throw new TokenExpiredException('No refresh token available for YouTube account');
         }
 
         $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
@@ -166,7 +185,7 @@ class YouTubePublisher
 
         if ($response->failed()) {
             Log::error('YouTube token refresh failed', ['body' => $response->body()]);
-            throw new \Exception('Failed to refresh YouTube token: '.$response->body());
+            $this->handleApiError($response, 'Failed to refresh YouTube token');
         }
 
         $data = $response->json();
@@ -178,5 +197,38 @@ class YouTubePublisher
         ]);
 
         Log::info('YouTube token refreshed successfully');
+    }
+
+    private function handleApiError(Response $response, string $context): void
+    {
+        $body = $response->json() ?? [];
+
+        // Google OAuth error format
+        $errorCode = $body['error'] ?? null;
+        $errorDescription = $body['error_description'] ?? null;
+
+        // YouTube API error format
+        $error = $body['error'] ?? [];
+        if (is_array($error)) {
+            $errors = $error['errors'] ?? [];
+            $reason = $errors[0]['reason'] ?? null;
+            $message = $error['message'] ?? $errorDescription ?? $response->body();
+        } else {
+            $reason = null;
+            $message = $errorDescription ?? $response->body();
+        }
+
+        $isTokenError = $response->status() === 401
+            || in_array($errorCode, self::TOKEN_ERROR_CODES)
+            || in_array($reason, self::TOKEN_ERROR_REASONS);
+
+        if ($isTokenError) {
+            throw new TokenExpiredException(
+                "{$context}: {$message}",
+                is_string($errorCode) ? $errorCode : $reason
+            );
+        }
+
+        throw new \Exception("{$context}: {$message}");
     }
 }

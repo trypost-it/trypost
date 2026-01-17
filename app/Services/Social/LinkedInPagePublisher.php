@@ -2,17 +2,30 @@
 
 namespace App\Services\Social;
 
+use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class LinkedInPagePublisher
 {
+    /**
+     * LinkedIn API error codes that indicate token issues.
+     *
+     * @see https://learn.microsoft.com/en-us/linkedin/shared/api-guide/concepts/error-handling
+     */
+    private const TOKEN_ERROR_CODES = [
+        'REVOKED_ACCESS_TOKEN',
+        'EXPIRED_ACCESS_TOKEN',
+        'INVALID_ACCESS_TOKEN',
+    ];
+
     private string $baseUrl = 'https://api.linkedin.com';
 
-    private string $apiVersion = '202501';
+    private string $apiVersion = '202601';
 
     private string $accessToken;
 
@@ -72,7 +85,7 @@ class LinkedInPagePublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            throw new \Exception('LinkedIn Page API error: '.$response->body());
+            $this->handleApiError($response, 'LinkedIn Page API error');
         }
 
         $postId = $response->header('x-restli-id');
@@ -131,7 +144,7 @@ class LinkedInPagePublisher
 
         if ($initResponse->failed()) {
             Log::error('LinkedIn Page image init failed', ['body' => $initResponse->body()]);
-            throw new \Exception('Failed to initialize LinkedIn Page image upload: '.$initResponse->body());
+            $this->handleApiError($initResponse, 'Failed to initialize LinkedIn Page image upload');
         }
 
         $initData = $initResponse->json();
@@ -156,7 +169,7 @@ class LinkedInPagePublisher
 
         if ($uploadResponse->failed()) {
             Log::error('LinkedIn Page image upload failed', ['body' => $uploadResponse->body()]);
-            throw new \Exception('Failed to upload LinkedIn Page image: '.$uploadResponse->body());
+            $this->handleApiError($uploadResponse, 'Failed to upload LinkedIn Page image');
         }
 
         Log::info('LinkedIn Page image upload success', ['imageUrn' => $imageUrn]);
@@ -187,7 +200,7 @@ class LinkedInPagePublisher
 
         if ($initResponse->failed()) {
             Log::error('LinkedIn Page video init failed', ['body' => $initResponse->body()]);
-            throw new \Exception('Failed to initialize LinkedIn Page video upload: '.$initResponse->body());
+            $this->handleApiError($initResponse, 'Failed to initialize LinkedIn Page video upload');
         }
 
         $initData = $initResponse->json();
@@ -234,7 +247,7 @@ class LinkedInPagePublisher
                     'index' => $index,
                     'body' => $chunkResponse->body(),
                 ]);
-                throw new \Exception('Failed to upload LinkedIn Page video chunk: '.$chunkResponse->body());
+                $this->handleApiError($chunkResponse, 'Failed to upload LinkedIn Page video chunk');
             }
 
             $etag = $chunkResponse->header('etag');
@@ -259,7 +272,7 @@ class LinkedInPagePublisher
 
         if ($finalizeResponse->failed()) {
             Log::error('LinkedIn Page video finalize failed', ['body' => $finalizeResponse->body()]);
-            throw new \Exception('Failed to finalize LinkedIn Page video upload: '.$finalizeResponse->body());
+            $this->handleApiError($finalizeResponse, 'Failed to finalize LinkedIn Page video upload');
         }
 
         Log::info('LinkedIn Page video upload finalized', ['videoUrn' => $videoUrn]);
@@ -307,7 +320,7 @@ class LinkedInPagePublisher
     private function refreshToken(SocialAccount $account): void
     {
         if (! $account->refresh_token) {
-            throw new \Exception('No refresh token available for LinkedIn Page account');
+            throw new TokenExpiredException('No refresh token available for LinkedIn Page account');
         }
 
         $response = Http::asForm()->post('https://www.linkedin.com/oauth/v2/accessToken', [
@@ -318,7 +331,7 @@ class LinkedInPagePublisher
         ]);
 
         if ($response->failed()) {
-            throw new \Exception('Failed to refresh LinkedIn Page token: '.$response->body());
+            $this->handleApiError($response, 'Failed to refresh LinkedIn Page token');
         }
 
         $data = $response->json();
@@ -328,5 +341,21 @@ class LinkedInPagePublisher
             'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
             'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
         ]);
+    }
+
+    private function handleApiError(Response $response, string $context): void
+    {
+        $body = $response->json() ?? [];
+        $errorCode = $body['code'] ?? null;
+        $message = $body['message'] ?? $response->body();
+
+        if ($response->status() === 401 || in_array($errorCode, self::TOKEN_ERROR_CODES)) {
+            throw new TokenExpiredException(
+                "{$context}: {$message}",
+                $errorCode
+            );
+        }
+
+        throw new \Exception("{$context}: {$message}");
     }
 }

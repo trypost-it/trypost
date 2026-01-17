@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Enums\SocialPlatform;
+use App\Enums\Status;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Socialite\Facades\Socialite;
@@ -29,16 +31,31 @@ class LinkedInPageController extends SocialController
         'w_member_social',
     ];
 
-    public function connect(Request $request, Workspace $workspace): SymfonyResponse
+    public function connect(Request $request): SymfonyResponse|RedirectResponse
     {
         $this->ensurePlatformEnabled();
+
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('workspaces.create');
+        }
+
         $this->authorize('manageAccounts', $workspace);
 
-        if ($workspace->hasConnectedPlatform($this->platform->value)) {
+        $existingAccount = $workspace->socialAccounts()
+            ->where('platform', $this->platform->value)
+            ->first();
+
+        if ($existingAccount && ! $existingAccount->isDisconnected()) {
             return back()->with('error', 'This platform is already connected.');
         }
 
-        session(['social_connect_workspace' => $workspace->id]);
+        session([
+            'social_connect_workspace' => $workspace->id,
+            'linkedin_page_reconnect_id' => $existingAccount?->id,
+            'social_connect_onboarding' => $request->boolean('onboarding'),
+        ]);
 
         return Inertia::location(
             Socialite::driver($this->driver)
@@ -51,20 +68,18 @@ class LinkedInPageController extends SocialController
         );
     }
 
-    public function callback(Request $request): RedirectResponse
+    public function callback(Request $request): View|RedirectResponse
     {
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Session expired. Please try again.');
+            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Workspace not found.');
+            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
         }
 
         try {
@@ -79,10 +94,7 @@ class LinkedInPageController extends SocialController
             $organizations = $this->fetchOrganizations($socialUser->token);
 
             if (empty($organizations)) {
-                session()->forget('social_connect_workspace');
-
-                return redirect()->route('workspaces.accounts', $workspace)
-                    ->with('error', 'You are not an administrator of any LinkedIn page.');
+                return $this->popupCallback(false, 'You are not an administrator of any LinkedIn page.', $this->platform->value);
             }
 
             // Store data in session and redirect to selection page
@@ -96,6 +108,7 @@ class LinkedInPageController extends SocialController
                     'refresh_token' => $socialUser->refreshToken,
                     'expires_in' => $socialUser->expiresIn,
                     'organizations' => $organizations,
+                    'reconnect_id' => session('linkedin_page_reconnect_id'),
                 ],
             ]);
 
@@ -105,8 +118,7 @@ class LinkedInPageController extends SocialController
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Error connecting account. Please try again.');
+            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
         }
     }
 
@@ -115,14 +127,14 @@ class LinkedInPageController extends SocialController
         $pendingData = session('linkedin_page_pending');
 
         if (! $pendingData) {
-            return redirect()->route('workspaces.index')
+            return redirect()->route('dashboard')
                 ->with('error', 'Session expired. Please try again.');
         }
 
         $workspace = Workspace::find($pendingData['workspace_id']);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return redirect()->route('workspaces.index')
+            return redirect()->route('dashboard')
                 ->with('error', 'Workspace not found.');
         }
 
@@ -132,7 +144,7 @@ class LinkedInPageController extends SocialController
         ]);
     }
 
-    public function select(Request $request): RedirectResponse
+    public function select(Request $request): View
     {
         $request->validate([
             'organization_id' => 'required',
@@ -144,20 +156,47 @@ class LinkedInPageController extends SocialController
         $pendingData = session('linkedin_page_pending');
 
         if (! $pendingData) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Session expired. Please try again.');
+            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
         }
 
         $workspace = Workspace::find($pendingData['workspace_id']);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return redirect()->route('workspaces.index')
-                ->with('error', 'Workspace not found.');
+            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
         }
 
         try {
             $avatarPath = uploadFromUrl($request->organization_logo);
+            $reconnectId = $pendingData['reconnect_id'] ?? null;
 
+            if ($reconnectId) {
+                // Reconnect existing account
+                $existingAccount = $workspace->socialAccounts()->find($reconnectId);
+
+                if ($existingAccount) {
+                    $existingAccount->update([
+                        'platform_user_id' => $request->organization_id,
+                        'username' => $request->organization_vanity_name,
+                        'display_name' => $request->organization_name,
+                        'avatar_url' => $avatarPath,
+                        'access_token' => $pendingData['token'],
+                        'refresh_token' => $pendingData['refresh_token'],
+                        'token_expires_at' => $pendingData['expires_in'] ? now()->addSeconds($pendingData['expires_in']) : null,
+                        'meta' => [
+                            'organization_id' => $request->organization_id,
+                            'admin_user_id' => $pendingData['user_id'],
+                            'admin_name' => $pendingData['name'],
+                        ],
+                    ]);
+                    $existingAccount->markAsConnected();
+
+                    session()->forget(['linkedin_page_pending', 'linkedin_page_reconnect_id']);
+
+                    return $this->popupCallback(true, 'LinkedIn Page reconnected!', $this->platform->value);
+                }
+            }
+
+            // Create new account
             $workspace->socialAccounts()->create([
                 'platform' => $this->platform->value,
                 'platform_user_id' => $request->organization_id,
@@ -167,6 +206,7 @@ class LinkedInPageController extends SocialController
                 'access_token' => $pendingData['token'],
                 'refresh_token' => $pendingData['refresh_token'],
                 'token_expires_at' => $pendingData['expires_in'] ? now()->addSeconds($pendingData['expires_in']) : null,
+                'status' => Status::Connected,
                 'meta' => [
                     'organization_id' => $request->organization_id,
                     'admin_user_id' => $pendingData['user_id'],
@@ -174,17 +214,15 @@ class LinkedInPageController extends SocialController
                 ],
             ]);
 
-            session()->forget(['social_connect_workspace', 'linkedin_page_pending']);
+            session()->forget(['linkedin_page_pending', 'linkedin_page_reconnect_id']);
 
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('success', 'LinkedIn Page connected successfully!');
+            return $this->popupCallback(true, 'LinkedIn Page connected!', $this->platform->value);
         } catch (\Exception $e) {
             Log::error('LinkedIn Page selection error', [
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect()->route('workspaces.accounts', $workspace)
-                ->with('error', 'Error connecting page. Please try again.');
+            return $this->popupCallback(false, 'Error connecting page. Please try again.', $this->platform->value);
         }
     }
 

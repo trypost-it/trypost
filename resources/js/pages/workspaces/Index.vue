@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Plus, Calendar, Users, Settings } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { accounts, calendar, settings } from '@/routes';
+import { create as createWorkspace, index as workspacesIndex, switchMethod } from '@/routes/workspaces';
 import { type BreadcrumbItemType } from '@/types';
 
 interface Workspace {
@@ -22,11 +24,16 @@ interface Props {
 defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    {
-        title: 'Workspaces',
-        href: '/workspaces',
-    },
+    { title: 'Workspaces', href: workspacesIndex.url() },
 ];
+
+function switchAndNavigate(workspaceId: string, destination: string) {
+    router.post(switchMethod.url(workspaceId), {}, {
+        onSuccess: () => {
+            router.visit(destination);
+        },
+    });
+}
 </script>
 
 <template>
@@ -41,7 +48,7 @@ const breadcrumbs: BreadcrumbItemType[] = [
                         Gerencie seus workspaces e redes sociais
                     </p>
                 </div>
-                <Link href="/workspaces/create">
+                <Link :href="createWorkspace.url()">
                     <Button>
                         <Plus class="mr-2 h-4 w-4" />
                         Novo Workspace
@@ -55,7 +62,7 @@ const breadcrumbs: BreadcrumbItemType[] = [
                     <p class="mb-4 mt-2 text-sm text-muted-foreground">
                         Crie seu primeiro workspace para começar a agendar posts.
                     </p>
-                    <Link href="/workspaces/create">
+                    <Link :href="createWorkspace.url()">
                         <Button>
                             <Plus class="mr-2 h-4 w-4" />
                             Criar Workspace
@@ -81,21 +88,15 @@ const breadcrumbs: BreadcrumbItemType[] = [
                                 </span>
                             </div>
                             <div class="flex gap-2">
-                                <Link :href="`/workspaces/${workspace.id}/calendar`">
-                                    <Button variant="outline" size="sm">
-                                        <Calendar class="h-4 w-4" />
-                                    </Button>
-                                </Link>
-                                <Link :href="`/workspaces/${workspace.id}/accounts`">
-                                    <Button variant="outline" size="sm">
-                                        <Users class="h-4 w-4" />
-                                    </Button>
-                                </Link>
-                                <Link :href="`/workspaces/${workspace.id}`">
-                                    <Button variant="outline" size="sm">
-                                        <Settings class="h-4 w-4" />
-                                    </Button>
-                                </Link>
+                                <Button variant="outline" size="sm" @click="switchAndNavigate(workspace.id, calendar.url())">
+                                    <Calendar class="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="sm" @click="switchAndNavigate(workspace.id, accounts.url())">
+                                    <Users class="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="sm" @click="switchAndNavigate(workspace.id, settings.url())">
+                                    <Settings class="h-4 w-4" />
+                                </Button>
                             </div>
                         </div>
                     </CardContent>

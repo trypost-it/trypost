@@ -124,4 +124,39 @@ return [
 
     'logger' => env('CASHIER_LOGGER'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Subscription Plans
+    |--------------------------------------------------------------------------
+    |
+    | Define the available subscription plans with their Stripe price IDs.
+    | The 'monthly' plan bills at $25/workspace/month.
+    | The 'yearly' plan bills at $20/workspace/month (20% discount).
+    |
+    */
+
+    'plans' => [
+        'monthly' => [
+            'price_id' => env('STRIPE_PRICE_MONTHLY'),
+            'price' => 25,
+            'interval' => 'month',
+        ],
+        'yearly' => [
+            'price_id' => env('STRIPE_PRICE_YEARLY'),
+            'price' => 20,
+            'interval' => 'year',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trial Period
+    |--------------------------------------------------------------------------
+    |
+    | The number of days for the trial period. Set to 0 to disable trials.
+    |
+    */
+
+    'trial_days' => env('CASHIER_TRIAL_DAYS', 8),
+
 ];

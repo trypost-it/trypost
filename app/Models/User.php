@@ -3,8 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\User\Persona;
+use App\Enums\User\Setup;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,6 +29,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'setup',
+        'persona',
+        'current_workspace_id',
     ];
 
     /**
@@ -51,6 +57,8 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'setup' => Setup::class,
+            'persona' => Persona::class,
         ];
     }
 
@@ -74,6 +82,31 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the user's current workspace.
+     */
+    public function currentWorkspace(): BelongsTo
+    {
+        return $this->belongsTo(Workspace::class, 'current_workspace_id');
+    }
+
+    /**
+     * Switch to a different workspace.
+     */
+    public function switchWorkspace(Workspace $workspace): void
+    {
+        $this->update(['current_workspace_id' => $workspace->id]);
+    }
+
+    /**
+     * Check if user belongs to a workspace (owner or member).
+     */
+    public function belongsToWorkspace(Workspace $workspace): bool
+    {
+        return $this->workspaces()->where('id', $workspace->id)->exists()
+            || $this->memberWorkspaces()->where('workspaces.id', $workspace->id)->exists();
+    }
+
+    /**
      * Get the count of workspaces the user owns.
      */
     public function ownedWorkspacesCount(): int
@@ -87,6 +120,14 @@ class User extends Authenticatable
     public function hasActiveSubscription(): bool
     {
         return $this->subscribed('default');
+    }
+
+    /**
+     * Check if user has ever had a subscription (for trial eligibility).
+     */
+    public function hasEverSubscribed(): bool
+    {
+        return $this->subscriptions()->exists();
     }
 
     /**

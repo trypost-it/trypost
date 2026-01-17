@@ -6,19 +6,40 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class BillingController extends Controller
 {
+    /**
+     * Show the subscription selection page for new users.
+     */
+    public function subscribe(Request $request): Response|RedirectResponse
+    {
+        $user = $request->user();
+
+        // If already subscribed, redirect to billing
+        if ($user->subscribed('default')) {
+            return redirect()->route('billing.index');
+        }
+
+        return Inertia::render('billing/Subscribe', [
+            'trialDays' => config('cashier.trial_days'),
+        ]);
+    }
+
     /**
      * Show the billing dashboard.
      */
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $subscription = $user->subscription('default');
 
         return Inertia::render('billing/Index', [
-            'hasSubscription' => $user->hasActiveSubscription(),
-            'subscription' => $user->subscription('default')?->only([
+            'hasSubscription' => $user->subscribed('default'),
+            'onTrial' => $subscription?->onTrial() ?? false,
+            'trialEndsAt' => $subscription?->trial_ends_at?->toFormattedDateString(),
+            'subscription' => $subscription?->only([
                 'stripe_status',
                 'quantity',
                 'ends_at',
@@ -41,22 +62,47 @@ class BillingController extends Controller
     }
 
     /**
-     * Create a Stripe Checkout session for new subscription.
+     * Create a Stripe Checkout session for new subscription with trial.
      */
-    public function checkout(Request $request): RedirectResponse
+    public function checkout(Request $request): SymfonyResponse
     {
         $user = $request->user();
 
-        // Calculate quantity based on workspaces (minimum 1)
-        $quantity = max(1, $user->ownedWorkspacesCount());
+        $subscription = $user->newSubscription('default', config('cashier.plans.monthly.price_id'))
+            ->allowPromotionCodes()
+            ->trialDays(config('cashier.trial_days'))
+            ->quantity(1);
 
-        return $user->newSubscription('default', config('services.stripe.price_id'))
-            ->quantity($quantity)
-            ->checkout([
-                'success_url' => route('billing.index') . '?checkout=success',
-                'cancel_url' => route('billing.index') . '?checkout=cancelled',
-            ])
-            ->redirect();
+        $checkoutSession = $subscription->checkout([
+            'success_url' => route('billing.processing').'?status=success',
+            'cancel_url' => route('billing.processing').'?status=cancelled',
+        ]);
+
+        return Inertia::location($checkoutSession->url);
+    }
+
+    /**
+     * Show the checkout processing page.
+     */
+    public function processing(Request $request): Response|RedirectResponse
+    {
+        $user = $request->user();
+        $status = $request->query('status', 'processing');
+
+        // If already subscribed, redirect to dashboard
+        if ($user->subscribed('default')) {
+            return redirect()->route('dashboard');
+        }
+
+        // Validate status
+        if (! in_array($status, ['processing', 'success', 'cancelled'])) {
+            $status = 'processing';
+        }
+
+        return Inertia::render('billing/Processing', [
+            'userId' => $user->id,
+            'status' => $status,
+        ]);
     }
 
     /**
@@ -76,14 +122,14 @@ class BillingController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->hasActiveSubscription()) {
+        if (! $user->subscribed('default')) {
             return redirect()->route('billing.index')
-                ->withErrors(['subscription' => 'Você precisa de uma assinatura ativa.']);
+                ->withErrors(['subscription' => 'You need an active subscription.']);
         }
 
         $user->incrementWorkspaceQuantity();
 
-        return back()->with('success', 'Workspace adicionado à assinatura.');
+        return back()->with('success', 'Workspace added to subscription.');
     }
 
     /**
@@ -93,12 +139,12 @@ class BillingController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->hasActiveSubscription()) {
+        if (! $user->subscribed('default')) {
             return back();
         }
 
         $user->decrementWorkspaceQuantity();
 
-        return back()->with('success', 'Workspace removido da assinatura.');
+        return back()->with('success', 'Workspace removed from subscription.');
     }
 }

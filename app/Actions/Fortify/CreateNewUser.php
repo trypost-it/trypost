@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Concerns\ProfileValidationRules;
+use App\Enums\User\Setup;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -30,15 +31,20 @@ class CreateNewUser implements CreatesNewUsers
                 'name' => $input['name'],
                 'email' => $input['email'],
                 'password' => $input['password'],
+                'setup' => Setup::Role,
             ]);
 
             // Create default workspace for new user
             $workspace = $user->workspaces()->create([
-                'name' => 'Meu Workspace',
+                'name' => 'My Workspace',
+                'timezone' => 'UTC',
             ]);
 
             // Add user as owner member
             $workspace->members()->attach($user->id, ['role' => 'owner']);
+
+            // Set as current workspace
+            $user->update(['current_workspace_id' => $workspace->id]);
 
             return $user;
         });

@@ -20,7 +20,14 @@ return new class extends Migration
             $table->text('two_factor_secret')->nullable();
             $table->text('two_factor_recovery_codes')->nullable();
             $table->timestamp('two_factor_confirmed_at')->nullable();
+            $table->string('stripe_id')->nullable()->index();
+            $table->string('pm_type')->nullable();
+            $table->string('pm_last_four', 4)->nullable();
+            $table->timestamp('trial_ends_at')->nullable();
             $table->rememberToken();
+            $table->string('setup')->nullable();
+            $table->string('persona')->nullable();
+            $table->uuid('current_workspace_id')->nullable();
             $table->timestamps();
         });
 

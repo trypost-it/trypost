@@ -21,6 +21,8 @@
         "laravel/wayfinder": "^0.1.9",
         "league/flysystem-aws-s3-v3": "^3.0",
         "predis/predis": "^3.3",
+        "socialiteproviders/facebook": "^4.1",
+        "socialiteproviders/instagram": "^5.1",
         "socialiteproviders/linkedin": "^5.0",
         "socialiteproviders/tiktok": "^5.2",
         "socialiteproviders/twitter": "^4.1"

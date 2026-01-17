@@ -9,6 +9,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { calendar } from '@/routes';
+import { edit as editPost } from '@/routes/posts';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -91,9 +93,7 @@ useEcho(
 );
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Workspaces', href: '/workspaces' },
-    { title: props.workspace.name, href: `/workspaces/${props.workspace.id}` },
-    { title: 'Calendar', href: `/workspaces/${props.workspace.id}/calendar` },
+    { title: 'Calendar', href: calendar.url() },
     { title: 'Post', href: '#' },
 ];
 
@@ -158,7 +158,7 @@ const enabledPlatforms = computed(() => post.value.post_platforms.filter(pp => p
                         Created by {{ post.user.name }}
                     </p>
                 </div>
-                <Link v-if="canEdit" :href="`/workspaces/${workspace.id}/posts/${post.id}/edit`">
+                <Link v-if="canEdit" :href="editPost.url(post.id)">
                     <Button>
                         <Pencil class="mr-2 h-4 w-4" />
                         Edit Post

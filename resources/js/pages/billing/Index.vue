@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
-import { CreditCard, FileText, Building2, Check, ExternalLink } from 'lucide-vue-next';
+import { Head } from '@inertiajs/vue3';
+import { CreditCard, FileText, Building2, ExternalLink, Sparkles } from 'lucide-vue-next';
 
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,8 @@ interface Invoice {
 
 interface Props {
     hasSubscription: boolean;
+    onTrial: boolean;
+    trialEndsAt: string | null;
     subscription: Subscription | null;
     workspacesCount: number;
     invoices: Invoice[];
@@ -42,16 +44,10 @@ const props = defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
     {
-        title: 'Assinatura',
+        title: 'Subscription',
         href: '/billing',
     },
 ];
-
-const form = useForm({});
-
-function subscribe() {
-    form.post('/billing/checkout');
-}
 
 function openPortal() {
     window.location.href = '/billing/portal';
@@ -59,13 +55,13 @@ function openPortal() {
 
 function getStatusLabel(status: string): string {
     const labels: Record<string, string> = {
-        active: 'Ativa',
-        canceled: 'Cancelada',
-        incomplete: 'Incompleta',
-        incomplete_expired: 'Expirada',
-        past_due: 'Atrasada',
-        trialing: 'Teste',
-        unpaid: 'Não paga',
+        active: 'Active',
+        canceled: 'Canceled',
+        incomplete: 'Incomplete',
+        incomplete_expired: 'Expired',
+        past_due: 'Past due',
+        trialing: 'Trial',
+        unpaid: 'Unpaid',
     };
     return labels[status] || status;
 }
@@ -75,71 +71,36 @@ function getStatusVariant(status: string): 'default' | 'secondary' | 'destructiv
     if (status === 'canceled' || status === 'past_due' || status === 'unpaid') return 'destructive';
     return 'secondary';
 }
-
-const pricePerWorkspace = 20;
 </script>
 
 <template>
-    <Head title="Assinatura" />
+    <Head title="Subscription" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-6">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight">Assinatura</h1>
+                <h1 class="text-2xl font-bold tracking-tight">Subscription</h1>
                 <p class="text-muted-foreground">
-                    Gerencie sua assinatura e método de pagamento
+                    Manage your subscription and payment method
                 </p>
             </div>
 
-            <div class="grid gap-6 lg:grid-cols-2">
-                <Card v-if="!hasSubscription">
-                    <CardHeader>
-                        <CardTitle class="flex items-center gap-2">
-                            <Building2 class="h-5 w-5" />
-                            Plano Pro
-                        </CardTitle>
-                        <CardDescription>
-                            Crie e gerencie múltiplos workspaces
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="mb-6">
-                            <span class="text-4xl font-bold">${{ pricePerWorkspace }}</span>
-                            <span class="text-muted-foreground">/workspace/mês</span>
-                        </div>
-                        <ul class="space-y-2">
-                            <li class="flex items-center gap-2">
-                                <Check class="h-4 w-4 text-green-500" />
-                                <span>Workspaces ilimitados</span>
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <Check class="h-4 w-4 text-green-500" />
-                                <span>LinkedIn, X e TikTok</span>
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <Check class="h-4 w-4 text-green-500" />
-                                <span>Calendário de agendamento</span>
-                            </li>
-                            <li class="flex items-center gap-2">
-                                <Check class="h-4 w-4 text-green-500" />
-                                <span>Convide colaboradores</span>
-                            </li>
-                        </ul>
-                    </CardContent>
-                    <CardFooter>
-                        <Button @click="subscribe" :disabled="form.processing" class="w-full">
-                            <CreditCard class="mr-2 h-4 w-4" />
-                            Assinar Agora
-                        </Button>
-                    </CardFooter>
-                </Card>
+            <Alert v-if="onTrial" class="border-primary/50 bg-primary/5">
+                <Sparkles class="h-4 w-4 text-primary" />
+                <AlertTitle>Trial period active</AlertTitle>
+                <AlertDescription>
+                    Your trial ends on <strong>{{ trialEndsAt }}</strong>.
+                    After that, your subscription will be charged automatically.
+                </AlertDescription>
+            </Alert>
 
-                <Card v-else>
+            <div class="grid gap-6 lg:grid-cols-2">
+                <Card>
                     <CardHeader>
                         <div class="flex items-center justify-between">
                             <CardTitle class="flex items-center gap-2">
                                 <Building2 class="h-5 w-5" />
-                                Sua Assinatura
+                                Your Subscription
                             </CardTitle>
                             <Badge :variant="getStatusVariant(subscription?.stripe_status || '')">
                                 {{ getStatusLabel(subscription?.stripe_status || '') }}
@@ -153,8 +114,8 @@ const pricePerWorkspace = 20;
                                 <p class="text-2xl font-bold">{{ workspacesCount }}</p>
                             </div>
                             <div class="text-right">
-                                <p class="text-sm text-muted-foreground">Total mensal</p>
-                                <p class="text-2xl font-bold">${{ workspacesCount * pricePerWorkspace }}</p>
+                                <p class="text-sm text-muted-foreground">Subscription quantity</p>
+                                <p class="text-2xl font-bold">{{ subscription?.quantity || 0 }}</p>
                             </div>
                         </div>
 
@@ -163,21 +124,21 @@ const pricePerWorkspace = 20;
                             <div>
                                 <p class="font-medium capitalize">{{ defaultPaymentMethod.brand }} **** {{ defaultPaymentMethod.last4 }}</p>
                                 <p class="text-sm text-muted-foreground">
-                                    Expira {{ defaultPaymentMethod.exp_month }}/{{ defaultPaymentMethod.exp_year }}
+                                    Expires {{ defaultPaymentMethod.exp_month }}/{{ defaultPaymentMethod.exp_year }}
                                 </p>
                             </div>
                         </div>
 
-                        <div v-if="subscription?.ends_at" class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <p class="text-sm text-yellow-800">
-                                Sua assinatura será cancelada em {{ subscription.ends_at }}
+                        <div v-if="subscription?.ends_at" class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg dark:bg-yellow-950 dark:border-yellow-800">
+                            <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                                Your subscription will be canceled on {{ subscription.ends_at }}
                             </p>
                         </div>
                     </CardContent>
                     <CardFooter>
                         <Button @click="openPortal" variant="outline" class="w-full">
                             <ExternalLink class="mr-2 h-4 w-4" />
-                            Gerenciar no Stripe
+                            Manage on Stripe
                         </Button>
                     </CardFooter>
                 </Card>
@@ -186,15 +147,15 @@ const pricePerWorkspace = 20;
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
                             <FileText class="h-5 w-5" />
-                            Faturas
+                            Invoices
                         </CardTitle>
                         <CardDescription>
-                            Histórico de pagamentos
+                            Payment history
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div v-if="invoices.length === 0" class="text-center py-6 text-muted-foreground">
-                            Nenhuma fatura encontrada
+                            No invoices found
                         </div>
                         <div v-else class="space-y-3">
                             <a
@@ -209,21 +170,13 @@ const pricePerWorkspace = 20;
                                     <p class="text-sm text-muted-foreground">{{ invoice.total }}</p>
                                 </div>
                                 <Badge variant="outline">
-                                    {{ invoice.status === 'paid' ? 'Paga' : invoice.status }}
+                                    {{ invoice.status === 'paid' ? 'Paid' : invoice.status }}
                                 </Badge>
                             </a>
                         </div>
                     </CardContent>
                 </Card>
             </div>
-
-            <Alert v-if="!hasSubscription && workspacesCount > 0">
-                <Building2 class="h-4 w-4" />
-                <AlertTitle>Workspace Grátis</AlertTitle>
-                <AlertDescription>
-                    Você está usando seu workspace gratuito. Assine para criar mais workspaces e desbloquear todos os recursos.
-                </AlertDescription>
-            </Alert>
         </div>
     </AppLayout>
 </template>

@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Building2, Check } from 'lucide-vue-next';
+import { Facebook, Check } from 'lucide-vue-next';
 
 import PopupLayout from '@/layouts/PopupLayout.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { select as selectLinkedInPage } from '@/routes/social/linkedin-page';
+import { select as selectFacebookPage } from '@/routes/social/facebook';
 
-interface Organization {
+interface Page {
     id: string;
     name: string;
-    vanity_name: string | null;
-    logo: string | null;
+    username: string | null;
+    picture: string | null;
+    access_token: string;
 }
 
 interface Workspace {
@@ -21,18 +22,17 @@ interface Workspace {
 
 interface Props {
     workspace: Workspace;
-    organizations: Organization[];
+    pages: Page[];
     error?: string;
 }
 
 defineProps<Props>();
 
 const formRef = ref<HTMLFormElement | null>(null);
-const selectedOrg = ref<Organization | null>(null);
+const selectedPageId = ref<string | null>(null);
 
-const handleSelectPage = (org: Organization) => {
-    selectedOrg.value = org;
-    // Submit via regular form to get Blade response
+const handleSelectPage = (page: Page) => {
+    selectedPageId.value = page.id;
     setTimeout(() => formRef.value?.submit(), 0);
 };
 
@@ -40,21 +40,18 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
 </script>
 
 <template>
-    <PopupLayout title="Select LinkedIn Page">
+    <PopupLayout title="Select Facebook Page">
         <!-- Hidden form for regular POST submission -->
-        <form ref="formRef" :action="selectLinkedInPage.url()" method="POST" class="hidden">
+        <form ref="formRef" :action="selectFacebookPage.url()" method="POST" class="hidden">
             <input type="hidden" name="_token" :value="csrfToken" />
-            <input type="hidden" name="organization_id" :value="selectedOrg?.id" />
-            <input type="hidden" name="organization_name" :value="selectedOrg?.name" />
-            <input type="hidden" name="organization_vanity_name" :value="selectedOrg?.vanity_name ?? ''" />
-            <input type="hidden" name="organization_logo" :value="selectedOrg?.logo ?? ''" />
+            <input type="hidden" name="page_id" :value="selectedPageId" />
         </form>
 
         <div class="flex flex-col gap-6">
             <div class="flex items-center gap-3">
-                <img src="/images/accounts/linkedin.png" alt="LinkedIn" class="h-10 w-10" />
+                <img src="/images/accounts/facebook.png" alt="Facebook" class="h-10 w-10" />
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Select LinkedIn Page</h1>
+                    <h1 class="text-xl font-bold tracking-tight">Select Facebook Page</h1>
                     <p class="text-sm text-muted-foreground">Choose which page you want to connect</p>
                 </div>
             </div>
@@ -63,38 +60,38 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                 <AlertDescription>{{ error }}</AlertDescription>
             </Alert>
 
-            <div v-if="organizations.length === 0 && !error" class="text-center py-12">
+            <div v-if="pages.length === 0 && !error" class="text-center py-12">
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-                    <Building2 class="h-7 w-7 text-muted-foreground" />
+                    <Facebook class="h-7 w-7 text-muted-foreground" />
                 </div>
                 <h3 class="mt-4 text-lg font-semibold">No pages found</h3>
                 <p class="mt-1 text-sm text-muted-foreground">
-                    You are not an administrator of any LinkedIn page.
+                    You are not an admin of any Facebook page.
                 </p>
             </div>
 
             <div v-else class="grid gap-3">
                 <button
-                    v-for="org in organizations"
-                    :key="org.id"
-                    @click="handleSelectPage(org)"
+                    v-for="page in pages"
+                    :key="page.id"
+                    @click="handleSelectPage(page)"
                     class="group relative overflow-hidden rounded-lg border bg-card p-4 text-left transition-all hover:border-primary hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                 >
                     <div class="flex items-center gap-4">
                         <Avatar class="h-12 w-12 rounded-lg">
-                            <AvatarImage v-if="org.logo" :src="org.logo" class="object-cover" />
+                            <AvatarImage v-if="page.picture" :src="page.picture" class="object-cover" />
                             <AvatarFallback class="rounded-lg bg-blue-100 dark:bg-blue-900">
-                                <Building2 class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                                <Facebook class="h-6 w-6 text-blue-600 dark:text-blue-400" />
                             </AvatarFallback>
                         </Avatar>
                         <div class="flex-1 min-w-0">
                             <h3 class="font-semibold truncate group-hover:text-primary transition-colors">
-                                {{ org.name }}
+                                {{ page.name }}
                             </h3>
-                            <p v-if="org.vanity_name" class="text-sm text-muted-foreground truncate">
-                                linkedin.com/company/{{ org.vanity_name }}
+                            <p v-if="page.username" class="text-sm text-muted-foreground truncate">
+                                facebook.com/{{ page.username }}
                             </p>
-                            <p v-else class="text-sm text-muted-foreground">LinkedIn Page</p>
+                            <p v-else class="text-sm text-muted-foreground">Facebook Page</p>
                         </div>
                         <div class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                             <div

@@ -47,7 +47,7 @@
             };
 
             // Try to notify the parent window
-            if (window.opener) {
+            if (window.opener && !window.opener.closed) {
                 try {
                     window.opener.postMessage({
                         type: 'social-oauth-callback',
@@ -61,10 +61,28 @@
                 }
             }
 
-            // Close this window after a short delay
+            // Try to close immediately and with delay
+            function closeWindow() {
+                try {
+                    window.open('', '_self', '');
+                    window.close();
+                } catch (e) {}
+
+                // Fallback: try again
+                try {
+                    window.close();
+                } catch (e) {}
+            }
+
+            // Close after a short delay
+            setTimeout(closeWindow, 1000);
+
+            // If still open after 2 seconds, show manual close message
             setTimeout(function() {
-                window.close();
-            }, 1500);
+                if (!window.closed) {
+                    document.querySelector('.submessage').textContent = 'You can close this window now.';
+                }
+            }, 2000);
         })();
     </script>
 </body>

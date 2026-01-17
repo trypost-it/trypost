@@ -17,6 +17,7 @@ return new class extends Migration
             $table->uuid('social_account_id');
             $table->string('platform');
             $table->text('content')->nullable();
+            $table->string('content_type');
             $table->string('status')->default('pending');
             $table->string('platform_post_id')->nullable();
             $table->boolean('enabled');

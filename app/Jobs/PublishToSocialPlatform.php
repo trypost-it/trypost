@@ -6,6 +6,7 @@ use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Events\PostPlatformStatusUpdated;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
+use App\Services\Social\BlueskyPublisher;
 use App\Services\Social\FacebookPublisher;
 use App\Services\Social\InstagramPublisher;
 use App\Services\Social\LinkedInPagePublisher;
@@ -71,7 +72,7 @@ class PublishToSocialPlatform implements ShouldQueue
         PostPlatformStatusUpdated::dispatch($this->postPlatform->fresh());
     }
 
-    private function getPublisher(): LinkedInPublisher|LinkedInPagePublisher|XPublisher|TikTokPublisher|YouTubePublisher|FacebookPublisher|InstagramPublisher|ThreadsPublisher|PinterestPublisher
+    private function getPublisher(): LinkedInPublisher|LinkedInPagePublisher|XPublisher|TikTokPublisher|YouTubePublisher|FacebookPublisher|InstagramPublisher|ThreadsPublisher|PinterestPublisher|BlueskyPublisher
     {
         return match ($this->postPlatform->platform) {
             SocialPlatform::LinkedIn => app(LinkedInPublisher::class),
@@ -83,6 +84,7 @@ class PublishToSocialPlatform implements ShouldQueue
             SocialPlatform::Instagram => app(InstagramPublisher::class),
             SocialPlatform::Threads => app(ThreadsPublisher::class),
             SocialPlatform::Pinterest => app(PinterestPublisher::class),
+            SocialPlatform::Bluesky => app(BlueskyPublisher::class),
         };
     }
 

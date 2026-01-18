@@ -41,6 +41,9 @@ return [
         'pinterest' => [
             'enabled' => env('TRYPOST_PINTEREST_ENABLED', true),
         ],
+        'bluesky' => [
+            'enabled' => env('TRYPOST_BLUESKY_ENABLED', true),
+        ],
     ],
 
 ];

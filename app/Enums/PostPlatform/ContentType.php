@@ -41,6 +41,9 @@ enum ContentType: string
     case PinterestVideoPin = 'pinterest_video_pin';
     case PinterestCarousel = 'pinterest_carousel';
 
+    // Bluesky
+    case BlueskyPost = 'bluesky_post';
+
     public function label(): string
     {
         return match ($this) {
@@ -59,6 +62,7 @@ enum ContentType: string
             self::PinterestPin => 'Pin',
             self::PinterestVideoPin => 'Video Pin',
             self::PinterestCarousel => 'Carousel',
+            self::BlueskyPost => 'Post',
         };
     }
 
@@ -80,6 +84,7 @@ enum ContentType: string
             self::PinterestPin => 'Standard image pin',
             self::PinterestVideoPin => 'Video pin (4s - 15min)',
             self::PinterestCarousel => 'Multi-image carousel (2-5 images)',
+            self::BlueskyPost => 'Text post with optional images',
         };
     }
 
@@ -95,6 +100,7 @@ enum ContentType: string
             self::XPost => SocialPlatform::X,
             self::ThreadsPost => SocialPlatform::Threads,
             self::PinterestPin, self::PinterestVideoPin, self::PinterestCarousel => SocialPlatform::Pinterest,
+            self::BlueskyPost => SocialPlatform::Bluesky,
         };
     }
 
@@ -126,6 +132,7 @@ enum ContentType: string
             self::ThreadsPost => 10,
             self::PinterestPin, self::PinterestVideoPin => 1,
             self::PinterestCarousel => 5,
+            self::BlueskyPost => 4,
         };
     }
 
@@ -142,6 +149,7 @@ enum ContentType: string
             self::ThreadsPost => true,
             self::PinterestVideoPin => true,
             self::PinterestPin, self::PinterestCarousel => false,
+            self::BlueskyPost => true,
         };
     }
 
@@ -162,6 +170,7 @@ enum ContentType: string
             self::LinkedInPost, self::LinkedInPagePost => false,
             self::XPost => false,
             self::ThreadsPost => false,
+            self::BlueskyPost => false,
             default => true,
         };
     }
@@ -194,6 +203,7 @@ enum ContentType: string
             SocialPlatform::X => self::XPost,
             SocialPlatform::Threads => self::ThreadsPost,
             SocialPlatform::Pinterest => self::PinterestPin,
+            SocialPlatform::Bluesky => self::BlueskyPost,
         };
     }
 }

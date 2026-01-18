@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\BlueskyController;
 use App\Http\Controllers\Auth\FacebookController;
 use App\Http\Controllers\Auth\InstagramController;
 use App\Http\Controllers\Auth\LinkedInController;
@@ -89,6 +90,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('connect/pinterest', [PinterestController::class, 'connect'])->name('social.pinterest.connect');
     Route::get('accounts/pinterest/callback', [PinterestController::class, 'callback'])->name('social.pinterest.callback');
+
+    Route::get('connect/bluesky', [BlueskyController::class, 'connect'])->name('social.bluesky.connect');
+    Route::post('connect/bluesky', [BlueskyController::class, 'store'])->name('social.bluesky.store');
 });
 
 // Routes that require active subscription and completed onboarding

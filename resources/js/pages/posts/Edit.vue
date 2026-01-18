@@ -190,6 +190,7 @@ const getPlatformLogo = (platform: string): string => {
         'instagram': '/images/accounts/instagram.png',
         'threads': '/images/accounts/threads.png',
         'pinterest': '/images/accounts/pinterest.png',
+        'bluesky': '/images/accounts/bluesky.png',
     };
     return logos[platform] || '/images/accounts/default.png';
 };
@@ -205,6 +206,7 @@ const getPlatformLabel = (platform: string): string => {
         'instagram': 'Instagram',
         'threads': 'Threads',
         'pinterest': 'Pinterest',
+        'bluesky': 'Bluesky',
     };
     return labels[platform] || platform;
 };
@@ -246,6 +248,9 @@ const contentTypeOptions: Record<string, ContentTypeOption[]> = {
         { value: 'pinterest_video_pin', label: 'Video Pin', description: 'Video content' },
         { value: 'pinterest_carousel', label: 'Carousel', description: '2-5 images' },
     ],
+    'bluesky': [
+        { value: 'bluesky_post', label: 'Post', description: 'Text post with optional images' },
+    ],
 };
 
 function getDefaultContentType(platform: string): string {
@@ -259,6 +264,7 @@ function getDefaultContentType(platform: string): string {
         'x': 'x_post',
         'threads': 'threads_post',
         'pinterest': 'pinterest_pin',
+        'bluesky': 'bluesky_post',
     };
     return defaults[platform] || '';
 }

@@ -28,16 +28,7 @@ class WorkspaceInviteFactory extends Factory
             'token' => Str::random(64),
             'role' => Role::Member,
             'status' => InviteStatus::Pending,
-            'expires_at' => now()->addDays(7),
         ];
-    }
-
-    public function expired(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'expires_at' => now()->subDay(),
-            'status' => InviteStatus::Expired,
-        ]);
     }
 
     public function accepted(): static
@@ -45,13 +36,6 @@ class WorkspaceInviteFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'status' => InviteStatus::Accepted,
             'accepted_at' => now(),
-        ]);
-    }
-
-    public function cancelled(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'status' => InviteStatus::Cancelled,
         ]);
     }
 }

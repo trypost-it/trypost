@@ -22,22 +22,10 @@ use App\Http\Controllers\WorkspaceInviteController;
 use App\Http\Controllers\WorkspaceLabelController;
 use App\Http\Middleware\EnsureUserSetupIsComplete;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Laravel\Fortify\Features;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canRegister' => Features::enabled(Features::registration()),
-    ]);
-})->name('home');
-
-Route::get('/privacy', function () {
-    return Inertia::render('legal/Privacy');
-})->name('privacy');
-
-Route::get('/terms', function () {
-    return Inertia::render('legal/Terms');
-})->name('terms');
+    return redirect()->route('calendar');
+})->name('home')->middleware(['auth', 'verified']);
 
 // Subscription selection (requires auth but not subscription)
 Route::middleware(['auth', 'verified'])->group(function () {

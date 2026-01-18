@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('token', 64)->unique();
             $table->string('role')->default('member');
             $table->string('status')->default('pending');
-            $table->timestamp('expires_at');
             $table->timestamp('accepted_at')->nullable();
             $table->timestamps();
 

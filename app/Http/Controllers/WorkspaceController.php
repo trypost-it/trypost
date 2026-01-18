@@ -59,7 +59,10 @@ class WorkspaceController extends Controller
                 ->with('message', 'Subscribe to create more workspaces.');
         }
 
-        $workspace = $user->workspaces()->create($request->validated());
+        $workspace = $user->workspaces()->create([
+            ...$request->validated(),
+            'timezone' => config('app.timezone', 'UTC'),
+        ]);
 
         // Set as current workspace
         $user->switchWorkspace($workspace);
@@ -156,7 +159,7 @@ class WorkspaceController extends Controller
             $user->decrementWorkspaceQuantity();
         }
 
-        return redirect()->route('dashboard')
+        return redirect()->route('workspaces.index')
             ->with('success', 'Workspace deleted successfully!');
     }
 }

@@ -2,8 +2,6 @@
   <img src="public/images/trypost/logo-dark.png" alt="TryPost" width="200">
 </p>
 
-<h1 align="center">TryPost</h1>
-
 <p align="center">
   <strong>The open-source social media scheduling platform</strong>
 </p>

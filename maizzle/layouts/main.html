@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" xmlns:v="urn:schemas-microsoft-com:vml">
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml">
 
 <head>
   <meta charset="utf-8">
@@ -39,13 +39,13 @@
 </head>
 
 <body class="m-0 p-0 w-full [word-break:break-word] [-webkit-font-smoothing:antialiased] {{ page.bodyClass || '' }}">
-  @if(isset($preheader))
+  @if(isset($previewText))
   <div class="hidden">
-    @{{ $preheader }}
+    @{{ $previewText }}
     <each loop="item in Array.from(Array(150))">&#8199;&#65279;&#847; </each>
   </div>
   @endif
-  <div role="article" aria-roledescription="email" aria-label="@{{ $title }}" lang="pt-BR">
+  <div role="article" aria-roledescription="email" aria-label="@{{ $title }}" lang="en">
     <yield />
   </div>
 </body>

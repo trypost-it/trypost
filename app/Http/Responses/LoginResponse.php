@@ -12,6 +12,11 @@ class LoginResponse implements LoginResponseContract
     {
         $user = $request->user();
 
+        // Check for pending invite token
+        if ($token = session('pending_invite_token')) {
+            return redirect()->route('invites.show', $token);
+        }
+
         // Determine redirect based on setup status
         $redirect = match ($user->setup) {
             Setup::Completed => route('calendar'),

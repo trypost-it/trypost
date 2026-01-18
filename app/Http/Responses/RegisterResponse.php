@@ -9,6 +9,11 @@ class RegisterResponse implements RegisterResponseContract
 {
     public function toResponse($request): Response
     {
+        // Check for pending invite token
+        if ($token = session('pending_invite_token')) {
+            return redirect()->route('invites.show', $token);
+        }
+
         return $request->wantsJson()
             ? response()->json(['two_factor' => false])
             : redirect()->route('onboarding.step1');

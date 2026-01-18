@@ -4,6 +4,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Self-Hosted Mode
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, the application runs in self-hosted mode which skips
+    | payment/subscription requirements during onboarding.
+    |
+    */
+
+    'self_hosted' => env('SELF_HOSTED', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Social Platforms
     |--------------------------------------------------------------------------
     |

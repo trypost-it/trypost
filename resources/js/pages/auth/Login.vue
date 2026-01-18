@@ -17,6 +17,7 @@ defineProps<{
     status?: string;
     canResetPassword: boolean;
     canRegister: boolean;
+    email?: string | null;
 }>();
 </script>
 
@@ -52,6 +53,7 @@ defineProps<{
                         :tabindex="1"
                         autocomplete="email"
                         placeholder="email@example.com"
+                        :default-value="email ?? ''"
                     />
                     <InputError :message="errors.email" />
                 </div>

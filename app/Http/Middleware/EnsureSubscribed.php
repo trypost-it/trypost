@@ -15,6 +15,11 @@ class EnsureSubscribed
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip subscription check for self-hosted mode
+        if (config('trypost.self_hosted')) {
+            return $next($request);
+        }
+
         $user = $request->user();
 
         if (! $user) {

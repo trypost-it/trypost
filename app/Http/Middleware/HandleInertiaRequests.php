@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => $request->session()->get('flash', []),
             'env' => config('app.env'),
             'locale' => app()->getLocale(),
+            'selfHosted' => config('trypost.self_hosted'),
         ];
     }
 }

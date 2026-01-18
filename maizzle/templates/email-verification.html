@@ -8,30 +8,30 @@
             <tr>
               <td class="p-12 sm:px-6 text-base text-zinc-800 bg-white rounded shadow-sm">
                 <p class="leading-6 mt-0">
-                  Olá @{{$user->name}},
+                  Hi @{{ $user->name }},
                 </p>
 
                 <p class="leading-6">
-                  Por favor, confirme seu endereço de e-mail clicando no botão abaixo:
+                  Please confirm your email address by clicking the button below:
                 </p>
 
                 <x-spacer height="24px" />
 
                 <div class="text-center">
                   <x-button href="@{{ $url }}">
-                    Confirmar Endereço de E-mail &rarr;
+                    Verify Email Address &rarr;
                   </x-button>
                 </div>
 
                 <x-spacer height="24px" />
 
                 <p class="leading-6">
-                  Se você não criou esta conta, pode ignorar este e-mail com segurança.
+                  If you did not create an account, you can safely ignore this email.
                 </p>
                 <p class="leading-6 mb-0">
-                  Atenciosamente,
+                  Best regards,
                   <br />
-                  Equipe Clinyx
+                  The TryPost Team
                 </p>
               </td>
             </tr>

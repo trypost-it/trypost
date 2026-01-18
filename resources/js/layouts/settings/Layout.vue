@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 import Heading from '@/components/Heading.vue';
 import { useActiveUrl } from '@/composables/useActiveUrl';
@@ -11,38 +12,47 @@ import { edit as editProfile } from '@/routes/profile';
 import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 import { settings as workspaceSettings } from '@/routes/workspace';
-import { type NavItem } from '@/types';
+import { type NavItem, type SharedData } from '@/types';
 
-const navItems: NavItem[] = [
-    {
-        title: 'Profile',
-        href: editProfile(),
-    },
-    {
-        title: 'Password',
-        href: editPassword(),
-    },
-    {
-        title: 'Two-Factor Auth',
-        href: show(),
-    },
-    {
-        title: 'Appearance',
-        href: editAppearance(),
-    },
-    {
-        title: 'Workspace',
-        href: workspaceSettings(),
-    },
-    {
-        title: 'Members',
-        href: members(),
-    },
-    {
-        title: 'Billing',
-        href: billing(),
-    },
-];
+const page = usePage<SharedData>();
+
+const navItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Profile',
+            href: editProfile(),
+        },
+        {
+            title: 'Password',
+            href: editPassword(),
+        },
+        {
+            title: 'Two-Factor Auth',
+            href: show(),
+        },
+        {
+            title: 'Appearance',
+            href: editAppearance(),
+        },
+        {
+            title: 'Workspace',
+            href: workspaceSettings(),
+        },
+        {
+            title: 'Members',
+            href: members(),
+        },
+    ];
+
+    if (!page.props.selfHosted) {
+        items.push({
+            title: 'Billing',
+            href: billing(),
+        });
+    }
+
+    return items;
+});
 
 const { urlIsActive } = useActiveUrl();
 </script>

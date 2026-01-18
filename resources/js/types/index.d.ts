@@ -17,14 +17,17 @@ export interface NavItem {
     isActive?: boolean;
 }
 
-export type AppPageProps<
-    T extends Record<string, unknown> = Record<string, unknown>,
-> = T & {
+export interface SharedData {
     name: string;
     auth: Auth;
     sidebarOpen: boolean;
+    selfHosted: boolean;
     [key: string]: unknown;
-};
+}
+
+export type AppPageProps<
+    T extends Record<string, unknown> = Record<string, unknown>,
+> = T & SharedData;
 
 export interface User {
     id: number;

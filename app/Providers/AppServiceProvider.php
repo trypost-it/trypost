@@ -135,10 +135,10 @@ class AppServiceProvider extends ServiceProvider
         VerifyEmail::toMailUsing(function (User $user, string $url) {
             return (new MailMessage)
                 ->from(config('mail.from.address'), config('mail.from.name'))
-                ->subject('Confirme o seu endereço de e-mail')
+                ->subject('Verify your email address')
                 ->view('mail.email-verification', [
-                    'title' => 'Confirme o seu endereço de e-mail',
-                    'previewText' => 'Por favor, confirme o seu endereço de e-mail.',
+                    'title' => 'Verify your email address',
+                    'previewText' => 'Please verify your email address.',
                     'user' => $user,
                     'url' => $url,
                 ]);
@@ -153,10 +153,10 @@ class AppServiceProvider extends ServiceProvider
 
             return (new MailMessage)
                 ->from(config('mail.from.address'), config('mail.from.name'))
-                ->subject('Redefina sua senha')
+                ->subject('Reset your password')
                 ->view('mail.password-reset', [
-                    'title' => 'Redefina sua senha',
-                    'previewText' => 'Por favor, redefina sua senha.',
+                    'title' => 'Reset your password',
+                    'previewText' => 'Reset your password.',
                     'user' => $user,
                     'url' => $url,
                 ]);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { UserPlus, Users, Mail, Clock, Trash2, Crown, User, Shield } from 'lucide-vue-next';
+import { UserPlus, Users, Mail, Trash2, Crown, User, Shield } from 'lucide-vue-next';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
@@ -31,9 +31,8 @@ interface Member {
 interface Invite {
     id: string;
     email: string;
-    role: { value: string; label: string };
-    status: { value: string; label: string; color: string };
-    expires_at: string;
+    role: string;
+    status: string;
     inviter: { name: string };
 }
 
@@ -86,22 +85,29 @@ function handleRemoveMember(memberId: string) {
     }
 }
 
-function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    });
+function getStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+        pending: 'Pending',
+        accepted: 'Accepted',
+    };
+    return labels[status] || status;
 }
 
-function getStatusColor(color: string): string {
+function getStatusColor(status: string): string {
     const colors: Record<string, string> = {
-        yellow: 'bg-yellow-100 text-yellow-800',
-        green: 'bg-green-100 text-green-800',
-        gray: 'bg-gray-100 text-gray-800',
-        red: 'bg-red-100 text-red-800',
+        pending: 'bg-yellow-100 text-yellow-800',
+        accepted: 'bg-green-100 text-green-800',
     };
-    return colors[color] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-100 text-gray-800';
+}
+
+function getRoleLabel(role: string): string {
+    const labels: Record<string, string> = {
+        owner: 'Owner',
+        admin: 'Admin',
+        member: 'Member',
+    };
+    return labels[role] || role;
 }
 
 function getRoleIcon(role: string) {
@@ -178,7 +184,7 @@ function getRoleIcon(role: string) {
                 <Card>
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
-                            <Clock class="h-5 w-5" />
+                            <Mail class="h-5 w-5" />
                             Pending Invites
                         </CardTitle>
                         <CardDescription>
@@ -199,18 +205,15 @@ function getRoleIcon(role: string) {
                                     <p class="font-medium truncate">{{ invite.email }}</p>
                                     <div class="flex items-center gap-2 mt-1">
                                         <Badge variant="outline" class="text-xs">
-                                            {{ invite.role.label }}
+                                            {{ getRoleLabel(invite.role) }}
                                         </Badge>
-                                        <Badge :class="getStatusColor(invite.status.color)" class="text-xs">
-                                            {{ invite.status.label }}
+                                        <Badge :class="getStatusColor(invite.status)" class="text-xs">
+                                            {{ getStatusLabel(invite.status) }}
                                         </Badge>
                                     </div>
-                                    <p class="text-xs text-muted-foreground mt-1">
-                                        Expires {{ formatDate(invite.expires_at) }}
-                                    </p>
                                 </div>
                                 <Button
-                                    v-if="invite.status.value === 'pending'"
+                                    v-if="invite.status === 'pending'"
                                     variant="ghost"
                                     size="icon"
                                     @click="cancelInvite(invite.id)"

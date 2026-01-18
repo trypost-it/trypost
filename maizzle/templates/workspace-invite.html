@@ -1,7 +1,3 @@
----
-bodyClass: bg-slate-50
-preheader: Convite para o sistema da Clinyx
----
 <x-main>
   <div class="bg-zinc-50 sm:px-4 font-sans">
     <table align="center">
@@ -13,23 +9,30 @@ preheader: Convite para o sistema da Clinyx
             <tr>
               <td class="p-12 sm:px-6 text-base text-zinc-700 bg-white rounded shadow-sm">
                 <h1 class="m-0 mb-6 text-2xl sm:leading-8 text-black font-semibold">
-                  Olá 👋
+                  You've been invited!
                 </h1>
 
                 <p class="m-0 leading-6">
-                  Você foi convidado para acessar o sistema da Clinyx.
-                  <br />
-                  <br />
-                  Para aceitar o convite e começar a utilizar a plataforma, clique no botão abaixo.
+                  <strong>@{{ $invite->inviter->name }}</strong> has invited you to collaborate on the <strong>@{{ $invite->workspace->name }}</strong> workspace.
+                </p>
+
+                <p class="m-0 mt-4 leading-6">
+                  You've been invited as <strong>@{{ $invite->role->label() }}</strong>.
                 </p>
 
                 <x-spacer height="24px" />
 
                 <div class="flex items-center justify-center">
                   <x-button href="@{{ $url }}">
-                    Aceitar convite &rarr;
+                    Accept Invite &rarr;
                   </x-button>
                 </div>
+
+                <x-spacer height="24px" />
+
+                <p class="m-0 leading-6 text-zinc-500 text-sm">
+                  This invite expires in 7 days.
+                </p>
               </td>
             </tr>
           </table>

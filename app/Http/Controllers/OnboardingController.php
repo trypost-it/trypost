@@ -74,11 +74,23 @@ class OnboardingController extends Controller
     }
 
     /**
-     * Store step 2 and redirect to Stripe checkout.
+     * Store step 2 and redirect to Stripe checkout (or complete if self-hosted).
      */
-    public function storeStep2(Request $request): SymfonyResponse
+    public function storeStep2(Request $request): SymfonyResponse|RedirectResponse
     {
         $user = $request->user();
+
+        // Skip payment for self-hosted mode
+        if (config('trypost.self_hosted')) {
+            $user->update([
+                'setup' => Setup::Completed,
+            ]);
+
+            session()->flash('flash.banner', 'Welcome to TryPost!');
+            session()->flash('flash.bannerStyle', 'success');
+
+            return redirect()->route('calendar');
+        }
 
         $user->update([
             'setup' => Setup::Subscription,

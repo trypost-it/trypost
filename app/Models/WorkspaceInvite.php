@@ -27,7 +27,6 @@ class WorkspaceInvite extends Model
         'token',
         'role',
         'status',
-        'expires_at',
         'accepted_at',
     ];
 
@@ -39,7 +38,6 @@ class WorkspaceInvite extends Model
         return [
             'role' => Role::class,
             'status' => InviteStatus::class,
-            'expires_at' => 'datetime',
             'accepted_at' => 'datetime',
         ];
     }
@@ -49,9 +47,6 @@ class WorkspaceInvite extends Model
         static::creating(function (WorkspaceInvite $invite) {
             if (empty($invite->token)) {
                 $invite->token = Str::random(64);
-            }
-            if (empty($invite->expires_at)) {
-                $invite->expires_at = now()->addDays(7);
             }
         });
     }
@@ -71,24 +66,9 @@ class WorkspaceInvite extends Model
         return $query->where('status', InviteStatus::Pending);
     }
 
-    public function scopeValid(Builder $query): Builder
-    {
-        return $query->pending()->where('expires_at', '>', now());
-    }
-
-    public function isExpired(): bool
-    {
-        return $this->expires_at->isPast();
-    }
-
     public function isPending(): bool
     {
         return $this->status === InviteStatus::Pending;
-    }
-
-    public function isValid(): bool
-    {
-        return $this->isPending() && ! $this->isExpired();
     }
 
     public function accept(User $user): void
@@ -101,11 +81,6 @@ class WorkspaceInvite extends Model
             'status' => InviteStatus::Accepted,
             'accepted_at' => now(),
         ]);
-    }
-
-    public function cancel(): void
-    {
-        $this->update(['status' => InviteStatus::Cancelled]);
     }
 
     public function routeNotificationForMail(): string

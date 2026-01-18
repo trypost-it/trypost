@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use App\Http\Requests\StoreWorkspaceInviteRequest;
+use App\Mail\WorkspaceInvite as WorkspaceInviteMail;
 use App\Models\WorkspaceInvite;
-use App\Notifications\WorkspaceInviteNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -86,9 +87,12 @@ class WorkspaceInviteController extends Controller
             'role' => $request->role ?? WorkspaceRole::Member,
         ]);
 
-        $invite->notify(new WorkspaceInviteNotification($invite));
+        Mail::to($invite->email)->send(new WorkspaceInviteMail($invite));
 
-        return back()->with('success', 'Invite sent successfully!');
+        session()->flash('flash.banner', 'Invite sent successfully!');
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
     }
 
     public function destroy(Request $request, WorkspaceInvite $invite): RedirectResponse
@@ -105,23 +109,65 @@ class WorkspaceInviteController extends Controller
             abort(404);
         }
 
-        $invite->cancel();
+        $invite->delete();
 
-        return back()->with('success', 'Invite cancelled.');
+        session()->flash('flash.banner', 'Invite deleted.');
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
+    public function show(Request $request, string $token): Response|RedirectResponse
+    {
+        $invite = WorkspaceInvite::where('token', $token)
+            ->with(['workspace', 'inviter'])
+            ->firstOrFail();
+
+        if (! $invite->isPending()) {
+            session()->flash('flash.banner', 'This invite is no longer valid.');
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('login');
+        }
+
+        $user = $request->user();
+
+        // Store token in session for after login/register
+        session(['pending_invite_token' => $token]);
+
+        return Inertia::render('invites/Accept', [
+            'invite' => [
+                'id' => $invite->id,
+                'token' => $invite->token,
+                'email' => $invite->email,
+                'role' => [
+                    'value' => $invite->role->value,
+                    'label' => $invite->role->label(),
+                ],
+                'workspace' => [
+                    'id' => $invite->workspace->id,
+                    'name' => $invite->workspace->name,
+                ],
+                'inviter' => [
+                    'id' => $invite->inviter->id,
+                    'name' => $invite->inviter->name,
+                    'email' => $invite->inviter->email,
+                ],
+            ],
+            'isAuthenticated' => (bool) $user,
+            'userEmail' => $user?->email,
+        ]);
     }
 
     public function accept(Request $request, string $token): RedirectResponse
     {
         $invite = WorkspaceInvite::where('token', $token)->firstOrFail();
 
-        if (! $invite->isValid()) {
-            if ($invite->isExpired()) {
-                return redirect()->route('dashboard')
-                    ->withErrors(['invite' => 'This invite has expired.']);
-            }
+        if (! $invite->isPending()) {
+            session()->flash('flash.banner', 'This invite is no longer valid.');
+            session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('dashboard')
-                ->withErrors(['invite' => 'This invite is no longer valid.']);
+            return redirect()->route('login');
         }
 
         $user = $request->user();
@@ -129,25 +175,28 @@ class WorkspaceInviteController extends Controller
         if (! $user) {
             session(['pending_invite_token' => $token]);
 
-            return redirect()->route('login')
-                ->with('message', 'Please log in to accept the invite.');
+            return redirect()->route('login');
         }
 
+        // Clear the pending token
+        session()->forget('pending_invite_token');
+
         if ($invite->workspace->hasMember($user)) {
-            // Switch to this workspace
             $user->switchWorkspace($invite->workspace);
 
-            return redirect()->route('calendar')
-                ->with('message', 'You are already a member of this workspace.');
+            session()->flash('flash.banner', 'You are already a member of this workspace.');
+            session()->flash('flash.bannerStyle', 'info');
+
+            return redirect()->route('calendar');
         }
 
         $invite->accept($user);
-
-        // Switch to the new workspace
         $user->switchWorkspace($invite->workspace);
 
-        return redirect()->route('calendar')
-            ->with('success', 'You are now a member of the workspace!');
+        session()->flash('flash.banner', 'You are now a member of the workspace!');
+        session()->flash('flash.bannerStyle', 'success');
+
+        return redirect()->route('calendar');
     }
 
     public function removeMember(Request $request, string $userId): RedirectResponse
@@ -166,6 +215,9 @@ class WorkspaceInviteController extends Controller
 
         $workspace->members()->detach($userId);
 
-        return back()->with('success', 'Member removed successfully.');
+        session()->flash('flash.banner', 'Member removed successfully.');
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
     }
 }

@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\FacebookController;
 use App\Http\Controllers\Auth\InstagramController;
 use App\Http\Controllers\Auth\LinkedInController;
 use App\Http\Controllers\Auth\LinkedInPageController;
+use App\Http\Controllers\Auth\PinterestController;
 use App\Http\Controllers\Auth\SocialController;
 use App\Http\Controllers\Auth\ThreadsController;
 use App\Http\Controllers\Auth\TikTokController;
@@ -85,6 +86,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('connect/threads', [ThreadsController::class, 'connect'])->name('social.threads.connect');
     Route::get('accounts/threads/callback', [ThreadsController::class, 'callback'])->name('social.threads.callback');
+
+    Route::get('connect/pinterest', [PinterestController::class, 'connect'])->name('social.pinterest.connect');
+    Route::get('accounts/pinterest/callback', [PinterestController::class, 'callback'])->name('social.pinterest.callback');
 });
 
 // Routes that require active subscription and completed onboarding

@@ -88,4 +88,12 @@ return [
         'redirect' => env('THREADS_CLIENT_REDIRECT'),
     ],
 
+    // Pinterest
+    'pinterest' => [
+        'client_id' => env('PINTEREST_CLIENT_ID'),
+        'client_secret' => env('PINTEREST_CLIENT_SECRET'),
+        'redirect' => env('PINTEREST_CLIENT_REDIRECT'),
+        'sandbox' => env('PINTEREST_SANDBOX', false),
+    ],
+
 ];

@@ -24,6 +24,7 @@
         "socialiteproviders/facebook": "^4.1",
         "socialiteproviders/instagram": "^5.1",
         "socialiteproviders/linkedin": "^5.0",
+        "socialiteproviders/pinterest": "^4.3",
         "socialiteproviders/tiktok": "^5.2",
         "socialiteproviders/twitter": "^4.1"
     },

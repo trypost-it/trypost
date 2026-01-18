@@ -6,3 +6,4 @@ export { default as InstagramPreview } from './InstagramPreview.vue';
 export { default as ThreadsPreview } from './ThreadsPreview.vue';
 export { default as TikTokPreview } from './TikTokPreview.vue';
 export { default as YouTubePreview } from './YouTubePreview.vue';
+export { default as PinterestPreview } from './PinterestPreview.vue';

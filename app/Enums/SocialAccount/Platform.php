@@ -14,6 +14,7 @@ enum Platform: string
     case Facebook = 'facebook';
     case Instagram = 'instagram';
     case Threads = 'threads';
+    case Pinterest = 'pinterest';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum Platform: string
             self::Facebook => 'Facebook Page',
             self::Instagram => 'Instagram',
             self::Threads => 'Threads',
+            self::Pinterest => 'Pinterest',
         };
     }
 
@@ -39,6 +41,7 @@ enum Platform: string
             self::Facebook => '#1877F2',
             self::Instagram => '#E4405F',
             self::Threads => '#000000',
+            self::Pinterest => '#E60023',
         };
     }
 
@@ -52,6 +55,7 @@ enum Platform: string
             self::Facebook => [MediaType::Image, MediaType::Video],
             self::Instagram => [MediaType::Image, MediaType::Video],
             self::Threads => [MediaType::Image, MediaType::Video],
+            self::Pinterest => [MediaType::Image, MediaType::Video],
         };
     }
 
@@ -65,6 +69,7 @@ enum Platform: string
             self::Facebook => 10,
             self::Instagram => 10,
             self::Threads => 10,
+            self::Pinterest => 5,
         };
     }
 
@@ -78,6 +83,7 @@ enum Platform: string
             self::Facebook => 63206,
             self::Instagram => 2200,
             self::Threads => 500,
+            self::Pinterest => 800,
         };
     }
 
@@ -91,6 +97,7 @@ enum Platform: string
             self::Facebook => true,
             self::Instagram => false,
             self::Threads => true,
+            self::Pinterest => false,
         };
     }
 

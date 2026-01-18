@@ -70,6 +70,12 @@ interface PostPlatform {
     status: string;
     social_account: SocialAccount;
     media: MediaItem[];
+    meta?: Record<string, any>;
+}
+
+interface PinterestBoard {
+    id: string;
+    name: string;
 }
 
 interface ContentTypeOption {
@@ -104,6 +110,7 @@ interface Props {
     post: Post;
     socialAccounts: SocialAccount[];
     platformConfigs: Record<string, PlatformConfig>;
+    pinterestBoards: PinterestBoard[];
 }
 
 const props = defineProps<Props>();
@@ -130,6 +137,9 @@ const platformMedia = ref<Record<string, MediaItem[]>>(
 );
 const platformContentTypes = ref<Record<string, string>>(
     Object.fromEntries(props.post.post_platforms.map(pp => [pp.id, pp.content_type || getDefaultContentType(pp.platform)]))
+);
+const platformMeta = ref<Record<string, Record<string, any>>>(
+    Object.fromEntries(props.post.post_platforms.map(pp => [pp.id, pp.meta || {}]))
 );
 const isUploading = ref<Record<string, boolean>>({});
 const isSubmitting = ref(false);
@@ -179,6 +189,7 @@ const getPlatformLogo = (platform: string): string => {
         'facebook': '/images/accounts/facebook.png',
         'instagram': '/images/accounts/instagram.png',
         'threads': '/images/accounts/threads.png',
+        'pinterest': '/images/accounts/pinterest.png',
     };
     return logos[platform] || '/images/accounts/default.png';
 };
@@ -193,6 +204,7 @@ const getPlatformLabel = (platform: string): string => {
         'facebook': 'Facebook Page',
         'instagram': 'Instagram',
         'threads': 'Threads',
+        'pinterest': 'Pinterest',
     };
     return labels[platform] || platform;
 };
@@ -229,6 +241,11 @@ const contentTypeOptions: Record<string, ContentTypeOption[]> = {
     'threads': [
         { value: 'threads_post', label: 'Post', description: 'Text post with optional media' },
     ],
+    'pinterest': [
+        { value: 'pinterest_pin', label: 'Pin', description: 'Image pin with link' },
+        { value: 'pinterest_video_pin', label: 'Video Pin', description: 'Video content' },
+        { value: 'pinterest_carousel', label: 'Carousel', description: '2-5 images' },
+    ],
 };
 
 function getDefaultContentType(platform: string): string {
@@ -241,6 +258,7 @@ function getDefaultContentType(platform: string): string {
         'youtube': 'youtube_short',
         'x': 'x_post',
         'threads': 'threads_post',
+        'pinterest': 'pinterest_pin',
     };
     return defaults[platform] || '';
 }
@@ -251,6 +269,13 @@ function getContentTypeOptions(platform: string): ContentTypeOption[] {
 
 function hasMultipleContentTypes(platform: string): boolean {
     return (contentTypeOptions[platform]?.length || 0) > 1;
+}
+
+function getPlatformData(platform: string): Record<string, any> {
+    if (platform === 'pinterest') {
+        return { boards: props.pinterestBoards };
+    }
+    return {};
 }
 
 const getConfig = (postPlatform: PostPlatform): PlatformConfig => {
@@ -374,8 +399,12 @@ const contentValidation = computed(() => {
         const withinLimit = charCount <= config.maxContentLength;
         const media = platformMedia.value[pp.id] || [];
         const hasMedia = media.length > 0;
+        const meta = platformMeta.value[pp.id] || {};
 
-        if (!config.supportsTextOnly && !hasMedia) {
+        // Pinterest requires a board
+        if (pp.platform === 'pinterest' && !meta.board_id) {
+            results[pp.id] = { valid: false, message: 'Select a board', charCount, maxLength: config.maxContentLength };
+        } else if (!config.supportsTextOnly && !hasMedia) {
             results[pp.id] = { valid: false, message: 'Requires media', charCount, maxLength: config.maxContentLength };
         } else if (!hasContent && !hasMedia) {
             results[pp.id] = { valid: false, message: 'No content', charCount, maxLength: config.maxContentLength };
@@ -562,6 +591,7 @@ const getSubmitData = () => {
             id: pp.id,
             content: synced.value ? globalContent.value : platformContents.value[pp.id],
             content_type: platformContentTypes.value[pp.id],
+            meta: platformMeta.value[pp.id] || {},
         }));
 
     // Combine date and time into ISO format
@@ -762,30 +792,6 @@ const deletePost = () => {
                         </Label>
                     </div>
 
-                    <!-- Content Type Selector -->
-                    <div v-if="hasMultipleContentTypes(activePlatform.platform)" class="flex items-center justify-center gap-2 mb-4">
-                        <Label class="text-sm text-muted-foreground">Post as:</Label>
-                        <Select
-                            :model-value="currentContentType"
-                            @update:model-value="setContentType(activePlatform.id, $event)"
-                        >
-                            <SelectTrigger class="w-[180px]">
-                                <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem
-                                    v-for="option in getContentTypeOptions(activePlatform.platform)"
-                                    :key="option.value"
-                                    :value="option.value"
-                                >
-                                    <div class="flex flex-col">
-                                        <span>{{ option.label }}</span>
-                                    </div>
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
                     <!-- Platform Preview -->
                     <PlatformPreview
                         :key="activePlatform.id"
@@ -794,12 +800,17 @@ const deletePost = () => {
                         :content="getContent(activePlatform.id)"
                         :media="currentPlatformMedia"
                         :content-type="currentContentType"
+                        :content-type-options="getContentTypeOptions(activePlatform.platform)"
+                        :meta="platformMeta[activePlatform.id]"
+                        :platform-data="getPlatformData(activePlatform.platform)"
                         :char-count="contentValidation[activePlatform.id]?.charCount || 0"
                         :max-length="contentValidation[activePlatform.id]?.maxLength || 5000"
                         :is-valid="contentValidation[activePlatform.id]?.valid ?? false"
                         :validation-message="contentValidation[activePlatform.id]?.message || ''"
                         :is-uploading="isUploading[activePlatform.id]"
                         @update:content="setContent(activePlatform.id, $event)"
+                        @update:content-type="setContentType(activePlatform.id, $event)"
+                        @update:meta="platformMeta[activePlatform.id] = $event"
                         @upload="handleFileUpload($event, activePlatform.id)"
                         @remove-media="removeMedia(activePlatform.id, $event)"
                     />

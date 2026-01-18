@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use App\Models\Language;
 use App\Models\User;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +18,18 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'language_id' => $this->languageRules(),
         ];
+    }
+
+    /**
+     * Get the validation rules used to validate user language.
+     *
+     * @return array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>
+     */
+    protected function languageRules(): array
+    {
+        return ['required', Rule::exists(Language::class, 'id')];
     }
 
     /**

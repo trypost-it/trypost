@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\SocialAccount\Platform;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Jobs\PublishPost;
 use App\Models\Post;
+use App\Services\Social\PinterestPublisher;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -233,11 +235,23 @@ class PostController extends Controller
             ];
         });
 
+        // Fetch Pinterest boards if Pinterest account exists
+        $pinterestBoards = [];
+        $pinterestAccount = $socialAccounts->firstWhere('platform', Platform::Pinterest);
+        if ($pinterestAccount) {
+            try {
+                $pinterestBoards = app(PinterestPublisher::class)->getBoards($pinterestAccount);
+            } catch (\Exception $e) {
+                // Silently fail - boards will be empty
+            }
+        }
+
         return Inertia::render('posts/Edit', [
             'workspace' => $workspace,
             'post' => $post,
             'socialAccounts' => $socialAccounts,
             'platformConfigs' => $platformConfigs,
+            'pinterestBoards' => $pinterestBoards,
         ]);
     }
 
@@ -282,13 +296,20 @@ class PostController extends Controller
         $post->postPlatforms()->update(['enabled' => false]);
 
         foreach ($request->input('platforms', []) as $platformData) {
+            $updateData = [
+                'enabled' => true,
+                'content' => $platformData['content'],
+                'content_type' => $platformData['content_type'] ?? null,
+            ];
+
+            if (isset($platformData['meta'])) {
+                $postPlatform = $post->postPlatforms()->where('id', $platformData['id'])->first();
+                $updateData['meta'] = array_merge($postPlatform->meta ?? [], $platformData['meta']);
+            }
+
             $post->postPlatforms()
                 ->where('id', $platformData['id'])
-                ->update([
-                    'enabled' => true,
-                    'content' => $platformData['content'],
-                    'content_type' => $platformData['content_type'] ?? null,
-                ]);
+                ->update($updateData);
         }
 
         // Dispatch publish job if publishing now

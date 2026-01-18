@@ -5,6 +5,7 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import DeleteUser from '@/components/DeleteUser.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
+import LanguageCombobox from '@/components/LanguageCombobox.vue';
 import PhotoUpload from '@/components/PhotoUpload.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,13 +15,26 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import { type BreadcrumbItem } from '@/types';
+import { ref } from 'vue';
+
+interface Language {
+    id: string;
+    name: string;
+    code: string;
+}
 
 interface Props {
     mustVerifyEmail: boolean;
     status?: string;
+    languages: Language[];
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
+
+const page = usePage();
+const user = page.props.auth.user;
+
+const languageId = ref(user.language_id);
 
 const breadcrumbItems: BreadcrumbItem[] = [
     {
@@ -28,9 +42,6 @@ const breadcrumbItems: BreadcrumbItem[] = [
         href: edit().url,
     },
 ];
-
-const page = usePage();
-const user = page.props.auth.user;
 </script>
 
 <template>
@@ -54,7 +65,7 @@ const user = page.props.auth.user;
                         :photo="user.avatar"
                         collection="avatar"
                         :reload-only="['auth']"
-                        rounded="full"
+                        rounded="lg"
                     />
                 </div>
 
@@ -90,6 +101,16 @@ const user = page.props.auth.user;
                             placeholder="Email address"
                         />
                         <InputError class="mt-2" :message="errors.email" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label>Language</Label>
+                        <input type="hidden" name="language_id" :value="languageId" />
+                        <LanguageCombobox
+                            v-model="languageId"
+                            :languages="props.languages"
+                        />
+                        <InputError class="mt-2" :message="errors.language_id" />
                     </div>
 
                     <div v-if="mustVerifyEmail && !user.email_verified_at">

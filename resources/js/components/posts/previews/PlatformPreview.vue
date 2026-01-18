@@ -7,6 +7,7 @@ import InstagramPreview from './InstagramPreview.vue';
 import ThreadsPreview from './ThreadsPreview.vue';
 import TikTokPreview from './TikTokPreview.vue';
 import YouTubePreview from './YouTubePreview.vue';
+import PinterestPreview from './PinterestPreview.vue';
 
 interface SocialAccount {
     id: string;
@@ -23,12 +24,21 @@ interface MediaItem {
     original_filename: string;
 }
 
+interface ContentTypeOption {
+    value: string;
+    label: string;
+    description: string;
+}
+
 interface Props {
     platform: string;
     socialAccount: SocialAccount;
     content: string;
     media: MediaItem[];
     contentType?: string;
+    contentTypeOptions?: ContentTypeOption[];
+    meta?: Record<string, any>;
+    platformData?: Record<string, any>;
     charCount: number;
     maxLength: number;
     isValid: boolean;
@@ -40,6 +50,8 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<{
     'update:content': [value: string];
+    'update:contentType': [value: string];
+    'update:meta': [value: Record<string, any>];
     'upload': [event: Event];
     'remove-media': [mediaId: string];
 }>();
@@ -61,6 +73,8 @@ const previewComponent = computed(() => {
             return TikTokPreview;
         case 'youtube':
             return YouTubePreview;
+        case 'pinterest':
+            return PinterestPreview;
         default:
             return LinkedInPreview;
     }
@@ -68,6 +82,14 @@ const previewComponent = computed(() => {
 
 const handleContentUpdate = (value: string) => {
     emit('update:content', value);
+};
+
+const handleContentTypeUpdate = (value: string) => {
+    emit('update:contentType', value);
+};
+
+const handleMetaUpdate = (value: Record<string, any>) => {
+    emit('update:meta', value);
 };
 
 const handleUpload = (event: Event) => {
@@ -86,12 +108,17 @@ const handleRemoveMedia = (mediaId: string) => {
         :content="content"
         :media="media"
         :content-type="contentType"
+        :content-type-options="contentTypeOptions"
+        :meta="meta"
+        :platform-data="platformData"
         :char-count="charCount"
         :max-length="maxLength"
         :is-valid="isValid"
         :validation-message="validationMessage"
         :is-uploading="isUploading"
         @update:content="handleContentUpdate"
+        @update:content-type="handleContentTypeUpdate"
+        @update:meta="handleMetaUpdate"
         @upload="handleUpload"
         @remove-media="handleRemoveMedia"
     />

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2154f2c0783c4818692dc434812ea32b",
+    "content-hash": "162908adce6139201ce70a7e1c4db434",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -5941,6 +5941,56 @@
                 "source": "https://github.com/socialiteproviders/manager"
             },
             "time": "2025-02-24T19:33:30+00:00"
+        },
+        {
+            "name": "socialiteproviders/pinterest",
+            "version": "4.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/SocialiteProviders/Pinterest.git",
+                "reference": "7f7e04c78b9988ab350a6a53e8542ebddcd09527"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SocialiteProviders/Pinterest/zipball/7f7e04c78b9988ab350a6a53e8542ebddcd09527",
+                "reference": "7f7e04c78b9988ab350a6a53e8542ebddcd09527",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": "^8.0",
+                "socialiteproviders/manager": "^4.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SocialiteProviders\\Pinterest\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Michael Tournaud",
+                    "email": "ollibrius@gmail.com"
+                }
+            ],
+            "description": "Pinterest OAuth2 Provider for Laravel Socialite",
+            "keywords": [
+                "laravel",
+                "oauth",
+                "pinterest",
+                "provider",
+                "socialite"
+            ],
+            "support": {
+                "docs": "https://socialiteproviders.com/pinterest",
+                "issues": "https://github.com/socialiteproviders/providers/issues",
+                "source": "https://github.com/socialiteproviders/providers"
+            },
+            "time": "2023-08-31T07:33:03+00:00"
         },
         {
             "name": "socialiteproviders/tiktok",

@@ -33,6 +33,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'setup',
         'persona',
         'current_workspace_id',
+        'language_id',
     ];
 
     /**
@@ -102,6 +103,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function currentWorkspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class, 'current_workspace_id');
+    }
+
+    /**
+     * Get the user's language.
+     */
+    public function language(): BelongsTo
+    {
+        return $this->belongsTo(Language::class);
     }
 
     /**

@@ -11,6 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::create('languages', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('name');
+            $table->string('code')->unique();
+            $table->timestamps();
+        });
+
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
@@ -28,7 +35,10 @@ return new class extends Migration
             $table->string('setup')->nullable();
             $table->string('persona')->nullable();
             $table->uuid('current_workspace_id')->nullable();
+            $table->uuid('language_id')->nullable();
             $table->timestamps();
+
+            $table->foreign('language_id')->references('id')->on('languages')->nullOnDelete();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
@@ -52,8 +62,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
+        Schema::dropIfExists('languages');
     }
 };

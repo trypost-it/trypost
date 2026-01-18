@@ -38,6 +38,9 @@ return [
         'threads' => [
             'enabled' => env('TRYPOST_THREADS_ENABLED', true),
         ],
+        'pinterest' => [
+            'enabled' => env('TRYPOST_PINTEREST_ENABLED', true),
+        ],
     ],
 
 ];

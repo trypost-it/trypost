@@ -36,6 +36,11 @@ enum ContentType: string
     // Threads
     case ThreadsPost = 'threads_post';
 
+    // Pinterest
+    case PinterestPin = 'pinterest_pin';
+    case PinterestVideoPin = 'pinterest_video_pin';
+    case PinterestCarousel = 'pinterest_carousel';
+
     public function label(): string
     {
         return match ($this) {
@@ -51,6 +56,9 @@ enum ContentType: string
             self::YouTubeShort => 'Short',
             self::XPost => 'Post',
             self::ThreadsPost => 'Post',
+            self::PinterestPin => 'Pin',
+            self::PinterestVideoPin => 'Video Pin',
+            self::PinterestCarousel => 'Carousel',
         };
     }
 
@@ -69,6 +77,9 @@ enum ContentType: string
             self::YouTubeShort => 'Vertical video up to 60 seconds',
             self::XPost => 'Tweet with text and media',
             self::ThreadsPost => 'Text post with optional media',
+            self::PinterestPin => 'Standard image pin',
+            self::PinterestVideoPin => 'Video pin (4s - 15min)',
+            self::PinterestCarousel => 'Multi-image carousel (2-5 images)',
         };
     }
 
@@ -83,6 +94,7 @@ enum ContentType: string
             self::YouTubeShort => SocialPlatform::YouTube,
             self::XPost => SocialPlatform::X,
             self::ThreadsPost => SocialPlatform::Threads,
+            self::PinterestPin, self::PinterestVideoPin, self::PinterestCarousel => SocialPlatform::Pinterest,
         };
     }
 
@@ -93,6 +105,8 @@ enum ContentType: string
             self::InstagramReel, self::InstagramStory => '9:16',
             self::FacebookReel, self::FacebookStory => '9:16',
             self::TikTokVideo, self::YouTubeShort => '9:16',
+            self::PinterestPin, self::PinterestCarousel => '2:3',
+            self::PinterestVideoPin => '9:16',
             default => null,
         };
     }
@@ -110,6 +124,8 @@ enum ContentType: string
             self::YouTubeShort => 1,
             self::XPost => 4,
             self::ThreadsPost => 10,
+            self::PinterestPin, self::PinterestVideoPin => 1,
+            self::PinterestCarousel => 5,
         };
     }
 
@@ -124,6 +140,8 @@ enum ContentType: string
             self::YouTubeShort => true,
             self::XPost => true,
             self::ThreadsPost => true,
+            self::PinterestVideoPin => true,
+            self::PinterestPin, self::PinterestCarousel => false,
         };
     }
 
@@ -133,6 +151,7 @@ enum ContentType: string
             self::InstagramReel => false,
             self::TikTokVideo => false,
             self::YouTubeShort => false,
+            self::PinterestVideoPin => false,
             default => true,
         };
     }
@@ -174,6 +193,7 @@ enum ContentType: string
             SocialPlatform::YouTube => self::YouTubeShort,
             SocialPlatform::X => self::XPost,
             SocialPlatform::Threads => self::ThreadsPost,
+            SocialPlatform::Pinterest => self::PinterestPin,
         };
     }
 }

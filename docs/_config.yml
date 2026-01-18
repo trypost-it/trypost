@@ -1,0 +1,16 @@
+title: TryPost Documentation
+description: Documentation for TryPost - Open source social media scheduling
+theme: jekyll-theme-minimal
+markdown: kramdown
+
+# Navigation
+header_pages:
+  - getting-started/installation.md
+  - platforms/README.md
+  - features/scheduling.md
+  - self-hosting/requirements.md
+  - contributing.md
+
+# Exclude files
+exclude:
+  - CNAME

@@ -38,7 +38,7 @@ Learn how to connect your social media accounts:
 
 ## Contributing
 
-- [Contributing Guide](contributing.md)
+- [Contributing Guide](contributing)
 
 ## Support
 

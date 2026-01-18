@@ -26,7 +26,7 @@ class PostPlatformFactory extends Factory
             'enabled' => true,
             'platform' => Platform::LinkedIn,
             'content' => $this->faker->paragraph(),
-            'content_type' => ContentType::Text,
+            'content_type' => ContentType::LinkedInPost,
             'status' => 'pending',
             'meta' => [],
         ];
@@ -68,6 +68,7 @@ class PostPlatformFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::X,
+            'content_type' => ContentType::XPost,
         ]);
     }
 
@@ -75,6 +76,94 @@ class PostPlatformFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::Instagram,
+        ]);
+    }
+
+    public function bluesky(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Bluesky,
+            'content_type' => ContentType::BlueskyPost,
+        ]);
+    }
+
+    public function mastodon(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Mastodon,
+            'content_type' => ContentType::MastodonPost,
+        ]);
+    }
+
+    public function threads(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Threads,
+            'content_type' => ContentType::ThreadsPost,
+        ]);
+    }
+
+    public function tiktok(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::TikTok,
+            'content_type' => ContentType::TikTokVideo,
+        ]);
+    }
+
+    public function youtube(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::YouTube,
+            'content_type' => ContentType::YouTubeShort,
+        ]);
+    }
+
+    public function pinterest(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Pinterest,
+            'content_type' => ContentType::PinterestPin,
+        ]);
+    }
+
+    public function pinterestVideoPin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Pinterest,
+            'content_type' => ContentType::PinterestVideoPin,
+        ]);
+    }
+
+    public function pinterestCarousel(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Pinterest,
+            'content_type' => ContentType::PinterestCarousel,
+        ]);
+    }
+
+    public function facebook(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Facebook,
+            'content_type' => ContentType::FacebookPost,
+        ]);
+    }
+
+    public function facebookReel(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Facebook,
+            'content_type' => ContentType::FacebookReel,
+        ]);
+    }
+
+    public function facebookStory(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Facebook,
+            'content_type' => ContentType::FacebookStory,
         ]);
     }
 }

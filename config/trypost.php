@@ -30,10 +30,10 @@ return [
             'enabled' => env('TRYPOST_YOUTUBE_ENABLED', true),
         ],
         'facebook' => [
-            'enabled' => env('TRYPOST_FACEBOOK_ENABLED', false),
+            'enabled' => env('TRYPOST_FACEBOOK_ENABLED', true),
         ],
         'instagram' => [
-            'enabled' => env('TRYPOST_INSTAGRAM_ENABLED', false),
+            'enabled' => env('TRYPOST_INSTAGRAM_ENABLED', true),
         ],
         'threads' => [
             'enabled' => env('TRYPOST_THREADS_ENABLED', true),

@@ -90,6 +90,39 @@ class SocialAccountFactory extends Factory
         ]);
     }
 
+    public function pinterest(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Pinterest,
+        ]);
+    }
+
+    public function bluesky(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Bluesky,
+            'token_expires_at' => now()->addHours(2),
+            'meta' => [
+                'service' => 'https://bsky.social',
+                'identifier' => 'test@example.com',
+                'password' => encrypt('test-app-password'),
+            ],
+        ]);
+    }
+
+    public function mastodon(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'platform' => Platform::Mastodon,
+            'token_expires_at' => null, // Mastodon tokens don't expire
+            'meta' => [
+                'instance' => 'https://mastodon.social',
+                'client_id' => 'test-client-id',
+                'client_secret' => 'test-client-secret',
+            ],
+        ]);
+    }
+
     public function disconnected(): static
     {
         return $this->state(fn (array $attributes) => [

@@ -29,7 +29,9 @@ class PostController extends Controller
         $this->authorize('view', $workspace);
 
         $posts = $workspace->posts()
-            ->with(['postPlatforms.socialAccount', 'user'])
+            ->with(['postPlatforms' => function ($query) {
+                $query->where('enabled', true)->with('socialAccount');
+            }, 'user'])
             ->latest('scheduled_at')
             ->paginate(20);
 
@@ -70,7 +72,9 @@ class PostController extends Controller
         $rangeEnd = $view === 'month' ? $monthEnd : $weekEnd;
 
         $posts = $workspace->posts()
-            ->with(['postPlatforms.socialAccount'])
+            ->with(['postPlatforms' => function ($query) {
+                $query->where('enabled', true)->with('socialAccount');
+            }])
             ->whereBetween('scheduled_at', [$rangeStart->copy()->utc(), $rangeEnd->copy()->utc()])
             ->orderBy('scheduled_at')
             ->get()

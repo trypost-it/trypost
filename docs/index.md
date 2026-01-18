@@ -40,7 +40,7 @@ Learn how to connect your social media accounts:
 
 - [Requirements](self-hosting/requirements.md)
 - [Production Setup](self-hosting/production.md)
-- [Docker](self-hosting/docker.md) *(coming soon)*
+- [Docker](self-hosting/docker.md)
 
 ## Contributing
 

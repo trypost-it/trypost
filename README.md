@@ -21,35 +21,36 @@
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> •
-  <a href="#supported-platforms">Platforms</a> •
-  <a href="#quick-start">Quick Start</a> •
-  <a href="#self-hosting">Self-Hosting</a> •
-  <a href="#contributing">Contributing</a>
+  <a href="https://docs.trypost.it">📚 Documentation</a> •
+  <a href="https://github.com/orgs/trypost-it/projects/1">🗺️ Roadmap</a> •
+  <a href="https://github.com/trypost-it/trypost/discussions">💬 Community</a>
 </p>
 
 ---
 
-## Why TryPost?
+## 🤔 Why TryPost?
 
 Tired of paying expensive monthly fees for social media scheduling tools? Want full control over your data? TryPost is the solution.
 
-- **100% Open Source** - Inspect the code, contribute, make it yours
-- **Self-Hosted** - Your data stays on your servers
-- **No Limits** - Schedule unlimited posts, connect unlimited accounts
-- **Privacy First** - No tracking, no analytics, no data selling
+| | |
+|---|---|
+| 🔓 **100% Open Source** | Inspect the code, contribute, make it yours |
+| 🏠 **Self-Hosted** | Your data stays on your servers |
+| ♾️ **No Limits** | Schedule unlimited posts, connect unlimited accounts |
+| 🔒 **Privacy First** | No tracking, no analytics, no data selling |
 
-## Features
+## ✨ Features
 
-- **Visual Calendar** - Drag and drop posts across your content calendar
-- **Post Composer** - Create and preview posts for multiple platforms at once
-- **Media Library** - Upload images and videos with automatic optimization
-- **Team Collaboration** - Invite team members with role-based permissions
-- **Workspaces** - Manage multiple brands or clients separately
-- **Smart Scheduling** - Schedule posts for optimal engagement times
-- **Multi-Platform Preview** - See exactly how your post will look on each platform
+| | |
+|---|---|
+| 📅 **Visual Calendar** | Drag and drop posts across your content calendar |
+| ✍️ **Post Composer** | Create and preview posts for multiple platforms at once |
+| 🖼️ **Media Library** | Upload images and videos with automatic optimization |
+| 👥 **Team Collaboration** | Invite team members with role-based permissions |
+| 🏢 **Workspaces** | Manage multiple brands or clients separately |
+| 👀 **Multi-Platform Preview** | See exactly how your post will look on each platform |
 
-## Supported Platforms
+## 🌐 Supported Platforms
 
 <table>
   <tr>
@@ -68,132 +69,34 @@ Tired of paying expensive monthly fees for social media scheduling tools? Want f
   </tr>
 </table>
 
-## Quick Start
+## 🚀 Getting Started
 
-### Requirements
+Get TryPost running in minutes:
 
-- PHP 8.2+
-- Node.js 18+
-- MySQL 8.0+ or PostgreSQL 14+
-- Redis
-- Composer
+| | |
+|---|---|
+| 📖 [Installation Guide](https://docs.trypost.it/getting-started/installation) | Step-by-step setup |
+| 🐳 [Docker Setup](https://docs.trypost.it/self-hosting/docker) | Run with Laravel Sail |
+| ⚙️ [Configuration](https://docs.trypost.it/getting-started/configuration) | Environment setup |
+| 🔗 [Platform Setup](https://docs.trypost.it/platforms/) | Connect your social accounts |
 
-### Installation
+## 🤝 Contributing
 
-```bash
-# Clone the repository
-git clone https://github.com/trypost-it/trypost.git
-cd trypost
+We love contributions! See our [Contributing Guide](https://docs.trypost.it/contributing) to get started.
 
-# Install dependencies
-composer install
-npm install
+- 💬 [Discussions](https://github.com/trypost-it/trypost/discussions) - Ask questions, share ideas
+- 🐛 [Issues](https://github.com/trypost-it/trypost/issues) - Report bugs, request features
 
-# Setup environment
-cp .env.example .env
-php artisan key:generate
-
-# Configure your database in .env, then run migrations
-php artisan migrate --seed
-
-# Build assets
-npm run build
-
-# Start the server
-php artisan serve
-```
-
-Visit `http://localhost:8000` and create your account!
-
-## Self-Hosting
-
-TryPost is designed to be self-hosted. Enable self-hosted mode in your `.env`:
-
-```env
-SELF_HOSTED=true
-```
-
-This skips payment/subscription requirements and gives you full access.
-
-### Running in Production
-
-```bash
-# Start the queue worker
-php artisan horizon
-
-# Or use the watcher for development
-php artisan horizon:watch
-```
-
-### Docker (Coming Soon)
-
-```bash
-docker-compose up -d
-```
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|------------|
-| **Backend** | Laravel 12, PHP 8.4 |
-| **Frontend** | Vue 3, Inertia.js, TypeScript |
-| **Styling** | Tailwind CSS 4 |
-| **Database** | MySQL / PostgreSQL |
-| **Queue** | Redis + Laravel Horizon |
-| **Real-time** | Laravel Reverb |
-
-## Roadmap
-
-Check out our [public roadmap](https://github.com/orgs/trypost-it/projects/1) to see what's coming next and vote on features!
-
-## Contributing
-
-We love contributions! Whether it's:
-
-- Bug reports
-- Feature requests
-- Documentation improvements
-- Code contributions
-
-### Development Setup
-
-```bash
-# Install dependencies
-composer install
-npm install
-
-# Start development server
-npm run dev
-
-# Run tests
-php artisan test
-```
-
-## Community
-
-- [GitHub Discussions](https://github.com/trypost-it/trypost/discussions) - Ask questions, share ideas
-- [GitHub Issues](https://github.com/trypost-it/trypost/issues) - Report bugs, request features
-
-## License
+## 📄 License
 
 TryPost is licensed under the [Functional Source License (FSL)](LICENSE.md).
 
-**You can:**
-- Use TryPost for personal or internal business use
-- Self-host for your own social media management
-- Modify and contribute to the codebase
+✅ **You can:** Use for personal or business use, self-host, modify and contribute.
 
-**You cannot:**
-- Offer TryPost as a competing SaaS product
-- White-label and resell TryPost
+❌ **You cannot:** Offer as a competing SaaS, white-label and resell.
 
 ---
 
 <p align="center">
-  <strong>If TryPost helps you, please give us a star!</strong>
-  <br />
-  <br />
-  <a href="https://github.com/trypost-it/trypost">
-    <img src="https://img.shields.io/github/stars/trypost-it/trypost?style=social" alt="Star on GitHub">
-  </a>
+  <strong>If TryPost helps you, please give us a ⭐</strong>
 </p>

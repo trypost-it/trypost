@@ -11,6 +11,7 @@ use App\Services\Social\FacebookPublisher;
 use App\Services\Social\InstagramPublisher;
 use App\Services\Social\LinkedInPagePublisher;
 use App\Services\Social\LinkedInPublisher;
+use App\Services\Social\MastodonPublisher;
 use App\Services\Social\PinterestPublisher;
 use App\Services\Social\ThreadsPublisher;
 use App\Services\Social\TikTokPublisher;
@@ -72,7 +73,7 @@ class PublishToSocialPlatform implements ShouldQueue
         PostPlatformStatusUpdated::dispatch($this->postPlatform->fresh());
     }
 
-    private function getPublisher(): LinkedInPublisher|LinkedInPagePublisher|XPublisher|TikTokPublisher|YouTubePublisher|FacebookPublisher|InstagramPublisher|ThreadsPublisher|PinterestPublisher|BlueskyPublisher
+    private function getPublisher(): LinkedInPublisher|LinkedInPagePublisher|XPublisher|TikTokPublisher|YouTubePublisher|FacebookPublisher|InstagramPublisher|ThreadsPublisher|PinterestPublisher|BlueskyPublisher|MastodonPublisher
     {
         return match ($this->postPlatform->platform) {
             SocialPlatform::LinkedIn => app(LinkedInPublisher::class),
@@ -85,6 +86,7 @@ class PublishToSocialPlatform implements ShouldQueue
             SocialPlatform::Threads => app(ThreadsPublisher::class),
             SocialPlatform::Pinterest => app(PinterestPublisher::class),
             SocialPlatform::Bluesky => app(BlueskyPublisher::class),
+            SocialPlatform::Mastodon => app(MastodonPublisher::class),
         };
     }
 

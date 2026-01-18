@@ -44,6 +44,9 @@ return [
         'bluesky' => [
             'enabled' => env('TRYPOST_BLUESKY_ENABLED', true),
         ],
+        'mastodon' => [
+            'enabled' => env('TRYPOST_MASTODON_ENABLED', true),
+        ],
     ],
 
 ];

@@ -191,6 +191,7 @@ const getPlatformLogo = (platform: string): string => {
         'threads': '/images/accounts/threads.png',
         'pinterest': '/images/accounts/pinterest.png',
         'bluesky': '/images/accounts/bluesky.png',
+        'mastodon': '/images/accounts/mastodon.png',
     };
     return logos[platform] || '/images/accounts/default.png';
 };
@@ -207,6 +208,7 @@ const getPlatformLabel = (platform: string): string => {
         'threads': 'Threads',
         'pinterest': 'Pinterest',
         'bluesky': 'Bluesky',
+        'mastodon': 'Mastodon',
     };
     return labels[platform] || platform;
 };

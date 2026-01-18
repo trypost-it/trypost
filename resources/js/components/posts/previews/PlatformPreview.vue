@@ -9,6 +9,7 @@ import TikTokPreview from './TikTokPreview.vue';
 import YouTubePreview from './YouTubePreview.vue';
 import PinterestPreview from './PinterestPreview.vue';
 import BlueskyPreview from './BlueskyPreview.vue';
+import MastodonPreview from './MastodonPreview.vue';
 
 interface SocialAccount {
     id: string;
@@ -78,6 +79,8 @@ const previewComponent = computed(() => {
             return PinterestPreview;
         case 'bluesky':
             return BlueskyPreview;
+        case 'mastodon':
+            return MastodonPreview;
         default:
             return LinkedInPreview;
     }

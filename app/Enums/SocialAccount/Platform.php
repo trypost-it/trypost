@@ -16,6 +16,7 @@ enum Platform: string
     case Threads = 'threads';
     case Pinterest = 'pinterest';
     case Bluesky = 'bluesky';
+    case Mastodon = 'mastodon';
 
     public function label(): string
     {
@@ -30,6 +31,7 @@ enum Platform: string
             self::Threads => 'Threads',
             self::Pinterest => 'Pinterest',
             self::Bluesky => 'Bluesky',
+            self::Mastodon => 'Mastodon',
         };
     }
 
@@ -45,6 +47,7 @@ enum Platform: string
             self::Threads => '#000000',
             self::Pinterest => '#E60023',
             self::Bluesky => '#0085FF',
+            self::Mastodon => '#6364FF',
         };
     }
 
@@ -60,6 +63,7 @@ enum Platform: string
             self::Threads => [MediaType::Image, MediaType::Video],
             self::Pinterest => [MediaType::Image, MediaType::Video],
             self::Bluesky => [MediaType::Image, MediaType::Video],
+            self::Mastodon => [MediaType::Image, MediaType::Video],
         };
     }
 
@@ -75,6 +79,7 @@ enum Platform: string
             self::Threads => 10,
             self::Pinterest => 5,
             self::Bluesky => 4,
+            self::Mastodon => 4,
         };
     }
 
@@ -90,6 +95,7 @@ enum Platform: string
             self::Threads => 500,
             self::Pinterest => 800,
             self::Bluesky => 300,
+            self::Mastodon => 500,
         };
     }
 
@@ -105,6 +111,7 @@ enum Platform: string
             self::Threads => true,
             self::Pinterest => false,
             self::Bluesky => true,
+            self::Mastodon => true,
         };
     }
 

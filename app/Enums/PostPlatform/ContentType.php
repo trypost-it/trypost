@@ -44,6 +44,9 @@ enum ContentType: string
     // Bluesky
     case BlueskyPost = 'bluesky_post';
 
+    // Mastodon
+    case MastodonPost = 'mastodon_post';
+
     public function label(): string
     {
         return match ($this) {
@@ -63,6 +66,7 @@ enum ContentType: string
             self::PinterestVideoPin => 'Video Pin',
             self::PinterestCarousel => 'Carousel',
             self::BlueskyPost => 'Post',
+            self::MastodonPost => 'Post',
         };
     }
 
@@ -85,6 +89,7 @@ enum ContentType: string
             self::PinterestVideoPin => 'Video pin (4s - 15min)',
             self::PinterestCarousel => 'Multi-image carousel (2-5 images)',
             self::BlueskyPost => 'Text post with optional images',
+            self::MastodonPost => 'Text post with optional media',
         };
     }
 
@@ -101,6 +106,7 @@ enum ContentType: string
             self::ThreadsPost => SocialPlatform::Threads,
             self::PinterestPin, self::PinterestVideoPin, self::PinterestCarousel => SocialPlatform::Pinterest,
             self::BlueskyPost => SocialPlatform::Bluesky,
+            self::MastodonPost => SocialPlatform::Mastodon,
         };
     }
 
@@ -133,6 +139,7 @@ enum ContentType: string
             self::PinterestPin, self::PinterestVideoPin => 1,
             self::PinterestCarousel => 5,
             self::BlueskyPost => 4,
+            self::MastodonPost => 4,
         };
     }
 
@@ -150,6 +157,7 @@ enum ContentType: string
             self::PinterestVideoPin => true,
             self::PinterestPin, self::PinterestCarousel => false,
             self::BlueskyPost => true,
+            self::MastodonPost => true,
         };
     }
 
@@ -171,6 +179,7 @@ enum ContentType: string
             self::XPost => false,
             self::ThreadsPost => false,
             self::BlueskyPost => false,
+            self::MastodonPost => false,
             default => true,
         };
     }
@@ -204,6 +213,7 @@ enum ContentType: string
             SocialPlatform::Threads => self::ThreadsPost,
             SocialPlatform::Pinterest => self::PinterestPin,
             SocialPlatform::Bluesky => self::BlueskyPost,
+            SocialPlatform::Mastodon => self::MastodonPost,
         };
     }
 }

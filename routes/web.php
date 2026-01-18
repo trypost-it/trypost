@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\FacebookController;
 use App\Http\Controllers\Auth\InstagramController;
 use App\Http\Controllers\Auth\LinkedInController;
 use App\Http\Controllers\Auth\LinkedInPageController;
+use App\Http\Controllers\Auth\MastodonController;
 use App\Http\Controllers\Auth\PinterestController;
 use App\Http\Controllers\Auth\SocialController;
 use App\Http\Controllers\Auth\ThreadsController;
@@ -93,6 +94,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('connect/bluesky', [BlueskyController::class, 'connect'])->name('social.bluesky.connect');
     Route::post('connect/bluesky', [BlueskyController::class, 'store'])->name('social.bluesky.store');
+
+    Route::get('connect/mastodon', [MastodonController::class, 'connect'])->name('social.mastodon.connect');
+    Route::post('connect/mastodon', [MastodonController::class, 'authorizeInstance'])->name('social.mastodon.authorize');
+    Route::get('accounts/mastodon/callback', [MastodonController::class, 'callback'])->name('social.mastodon.callback');
 });
 
 // Routes that require active subscription and completed onboarding

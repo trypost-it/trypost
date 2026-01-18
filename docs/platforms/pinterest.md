@@ -1,3 +1,9 @@
+---
+title: Pinterest
+parent: Platforms
+nav_order: 8
+---
+
 # Pinterest
 
 Connect your Pinterest account to TryPost.

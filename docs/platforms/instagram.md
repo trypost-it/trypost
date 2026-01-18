@@ -1,3 +1,9 @@
+---
+title: Instagram
+parent: Platforms
+nav_order: 4
+---
+
 # Instagram
 
 Connect your Instagram Business or Creator account to TryPost.

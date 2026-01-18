@@ -1,3 +1,9 @@
+---
+title: Mastodon
+parent: Platforms
+nav_order: 10
+---
+
 # Mastodon
 
 Connect your Mastodon account to TryPost.

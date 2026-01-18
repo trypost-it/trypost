@@ -1,15 +1,30 @@
-title: TryPost Documentation
+title: TryPost
 description: Documentation for TryPost - Open source social media scheduling
-theme: jekyll-theme-minimal
-markdown: kramdown
+remote_theme: just-the-docs/just-the-docs
+color_scheme: light
 
-# Navigation
-header_pages:
-  - getting-started/installation.md
-  - platforms/README.md
-  - features/scheduling.md
-  - self-hosting/requirements.md
-  - contributing.md
+# Logo
+logo: "/assets/images/logo.png"
+
+# Search
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 3
+
+# Aux links (top right)
+aux_links:
+  "GitHub":
+    - "https://github.com/trypost-it/trypost"
+
+aux_links_new_tab: true
+
+# Footer
+footer_content: "Copyright &copy; 2025 TryPost. Distributed under the <a href=\"https://github.com/trypost-it/trypost/blob/main/LICENSE.md\">FSL License</a>."
+
+# Back to top link
+back_to_top: true
+back_to_top_text: "Back to top"
 
 # Exclude files
 exclude:

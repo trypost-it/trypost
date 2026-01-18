@@ -1,3 +1,9 @@
+---
+title: Team Management
+parent: Features
+nav_order: 3
+---
+
 # Team Management
 
 Invite team members to collaborate on your social media content.

@@ -1,3 +1,8 @@
+---
+title: Contributing
+nav_order: 6
+---
+
 # Contributing to TryPost
 
 Thank you for your interest in contributing to TryPost! This guide will help you get started.

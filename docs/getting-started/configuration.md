@@ -1,3 +1,9 @@
+---
+title: Configuration
+parent: Getting Started
+nav_order: 2
+---
+
 # Configuration
 
 TryPost is configured through environment variables in the `.env` file.

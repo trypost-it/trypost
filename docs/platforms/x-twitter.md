@@ -1,3 +1,9 @@
+---
+title: X (Twitter)
+parent: Platforms
+nav_order: 2
+---
+
 # X (Twitter)
 
 Connect your X (formerly Twitter) account to TryPost.

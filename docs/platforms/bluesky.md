@@ -1,3 +1,9 @@
+---
+title: Bluesky
+parent: Platforms
+nav_order: 9
+---
+
 # Bluesky
 
 Connect your Bluesky account to TryPost.

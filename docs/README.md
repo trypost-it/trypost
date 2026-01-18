@@ -1,3 +1,9 @@
+---
+title: Home
+layout: home
+nav_order: 1
+---
+
 # TryPost Documentation
 
 Welcome to the TryPost documentation. Here you'll find everything you need to install, configure, and use TryPost.
@@ -38,7 +44,7 @@ Learn how to connect your social media accounts:
 
 ## Contributing
 
-- [Contributing Guide](contributing)
+- [Contributing Guide](./contributing.md)
 
 ## Support
 

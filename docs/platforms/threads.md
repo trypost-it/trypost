@@ -1,3 +1,9 @@
+---
+title: Threads
+parent: Platforms
+nav_order: 7
+---
+
 # Threads
 
 Connect your Threads account to TryPost.

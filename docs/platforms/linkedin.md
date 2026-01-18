@@ -1,3 +1,9 @@
+---
+title: LinkedIn
+parent: Platforms
+nav_order: 1
+---
+
 # LinkedIn
 
 Connect your LinkedIn profile or company pages to TryPost.

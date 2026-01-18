@@ -1,3 +1,9 @@
+---
+title: Production Setup
+parent: Self-Hosting
+nav_order: 2
+---
+
 # Production Setup
 
 This guide covers deploying TryPost to a production environment.
@@ -76,6 +82,7 @@ sudo supervisorctl start trypost-horizon
 
 Example Nginx configuration:
 
+{% raw %}
 ```nginx
 server {
   listen 80;
@@ -122,6 +129,7 @@ server {
   client_max_body_size 100M;
 }
 ```
+{% endraw %}
 
 ## SSL Certificate
 

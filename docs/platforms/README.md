@@ -1,3 +1,9 @@
+---
+title: Platforms
+has_children: true
+nav_order: 3
+---
+
 # Supported Platforms
 
 TryPost supports the following social media platforms:

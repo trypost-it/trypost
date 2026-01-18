@@ -1,3 +1,9 @@
+---
+title: YouTube
+parent: Platforms
+nav_order: 6
+---
+
 # YouTube
 
 Connect your YouTube channel to TryPost.

@@ -1,3 +1,9 @@
+---
+title: Workspaces
+parent: Features
+nav_order: 2
+---
+
 # Workspaces
 
 Workspaces help you organize your social media accounts, especially if you manage multiple brands or clients.

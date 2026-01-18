@@ -1,3 +1,9 @@
+---
+title: Installation
+parent: Getting Started
+nav_order: 1
+---
+
 # Installation
 
 This guide will walk you through installing TryPost on your server.

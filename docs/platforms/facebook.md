@@ -1,3 +1,9 @@
+---
+title: Facebook
+parent: Platforms
+nav_order: 3
+---
+
 # Facebook
 
 Connect your Facebook pages to TryPost.

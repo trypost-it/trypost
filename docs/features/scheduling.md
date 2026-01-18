@@ -1,3 +1,9 @@
+---
+title: Scheduling
+parent: Features
+nav_order: 1
+---
+
 # Scheduling Posts
 
 TryPost makes it easy to schedule your social media content in advance.

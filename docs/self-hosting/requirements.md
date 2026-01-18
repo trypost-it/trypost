@@ -1,3 +1,9 @@
+---
+title: Requirements
+parent: Self-Hosting
+nav_order: 1
+---
+
 # Server Requirements
 
 This guide covers the requirements for self-hosting TryPost.

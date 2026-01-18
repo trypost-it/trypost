@@ -1,3 +1,9 @@
+---
+title: TikTok
+parent: Platforms
+nav_order: 5
+---
+
 # TikTok
 
 Connect your TikTok account to TryPost.

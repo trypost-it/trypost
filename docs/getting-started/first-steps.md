@@ -1,3 +1,9 @@
+---
+title: First Steps
+parent: Getting Started
+nav_order: 3
+---
+
 # First Steps
 
 After installing TryPost, follow these steps to start scheduling your social media posts.

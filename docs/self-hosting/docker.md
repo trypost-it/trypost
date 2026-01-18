@@ -1,3 +1,9 @@
+---
+title: Docker
+parent: Self-Hosting
+nav_order: 3
+---
+
 # Docker Deployment
 
 > **Coming Soon:** Docker support is planned but not yet available.

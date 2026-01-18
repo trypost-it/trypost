@@ -75,11 +75,8 @@ jobs:
 
       - name: Configure test environment
         run: |
-          sed -i 's/DB_CONNECTION=mysql/DB_CONNECTION=pgsql/' .env
-          sed -i 's/DB_PORT=3306/DB_PORT=5432/' .env
           sed -i 's/DB_DATABASE=trypost/DB_DATABASE=trypost_test/' .env
-          sed -i 's/DB_USERNAME=root/DB_USERNAME=postgres/' .env
-          sed -i 's/DB_PASSWORD=/DB_PASSWORD=password/' .env
+          sed -i 's/DB_PASSWORD=$/DB_PASSWORD=password/' .env
           sed -i 's/CACHE_STORE=redis/CACHE_STORE=array/' .env
           sed -i 's/QUEUE_CONNECTION=redis/QUEUE_CONNECTION=sync/' .env
           sed -i 's/SESSION_DRIVER=database/SESSION_DRIVER=array/' .env

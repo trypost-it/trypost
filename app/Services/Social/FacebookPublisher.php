@@ -29,7 +29,7 @@ class FacebookPublisher
         467, // Invalid access token
     ];
 
-    private string $baseUrl = 'https://graph.facebook.com/v21.0';
+    private string $baseUrl = 'https://graph.facebook.com/v24.0';
 
     public function publish(PostPlatform $postPlatform): array
     {

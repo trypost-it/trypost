@@ -11,6 +11,13 @@ import {
     IconBookmark,
     IconMusic,
 } from '@tabler/icons-vue';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 interface SocialAccount {
     id: string;
@@ -27,11 +34,18 @@ interface MediaItem {
     original_filename: string;
 }
 
+interface ContentTypeOption {
+    value: string;
+    label: string;
+    description: string;
+}
+
 interface Props {
     socialAccount: SocialAccount;
     content: string;
     media: MediaItem[];
     contentType?: string;
+    contentTypeOptions?: ContentTypeOption[];
     charCount: number;
     maxLength: number;
     isValid: boolean;
@@ -45,17 +59,42 @@ const props = defineProps<Props>();
 const isReel = computed(() => props.contentType === 'instagram_reel');
 const isStory = computed(() => props.contentType === 'instagram_story');
 const isFeed = computed(() => props.contentType === 'instagram_feed' || !props.contentType);
+const hasMultipleContentTypes = computed(() => (props.contentTypeOptions?.length || 0) > 1);
 
 const emit = defineEmits<{
     'update:content': [value: string];
+    'update:contentType': [value: string];
     'upload': [event: Event];
     'remove-media': [mediaId: string];
 }>();
 </script>
 
 <template>
-    <!-- Reel/Story Preview (vertical) -->
-    <div v-if="isReel || isStory" class="mx-auto" style="max-width: 320px;">
+    <div class="space-y-4">
+        <!-- Content Type Selector -->
+        <div v-if="hasMultipleContentTypes" class="flex items-center justify-center gap-2">
+            <span class="text-sm text-muted-foreground">Type:</span>
+            <Select
+                :model-value="contentType"
+                @update:model-value="emit('update:contentType', $event)"
+            >
+                <SelectTrigger class="w-[140px] h-8">
+                    <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem
+                        v-for="option in contentTypeOptions"
+                        :key="option.value"
+                        :value="option.value"
+                    >
+                        {{ option.label }}
+                    </SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
+
+        <!-- Reel/Story Preview (vertical) -->
+        <div v-if="isReel || isStory" class="mx-auto" style="max-width: 320px;">
         <div class="relative bg-black rounded-2xl overflow-hidden" style="aspect-ratio: 9/16;">
             <!-- Media Area -->
             <div v-if="media.length > 0" class="w-full h-full">
@@ -366,5 +405,6 @@ const emit = defineEmits<{
                 <IconPhoto class="h-5 w-5 text-gray-500" />
             </label>
         </div>
+    </div>
     </div>
 </template>

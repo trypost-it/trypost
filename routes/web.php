@@ -131,6 +131,7 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
 
     // Media
     Route::post('medias', [MediaController::class, 'store'])->name('medias.store');
+    Route::post('medias/chunked', [MediaController::class, 'storeChunked'])->name('medias.store-chunked');
     Route::post('medias/{media}/duplicate', [MediaController::class, 'duplicate'])->name('medias.duplicate');
     Route::delete('medias/{modelId}/{media}', [MediaController::class, 'destroy'])->name('medias.destroy');
 

@@ -29,7 +29,7 @@ class InstagramPublisher
         467, // Invalid access token
     ];
 
-    private string $baseUrl = 'https://graph.facebook.com/v21.0';
+    private string $baseUrl = 'https://graph.instagram.com/v24.0';
 
     public function publish(PostPlatform $postPlatform): array
     {
@@ -58,13 +58,18 @@ class InstagramPublisher
 
     private function publishSingleImage(string $instagramId, string $accessToken, string $content, $media): array
     {
-        Log::info('Instagram publishing single image', ['instagram_id' => $instagramId]);
+        Log::info('Instagram publishing single image', ['instagram_id' => $instagramId, 'image_url' => $media->url]);
 
         // Step 1: Create container
         $containerResponse = Http::post("{$this->baseUrl}/{$instagramId}/media", [
             'image_url' => $media->url,
             'caption' => $content,
             'access_token' => $accessToken,
+        ]);
+
+        Log::info('Instagram container response', [
+            'status' => $containerResponse->status(),
+            'body' => $containerResponse->json(),
         ]);
 
         if ($containerResponse->failed()) {
@@ -75,9 +80,16 @@ class InstagramPublisher
             $this->handleApiError($containerResponse, 'Instagram API error');
         }
 
-        $containerId = $containerResponse->json()['id'];
+        $containerId = $containerResponse->json()['id'] ?? null;
 
-        // Step 2: Publish container
+        if (! $containerId) {
+            throw new \Exception('Instagram container creation failed: No container ID returned');
+        }
+
+        // Step 2: Wait for container to be ready
+        $this->waitForMediaProcessing($containerId, $accessToken);
+
+        // Step 3: Publish container
         return $this->publishContainer($instagramId, $accessToken, $containerId);
     }
 
@@ -101,7 +113,11 @@ class InstagramPublisher
             $this->handleApiError($containerResponse, 'Instagram API error');
         }
 
-        $containerId = $containerResponse->json()['id'];
+        $containerId = $containerResponse->json()['id'] ?? null;
+
+        if (! $containerId) {
+            throw new \Exception('Instagram reel container creation failed: No container ID returned');
+        }
 
         // Wait for video processing
         $this->waitForMediaProcessing($containerId, $accessToken);
@@ -138,14 +154,16 @@ class InstagramPublisher
             $this->handleApiError($containerResponse, 'Instagram API error');
         }
 
-        $containerId = $containerResponse->json()['id'];
+        $containerId = $containerResponse->json()['id'] ?? null;
 
-        // Wait for video processing if needed
-        if ($isVideo) {
-            $this->waitForMediaProcessing($containerId, $accessToken);
+        if (! $containerId) {
+            throw new \Exception('Instagram story container creation failed: No container ID returned');
         }
 
-        // Step 2: Publish story container
+        // Step 2: Wait for media processing
+        $this->waitForMediaProcessing($containerId, $accessToken);
+
+        // Step 3: Publish story container
         return $this->publishContainer($instagramId, $accessToken, $containerId);
     }
 
@@ -213,9 +231,16 @@ class InstagramPublisher
             $this->handleApiError($carouselResponse, 'Instagram API error');
         }
 
-        $carouselId = $carouselResponse->json()['id'];
+        $carouselId = $carouselResponse->json()['id'] ?? null;
 
-        // Step 3: Publish carousel
+        if (! $carouselId) {
+            throw new \Exception('Instagram carousel container creation failed: No container ID returned');
+        }
+
+        // Step 3: Wait for carousel to be ready
+        $this->waitForMediaProcessing($carouselId, $accessToken);
+
+        // Step 4: Publish carousel
         return $this->publishContainer($instagramId, $accessToken, $carouselId);
     }
 

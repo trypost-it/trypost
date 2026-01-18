@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 trait HasMedia
 {
@@ -70,8 +72,12 @@ trait HasMedia
 
         $mimeType = $file->getMimeType();
         $type = $this->getMediaType($mimeType);
+        $extension = $file->getClientOriginalExtension();
 
-        $path = $file->store('media/'.now()->format('Y-m'));
+        $filename = Str::uuid().'.'.$extension;
+        $path = 'medias/'.$filename;
+
+        Storage::put($path, file_get_contents($file->getPathname()));
 
         return $this->media()->create([
             'collection' => $collection,
@@ -82,6 +88,46 @@ trait HasMedia
             'size' => $file->getSize(),
             'order' => 0,
             'meta' => array_merge($this->getMediaMeta($file, $type), $meta),
+        ]);
+    }
+
+    /**
+     * Add media from a file path (used for chunked uploads).
+     */
+    public function addMediaFromPath(string $filePath, string $originalFilename, string $collection = 'default', array $meta = []): Media
+    {
+        if ($this->isSingleMediaCollection($collection)) {
+            $this->clearMediaCollection($collection);
+        }
+
+        $mimeType = mime_content_type($filePath);
+        $type = $this->getMediaType($mimeType);
+        $size = filesize($filePath);
+        $extension = pathinfo($originalFilename, PATHINFO_EXTENSION);
+
+        $filename = Str::uuid().'.'.$extension;
+        $storagePath = 'medias/'.$filename;
+
+        Storage::put($storagePath, file_get_contents($filePath));
+
+        $mediaMeta = [];
+        if ($type === 'image') {
+            $imageInfo = @getimagesize($filePath);
+            if ($imageInfo) {
+                $mediaMeta['width'] = $imageInfo[0];
+                $mediaMeta['height'] = $imageInfo[1];
+            }
+        }
+
+        return $this->media()->create([
+            'collection' => $collection,
+            'type' => $type,
+            'path' => $storagePath,
+            'original_filename' => $originalFilename,
+            'mime_type' => $mimeType,
+            'size' => $size,
+            'order' => 0,
+            'meta' => array_merge($mediaMeta, $meta),
         ]);
     }
 

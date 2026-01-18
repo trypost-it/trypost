@@ -42,7 +42,8 @@ import DatePicker from '@/components/DatePicker.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import { calendar } from '@/routes';
 import { destroy as destroyPost, update as updatePost } from '@/routes/posts';
-import { store as storeMedia, destroy as destroyMedia, duplicate as duplicateMedia } from '@/routes/medias';
+import { store as storeMedia, storeChunked as storeMediaChunked, destroy as destroyMedia, duplicate as duplicateMedia } from '@/actions/App/Http/Controllers/MediaController';
+import { uploadChunked, shouldUseChunkedUpload } from '@/utils/chunkedUpload';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -517,14 +518,30 @@ const handleFileUpload = async (event: Event, postPlatformId: string) => {
 
     for (const file of Array.from(files)) {
         try {
-            // 1. Upload once to the current platform
-            const formData = new FormData();
-            formData.append('media', file);
-            formData.append('model', 'App\\Models\\PostPlatform');
-            formData.append('model_id', postPlatformId);
+            let data;
 
-            const response = await axios.post(storeMedia.url(), formData);
-            const data = response.data;
+            // Use chunked upload for large files (> 10MB)
+            if (shouldUseChunkedUpload(file)) {
+                data = await uploadChunked({
+                    file,
+                    url: storeMediaChunked.url(),
+                    model: 'postPlatform',
+                    modelId: postPlatformId,
+                    collection: 'default',
+                    onProgress: (progress) => {
+                        console.log(`Upload progress: ${progress}%`);
+                    },
+                });
+            } else {
+                // Regular upload for small files
+                const formData = new FormData();
+                formData.append('media', file);
+                formData.append('model', 'postPlatform');
+                formData.append('model_id', postPlatformId);
+
+                const response = await axios.post(storeMedia.url(), formData);
+                data = response.data;
+            }
 
             // Add to current platform (use spread for reactivity)
             const currentMedia = platformMedia.value[postPlatformId] || [];
@@ -533,7 +550,7 @@ const handleFileUpload = async (event: Event, postPlatformId: string) => {
             // 2. If synced, duplicate to other platforms
             if (otherPlatformIds.length > 0) {
                 const targets = otherPlatformIds.map(id => ({
-                    model: 'App\\Models\\PostPlatform',
+                    model: 'postPlatform',
                     model_id: id,
                 }));
 

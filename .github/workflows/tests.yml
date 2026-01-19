@@ -69,17 +69,7 @@ jobs:
         run: npm run build
 
       - name: Prepare environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-
-      - name: Configure test environment
-        run: |
-          sed -i 's/DB_DATABASE=trypost/DB_DATABASE=trypost_test/' .env
-          sed -i 's/DB_PASSWORD=$/DB_PASSWORD=password/' .env
-          sed -i 's/CACHE_STORE=redis/CACHE_STORE=array/' .env
-          sed -i 's/QUEUE_CONNECTION=redis/QUEUE_CONNECTION=sync/' .env
-          sed -i 's/SESSION_DRIVER=database/SESSION_DRIVER=array/' .env
+        run: cp .env.ci .env
 
       - name: Run migrations
         run: php artisan migrate --force

@@ -9,6 +9,7 @@ use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Services\Social\LinkedInPublisher;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     $this->workspace = Workspace::factory()->create();
@@ -160,4 +161,59 @@ test('linkedin publisher handles 401 status as token error', function () {
 
     expect(fn () => $publisher->publish($this->postPlatform))
         ->toThrow(TokenExpiredException::class);
+});
+
+test('linkedin publisher handles token refresh failure', function () {
+    $this->socialAccount->update([
+        'token_expires_at' => now()->subHour(),
+        'refresh_token' => 'refresh-token-123',
+    ]);
+
+    Http::fake([
+        'https://www.linkedin.com/oauth/v2/accessToken' => Http::response([
+            'code' => 'INVALID_REFRESH_TOKEN',
+            'message' => 'Invalid refresh token',
+        ], 400),
+    ]);
+
+    $publisher = new LinkedInPublisher;
+
+    expect(fn () => $publisher->publish($this->postPlatform))
+        ->toThrow(\Exception::class);
+});
+
+test('linkedin publisher refreshes token when expiring soon', function () {
+    $this->socialAccount->update([
+        'token_expires_at' => now()->addMinutes(5),
+        'refresh_token' => 'refresh-token-123',
+    ]);
+
+    Http::fake([
+        'https://www.linkedin.com/oauth/v2/accessToken' => Http::response([
+            'access_token' => 'new-access-token',
+            'refresh_token' => 'new-refresh-token',
+            'expires_in' => 3600,
+        ], 200),
+        '*/rest/posts' => Http::response(null, 201, ['x-restli-id' => 'urn:li:share:123456']),
+    ]);
+
+    $publisher = new LinkedInPublisher;
+    $result = $publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('urn:li:share:123456');
+    $this->socialAccount->refresh();
+    expect($this->socialAccount->access_token)->toBe('new-access-token');
+});
+
+test('linkedin publisher handles empty post id header', function () {
+    Http::fake([
+        '*/rest/posts' => Http::response(null, 201),
+    ]);
+
+    $publisher = new LinkedInPublisher;
+    $result = $publisher->publish($this->postPlatform);
+
+    // When header is empty, id will be empty string or 'unknown'
+    expect($result)->toHaveKey('id');
+    expect($result)->toHaveKey('url');
 });

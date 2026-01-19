@@ -9,6 +9,15 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    env:
+      DB_CONNECTION: pgsql
+      DB_DATABASE: trypost_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      BROADCAST_CONNECTION: "null"
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
 
     services:
       postgres:
@@ -18,7 +27,7 @@ jobs:
           POSTGRES_PASSWORD: password
           POSTGRES_DB: trypost_test
         ports:
-          - 5432:5432
+          - 5432/tcp
         options: >-
           --health-cmd="pg_isready"
           --health-interval=10s
@@ -28,7 +37,7 @@ jobs:
       redis:
         image: redis:7
         ports:
-          - 6379:6379
+          - 6379/tcp
         options: >-
           --health-cmd="redis-cli ping"
           --health-interval=10s
@@ -69,10 +78,21 @@ jobs:
         run: npm run build
 
       - name: Prepare environment
-        run: cp .env.ci .env
+        run: |
+          cp .env.ci .env
+          php artisan key:generate
+
+      - name: Clear Config
+        run: php artisan config:clear
 
       - name: Run migrations
         run: php artisan migrate --force
+        env:
+          DB_PORT: ${{ job.services.postgres.ports['5432'] }}
+          REDIS_PORT: ${{ job.services.redis.ports['6379'] }}
 
       - name: Run tests
         run: php artisan test --compact
+        env:
+          DB_PORT: ${{ job.services.postgres.ports['5432'] }}
+          REDIS_PORT: ${{ job.services.redis.ports['6379'] }}

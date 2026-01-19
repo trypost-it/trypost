@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
 import { Plus, Hash, Pencil, Trash2 } from 'lucide-vue-next';
+import { ref } from 'vue';
 
-import AppLayout from '@/layouts/AppLayout.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import CreateDialog from '@/components/hashtags/CreateDialog.vue';
 import EditDialog from '@/components/hashtags/EditDialog.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { index as hashtagsIndex, destroy as hashtagsDestroy } from '@/routes/hashtags';
 import { type BreadcrumbItemType } from '@/types';
 

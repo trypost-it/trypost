@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import {
     IconWorld,
     IconThumbUp,
@@ -7,7 +6,6 @@ import {
     IconRepeat,
     IconSend,
     IconDots,
-    IconVideo,
     IconX,
     IconPhoto,
     IconHeart,
@@ -39,7 +37,7 @@ interface Props {
     isUploading?: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const emit = defineEmits<{
     'update:content': [value: string];

@@ -59,7 +59,7 @@ export default {
 
     formatDuration(duration: string) {
         // Duration comes in format "HH:mm:ss"
-        const [hours, minutes, seconds] = duration.split(':');
+        const [hours, minutes] = duration.split(':');
         const h = parseInt(hours, 10);
         const m = parseInt(minutes, 10);
 

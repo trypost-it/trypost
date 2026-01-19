@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { parseDate } from '@internationalized/date';
+import { IconCalendar } from '@tabler/icons-vue';
+import { ref, watch } from 'vue';
+
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { InputMask } from '@/components/ui/input';
@@ -9,9 +13,6 @@ import {
 } from '@/components/ui/popover';
 import { useDateMaska } from '@/composables/useDateMaska';
 import dayjs from '@/dayjs';
-import { parseDate } from '@internationalized/date';
-import { IconCalendar } from '@tabler/icons-vue';
-import { ref, watch } from 'vue';
 
 const props = defineProps({
   name: {

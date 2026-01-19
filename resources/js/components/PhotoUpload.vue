@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3';
+import axios from 'axios';
+import { Trash2, Upload, User } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
+
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -13,10 +18,6 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { store as storeMedia, destroy as destroyMedia } from '@/routes/medias';
-import { router } from '@inertiajs/vue3';
-import axios from 'axios';
-import { Trash2, Upload, User } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
 
 interface Photo {
     url: string;

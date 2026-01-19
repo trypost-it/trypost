@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { computed, onMounted, onUnmounted } from 'vue';
 import { AlertCircle, Check, ExternalLink, RefreshCw, Trash2 } from 'lucide-vue-next';
+import { computed, onMounted, onUnmounted } from 'vue';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';

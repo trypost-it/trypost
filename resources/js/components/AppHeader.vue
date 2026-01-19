@@ -5,7 +5,6 @@ import { Calendar, Menu, Settings, Share2, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
-import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,9 +26,10 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import UserMenuContent from '@/components/UserMenuContent.vue';
+import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue';
 import { useActiveUrl } from '@/composables/useActiveUrl';
-import { calendar } from '@/routes';
 import { getInitials } from '@/composables/useInitials';
+import { calendar } from '@/routes';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 interface Props {

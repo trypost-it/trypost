@@ -3,12 +3,12 @@ import { Head, Link } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import { Clock, CheckCircle, AlertCircle, Loader2, FileText, ExternalLink, Pencil } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
-import dayjs from '@/dayjs';
 
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import dayjs from '@/dayjs';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { calendar } from '@/routes';
 import { edit as editPost } from '@/routes/posts';
 import { type BreadcrumbItemType } from '@/types';

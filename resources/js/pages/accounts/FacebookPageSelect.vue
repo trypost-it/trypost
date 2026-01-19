@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import { Facebook, Check } from 'lucide-vue-next';
+import { ref } from 'vue';
 
-import PopupLayout from '@/layouts/PopupLayout.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import PopupLayout from '@/layouts/PopupLayout.vue';
 import { select as selectFacebookPage } from '@/routes/social/facebook';
 
 interface Page {

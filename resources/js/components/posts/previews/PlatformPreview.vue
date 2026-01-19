@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import LinkedInPreview from './LinkedInPreview.vue';
-import XPreview from './XPreview.vue';
+
+import BlueskyPreview from './BlueskyPreview.vue';
 import FacebookPreview from './FacebookPreview.vue';
 import InstagramPreview from './InstagramPreview.vue';
+import LinkedInPreview from './LinkedInPreview.vue';
+import MastodonPreview from './MastodonPreview.vue';
+import PinterestPreview from './PinterestPreview.vue';
 import ThreadsPreview from './ThreadsPreview.vue';
 import TikTokPreview from './TikTokPreview.vue';
+import XPreview from './XPreview.vue';
 import YouTubePreview from './YouTubePreview.vue';
-import PinterestPreview from './PinterestPreview.vue';
-import BlueskyPreview from './BlueskyPreview.vue';
-import MastodonPreview from './MastodonPreview.vue';
 
 interface SocialAccount {
     id: string;

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { computed } from 'vue';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next';
-import dayjs from '@/dayjs';
+import { computed } from 'vue';
 
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import dayjs from '@/dayjs';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { calendar } from '@/routes';
 import { create as createPost, edit as editPost, show as showPost } from '@/routes/posts';
 import { type BreadcrumbItemType } from '@/types';

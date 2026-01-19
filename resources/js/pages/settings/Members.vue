@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { members } from '@/routes';
+import { members as membersRoute } from '@/routes';
 import { destroy as destroyInvite, store as storeInvite } from '@/routes/invites';
 import { remove as removeMember } from '@/routes/members';
 import { type BreadcrumbItem } from '@/types';
@@ -49,10 +49,10 @@ interface Props {
     roles: Role[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const breadcrumbItems: BreadcrumbItem[] = [
-    { title: 'Members', href: members.url() },
+    { title: 'Members', href: membersRoute.url() },
 ];
 
 const form = useForm({

@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
-
 import {
     IconAlertTriangle,
     IconCircleCheck,
@@ -9,6 +7,8 @@ import {
     IconInfoCircle,
     IconX,
 } from '@tabler/icons-vue';
+import { computed, ref, watch } from 'vue';
+
 
 const show = ref(false);
 const animate = ref(false);

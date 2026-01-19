@@ -2,9 +2,9 @@
 import { Head } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
-import AppLayout from '@/layouts/AppLayout.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import SocialAccountsGrid, { type Platform } from '@/components/SocialAccountsGrid.vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { accounts } from '@/routes';
 import { disconnect as disconnectAccount } from '@/routes/accounts';
 import { type BreadcrumbItemType } from '@/types';
@@ -19,7 +19,7 @@ interface Props {
     platforms: Platform[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 

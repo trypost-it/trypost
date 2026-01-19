@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3';
+import { ref } from 'vue';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,8 +12,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { router } from '@inertiajs/vue3';
-import { ref } from 'vue';
 
 const props = defineProps({
   title: {

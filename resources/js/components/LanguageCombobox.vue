@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { IconCheck, IconChevronDown, IconSearch } from '@tabler/icons-vue';
+import { FocusScope } from 'reka-ui';
+import { ref, watchEffect } from 'vue';
+
 import { Button } from '@/components/ui/button';
 import {
     Combobox,
@@ -11,9 +15,6 @@ import {
     ComboboxList,
     ComboboxTrigger,
 } from '@/components/ui/combobox';
-import { IconCheck, IconChevronDown, IconSearch } from '@tabler/icons-vue';
-import { FocusScope } from 'reka-ui';
-import { ref, watchEffect } from 'vue';
 
 interface Language {
     id: string;

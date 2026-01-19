@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import {
     IconX,
     IconPhoto,
     IconShare,
     IconUpload,
 } from '@tabler/icons-vue';
+import { computed } from 'vue';
+
 import {
     Select,
     SelectContent,
@@ -173,7 +174,7 @@ const updateBoardId = (boardId: string) => {
                     <div v-else class="relative">
                         <div class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide">
                             <div
-                                v-for="(item, index) in media"
+                                v-for="item in media"
                                 :key="item.id"
                                 class="relative flex-shrink-0 w-full snap-center"
                             >

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
     IconDots,
-    IconVideo,
     IconX,
     IconPhoto,
     IconThumbUp,
@@ -36,7 +35,7 @@ interface Props {
     isUploading?: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const emit = defineEmits<{
     'update:content': [value: string];

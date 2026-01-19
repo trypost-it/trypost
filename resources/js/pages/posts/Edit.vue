@@ -1,16 +1,13 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
-import { Clock, AlertCircle, Trash2, Send, Link2, MoreHorizontal, Plus } from 'lucide-vue-next';
 import axios from 'axios';
-import dayjs from '@/dayjs';
-import { PlatformPreview } from '@/components/posts/previews';
+import { Clock, AlertCircle, Trash2, Send, Link2, MoreHorizontal, Plus } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 
-import AppLayout from '@/layouts/AppLayout.vue';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
+import { store as storeMedia, storeChunked as storeMediaChunked, destroy as destroyMedia, duplicate as duplicateMedia } from '@/actions/App/Http/Controllers/MediaController';
+import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
+import DatePicker from '@/components/DatePicker.vue';
+import { PlatformPreview } from '@/components/posts/previews';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
     AlertDialog,
@@ -22,6 +19,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -29,22 +27,17 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import DatePicker from '@/components/DatePicker.vue';
-import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
+import dayjs from '@/dayjs';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { calendar } from '@/routes';
 import { destroy as destroyPost, update as updatePost } from '@/routes/posts';
-import { store as storeMedia, storeChunked as storeMediaChunked, destroy as destroyMedia, duplicate as duplicateMedia } from '@/actions/App/Http/Controllers/MediaController';
-import { uploadChunked, shouldUseChunkedUpload } from '@/utils/chunkedUpload';
 import { type BreadcrumbItemType } from '@/types';
+import { uploadChunked, shouldUseChunkedUpload } from '@/utils/chunkedUpload';
 
 interface SocialAccount {
     id: string;
@@ -276,10 +269,6 @@ function getContentTypeOptions(platform: string): ContentTypeOption[] {
     return contentTypeOptions[platform] || [];
 }
 
-function hasMultipleContentTypes(platform: string): boolean {
-    return (contentTypeOptions[platform]?.length || 0) > 1;
-}
-
 function getPlatformData(platform: string): Record<string, any> {
     if (platform === 'pinterest') {
         return { boards: props.pinterestBoards };
@@ -342,11 +331,6 @@ const setContentType = (platformId: string, value: string) => {
 // Selected platforms (for tabs)
 const selectedPlatforms = computed(() => {
     return props.post.post_platforms.filter(pp => selectedPlatformIds.value.includes(pp.id));
-});
-
-// Unselected platforms (for add button)
-const unselectedPlatforms = computed(() => {
-    return props.post.post_platforms.filter(pp => !selectedPlatformIds.value.includes(pp.id));
 });
 
 // Other selected platforms (for sync label)

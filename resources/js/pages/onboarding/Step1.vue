@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import { Building, Building2, Rocket, Sparkles, Store, User } from 'lucide-vue-next';
-import { computed } from 'vue';
 
-import OnboardingLayout from '@/layouts/OnboardingLayout.vue';
-import { Button } from '@/components/ui/button';
 import { storeStep1 } from '@/actions/App/Http/Controllers/OnboardingController';
+import { Button } from '@/components/ui/button';
+import OnboardingLayout from '@/layouts/OnboardingLayout.vue';
 
 interface Persona {
     value: string;
@@ -18,7 +17,7 @@ interface Props {
     personas: Persona[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const form = useForm({
     persona: '',

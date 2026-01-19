@@ -2,11 +2,11 @@
 import { Head } from '@inertiajs/vue3';
 import { CreditCard, FileText, Building2, ExternalLink, Sparkles } from 'lucide-vue-next';
 
-import AppLayout from '@/layouts/AppLayout.vue';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItemType } from '@/types';
 
 interface Subscription {
@@ -40,7 +40,7 @@ interface Props {
     defaultPaymentMethod: PaymentMethod | null;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
     {

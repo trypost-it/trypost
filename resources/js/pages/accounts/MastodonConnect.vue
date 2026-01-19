@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import { IconInfoCircle } from '@tabler/icons-vue';
+import { ref } from 'vue';
 
-import PopupLayout from '@/layouts/PopupLayout.vue';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import PopupLayout from '@/layouts/PopupLayout.vue';
 import { authorize as authorizeMastodon } from '@/routes/social/mastodon';
 
 interface Props {
     errors?: Record<string, string>;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const formRef = ref<HTMLFormElement | null>(null);
 const instance = ref('https://mastodon.social');

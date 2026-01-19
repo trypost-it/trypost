@@ -2,9 +2,9 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { Calendar, Users, FileText, CheckCircle, Clock, AlertCircle, Settings } from 'lucide-vue-next';
 
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { accounts, calendar } from '@/routes';
 import { settings } from '@/routes/workspace';
 import { type BreadcrumbItemType } from '@/types';
@@ -35,7 +35,7 @@ interface Props {
     stats: Stats;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const breadcrumbs: BreadcrumbItemType[] = [
     { title: 'Calendar', href: calendar.url() },

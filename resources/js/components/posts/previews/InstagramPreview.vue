@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import {
     IconDots,
     IconVideo,
@@ -11,6 +10,8 @@ import {
     IconBookmark,
     IconMusic,
 } from '@tabler/icons-vue';
+import { computed } from 'vue';
+
 import {
     Select,
     SelectContent,
@@ -58,7 +59,6 @@ const props = defineProps<Props>();
 // Computed helpers for content type
 const isReel = computed(() => props.contentType === 'instagram_reel');
 const isStory = computed(() => props.contentType === 'instagram_story');
-const isFeed = computed(() => props.contentType === 'instagram_feed' || !props.contentType);
 const hasMultipleContentTypes = computed(() => (props.contentTypeOptions?.length || 0) > 1);
 
 const emit = defineEmits<{

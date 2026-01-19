@@ -1,0 +1,48 @@
+<x-main>
+  <div class="bg-zinc-50 sm:px-4 font-sans">
+    <table align="center">
+      <tr>
+        <td class="w-[552px] max-w-full">
+          <x-header />
+
+          <table class="w-full">
+            <tr>
+              <td class="p-12 sm:px-6 text-base text-zinc-700 bg-white rounded shadow-sm">
+                <h1 class="m-0 mb-6 text-2xl sm:leading-8 text-black font-semibold">
+                  Account Disconnected
+                </h1>
+
+                <p class="m-0 leading-6">
+                  Your <strong>@{{ $platformName }}</strong> account <strong>@{{ $accountName }}</strong> has been disconnected from the <strong>@{{ $workspaceName }}</strong> workspace.
+                </p>
+
+                <p class="m-0 mt-4 leading-6">
+                  This may have happened because:
+                </p>
+
+                <ul class="m-0 mt-2 pl-5 leading-6">
+                  <li>Your access token expired</li>
+                  <li>You revoked access to TryPost</li>
+                  <li>There was an authentication error</li>
+                </ul>
+
+                <p class="m-0 mt-4 leading-6">
+                  Please reconnect your account to continue scheduling and publishing posts.
+                </p>
+
+                <x-spacer height="24px" />
+
+                <div class="flex items-center justify-center">
+                  <x-button href="@{{ $url }}">
+                    Reconnect Account &rarr;
+                  </x-button>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <x-footer />
+        </td>
+      </tr>
+    </table>
+  </div>
+</x-main>

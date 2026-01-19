@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\SocialAccount\Status;
-use App\Notifications\AccountDisconnectedNotification;
+use App\Mail\AccountDisconnected;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class SocialAccount extends Model
@@ -102,7 +103,7 @@ class SocialAccount extends Model
                 ]);
 
                 if ($wasConnected) {
-                    $this->workspace->owner->notify(new AccountDisconnectedNotification($this));
+                    Mail::to($this->workspace->owner)->send(new AccountDisconnected($this));
                 }
             } finally {
                 $lock->release();

@@ -30,7 +30,7 @@ enum Type: string
     {
         return match ($this) {
             self::Image => 10,
-            self::Video => 500,
+            self::Video => 2048,
             self::Document => 100,
         };
     }

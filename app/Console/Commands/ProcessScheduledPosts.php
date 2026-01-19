@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Console\Commands;
 
+use App\Jobs\PublishPost;
 use App\Models\Post;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Console\Command;
 
-class ProcessScheduledPosts implements ShouldQueue
+class ProcessScheduledPosts extends Command
 {
-    use Queueable;
+    protected $signature = 'posts:process-scheduled';
+
+    protected $description = 'Process scheduled posts that are due for publishing';
 
     public function handle(): void
     {

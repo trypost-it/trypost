@@ -1,6 +1,6 @@
 <?php
 
-use App\Jobs\ProcessScheduledPosts;
+use App\Console\Commands\ProcessScheduledPosts;
 use Illuminate\Support\Facades\Schedule;
 
-Schedule::job(new ProcessScheduledPosts)->everyMinute();
+Schedule::command(ProcessScheduledPosts::class)->everyMinute();

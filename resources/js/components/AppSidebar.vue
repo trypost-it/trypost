@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconShare2, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconGift, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop } from '@tabler/icons-vue';
+import { IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconShare2, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop } from '@tabler/icons-vue';
 import { Button } from '@/components/ui/button';
 import { create as createPost } from '@/actions/App/Http/Controllers/PostController';
 import { computed } from 'vue';
@@ -130,17 +130,12 @@ const configNavItems = computed(() => {
 const supportNavItems: NavItem[] = [
     {
         title: 'Share feedback',
-        href: 'mailto:support@trypost.it',
+        href: 'https://github.com/trypost-it/trypost/discussions',
         icon: IconMessageCircle,
     },
     {
-        title: 'Earn 30% referral',
-        href: '/referral',
-        icon: IconGift,
-    },
-    {
-        title: 'Stay updated',
-        href: 'https://x.com/trypostit',
+        title: 'Last Updates',
+        href: 'https://github.com/trypost-it/trypost/releases',
         icon: IconBell,
     },
     {

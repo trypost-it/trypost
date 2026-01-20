@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { calendar } from '@/routes';
-import { create as createPost, edit as editPost, show as showPost } from '@/routes/posts';
+import { create as createPost, edit as editPost } from '@/routes/posts';
 import { type BreadcrumbItemType } from '@/types';
 
 interface PostPlatform {
@@ -179,9 +179,7 @@ const getPlatformLogo = (platform: string): string => {
 };
 
 const getPostUrl = (post: Post): string => {
-    return post.status === 'draft' || post.status === 'scheduled'
-        ? editPost.url(post.id)
-        : showPost.url(post.id);
+    return editPost.url(post.id);
 };
 
 const formatTime = (scheduledAt: string): string => {

@@ -34,9 +34,10 @@ interface Props {
     isValid: boolean;
     validationMessage: string;
     isUploading?: boolean;
+    readonly?: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
     'update:content': [value: string];
@@ -52,6 +53,7 @@ const emit = defineEmits<{
             <div v-if="media.length > 0 && media[0].type === 'video'" class="w-full h-full">
                 <video :src="media[0].url" class="w-full h-full object-cover" muted loop playsinline />
                 <button
+                    v-if="!props.readonly"
                     type="button"
                     @click="emit('remove-media', media[0].id)"
                     class="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2"
@@ -62,6 +64,7 @@ const emit = defineEmits<{
             <div v-else-if="media.length > 0 && media[0].type === 'image'" class="w-full h-full">
                 <img :src="media[0].url" :alt="media[0].original_filename" class="w-full h-full object-cover" />
                 <button
+                    v-if="!props.readonly"
                     type="button"
                     @click="emit('remove-media', media[0].id)"
                     class="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2"
@@ -69,7 +72,7 @@ const emit = defineEmits<{
                     <IconX class="h-5 w-5" />
                 </button>
             </div>
-            <div v-else class="w-full h-full flex flex-col items-center justify-center bg-[#0f0f0f] text-gray-400">
+            <div v-else-if="!props.readonly" class="w-full h-full flex flex-col items-center justify-center bg-[#0f0f0f] text-gray-400">
                 <IconVideo class="h-20 w-20 mb-4" />
                 <p class="text-sm mb-2">Add a Short video</p>
                 <label class="cursor-pointer bg-[#ff0000] text-white px-6 py-2 rounded-full font-semibold text-sm hover:bg-[#cc0000] transition-colors">
@@ -82,6 +85,10 @@ const emit = defineEmits<{
                     />
                     Upload
                 </label>
+            </div>
+            <div v-else class="w-full h-full flex flex-col items-center justify-center bg-[#0f0f0f] text-gray-400">
+                <IconVideo class="h-20 w-20 mb-4" />
+                <p class="text-sm">No media</p>
             </div>
         </div>
 
@@ -161,7 +168,11 @@ const emit = defineEmits<{
                 </button>
             </div>
             <div>
+                <div v-if="props.readonly" class="w-full min-h-[40px] max-h-[80px] text-sm text-white whitespace-pre-wrap">
+                    {{ content || 'No content' }}
+                </div>
                 <textarea
+                    v-else
                     :value="content"
                     @input="emit('update:content', ($event.target as HTMLTextAreaElement).value)"
                     class="w-full min-h-[40px] max-h-[80px] bg-transparent border-0 p-0 text-sm text-white resize-none focus:outline-none focus:ring-0 placeholder:text-gray-400"
@@ -177,8 +188,8 @@ const emit = defineEmits<{
             </div>
         </div>
 
-        <!-- Footer with char count -->
-        <div class="absolute top-4 right-3 flex items-center gap-2">
+        <!-- Footer with char count (only in edit mode) -->
+        <div v-if="!props.readonly" class="absolute top-4 right-3 flex items-center gap-2">
             <span
                 class="text-xs px-2 py-1 rounded-full"
                 :class="isValid ? 'bg-green-500/30 text-green-300' : 'bg-red-500/30 text-red-300'"

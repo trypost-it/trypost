@@ -56,6 +56,7 @@ interface Props {
     isValid: boolean;
     validationMessage: string;
     isUploading?: boolean;
+    readonly?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -82,7 +83,7 @@ const updateBoardId = (boardId: string) => {
 <template>
     <div class="space-y-4">
         <!-- Settings Bar -->
-        <div v-if="hasMultipleContentTypes || boards.length > 0" class="flex items-center justify-center gap-4 flex-wrap">
+        <div v-if="(hasMultipleContentTypes || boards.length > 0) && !props.readonly" class="flex items-center justify-center gap-4 flex-wrap">
             <!-- Content Type Selector -->
             <div v-if="hasMultipleContentTypes" class="flex items-center gap-2">
                 <span class="text-sm text-muted-foreground">Type:</span>
@@ -157,6 +158,7 @@ const updateBoardId = (boardId: string) => {
                         />
                         <!-- Remove button -->
                         <button
+                            v-if="!props.readonly"
                             type="button"
                             @click="emit('remove-media', media[0].id)"
                             class="absolute top-3 right-3 bg-black/60 text-white rounded-full p-1.5 opacity-0 hover:opacity-100 transition-opacity"
@@ -184,6 +186,7 @@ const updateBoardId = (boardId: string) => {
                                     class="w-full aspect-[2/3] object-cover"
                                 />
                                 <button
+                                    v-if="!props.readonly"
                                     type="button"
                                     @click="emit('remove-media', item.id)"
                                     class="absolute top-3 right-3 bg-black/60 text-white rounded-full p-1.5 opacity-0 hover:opacity-100 transition-opacity"
@@ -215,7 +218,7 @@ const updateBoardId = (boardId: string) => {
                 </div>
 
                 <!-- Empty State - No Media -->
-                <div v-else class="aspect-[2/3] bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center">
+                <div v-else-if="!props.readonly" class="aspect-[2/3] bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center">
                     <label class="cursor-pointer flex flex-col items-center gap-3 p-6 text-center">
                         <div class="p-4 bg-gray-200 dark:bg-gray-700 rounded-full">
                             <IconPhoto class="h-8 w-8 text-gray-500 dark:text-gray-400" />
@@ -238,12 +241,22 @@ const updateBoardId = (boardId: string) => {
                         />
                     </label>
                 </div>
+                <div v-else class="aspect-[2/3] bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center">
+                    <div class="p-4 bg-gray-200 dark:bg-gray-700 rounded-full">
+                        <IconPhoto class="h-8 w-8 text-gray-500 dark:text-gray-400" />
+                    </div>
+                    <p class="text-sm text-gray-500 mt-3">No media</p>
+                </div>
             </div>
 
             <!-- Pin Content -->
             <div class="p-4">
                 <!-- Description -->
+                <div v-if="props.readonly" class="w-full min-h-[60px] text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
+                    {{ content || 'No content' }}
+                </div>
                 <textarea
+                    v-else
                     :value="content"
                     @input="emit('update:content', ($event.target as HTMLTextAreaElement).value)"
                     class="w-full min-h-[60px] bg-transparent border-0 p-0 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-0 placeholder:text-gray-400"
@@ -272,8 +285,8 @@ const updateBoardId = (boardId: string) => {
                 </div>
             </div>
 
-            <!-- Footer with upload and char count -->
-            <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
+            <!-- Footer with upload and char count (only in edit mode) -->
+            <div v-if="!props.readonly" class="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
                 <div class="flex items-center gap-2">
                     <span
                         class="text-xs px-2 py-1 rounded-full"

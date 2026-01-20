@@ -47,6 +47,7 @@ interface Props {
     isValid: boolean;
     validationMessage: string;
     isUploading?: boolean;
+    readonly?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -123,6 +124,7 @@ const handleRemoveMedia = (mediaId: string) => {
         :is-valid="isValid"
         :validation-message="validationMessage"
         :is-uploading="isUploading"
+        :readonly="readonly"
         @update:content="handleContentUpdate"
         @update:content-type="handleContentTypeUpdate"
         @update:meta="handleMetaUpdate"

@@ -35,9 +35,10 @@ interface Props {
     isValid: boolean;
     validationMessage: string;
     isUploading?: boolean;
+    readonly?: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
     'update:content': [value: string];
@@ -83,7 +84,11 @@ const emit = defineEmits<{
 
                     <!-- Tweet Content -->
                     <div class="mt-1">
+                        <div v-if="props.readonly" class="w-full min-h-[80px] text-[15px] text-gray-900 dark:text-white whitespace-pre-wrap">
+                            {{ content || 'No content' }}
+                        </div>
                         <textarea
+                            v-else
                             :value="content"
                             @input="emit('update:content', ($event.target as HTMLTextAreaElement).value)"
                             class="w-full min-h-[80px] bg-transparent border-0 p-0 text-[15px] text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-0 placeholder:text-gray-500"
@@ -125,6 +130,7 @@ const emit = defineEmits<{
                                     playsinline
                                 />
                                 <button
+                                    v-if="!props.readonly"
                                     type="button"
                                     @click="emit('remove-media', item.id)"
                                     class="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -180,8 +186,8 @@ const emit = defineEmits<{
             </div>
         </div>
 
-        <!-- Footer with upload and char count -->
-        <div class="border-t border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50">
+        <!-- Footer with upload and char count (only in edit mode) -->
+        <div v-if="!props.readonly" class="border-t border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50">
             <div class="flex items-center gap-2">
                 <span
                     class="text-xs px-2 py-1 rounded-full"

@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
+import { useEcho } from '@laravel/echo-vue';
 import axios from 'axios';
-import { Clock, AlertCircle, Trash2, Send, Link2, MoreHorizontal, Plus } from 'lucide-vue-next';
+import { Clock, AlertCircle, Trash2, Send, Link2, MoreHorizontal, Plus, CheckCircle, ExternalLink, Loader2 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
+
+import { Badge } from '@/components/ui/badge';
 
 import { store as storeMedia, storeChunked as storeMediaChunked, destroy as destroyMedia, duplicate as duplicateMedia } from '@/actions/App/Http/Controllers/MediaController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
@@ -62,6 +65,9 @@ interface PostPlatform {
     content: string;
     content_type: string | null;
     status: string;
+    platform_url: string | null;
+    error_message: string | null;
+    published_at: string | null;
     social_account: SocialAccount;
     media: MediaItem[];
     meta?: Record<string, any>;
@@ -83,6 +89,7 @@ interface Post {
     status: string;
     synced: boolean;
     scheduled_at: string | null;
+    published_at: string | null;
     post_platforms: PostPlatform[];
 }
 
@@ -109,31 +116,57 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const breadcrumbs: BreadcrumbItemType[] = [
+// Reactive state for real-time updates
+const post = ref(props.post);
+
+// Listen for status updates via WebSocket
+useEcho(
+    `posts.${props.post.id}`,
+    'PostPlatformStatusUpdated',
+    (e: { post_platform: { id: string; status: string; platform_url: string | null; error_message: string | null; published_at: string | null }; post: { id: string; status: string; published_at: string | null } }) => {
+        // Update post platform status
+        const platformIndex = post.value.post_platforms.findIndex(pp => pp.id === e.post_platform.id);
+        if (platformIndex !== -1) {
+            post.value.post_platforms[platformIndex].status = e.post_platform.status;
+            post.value.post_platforms[platformIndex].platform_url = e.post_platform.platform_url;
+            post.value.post_platforms[platformIndex].error_message = e.post_platform.error_message;
+            post.value.post_platforms[platformIndex].published_at = e.post_platform.published_at;
+        }
+
+        // Update post status
+        post.value.status = e.post.status;
+        post.value.published_at = e.post.published_at;
+    },
+);
+
+// Check if post is in read-only mode (published, failed, publishing, partially_published)
+const isReadOnly = computed(() => ['published', 'failed', 'publishing', 'partially_published'].includes(post.value.status));
+
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
     { title: 'Calendar', href: calendar.url() },
-    { title: 'Edit Post', href: '#' },
-];
+    { title: isReadOnly.value ? 'View Post' : 'Edit Post', href: '#' },
+]);
 
 // State
 const selectedPlatformIds = ref<string[]>(
-    props.post.post_platforms.filter(pp => pp.enabled).map(pp => pp.id)
+    post.value.post_platforms.filter(pp => pp.enabled).map(pp => pp.id)
 );
-const synced = ref(props.post.synced);
-const enabledPlatforms = props.post.post_platforms.filter(pp => pp.enabled);
+const synced = ref(post.value.synced);
+const enabledPlatforms = post.value.post_platforms.filter(pp => pp.enabled);
 const globalContent = ref(
-    enabledPlatforms[0]?.content || props.post.post_platforms[0]?.content || ''
+    enabledPlatforms[0]?.content || post.value.post_platforms[0]?.content || ''
 );
 const platformContents = ref<Record<string, string>>(
-    Object.fromEntries(props.post.post_platforms.map(pp => [pp.id, pp.content]))
+    Object.fromEntries(post.value.post_platforms.map(pp => [pp.id, pp.content]))
 );
 const platformMedia = ref<Record<string, MediaItem[]>>(
-    Object.fromEntries(props.post.post_platforms.map(pp => [pp.id, pp.media || []]))
+    Object.fromEntries(post.value.post_platforms.map(pp => [pp.id, pp.media || []]))
 );
 const platformContentTypes = ref<Record<string, string>>(
-    Object.fromEntries(props.post.post_platforms.map(pp => [pp.id, pp.content_type || getDefaultContentType(pp.platform)]))
+    Object.fromEntries(post.value.post_platforms.map(pp => [pp.id, pp.content_type || getDefaultContentType(pp.platform)]))
 );
 const platformMeta = ref<Record<string, Record<string, any>>>(
-    Object.fromEntries(props.post.post_platforms.map(pp => [pp.id, pp.meta || {}]))
+    Object.fromEntries(post.value.post_platforms.map(pp => [pp.id, pp.meta || {}]))
 );
 const isUploading = ref<Record<string, boolean>>({});
 const isSubmitting = ref(false);
@@ -143,7 +176,7 @@ const showDisableSyncDialog = ref(false);
 const showPlatformsDialog = ref(false);
 
 // Active tab - first selected platform
-const activeTabId = ref<string>(selectedPlatformIds.value[0] || props.post.post_platforms[0]?.id || '');
+const activeTabId = ref<string>(selectedPlatformIds.value[0] || post.value.post_platforms[0]?.id || '');
 
 // Watch selected platforms and update active tab if needed
 watch(selectedPlatformIds, (newIds) => {
@@ -154,10 +187,10 @@ watch(selectedPlatformIds, (newIds) => {
 
 // Convert UTC to workspace timezone for display
 const getLocalSchedule = () => {
-    if (!props.post.scheduled_at) {
+    if (!post.value.scheduled_at) {
         return { date: '', time: '09:00' };
     }
-    const local = dayjs.utc(props.post.scheduled_at).tz(props.workspace.timezone);
+    const local = dayjs.utc(post.value.scheduled_at).tz(props.workspace.timezone);
     return {
         date: local.format('YYYY-MM-DD'),
         time: local.format('HH:mm'),
@@ -205,6 +238,23 @@ const getPlatformLabel = (platform: string): string => {
         'mastodon': 'Mastodon',
     };
     return labels[platform] || platform;
+};
+
+const getStatusConfig = (status: string) => {
+    const configs: Record<string, { label: string; color: string; icon: any }> = {
+        'draft': { label: 'Draft', color: 'bg-gray-100 text-gray-800', icon: Clock },
+        'scheduled': { label: 'Scheduled', color: 'bg-blue-100 text-blue-800', icon: Clock },
+        'publishing': { label: 'Publishing', color: 'bg-yellow-100 text-yellow-800', icon: Loader2 },
+        'published': { label: 'Published', color: 'bg-green-100 text-green-800', icon: CheckCircle },
+        'partially_published': { label: 'Partially Published', color: 'bg-orange-100 text-orange-800', icon: AlertCircle },
+        'failed': { label: 'Failed', color: 'bg-red-100 text-red-800', icon: AlertCircle },
+    };
+    return configs[status] || configs['draft'];
+};
+
+const formatDateTime = (date: string | null): string => {
+    if (!date) return '-';
+    return dayjs.utc(date).tz(props.workspace.timezone).format('MMM D, YYYY [at] h:mm A');
 };
 
 // Content type options per platform
@@ -308,7 +358,7 @@ const setContent = (platformId: string, value: string) => {
 
 // Active platform
 const activePlatform = computed(() => {
-    return props.post.post_platforms.find(pp => pp.id === activeTabId.value);
+    return post.value.post_platforms.find(pp => pp.id === activeTabId.value);
 });
 
 // Current platform media (computed for proper reactivity)
@@ -330,7 +380,7 @@ const setContentType = (platformId: string, value: string) => {
 
 // Selected platforms (for tabs)
 const selectedPlatforms = computed(() => {
-    return props.post.post_platforms.filter(pp => selectedPlatformIds.value.includes(pp.id));
+    return post.value.post_platforms.filter(pp => selectedPlatformIds.value.includes(pp.id));
 });
 
 // Other selected platforms (for sync label)
@@ -381,7 +431,7 @@ const confirmDisableSync = () => {
 const contentValidation = computed(() => {
     const results: Record<string, { valid: boolean; message: string; charCount: number; maxLength: number }> = {};
 
-    for (const pp of props.post.post_platforms) {
+    for (const pp of post.value.post_platforms) {
         if (!selectedPlatformIds.value.includes(pp.id)) continue;
 
         const config = getConfig(pp);
@@ -414,7 +464,7 @@ const contentValidation = computed(() => {
 const mediaValidation = computed(() => {
     const errors: string[] = [];
 
-    for (const pp of props.post.post_platforms) {
+    for (const pp of post.value.post_platforms) {
         if (!selectedPlatformIds.value.includes(pp.id)) continue;
 
         const config = getConfig(pp);
@@ -464,7 +514,7 @@ const togglePlatform = (platformId: string) => {
 const singleMediaPlatforms = ['tiktok', 'youtube', 'instagram'];
 
 const isSingleMediaPlatform = (platformId: string): boolean => {
-    const platform = props.post.post_platforms.find(pp => pp.id === platformId);
+    const platform = post.value.post_platforms.find(pp => pp.id === platformId);
     return platform ? singleMediaPlatforms.includes(platform.platform) : false;
 };
 
@@ -594,7 +644,7 @@ const removeMedia = async (postPlatformId: string, mediaId: string) => {
 };
 
 const getSubmitData = () => {
-    const platforms = props.post.post_platforms
+    const platforms = post.value.post_platforms
         .filter(pp => selectedPlatformIds.value.includes(pp.id))
         .map(pp => ({
             id: pp.id,
@@ -612,14 +662,14 @@ const getSubmitData = () => {
 };
 
 const save = () => {
-    if (isSubmitting.value) return;
+    if (isSubmitting.value || isReadOnly.value) return;
 
     const { platforms, scheduled_at } = getSubmitData();
 
     isSubmitting.value = true;
 
-    router.put(updatePost.url(props.post.id), {
-        status: props.post.status,
+    router.put(updatePost.url(post.value.id), {
+        status: post.value.status,
         synced: synced.value,
         scheduled_at,
         platforms,
@@ -632,13 +682,13 @@ const save = () => {
 };
 
 const submit = (status: string = 'scheduled') => {
-    if (isSubmitting.value) return;
+    if (isSubmitting.value || isReadOnly.value) return;
 
     const { platforms, scheduled_at } = getSubmitData();
 
     isSubmitting.value = true;
 
-    router.put(updatePost.url(props.post.id), {
+    router.put(updatePost.url(post.value.id), {
         status,
         synced: synced.value,
         scheduled_at,
@@ -651,14 +701,15 @@ const submit = (status: string = 'scheduled') => {
 };
 
 const deletePost = () => {
+    if (isReadOnly.value) return;
     deleteModal.value?.open({
-        url: destroyPost.url(props.post.id),
+        url: destroyPost.url(post.value.id),
     });
 };
 </script>
 
 <template>
-    <Head title="Edit Post" />
+    <Head :title="isReadOnly ? 'View Post' : 'Edit Post'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col h-[calc(100vh-4rem)]">
@@ -666,6 +717,12 @@ const deletePost = () => {
             <div class="flex items-center justify-between border-b px-4 py-2 bg-background">
                 <!-- Platform Tabs -->
                 <div class="flex items-center gap-2">
+                    <!-- Status Badge (when read-only) -->
+                    <Badge v-if="isReadOnly" :class="getStatusConfig(post.status).color" class="mr-2">
+                        <component :is="getStatusConfig(post.status).icon" class="mr-1 h-3 w-3" :class="{ 'animate-spin': post.status === 'publishing' }" />
+                        {{ getStatusConfig(post.status).label }}
+                    </Badge>
+
                     <Tabs v-model="activeTabId" v-if="selectedPlatforms.length > 0">
                         <TabsList class="h-auto p-1 gap-1">
                             <TooltipProvider v-for="pp in selectedPlatforms" :key="pp.id">
@@ -677,9 +734,19 @@ const deletePost = () => {
                                                 :alt="getPlatformLabel(pp.platform)"
                                                 class="h-6 w-6 rounded"
                                             />
-                                            <!-- Validation indicator -->
+                                            <!-- Status indicator (read-only) or Validation indicator (edit mode) -->
                                             <span
-                                                v-if="contentValidation[pp.id]"
+                                                v-if="isReadOnly"
+                                                class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border border-background"
+                                                :class="{
+                                                    'bg-green-500': pp.status === 'published',
+                                                    'bg-red-500': pp.status === 'failed',
+                                                    'bg-yellow-500 animate-pulse': pp.status === 'publishing',
+                                                    'bg-gray-400': !['published', 'failed', 'publishing'].includes(pp.status)
+                                                }"
+                                            />
+                                            <span
+                                                v-else-if="contentValidation[pp.id]"
                                                 class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border border-background"
                                                 :class="contentValidation[pp.id].valid ? 'bg-green-500' : 'bg-red-500'"
                                             />
@@ -687,14 +754,15 @@ const deletePost = () => {
                                     </TooltipTrigger>
                                     <TooltipContent>
                                         <p>{{ pp.social_account.display_name }}</p>
+                                        <p v-if="isReadOnly" class="text-xs text-muted-foreground">{{ getStatusConfig(pp.status).label }}</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
                         </TabsList>
                     </Tabs>
 
-                    <!-- Platforms Menu Button -->
-                    <TooltipProvider>
+                    <!-- Platforms Menu Button (only in edit mode) -->
+                    <TooltipProvider v-if="!isReadOnly">
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <button
@@ -711,19 +779,21 @@ const deletePost = () => {
                         </Tooltip>
                     </TooltipProvider>
 
-                    <span class="mx-2 text-muted-foreground">|</span>
+                    <template v-if="!isReadOnly">
+                        <span class="mx-2 text-muted-foreground">|</span>
 
-                    <button
-                        type="button"
-                        @click="deletePost"
-                        class="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-destructive"
-                    >
-                        <Trash2 class="h-5 w-5" />
-                    </button>
+                        <button
+                            type="button"
+                            @click="deletePost"
+                            class="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-destructive"
+                        >
+                            <Trash2 class="h-5 w-5" />
+                        </button>
+                    </template>
                 </div>
 
-                <!-- Schedule & Actions -->
-                <div class="flex items-center gap-3">
+                <!-- Schedule & Actions (only in edit mode) -->
+                <div v-if="!isReadOnly" class="flex items-center gap-3">
                     <!-- Date/Time Picker -->
                     <div class="flex items-center gap-2">
                         <DatePicker
@@ -774,13 +844,19 @@ const deletePost = () => {
                         Publish
                     </Button>
                 </div>
+
+                <!-- Read-only info -->
+                <div v-else class="flex items-center gap-3 text-sm text-muted-foreground">
+                    <span v-if="post.scheduled_at">Scheduled: {{ formatDateTime(post.scheduled_at) }}</span>
+                    <span v-if="post.published_at">Published: {{ formatDateTime(post.published_at) }}</span>
+                </div>
             </div>
 
             <!-- Main Content Area -->
             <div class="flex-1 overflow-auto">
                 <div v-if="activePlatform && selectedPlatformIds.length > 0" class="max-w-2xl mx-auto py-8 px-4">
-                    <!-- Sync Toggle -->
-                    <div v-if="selectedPlatformIds.length > 1" class="flex items-center justify-center gap-2 mb-6">
+                    <!-- Sync Toggle (only in edit mode) -->
+                    <div v-if="!isReadOnly && selectedPlatformIds.length > 1" class="flex items-center justify-center gap-2 mb-6">
                         <div @click.capture="handleSyncClick">
                             <Switch id="sync-content" v-model="synced" />
                         </div>
@@ -801,6 +877,51 @@ const deletePost = () => {
                         </Label>
                     </div>
 
+                    <!-- Publication Result (read-only mode) -->
+                    <div v-if="isReadOnly" class="mb-6 space-y-3">
+                        <!-- Platform Status -->
+                        <div class="flex items-center justify-between p-4 rounded-lg border">
+                            <div class="flex items-center gap-3">
+                                <img
+                                    :src="getPlatformLogo(activePlatform.platform)"
+                                    :alt="getPlatformLabel(activePlatform.platform)"
+                                    class="h-8 w-8 rounded"
+                                />
+                                <div>
+                                    <p class="font-medium">{{ activePlatform.social_account.display_name }}</p>
+                                    <p class="text-sm text-muted-foreground">{{ getPlatformLabel(activePlatform.platform) }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <Badge :class="getStatusConfig(activePlatform.status).color">
+                                    <component :is="getStatusConfig(activePlatform.status).icon" class="mr-1 h-3 w-3" :class="{ 'animate-spin': activePlatform.status === 'publishing' }" />
+                                    {{ getStatusConfig(activePlatform.status).label }}
+                                </Badge>
+                                <a
+                                    v-if="activePlatform.platform_url"
+                                    :href="activePlatform.platform_url"
+                                    target="_blank"
+                                    class="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+                                >
+                                    <ExternalLink class="h-4 w-4" />
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Error Message -->
+                        <Alert v-if="activePlatform.error_message" variant="destructive">
+                            <AlertCircle class="h-4 w-4" />
+                            <AlertDescription>
+                                {{ activePlatform.error_message }}
+                            </AlertDescription>
+                        </Alert>
+
+                        <!-- Published Date -->
+                        <p v-if="activePlatform.published_at" class="text-sm text-muted-foreground text-center">
+                            Published {{ formatDateTime(activePlatform.published_at) }}
+                        </p>
+                    </div>
+
                     <!-- Platform Preview -->
                     <PlatformPreview
                         :key="activePlatform.id"
@@ -817,6 +938,7 @@ const deletePost = () => {
                         :is-valid="contentValidation[activePlatform.id]?.valid ?? false"
                         :validation-message="contentValidation[activePlatform.id]?.message || ''"
                         :is-uploading="isUploading[activePlatform.id]"
+                        :readonly="isReadOnly"
                         @update:content="setContent(activePlatform.id, $event)"
                         @update:content-type="setContentType(activePlatform.id, $event)"
                         @update:meta="platformMeta[activePlatform.id] = $event"
@@ -824,8 +946,8 @@ const deletePost = () => {
                         @remove-media="removeMedia(activePlatform.id, $event)"
                     />
 
-                    <!-- Media Validation Errors -->
-                    <Alert v-if="mediaValidation.length > 0" variant="destructive" class="mt-4">
+                    <!-- Media Validation Errors (only in edit mode) -->
+                    <Alert v-if="!isReadOnly && mediaValidation.length > 0" variant="destructive" class="mt-4">
                         <AlertCircle class="h-4 w-4" />
                         <AlertDescription>
                             <ul class="list-disc list-inside">

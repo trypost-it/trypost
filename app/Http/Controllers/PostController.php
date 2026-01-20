@@ -189,28 +189,6 @@ class PostController extends Controller
         return redirect()->route($route);
     }
 
-    public function show(Request $request, Post $post): Response|RedirectResponse
-    {
-        $workspace = $request->user()->currentWorkspace;
-
-        if (! $workspace) {
-            return redirect()->route('workspaces.create');
-        }
-
-        $this->authorize('view', $workspace);
-
-        if ($post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
-
-        $post->load(['postPlatforms.socialAccount', 'postPlatforms.media', 'user']);
-
-        return Inertia::render('posts/Show', [
-            'workspace' => $workspace,
-            'post' => $post,
-        ]);
-    }
-
     public function edit(Request $request, Post $post): Response|RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
@@ -223,13 +201,6 @@ class PostController extends Controller
 
         if ($post->workspace_id !== $workspace->id) {
             abort(404);
-        }
-
-        if ($post->status === PostStatus::Published) {
-            session()->flash('flash.banner', 'Published posts cannot be edited.');
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return redirect()->route('posts.show', $post);
         }
 
         $post->load(['postPlatforms.socialAccount', 'postPlatforms.media']);

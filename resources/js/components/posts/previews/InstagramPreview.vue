@@ -52,6 +52,7 @@ interface Props {
     isValid: boolean;
     validationMessage: string;
     isUploading?: boolean;
+    readonly?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -72,7 +73,7 @@ const emit = defineEmits<{
 <template>
     <div class="space-y-4">
         <!-- Content Type Selector -->
-        <div v-if="hasMultipleContentTypes" class="flex items-center justify-center gap-2">
+        <div v-if="hasMultipleContentTypes && !props.readonly" class="flex items-center justify-center gap-2">
             <span class="text-sm text-muted-foreground">Type:</span>
             <Select
                 :model-value="contentType"
@@ -114,6 +115,7 @@ const emit = defineEmits<{
                 />
                 <!-- Remove button -->
                 <button
+                    v-if="!props.readonly"
                     type="button"
                     @click="emit('remove-media', media[0].id)"
                     class="absolute top-3 right-3 bg-black/70 text-white rounded-full p-2 z-20"
@@ -121,7 +123,7 @@ const emit = defineEmits<{
                     <IconX class="h-4 w-4" />
                 </button>
             </div>
-            <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
+            <div v-else-if="!props.readonly" class="w-full h-full flex flex-col items-center justify-center text-gray-400">
                 <IconVideo class="h-16 w-16 mb-2" />
                 <p class="text-sm">Add a {{ isReel ? 'video' : 'photo or video' }}</p>
                 <label class="mt-2 cursor-pointer text-blue-500 font-medium text-sm hover:text-blue-600">
@@ -134,6 +136,10 @@ const emit = defineEmits<{
                     />
                     Upload
                 </label>
+            </div>
+            <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                <IconVideo class="h-16 w-16 mb-2" />
+                <p class="text-sm">No media</p>
             </div>
 
             <!-- Overlay UI -->
@@ -218,13 +224,17 @@ const emit = defineEmits<{
         <!-- Caption input for Reels -->
         <div v-if="isReel" class="mt-4 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Caption</label>
+            <div v-if="props.readonly" class="w-full min-h-[80px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
+                {{ content || 'No content' }}
+            </div>
             <textarea
+                v-else
                 :value="content"
                 @input="emit('update:content', ($event.target as HTMLTextAreaElement).value)"
                 class="w-full min-h-[80px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-gray-500"
                 placeholder="Write a caption..."
             />
-            <div class="flex items-center justify-between mt-2">
+            <div v-if="!props.readonly" class="flex items-center justify-between mt-2">
                 <span
                     class="text-xs px-2 py-1 rounded-full"
                     :class="isValid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
@@ -247,7 +257,7 @@ const emit = defineEmits<{
         <!-- Story note -->
         <div v-if="isStory" class="mt-4 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
             <p class="text-sm text-gray-500 dark:text-gray-400 text-center">Stories disappear after 24 hours</p>
-            <div class="flex items-center justify-between mt-2">
+            <div v-if="!props.readonly" class="flex items-center justify-between mt-2">
                 <span
                     class="text-xs px-2 py-1 rounded-full"
                     :class="isValid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
@@ -317,6 +327,7 @@ const emit = defineEmits<{
                 />
                 <!-- Remove button -->
                 <button
+                    v-if="!props.readonly"
                     type="button"
                     @click="emit('remove-media', media[0].id)"
                     class="absolute top-3 right-3 bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -324,7 +335,7 @@ const emit = defineEmits<{
                     <IconX class="h-4 w-4" />
                 </button>
             </div>
-            <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
+            <div v-else-if="!props.readonly" class="w-full h-full flex flex-col items-center justify-center text-gray-400">
                 <IconPhoto class="h-16 w-16 mb-2" />
                 <p class="text-sm">Add a photo or video</p>
                 <label class="mt-2 cursor-pointer text-blue-500 font-medium text-sm hover:text-blue-600">
@@ -337,6 +348,10 @@ const emit = defineEmits<{
                     />
                     Upload
                 </label>
+            </div>
+            <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                <IconPhoto class="h-16 w-16 mb-2" />
+                <p class="text-sm">No media</p>
             </div>
         </div>
 
@@ -369,7 +384,11 @@ const emit = defineEmits<{
                 <span class="font-semibold text-gray-900 dark:text-white mr-1">
                     {{ socialAccount.username || socialAccount.display_name }}
                 </span>
+                <div v-if="props.readonly" class="w-full min-h-[60px] text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
+                    {{ content || 'No content' }}
+                </div>
                 <textarea
+                    v-else
                     :value="content"
                     @input="emit('update:content', ($event.target as HTMLTextAreaElement).value)"
                     class="w-full min-h-[60px] bg-transparent border-0 p-0 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-0 placeholder:text-gray-500"
@@ -383,8 +402,8 @@ const emit = defineEmits<{
             <p class="text-[10px] text-gray-500 uppercase tracking-wide">Just now</p>
         </div>
 
-        <!-- Footer with char count -->
-        <div class="border-t border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50">
+        <!-- Footer with char count (only in edit mode) -->
+        <div v-if="!props.readonly" class="border-t border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50">
             <div class="flex items-center gap-2">
                 <span
                     class="text-xs px-2 py-1 rounded-full"

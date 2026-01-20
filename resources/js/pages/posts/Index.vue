@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { calendar } from '@/routes';
-import { index as postsIndex, create as createPost, show as showPost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
+import { index as postsIndex, create as createPost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -232,7 +232,7 @@ const handleDelete = (post: Post) => {
                             </div>
 
                             <div class="flex items-center gap-1">
-                                <Link :href="showPost.url(post.id)">
+                                <Link :href="editPost.url(post.id)">
                                     <Button variant="ghost" size="icon">
                                         <IconEye class="h-4 w-4" />
                                     </Button>

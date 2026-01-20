@@ -152,34 +152,11 @@ test('edit post returns 404 for post from different workspace', function () {
     $response->assertNotFound();
 });
 
-test('edit post redirects to show for published posts', function () {
+test('edit post shows published posts in read-only mode', function () {
     $post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
         'status' => PostStatus::Published,
-    ]);
-
-    $response = $this->actingAs($this->user)->get(route('posts.edit', $post));
-
-    $response->assertRedirect(route('posts.show', $post));
-});
-
-// Show tests
-test('show post requires authentication', function () {
-    $post = Post::factory()->create([
-        'workspace_id' => $this->workspace->id,
-        'user_id' => $this->user->id,
-    ]);
-
-    $response = $this->get(route('posts.show', $post));
-
-    $response->assertRedirect(route('login'));
-});
-
-test('show post displays post details', function () {
-    $post = Post::factory()->create([
-        'workspace_id' => $this->workspace->id,
-        'user_id' => $this->user->id,
     ]);
 
     PostPlatform::factory()->create([
@@ -187,11 +164,11 @@ test('show post displays post details', function () {
         'social_account_id' => $this->socialAccount->id,
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('posts.show', $post));
+    $response = $this->actingAs($this->user)->get(route('posts.edit', $post));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('posts/Show')
+        ->component('posts/Edit')
         ->has('post')
     );
 });

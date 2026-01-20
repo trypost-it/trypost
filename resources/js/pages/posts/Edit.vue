@@ -915,21 +915,21 @@ const deletePost = () => {
 
     <!-- Platforms Selection Dialog -->
     <Dialog :open="showPlatformsDialog" @update:open="showPlatformsDialog = $event">
-        <DialogContent class="sm:max-w-md">
+        <DialogContent class="sm:max-w-2xl">
             <DialogHeader>
                 <DialogTitle>Select Platforms</DialogTitle>
                 <DialogDescription>
                     Choose which platforms to publish this post to.
                 </DialogDescription>
             </DialogHeader>
-            <div class="space-y-3 py-4">
+            <div class="grid grid-cols-2 gap-3 py-4">
                 <div
                     v-for="pp in post.post_platforms"
                     :key="pp.id"
                     class="flex items-center justify-between p-3 rounded-lg border"
                 >
                     <div class="flex items-center gap-3">
-                        <div class="relative">
+                        <div class="relative shrink-0">
                             <img
                                 v-if="pp.social_account.avatar_url"
                                 :src="pp.social_account.avatar_url"
@@ -945,12 +945,12 @@ const deletePost = () => {
                                 class="absolute -bottom-1 -right-1 h-5 w-5 rounded ring-2 ring-background"
                             />
                         </div>
-                        <div>
-                            <p class="font-medium text-sm">{{ pp.social_account.display_name }}</p>
+                        <div class="min-w-0">
+                            <p class="font-medium text-sm truncate">{{ pp.social_account.display_name }}</p>
                             <p class="text-xs text-muted-foreground">{{ getPlatformLabel(pp.platform) }}</p>
                         </div>
                     </div>
-                    <div @click="togglePlatform(pp.id)" class="cursor-pointer">
+                    <div @click="togglePlatform(pp.id)" class="cursor-pointer shrink-0">
                         <Switch :model-value="selectedPlatformIds.includes(pp.id)" />
                     </div>
                 </div>

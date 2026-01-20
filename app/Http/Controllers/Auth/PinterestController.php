@@ -88,7 +88,7 @@ class PinterestController extends SocialController
                 $existingAccount->update([
                     'platform_user_id' => $socialUser->getId(),
                     'username' => $socialUser->getNickname(),
-                    'display_name' => $socialUser->getName(),
+                    'display_name' => $socialUser->getName() ?? $socialUser->getNickname(),
                     'avatar_url' => $avatarPath,
                     'access_token' => $socialUser->token,
                     'refresh_token' => $socialUser->refreshToken,
@@ -105,7 +105,7 @@ class PinterestController extends SocialController
                 'platform' => $this->platform->value,
                 'platform_user_id' => $socialUser->getId(),
                 'username' => $socialUser->getNickname(),
-                'display_name' => $socialUser->getName(),
+                'display_name' => $socialUser->getName() ?? $socialUser->getNickname(),
                 'avatar_url' => $avatarPath,
                 'access_token' => $socialUser->token,
                 'refresh_token' => $socialUser->refreshToken,

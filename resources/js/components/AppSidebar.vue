@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { Calendar, Check, ChevronsUpDown, Hash, LogOut, Plus, Settings, Share2, Tag } from 'lucide-vue-next';
+import { IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconShare2, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconGift, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop } from '@tabler/icons-vue';
+import { Button } from '@/components/ui/button';
+import { create as createPost } from '@/actions/App/Http/Controllers/PostController';
 import { computed } from 'vue';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,13 +12,18 @@ import {
     DropdownMenuGroup,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuPortal,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
     DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubContent,
+    DropdownMenuSubTrigger,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
     Sidebar,
     SidebarContent,
-    SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
     SidebarGroupLabel,
@@ -26,10 +33,12 @@ import {
     SidebarMenuItem,
     SidebarRail,
 } from '@/components/ui/sidebar';
+import { useAppearance } from '@/composables/useAppearance';
 import { useInitials } from '@/composables/useInitials';
 import { accounts, calendar, logout } from '@/routes';
 import { index as hashtags } from '@/routes/hashtags';
 import { index as labels } from '@/routes/labels';
+import { index as postsIndex } from '@/actions/App/Http/Controllers/PostController';
 import { edit as editProfile } from '@/routes/profile';
 import { settings as workspaceSettings } from '@/routes/workspace';
 import { create as createWorkspaceRoute, switchMethod } from '@/routes/workspaces';
@@ -50,32 +59,94 @@ const currentWorkspace = computed<Workspace | null>(() => page.props.currentWork
 const workspaces = computed<Workspace[]>(() => page.props.workspaces as Workspace[]);
 
 const { getInitials } = useInitials();
+const { appearance, updateAppearance } = useAppearance();
 
-const mainNavItems: NavItem[] = [
+const themeLabels: Record<string, string> = {
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
+};
+
+const postsNavItems: NavItem[] = [
     {
         title: 'Calendar',
         href: calendar.url(),
-        icon: Calendar,
+        icon: IconCalendar,
     },
     {
-        title: 'Accounts',
-        href: accounts.url(),
-        icon: Share2,
+        title: 'All',
+        href: postsIndex.url(),
+        icon: IconFileText,
     },
     {
-        title: 'Hashtags',
-        href: hashtags.url(),
-        icon: Hash,
+        title: 'Scheduled',
+        href: postsIndex.url('scheduled'),
+        icon: IconClock,
     },
     {
-        title: 'Labels',
-        href: labels.url(),
-        icon: Tag,
+        title: 'Posted',
+        href: postsIndex.url('published'),
+        icon: IconFileCheck,
     },
     {
-        title: 'Settings',
-        href: workspaceSettings.url(),
-        icon: Settings,
+        title: 'Drafts',
+        href: postsIndex.url('draft'),
+        icon: IconPencil,
+    },
+];
+
+const canManageWorkspace = computed(() => auth.value.role !== 'member');
+
+const configNavItems = computed(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Connections',
+            href: accounts.url(),
+            icon: IconShare2,
+        },
+        {
+            title: 'Hashtags',
+            href: hashtags.url(),
+            icon: IconHash,
+        },
+        {
+            title: 'Labels',
+            href: labels.url(),
+            icon: IconTag,
+        },
+    ];
+
+    if (canManageWorkspace.value) {
+        items.push({
+            title: 'Settings',
+            href: workspaceSettings.url(),
+            icon: IconSettings,
+        });
+    }
+
+    return items;
+});
+
+const supportNavItems: NavItem[] = [
+    {
+        title: 'Share feedback',
+        href: 'mailto:support@trypost.it',
+        icon: IconMessageCircle,
+    },
+    {
+        title: 'Earn 30% referral',
+        href: '/referral',
+        icon: IconGift,
+    },
+    {
+        title: 'Stay updated',
+        href: 'https://x.com/trypostit',
+        icon: IconBell,
+    },
+    {
+        title: 'Docs',
+        href: 'https://docs.trypost.it',
+        icon: IconBook,
     },
 ];
 
@@ -105,51 +176,122 @@ function handleLogout() {
                 <SidebarMenuItem>
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
-                            <SidebarMenuButton
-                                size="lg"
-                                class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                            >
-                                <img
-                                    :src="currentWorkspace?.logo.url"
-                                    :alt="currentWorkspace?.name"
-                                    class="size-8 rounded-full object-cover"
-                                />
+                            <SidebarMenuButton size="lg"
+                                class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                                <Avatar class="h-9 w-9 rounded-full shrink-0">
+                                    <AvatarImage v-if="auth.user.avatar?.url" :src="auth.user.avatar?.url"
+                                        :alt="auth.user.name" />
+                                    <AvatarFallback class="rounded-full text-xs">
+                                        {{ getInitials(auth.user.name) }}
+                                    </AvatarFallback>
+                                </Avatar>
                                 <div class="grid flex-1 text-left text-sm leading-tight">
-                                    <span class="truncate font-semibold">{{ currentWorkspace?.name || 'Select workspace' }}</span>
-                                    <span class="truncate text-xs text-muted-foreground">Workspace</span>
+                                    <span class="truncate font-semibold">{{ auth.user.name }}</span>
+                                    <span class="truncate text-xs text-muted-foreground">{{ currentWorkspace?.name ||
+                                        'Select workspace' }}</span>
                                 </div>
-                                <ChevronsUpDown class="ml-auto size-4" />
+                                <IconSelector class="ml-auto size-4" />
                             </SidebarMenuButton>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            class="w-[--reka-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                            align="start"
-                            side="bottom"
-                            :side-offset="4"
-                        >
-                            <DropdownMenuLabel class="text-xs text-muted-foreground">
-                                Workspaces
-                            </DropdownMenuLabel>
-                            <DropdownMenuItem
-                                v-for="workspace in workspaces"
-                                :key="workspace.id"
-                                class="cursor-pointer gap-2 p-2"
-                                @click="switchWorkspace(workspace)"
-                            >
-                                <img
-                                    :src="workspace.logo.url"
-                                    :alt="workspace.name"
-                                    class="size-6 rounded-sm object-cover"
-                                />
-                                <span class="truncate">{{ workspace.name }}</span>
-                                <Check v-if="currentWorkspace?.id === workspace.id" class="ml-auto size-4" />
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem class="cursor-pointer gap-2 p-2" @click="createWorkspace">
-                                <div class="flex size-6 items-center justify-center rounded-md border bg-background">
-                                    <Plus class="size-4" />
+                        <DropdownMenuContent class="w-[--reka-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                            align="start" side="bottom" :side-offset="4">
+                            <!-- User Info -->
+                            <DropdownMenuLabel class="p-0 font-normal">
+                                <div class="flex items-center gap-2 px-2 py-2 text-left text-sm">
+                                    <Avatar class="h-8 w-8 rounded-full">
+                                        <AvatarImage v-if="auth.user.avatar?.url" :src="auth.user.avatar?.url"
+                                            :alt="auth.user.name" />
+                                        <AvatarFallback class="rounded-full">
+                                            {{ getInitials(auth.user.name) }}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div class="grid flex-1 text-left text-sm leading-tight">
+                                        <span class="truncate font-semibold">{{ auth.user.name }}</span>
+                                        <span class="truncate text-xs text-muted-foreground">{{ auth.user.email
+                                        }}</span>
+                                    </div>
                                 </div>
-                                <span class="font-medium">Create workspace</span>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+
+                            <!-- Workspaces -->
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                    <img v-if="currentWorkspace?.logo.url" :src="currentWorkspace.logo.url"
+                                        :alt="currentWorkspace.name" class="mr-2 size-4 rounded-full object-cover" />
+                                    <span>Workspace: {{ currentWorkspace?.name || 'Select' }}</span>
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuSubContent>
+                                        <DropdownMenuRadioGroup :model-value="currentWorkspace?.id"
+                                            @update:model-value="(id: string) => switchWorkspace(workspaces.find(w => w.id === id)!)">
+                                            <DropdownMenuRadioItem v-for="workspace in workspaces" :key="workspace.id"
+                                                :value="workspace.id">
+                                                <img :src="workspace.logo.url" :alt="workspace.name"
+                                                    class="mr-2 size-4 rounded-full object-cover" />
+                                                <span>{{ workspace.name }}</span>
+                                            </DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem class="cursor-pointer gap-2" @click="createWorkspace">
+                                            <IconPlus class="size-4" />
+                                            <span>Create workspace</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuSeparator />
+
+                            <!-- Theme -->
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                    <IconSun v-if="appearance === 'light'" class="mr-2 size-4" />
+                                    <IconMoon v-else-if="appearance === 'dark'" class="mr-2 size-4" />
+                                    <IconDeviceDesktop v-else class="mr-2 size-4" />
+                                    <span>Theme: {{ themeLabels[appearance] }}</span>
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuSubContent>
+                                        <DropdownMenuRadioGroup :model-value="appearance"
+                                            @update:model-value="updateAppearance">
+                                            <DropdownMenuRadioItem value="light">
+                                                <IconSun class="mr-2 size-4" />
+                                                <span>Light</span>
+                                            </DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="dark">
+                                                <IconMoon class="mr-2 size-4" />
+                                                <span>Dark</span>
+                                            </DropdownMenuRadioItem>
+                                            <DropdownMenuRadioItem value="system">
+                                                <IconDeviceDesktop class="mr-2 size-4" />
+                                                <span>System</span>
+                                            </DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuSeparator />
+
+                            <!-- User Actions -->
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem as-child>
+                                    <Link class="cursor-pointer" :href="editProfile()">
+                                        <IconUser class="mr-2 size-4" />
+                                        Profile
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
+
+                            <DropdownMenuSeparator />
+
+
+                            <DropdownMenuItem as-child>
+                                <Link class="w-full cursor-pointer" :href="logout()" @click="handleLogout" as="button">
+                                    <IconLogout class="mr-2 size-4" />
+                                    Log out
+                                </Link>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -158,16 +300,23 @@ function handleLogout() {
         </SidebarHeader>
 
         <SidebarContent>
+            <!-- Create Post Button -->
+            <div v-if="currentWorkspace" class="px-2 py-2">
+                <Link :href="createPost.url()">
+                    <Button class="w-full">
+                        <IconPlus class="mr-2 size-4" />
+                        Create post
+                    </Button>
+                </Link>
+            </div>
+
             <SidebarGroup v-if="currentWorkspace">
-                <SidebarGroupLabel>Menu</SidebarGroupLabel>
+                <SidebarGroupLabel>Posts</SidebarGroupLabel>
                 <SidebarGroupContent>
                     <SidebarMenu>
-                        <SidebarMenuItem v-for="item in mainNavItems" :key="item.title">
-                            <SidebarMenuButton
-                                as-child
-                                :tooltip="item.title"
-                                :is-active="isActive(item.href as string)"
-                            >
+                        <SidebarMenuItem v-for="item in postsNavItems" :key="item.title">
+                            <SidebarMenuButton as-child :tooltip="item.title"
+                                :is-active="isActive(item.href as string)">
                                 <Link :href="item.href">
                                     <component v-if="item.icon" :is="item.icon" />
                                     <span>{{ item.title }}</span>
@@ -177,76 +326,41 @@ function handleLogout() {
                     </SidebarMenu>
                 </SidebarGroupContent>
             </SidebarGroup>
-        </SidebarContent>
 
-        <SidebarFooter>
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger as-child>
-                            <SidebarMenuButton
-                                size="lg"
-                                class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                            >
-                                <Avatar class="h-8 w-8 rounded-lg">
-                                    <AvatarImage v-if="auth.user.avatar?.url" :src="auth.user.avatar?.url" :alt="auth.user.name" />
-                                    <AvatarFallback class="rounded-lg">
-                                        {{ getInitials(auth.user.name) }}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <div class="grid flex-1 text-left text-sm leading-tight">
-                                    <span class="truncate font-semibold">{{ auth.user.name }}</span>
-                                    <span class="truncate text-xs text-muted-foreground">{{ auth.user.email }}</span>
-                                </div>
-                                <ChevronsUpDown class="ml-auto size-4" />
-                            </SidebarMenuButton>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            class="w-[--reka-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                            side="bottom"
-                            align="end"
-                            :side-offset="4"
-                        >
-                            <DropdownMenuLabel class="p-0 font-normal">
-                                <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                                    <Avatar class="h-8 w-8 rounded-lg">
-                                        <AvatarImage v-if="auth.user.avatar?.url" :src="auth.user.avatar?.url" :alt="auth.user.name" />
-                                        <AvatarFallback class="rounded-lg">
-                                            {{ getInitials(auth.user.name) }}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div class="grid flex-1 text-left text-sm leading-tight">
-                                        <span class="truncate font-semibold">{{ auth.user.name }}</span>
-                                        <span class="truncate text-xs text-muted-foreground">{{ auth.user.email }}</span>
-                                    </div>
-                                </div>
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                                <DropdownMenuItem as-child>
-                                    <Link class="cursor-pointer" :href="editProfile()">
-                                        <Settings class="mr-2 size-4" />
-                                        Settings
-                                    </Link>
-                                </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem as-child>
-                                <Link
-                                    class="cursor-pointer"
-                                    :href="logout()"
-                                    @click="handleLogout"
-                                    as="button"
-                                >
-                                    <LogOut class="mr-2 size-4" />
-                                    Log out
+            <SidebarGroup v-if="currentWorkspace">
+                <SidebarGroupLabel>Configuration</SidebarGroupLabel>
+                <SidebarGroupContent>
+                    <SidebarMenu>
+                        <SidebarMenuItem v-for="item in configNavItems" :key="item.title">
+                            <SidebarMenuButton as-child :tooltip="item.title"
+                                :is-active="isActive(item.href as string)">
+                                <Link :href="item.href">
+                                    <component v-if="item.icon" :is="item.icon" />
+                                    <span>{{ item.title }}</span>
                                 </Link>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </SidebarMenuItem>
-            </SidebarMenu>
-        </SidebarFooter>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup v-if="currentWorkspace">
+                <SidebarGroupLabel>Support</SidebarGroupLabel>
+                <SidebarGroupContent>
+                    <SidebarMenu>
+                        <SidebarMenuItem v-for="item in supportNavItems" :key="item.title">
+                            <SidebarMenuButton as-child :tooltip="item.title">
+                                <a :href="item.href"
+                                    :target="(item.href as string).startsWith('http') ? '_blank' : undefined">
+                                    <component v-if="item.icon" :is="item.icon" />
+                                    <span>{{ item.title }}</span>
+                                </a>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarGroupContent>
+            </SidebarGroup>
+        </SidebarContent>
 
         <SidebarRail />
     </Sidebar>

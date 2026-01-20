@@ -18,7 +18,7 @@ use Inertia\Response;
 
 class PostController extends Controller
 {
-    public function index(Request $request): Response|RedirectResponse
+    public function index(Request $request, ?string $status = null): Response|RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -28,16 +28,25 @@ class PostController extends Controller
 
         $this->authorize('view', $workspace);
 
-        $posts = $workspace->posts()
+        $query = $workspace->posts()
             ->with(['postPlatforms' => function ($query) {
                 $query->where('enabled', true)->with('socialAccount');
-            }, 'user'])
-            ->latest('scheduled_at')
-            ->paginate(20);
+            }, 'user']);
+
+        // Apply status filter if provided
+        if ($status) {
+            $query = match ($status) {
+                'draft' => $query->draft(),
+                'scheduled' => $query->scheduled(),
+                'published' => $query->published(),
+                default => $query,
+            };
+        }
 
         return Inertia::render('posts/Index', [
             'workspace' => $workspace,
-            'posts' => $posts,
+            'posts' => Inertia::scroll(fn () => $query->latest('scheduled_at')->paginate(15)),
+            'currentStatus' => $status,
         ]);
     }
 

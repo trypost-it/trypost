@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
-import { Clock, CheckCircle, AlertCircle, Loader2, FileText, Plus, Eye, Pencil, Trash2 } from 'lucide-vue-next';
+import { Head, Link, router, InfiniteScroll } from '@inertiajs/vue3';
+import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconPlus, IconEye, IconPencil, IconTrash } from '@tabler/icons-vue';
+import { computed } from 'vue';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { calendar } from '@/routes';
-import { index as postsIndex, create as createPost, show as showPost, edit as editPost, destroy as destroyPost } from '@/routes/posts';
+import { index as postsIndex, create as createPost, show as showPost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -43,21 +45,10 @@ interface Post {
     user: User;
 }
 
-interface PaginatedPosts {
+interface ScrollPosts {
     data: Post[];
-    links: {
-        first: string | null;
-        last: string | null;
-        prev: string | null;
-        next: string | null;
-    };
     meta: {
-        current_page: number;
-        from: number | null;
-        last_page: number;
-        per_page: number;
-        to: number | null;
-        total: number;
+        hasNextPage: boolean;
     };
 }
 
@@ -69,10 +60,31 @@ interface Workspace {
 
 interface Props {
     workspace: Workspace;
-    posts: PaginatedPosts;
+    posts: ScrollPosts;
+    currentStatus: string | null;
 }
 
 const props = defineProps<Props>();
+
+const statusLabels: Record<string, string> = {
+    draft: 'Draft',
+    scheduled: 'Scheduled',
+    published: 'Published',
+};
+
+const pageTitle = computed(() => {
+    if (props.currentStatus && statusLabels[props.currentStatus]) {
+        return `Posts - ${statusLabels[props.currentStatus]}`;
+    }
+    return 'All Posts';
+});
+
+const pageDescription = computed(() => {
+    if (props.currentStatus === 'draft') return 'Posts waiting to be scheduled';
+    if (props.currentStatus === 'scheduled') return 'Posts scheduled for publishing';
+    if (props.currentStatus === 'published') return 'Posts already published';
+    return 'Manage all your posts';
+});
 
 const breadcrumbs: BreadcrumbItemType[] = [
     { title: 'Posts', href: postsIndex.url() },
@@ -96,13 +108,13 @@ const getPlatformLogo = (platform: string): string => {
 };
 
 const getStatusConfig = (status: string) => {
-    const configs: Record<string, { label: string; color: string; icon: typeof FileText }> = {
-        'draft': { label: 'Rascunho', color: 'bg-gray-100 text-gray-800', icon: FileText },
-        'scheduled': { label: 'Agendado', color: 'bg-blue-100 text-blue-800', icon: Clock },
-        'publishing': { label: 'Publicando', color: 'bg-yellow-100 text-yellow-800', icon: Loader2 },
-        'published': { label: 'Publicado', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-        'partially_published': { label: 'Parcialmente Publicado', color: 'bg-orange-100 text-orange-800', icon: AlertCircle },
-        'failed': { label: 'Falhou', color: 'bg-red-100 text-red-800', icon: AlertCircle },
+    const configs: Record<string, { label: string; color: string; icon: typeof IconFileText }> = {
+        'draft': { label: 'Draft', color: 'bg-gray-100 text-gray-800', icon: IconFileText },
+        'scheduled': { label: 'Scheduled', color: 'bg-blue-100 text-blue-800', icon: IconClock },
+        'publishing': { label: 'Publishing', color: 'bg-yellow-100 text-yellow-800', icon: IconLoader2 },
+        'published': { label: 'Published', color: 'bg-green-100 text-green-800', icon: IconCircleCheck },
+        'partially_published': { label: 'Partially Published', color: 'bg-orange-100 text-orange-800', icon: IconAlertCircle },
+        'failed': { label: 'Failed', color: 'bg-red-100 text-red-800', icon: IconAlertCircle },
     };
     return configs[status] || configs['draft'];
 };
@@ -118,10 +130,10 @@ const getEnabledPlatforms = (post: Post) => {
 
 const getPostPreview = (post: Post): string => {
     const enabledPlatforms = getEnabledPlatforms(post);
-    if (enabledPlatforms.length === 0) return 'Sem conteudo';
+    if (enabledPlatforms.length === 0) return 'No content';
     const firstPlatform = enabledPlatforms[0];
     const content = firstPlatform.content || '';
-    return content.length > 100 ? content.substring(0, 100) + '...' : content || 'Sem conteudo';
+    return content.length > 100 ? content.substring(0, 100) + '...' : content || 'No content';
 };
 
 const canEdit = (post: Post): boolean => {
@@ -129,35 +141,35 @@ const canEdit = (post: Post): boolean => {
 };
 
 const handleDelete = (post: Post) => {
-    if (confirm('Tem certeza que deseja excluir este post?')) {
+    if (confirm('Are you sure you want to delete this post?')) {
         router.delete(destroyPost.url(post.id));
     }
 };
 </script>
 
 <template>
-    <Head title="Posts" />
+    <Head :title="pageTitle" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Posts</h1>
+                    <h1 class="text-2xl font-bold tracking-tight">{{ pageTitle }}</h1>
                     <p class="text-muted-foreground">
-                        Gerencie todos os seus posts
+                        {{ pageDescription }}
                     </p>
                 </div>
                 <div class="flex gap-2">
                     <Link :href="calendar.url()">
                         <Button variant="outline">
-                            <Clock class="mr-2 h-4 w-4" />
-                            Calendario
+                            <IconClock class="mr-2 h-4 w-4" />
+                            Calendar
                         </Button>
                     </Link>
                     <Link :href="createPost.url()">
                         <Button>
-                            <Plus class="mr-2 h-4 w-4" />
-                            Novo Post
+                            <IconPlus class="mr-2 h-4 w-4" />
+                            New Post
                         </Button>
                     </Link>
                 </div>
@@ -166,15 +178,15 @@ const handleDelete = (post: Post) => {
             <div v-if="posts.data.length === 0">
                 <Card>
                     <CardContent class="flex flex-col items-center justify-center py-12">
-                        <FileText class="h-12 w-12 text-muted-foreground" />
-                        <h3 class="mt-4 text-lg font-semibold">Nenhum post ainda</h3>
+                        <IconFileText class="h-12 w-12 text-muted-foreground" />
+                        <h3 class="mt-4 text-lg font-semibold">No posts found</h3>
                         <p class="mt-2 text-sm text-muted-foreground">
-                            Comece criando seu primeiro post.
+                            {{ currentStatus ? `No ${currentStatus} posts yet.` : 'Start by creating your first post.' }}
                         </p>
-                        <Link :href="createPost.url()" class="mt-4">
+                        <Link v-if="!currentStatus" :href="createPost.url()" class="mt-4">
                             <Button>
-                                <Plus class="mr-2 h-4 w-4" />
-                                Criar Post
+                                <IconPlus class="mr-2 h-4 w-4" />
+                                Create Post
                             </Button>
                         </Link>
                     </CardContent>
@@ -214,7 +226,7 @@ const handleDelete = (post: Post) => {
                                         +{{ getEnabledPlatforms(post).length - 5 }}
                                     </span>
                                     <span class="text-xs text-muted-foreground ml-2">
-                                        por {{ post.user.name }}
+                                        by {{ post.user.name }}
                                     </span>
                                 </div>
                             </div>
@@ -222,12 +234,12 @@ const handleDelete = (post: Post) => {
                             <div class="flex items-center gap-1">
                                 <Link :href="showPost.url(post.id)">
                                     <Button variant="ghost" size="icon">
-                                        <Eye class="h-4 w-4" />
+                                        <IconEye class="h-4 w-4" />
                                     </Button>
                                 </Link>
                                 <Link v-if="canEdit(post)" :href="editPost.url(post.id)">
                                     <Button variant="ghost" size="icon">
-                                        <Pencil class="h-4 w-4" />
+                                        <IconPencil class="h-4 w-4" />
                                     </Button>
                                 </Link>
                                 <Button
@@ -236,38 +248,40 @@ const handleDelete = (post: Post) => {
                                     size="icon"
                                     @click="handleDelete(post)"
                                 >
-                                    <Trash2 class="h-4 w-4 text-red-500" />
+                                    <IconTrash class="h-4 w-4 text-red-500" />
                                 </Button>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                <div v-if="posts.meta.last_page > 1" class="flex items-center justify-between">
-                    <p class="text-sm text-muted-foreground">
-                        Mostrando {{ posts.meta.from }} a {{ posts.meta.to }} de {{ posts.meta.total }} posts
-                    </p>
-                    <div class="flex gap-2">
-                        <Link
-                            v-if="posts.links.prev"
-                            :href="posts.links.prev"
-                            preserve-scroll
-                        >
-                            <Button variant="outline" size="sm">
-                                Anterior
-                            </Button>
-                        </Link>
-                        <Link
-                            v-if="posts.links.next"
-                            :href="posts.links.next"
-                            preserve-scroll
-                        >
-                            <Button variant="outline" size="sm">
-                                Proximo
-                            </Button>
-                        </Link>
+                <InfiniteScroll data="posts" #default="{ loading }">
+                    <div v-if="loading" class="space-y-4">
+                        <Card v-for="i in 3" :key="i">
+                            <CardContent class="p-4">
+                                <div class="flex items-start gap-4">
+                                    <div class="flex-1 space-y-3">
+                                        <div class="flex items-center gap-2">
+                                            <Skeleton class="h-5 w-20" />
+                                            <Skeleton class="h-4 w-32" />
+                                        </div>
+                                        <Skeleton class="h-4 w-full" />
+                                        <Skeleton class="h-4 w-3/4" />
+                                        <div class="flex items-center gap-2">
+                                            <Skeleton class="h-6 w-6 rounded-full" />
+                                            <Skeleton class="h-6 w-6 rounded-full" />
+                                            <Skeleton class="h-4 w-24" />
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-1">
+                                        <Skeleton class="h-8 w-8" />
+                                        <Skeleton class="h-8 w-8" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
-                </div>
+                </InfiniteScroll>
             </div>
         </div>
     </AppLayout>

@@ -37,13 +37,25 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
+        $currentWorkspace = $user?->currentWorkspace;
+        $currentRole = null;
+
+        if ($user && $currentWorkspace) {
+            $currentRole = $user->workspaces()
+                ->where('workspaces.id', $currentWorkspace->id)
+                ->first()
+                ?->pivot
+                ?->role;
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
                 'user' => $user,
+                'role' => $currentRole,
             ],
-            'currentWorkspace' => $user?->currentWorkspace,
+            'currentWorkspace' => $currentWorkspace,
             'workspaces' => $user ? $user->workspaces()->select('workspaces.id', 'workspaces.name')->get() : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => $request->session()->get('flash', []),

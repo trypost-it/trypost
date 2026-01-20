@@ -69,6 +69,7 @@ const submit = () => {
                         :photo="workspace.logo"
                         collection="logo"
                         :reload-only="['workspace']"
+                        rounded="full"
                     />
                 </div>
 

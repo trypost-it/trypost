@@ -6,7 +6,6 @@ import Heading from '@/components/Heading.vue';
 import { useActiveUrl } from '@/composables/useActiveUrl';
 import { toUrl } from '@/lib/utils';
 import { members } from '@/routes';
-import { edit as editAppearance } from '@/routes/appearance';
 import { index as billing } from '@/routes/billing';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editPassword } from '@/routes/user-password';
@@ -14,6 +13,8 @@ import { settings as workspaceSettings } from '@/routes/workspace';
 import { type NavItem, type SharedData } from '@/types';
 
 const page = usePage<SharedData>();
+const auth = computed(() => page.props.auth);
+const canManageWorkspace = computed(() => auth.value.role !== 'member');
 
 const navItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [
@@ -25,25 +26,26 @@ const navItems = computed<NavItem[]>(() => {
             title: 'Password',
             href: editPassword(),
         },
-        {
-            title: 'Appearance',
-            href: editAppearance(),
-        },
-        {
-            title: 'Workspace',
-            href: workspaceSettings(),
-        },
-        {
-            title: 'Members',
-            href: members(),
-        },
     ];
 
-    if (!page.props.selfHosted) {
-        items.push({
-            title: 'Billing',
-            href: billing(),
-        });
+    if (canManageWorkspace.value) {
+        items.push(
+            {
+                title: 'Workspace',
+                href: workspaceSettings(),
+            },
+            {
+                title: 'Members',
+                href: members(),
+            },
+        );
+
+        if (!page.props.selfHosted) {
+            items.push({
+                title: 'Billing',
+                href: billing(),
+            });
+        }
     }
 
     return items;

@@ -65,7 +65,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
                         :photo="user.avatar"
                         collection="avatar"
                         :reload-only="['auth']"
-                        rounded="lg"
+                        rounded="full"
                     />
                 </div>
 

@@ -13,17 +13,12 @@ return new class extends Migration
     {
         Schema::create('workspace_invites', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
-            $table->foreignUuid('invited_by')->constrained('users')->cascadeOnDelete();
             $table->string('email');
-            $table->string('token', 64)->unique();
             $table->string('role')->default('member');
-            $table->string('status')->default('pending');
-            $table->timestamp('accepted_at')->nullable();
+            $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
 
-            $table->index(['workspace_id', 'email']);
-            $table->index(['token', 'status']);
+            $table->unique(['email', 'workspace_id']);
         });
     }
 

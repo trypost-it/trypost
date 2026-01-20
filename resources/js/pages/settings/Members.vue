@@ -32,8 +32,6 @@ interface Invite {
     id: string;
     email: string;
     role: string;
-    status: string;
-    inviter: { name: string };
 }
 
 interface Role {
@@ -83,22 +81,6 @@ function handleRemoveMember(memberId: string) {
             preserveScroll: true,
         });
     }
-}
-
-function getStatusLabel(status: string): string {
-    const labels: Record<string, string> = {
-        pending: 'Pending',
-        accepted: 'Accepted',
-    };
-    return labels[status] || status;
-}
-
-function getStatusColor(status: string): string {
-    const colors: Record<string, string> = {
-        pending: 'bg-yellow-100 text-yellow-800',
-        accepted: 'bg-green-100 text-green-800',
-    };
-    return colors[status] || 'bg-gray-100 text-gray-800';
 }
 
 function getRoleLabel(role: string): string {
@@ -203,17 +185,11 @@ function getRoleIcon(role: string) {
                             >
                                 <div class="flex-1 min-w-0">
                                     <p class="font-medium truncate">{{ invite.email }}</p>
-                                    <div class="flex items-center gap-2 mt-1">
-                                        <Badge variant="outline" class="text-xs">
-                                            {{ getRoleLabel(invite.role) }}
-                                        </Badge>
-                                        <Badge :class="getStatusColor(invite.status)" class="text-xs">
-                                            {{ getStatusLabel(invite.status) }}
-                                        </Badge>
-                                    </div>
+                                    <Badge variant="outline" class="text-xs mt-1">
+                                        {{ getRoleLabel(invite.role) }}
+                                    </Badge>
                                 </div>
                                 <Button
-                                    v-if="invite.status === 'pending'"
                                     variant="ghost"
                                     size="icon"
                                     @click="cancelInvite(invite.id)"

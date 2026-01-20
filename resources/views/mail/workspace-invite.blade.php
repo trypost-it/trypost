@@ -72,7 +72,7 @@
                     You've been invited!
                   </h1>
                   <p style="margin: 0; line-height: 24px">
-                    <strong>{{ $invite->inviter->name }}</strong> has invited you to collaborate on the <strong>{{ $invite->workspace->name }}</strong> workspace.
+                    You've been invited to collaborate on the <strong>{{ $invite->workspace->name }}</strong> workspace.
                   </p>
                   <p style="margin: 16px 0 0; line-height: 24px">
                     You've been invited as <strong>{{ $invite->role->label() }}</strong>.

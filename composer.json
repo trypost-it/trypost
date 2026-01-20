@@ -12,7 +12,6 @@
         "php": "^8.2",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/cashier": "^16.2",
-        "laravel/fortify": "^1.30",
         "laravel/framework": "^12.0",
         "laravel/horizon": "^5.42",
         "laravel/nightwatch": "^1.22",

@@ -5,24 +5,15 @@ namespace App\Models\Traits;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 trait HasWorkspace
 {
     /**
-     * Get workspaces owned by this user.
+     * Get all workspaces the user belongs to (as owner or member).
      */
-    public function workspaces(): HasMany
+    public function workspaces(): BelongsToMany
     {
-        return $this->hasMany(Workspace::class);
-    }
-
-    /**
-     * Get workspaces where the user is a member (not owner).
-     */
-    public function memberWorkspaces(): BelongsToMany
-    {
-        return $this->belongsToMany(Workspace::class)
+        return $this->belongsToMany(Workspace::class, 'user_workspace')
             ->withPivot('role')
             ->withTimestamps();
     }
@@ -48,8 +39,7 @@ trait HasWorkspace
      */
     public function belongsToWorkspace(Workspace $workspace): bool
     {
-        return $this->workspaces()->where('id', $workspace->id)->exists()
-            || $this->memberWorkspaces()->where('workspaces.id', $workspace->id)->exists();
+        return $this->workspaces()->where('workspaces.id', $workspace->id)->exists();
     }
 
     /**
@@ -57,7 +47,7 @@ trait HasWorkspace
      */
     public function ownedWorkspacesCount(): int
     {
-        return $this->workspaces()->count();
+        return $this->workspaces()->wherePivot('role', 'owner')->count();
     }
 
     /**

@@ -31,9 +31,9 @@ class WorkspaceInvite extends Mailable implements ShouldQueue
             view: 'mail.workspace-invite',
             with: [
                 'title' => "You've been invited to join {$this->invite->workspace->name}",
-                'previewText' => "{$this->invite->inviter->name} has invited you to collaborate on TryPost.",
+                'previewText' => "You've been invited to join {$this->invite->workspace->name}",
                 'invite' => $this->invite,
-                'url' => route('invites.show', $this->invite->token),
+                'url' => route('invites.show', $this->invite->id),
             ],
         );
     }

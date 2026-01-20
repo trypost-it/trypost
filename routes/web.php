@@ -146,10 +146,4 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::get('billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
 });
 
-// Invite routes (accessible with or without auth)
-Route::get('invites/{token}/accept', [WorkspaceInviteController::class, 'show'])
-    ->name('invites.show');
-Route::post('invites/{token}/accept', [WorkspaceInviteController::class, 'accept'])
-    ->name('invites.accept');
-
 require __DIR__.'/settings.php';

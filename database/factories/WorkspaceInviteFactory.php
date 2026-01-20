@@ -3,11 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\UserWorkspace\Role;
-use App\Enums\WorkspaceInvite\Status as InviteStatus;
-use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\WorkspaceInvite>
@@ -22,20 +19,9 @@ class WorkspaceInviteFactory extends Factory
     public function definition(): array
     {
         return [
-            'workspace_id' => Workspace::factory(),
-            'invited_by' => User::factory(),
             'email' => fake()->unique()->safeEmail(),
-            'token' => Str::random(64),
-            'role' => Role::Member,
-            'status' => InviteStatus::Pending,
+            'role' => fake()->randomElement(Role::cases()),
+            'workspace_id' => Workspace::factory(),
         ];
-    }
-
-    public function accepted(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'status' => InviteStatus::Accepted,
-            'accepted_at' => now(),
-        ]);
     }
 }

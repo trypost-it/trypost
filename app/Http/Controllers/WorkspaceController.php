@@ -59,10 +59,14 @@ class WorkspaceController extends Controller
                 ->with('message', 'Subscribe to create more workspaces.');
         }
 
-        $workspace = $user->workspaces()->create([
+        $workspace = Workspace::create([
+            'user_id' => $user->id,
             ...$request->validated(),
             'timezone' => config('app.timezone', 'UTC'),
         ]);
+
+        // Add user as owner member
+        $workspace->members()->attach($user->id, ['role' => 'owner']);
 
         // Set as current workspace
         $user->switchWorkspace($workspace);

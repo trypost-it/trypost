@@ -25,7 +25,6 @@ test('members index requires authentication', function () {
 test('members index shows members and invites', function () {
     $invite = WorkspaceInvite::factory()->create([
         'workspace_id' => $this->workspace->id,
-        'invited_by' => $this->user->id,
     ]);
 
     $response = $this->actingAs($this->user)->get(route('members'));
@@ -78,7 +77,6 @@ test('store invite creates invite and sends email', function () {
 test('store invite fails if invite already exists', function () {
     WorkspaceInvite::factory()->create([
         'workspace_id' => $this->workspace->id,
-        'invited_by' => $this->user->id,
         'email' => 'existing@example.com',
     ]);
 
@@ -106,7 +104,6 @@ test('store invite fails if user is already member', function () {
 test('destroy invite requires authentication', function () {
     $invite = WorkspaceInvite::factory()->create([
         'workspace_id' => $this->workspace->id,
-        'invited_by' => $this->user->id,
     ]);
 
     $response = $this->delete(route('invites.destroy', $invite));
@@ -117,7 +114,6 @@ test('destroy invite requires authentication', function () {
 test('destroy invite deletes invite', function () {
     $invite = WorkspaceInvite::factory()->create([
         'workspace_id' => $this->workspace->id,
-        'invited_by' => $this->user->id,
     ]);
 
     $response = $this->actingAs($this->user)->delete(route('invites.destroy', $invite));
@@ -135,87 +131,6 @@ test('destroy invite returns 404 for other workspace invite', function () {
     $response = $this->actingAs($this->user)->delete(route('invites.destroy', $invite));
 
     $response->assertNotFound();
-});
-
-// Show invite tests
-test('show invite displays invite details', function () {
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
-        'invited_by' => $this->user->id,
-    ]);
-
-    $response = $this->get(route('invites.show', $invite->token));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('invites/Accept', false)
-        ->has('invite')
-    );
-});
-
-test('show invite redirects for accepted invite', function () {
-    $invite = WorkspaceInvite::factory()->accepted()->create([
-        'workspace_id' => $this->workspace->id,
-        'invited_by' => $this->user->id,
-    ]);
-
-    $response = $this->get(route('invites.show', $invite->token));
-
-    $response->assertRedirect(route('login'));
-});
-
-// Accept invite tests
-test('accept invite redirects to login if not authenticated', function () {
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
-        'invited_by' => $this->user->id,
-    ]);
-
-    $response = $this->post(route('invites.accept', $invite->token));
-
-    $response->assertRedirect(route('login'));
-});
-
-test('accept invite adds user to workspace', function () {
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
-        'invited_by' => $this->user->id,
-    ]);
-
-    $newUser = User::factory()->create(['setup' => Setup::Completed]);
-
-    $response = $this->actingAs($newUser)->post(route('invites.accept', $invite->token));
-
-    $response->assertRedirect(route('calendar'));
-    expect($this->workspace->hasMember($newUser))->toBeTrue();
-});
-
-test('accept invite redirects for accepted invite', function () {
-    $invite = WorkspaceInvite::factory()->accepted()->create([
-        'workspace_id' => $this->workspace->id,
-        'invited_by' => $this->user->id,
-    ]);
-
-    $newUser = User::factory()->create(['setup' => Setup::Completed]);
-
-    $response = $this->actingAs($newUser)->post(route('invites.accept', $invite->token));
-
-    $response->assertRedirect(route('login'));
-});
-
-test('accept invite handles already member', function () {
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
-        'invited_by' => $this->user->id,
-    ]);
-
-    $member = User::factory()->create(['setup' => Setup::Completed]);
-    $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
-
-    $response = $this->actingAs($member)->post(route('invites.accept', $invite->token));
-
-    $response->assertRedirect(route('calendar'));
-    $response->assertSessionHas('flash.banner', 'You are already a member of this workspace.');
 });
 
 // Remove member tests

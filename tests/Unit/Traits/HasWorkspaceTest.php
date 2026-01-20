@@ -3,23 +3,27 @@
 use App\Models\User;
 use App\Models\Workspace;
 
-test('user can get owned workspaces', function () {
+test('user can get workspaces they belong to', function () {
     $user = User::factory()->create();
     $workspace1 = Workspace::factory()->create(['user_id' => $user->id]);
     $workspace2 = Workspace::factory()->create(['user_id' => $user->id]);
+
+    // Add user as owner to both workspaces via pivot
+    $workspace1->members()->attach($user->id, ['role' => 'owner']);
+    $workspace2->members()->attach($user->id, ['role' => 'owner']);
 
     expect($user->workspaces)->toHaveCount(2);
     expect($user->workspaces->pluck('id')->toArray())->toContain($workspace1->id, $workspace2->id);
 });
 
-test('user can get member workspaces', function () {
+test('user can get workspaces as member', function () {
     $owner = User::factory()->create();
     $member = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
     $workspace->members()->attach($member->id, ['role' => 'member']);
 
-    expect($member->memberWorkspaces)->toHaveCount(1);
-    expect($member->memberWorkspaces->first()->id)->toBe($workspace->id);
+    expect($member->workspaces)->toHaveCount(1);
+    expect($member->workspaces->first()->id)->toBe($workspace->id);
 });
 
 test('user can get current workspace', function () {
@@ -44,6 +48,7 @@ test('user can switch workspace', function () {
 test('user belongs to owned workspace', function () {
     $user = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
+    $workspace->members()->attach($user->id, ['role' => 'owner']);
 
     expect($user->belongsToWorkspace($workspace))->toBeTrue();
 });
@@ -67,7 +72,11 @@ test('user does not belong to other workspace', function () {
 
 test('user can get owned workspaces count', function () {
     $user = User::factory()->create();
-    Workspace::factory()->count(3)->create(['user_id' => $user->id]);
+    $workspaces = Workspace::factory()->count(3)->create(['user_id' => $user->id]);
+
+    foreach ($workspaces as $workspace) {
+        $workspace->members()->attach($user->id, ['role' => 'owner']);
+    }
 
     expect($user->ownedWorkspacesCount())->toBe(3);
 });
@@ -80,7 +89,8 @@ test('user without subscription can create first workspace', function () {
 
 test('user without subscription cannot create second workspace', function () {
     $user = User::factory()->create();
-    Workspace::factory()->create(['user_id' => $user->id]);
+    $workspace = Workspace::factory()->create(['user_id' => $user->id]);
+    $workspace->members()->attach($user->id, ['role' => 'owner']);
 
     expect($user->canCreateWorkspace())->toBeFalse();
 });
@@ -95,7 +105,8 @@ test('user with subscription can create workspaces up to quantity', function () 
         'quantity' => 3,
     ]);
 
-    Workspace::factory()->create(['user_id' => $user->id]);
+    $workspace = Workspace::factory()->create(['user_id' => $user->id]);
+    $workspace->members()->attach($user->id, ['role' => 'owner']);
 
     expect($user->canCreateWorkspace())->toBeTrue();
 });
@@ -110,7 +121,11 @@ test('user with subscription cannot exceed workspace quantity', function () {
         'quantity' => 2,
     ]);
 
-    Workspace::factory()->count(2)->create(['user_id' => $user->id]);
+    $workspaces = Workspace::factory()->count(2)->create(['user_id' => $user->id]);
+
+    foreach ($workspaces as $workspace) {
+        $workspace->members()->attach($user->id, ['role' => 'owner']);
+    }
 
     expect($user->canCreateWorkspace())->toBeFalse();
 });
@@ -133,7 +148,11 @@ test('decrement workspace quantity does nothing without subscription', function 
 
 test('sync workspace quantity does nothing without subscription', function () {
     $user = User::factory()->create();
-    Workspace::factory()->count(2)->create(['user_id' => $user->id]);
+    $workspaces = Workspace::factory()->count(2)->create(['user_id' => $user->id]);
+
+    foreach ($workspaces as $workspace) {
+        $workspace->members()->attach($user->id, ['role' => 'owner']);
+    }
 
     $user->syncWorkspaceQuantity();
 

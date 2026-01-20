@@ -112,7 +112,7 @@ function handleLogout() {
                                 <img
                                     :src="currentWorkspace?.logo.url"
                                     :alt="currentWorkspace?.name"
-                                    class="size-8 rounded-lg object-cover"
+                                    class="size-8 rounded-full object-cover"
                                 />
                                 <div class="grid flex-1 text-left text-sm leading-tight">
                                     <span class="truncate font-semibold">{{ currentWorkspace?.name || 'Select workspace' }}</span>

@@ -13,12 +13,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use Billable, HasFactory, HasMedia, HasUuids, HasWorkspace, Notifiable, TwoFactorAuthenticatable;
+    use Billable, HasFactory, HasMedia, HasUuids, HasWorkspace, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -33,6 +32,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'persona',
         'current_workspace_id',
         'language_id',
+        'email_verified_at',
     ];
 
     /**

@@ -9,7 +9,6 @@ import { members } from '@/routes';
 import { edit as editAppearance } from '@/routes/appearance';
 import { index as billing } from '@/routes/billing';
 import { edit as editProfile } from '@/routes/profile';
-import { show } from '@/routes/two-factor';
 import { edit as editPassword } from '@/routes/user-password';
 import { settings as workspaceSettings } from '@/routes/workspace';
 import { type NavItem, type SharedData } from '@/types';
@@ -25,10 +24,6 @@ const navItems = computed<NavItem[]>(() => {
         {
             title: 'Password',
             href: editPassword(),
-        },
-        {
-            title: 'Two-Factor Auth',
-            href: show(),
         },
         {
             title: 'Appearance',

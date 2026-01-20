@@ -12,12 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class PinterestPublisher
 {
-    private function getApiBase(): string
-    {
-        return config('services.pinterest.sandbox', false)
-            ? 'https://api-sandbox.pinterest.com/v5'
-            : 'https://api.pinterest.com/v5';
-    }
+    private const API_BASE = 'https://api.pinterest.com/v5';
 
     /**
      * Pinterest API error codes that indicate token issues.
@@ -90,7 +85,7 @@ class PinterestPublisher
         }
 
         $response = Http::withToken($account->access_token)
-            ->post($this->getApiBase().'/pins', $payload);
+            ->post(self::API_BASE.'/pins', $payload);
 
         if ($response->failed()) {
             Log::error('Pinterest pin creation failed', [
@@ -132,7 +127,7 @@ class PinterestPublisher
 
         // Step 1: Register media upload
         $registerResponse = Http::withToken($account->access_token)
-            ->post($this->getApiBase().'/media', [
+            ->post(self::API_BASE.'/media', [
                 'media_type' => 'video',
             ]);
 
@@ -217,7 +212,7 @@ class PinterestPublisher
         }
 
         $response = Http::withToken($account->access_token)
-            ->post($this->getApiBase().'/pins', $payload);
+            ->post(self::API_BASE.'/pins', $payload);
 
         if ($response->failed()) {
             Log::error('Pinterest video pin creation failed', [
@@ -283,7 +278,7 @@ class PinterestPublisher
         }
 
         $response = Http::withToken($account->access_token)
-            ->post($this->getApiBase().'/pins', $payload);
+            ->post(self::API_BASE.'/pins', $payload);
 
         if ($response->failed()) {
             Log::error('Pinterest carousel creation failed', [
@@ -307,7 +302,7 @@ class PinterestPublisher
     {
         for ($i = 0; $i < $maxAttempts; $i++) {
             $response = Http::withToken($account->access_token)
-                ->get($this->getApiBase()."/media/{$mediaId}");
+                ->get(self::API_BASE."/media/{$mediaId}");
 
             if ($response->failed()) {
                 Log::warning('Pinterest media status check failed', [
@@ -353,7 +348,7 @@ class PinterestPublisher
                 config('services.pinterest.client_id'),
                 config('services.pinterest.client_secret')
             )
-            ->post($this->getApiBase().'/oauth/token', [
+            ->post(self::API_BASE.'/oauth/token', [
                 'grant_type' => 'refresh_token',
                 'refresh_token' => $account->refresh_token,
             ]);
@@ -385,7 +380,7 @@ class PinterestPublisher
         }
 
         $response = Http::withToken($account->access_token)
-            ->get($this->getApiBase().'/boards', [
+            ->get(self::API_BASE.'/boards', [
                 'page_size' => 100,
             ]);
 

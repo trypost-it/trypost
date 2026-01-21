@@ -32,6 +32,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarRail,
+    useSidebar,
 } from '@/components/ui/sidebar';
 import { useAppearance } from '@/composables/useAppearance';
 import { useInitials } from '@/composables/useInitials';
@@ -60,6 +61,7 @@ const workspaces = computed<Workspace[]>(() => page.props.workspaces as Workspac
 
 const { getInitials } = useInitials();
 const { appearance, updateAppearance } = useAppearance();
+const { state: sidebarState } = useSidebar();
 
 const themeLabels: Record<string, string> = {
     light: 'Light',
@@ -209,7 +211,7 @@ function handleLogout() {
                                     <div class="grid flex-1 text-left text-sm leading-tight">
                                         <span class="truncate font-semibold">{{ auth.user.name }}</span>
                                         <span class="truncate text-xs text-muted-foreground">{{ auth.user.email
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                 </div>
                             </DropdownMenuLabel>
@@ -304,9 +306,9 @@ function handleLogout() {
             <!-- Create Post Button -->
             <div v-if="currentWorkspace" class="px-2 py-2">
                 <Link :href="createPost.url()">
-                    <Button class="w-full">
-                        <IconPlus class="mr-2 size-4" />
-                        Create post
+                    <Button :size="sidebarState === 'collapsed' ? 'icon' : 'default'" class="w-full">
+                        <IconPlus class="size-4" />
+                        <span v-if="sidebarState === 'expanded'">Create post</span>
                     </Button>
                 </Link>
             </div>

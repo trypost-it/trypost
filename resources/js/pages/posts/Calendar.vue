@@ -224,7 +224,7 @@ const formatTime = (scheduledAt: string): string => {
                     </Tabs>
                     <Link :href="createPost.url()">
                         <Button>
-                            <IconPlus class="mr-2 h-4 w-4" />
+                            <IconPlus class="h-4 w-4" />
                             New Post
                         </Button>
                     </Link>

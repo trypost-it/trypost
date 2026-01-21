@@ -148,6 +148,7 @@ const handleDelete = (post: Post) => {
 </script>
 
 <template>
+
     <Head :title="pageTitle" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
@@ -181,11 +182,12 @@ const handleDelete = (post: Post) => {
                         <IconFileText class="h-12 w-12 text-muted-foreground" />
                         <h3 class="mt-4 text-lg font-semibold">No posts found</h3>
                         <p class="mt-2 text-sm text-muted-foreground">
-                            {{ currentStatus ? `No ${currentStatus} posts yet.` : 'Start by creating your first post.' }}
+                            {{ currentStatus ? `No ${currentStatus} posts yet.` : 'Start by creating your first post.'
+                            }}
                         </p>
                         <Link v-if="!currentStatus" :href="createPost.url()" class="mt-4">
                             <Button>
-                                <IconPlus class="mr-2 h-4 w-4" />
+                                <IconPlus class="h-4 w-4" />
                                 Create Post
                             </Button>
                         </Link>
@@ -214,15 +216,12 @@ const handleDelete = (post: Post) => {
 
                                 <div class="flex items-center gap-2">
                                     <div class="flex -space-x-2">
-                                        <img
-                                            v-for="pp in getEnabledPlatforms(post).slice(0, 5)"
-                                            :key="pp.id"
-                                            :src="getPlatformLogo(pp.platform)"
-                                            :alt="pp.platform"
-                                            class="h-6 w-6 rounded-full ring-2 ring-background"
-                                        />
+                                        <img v-for="pp in getEnabledPlatforms(post).slice(0, 5)" :key="pp.id"
+                                            :src="getPlatformLogo(pp.platform)" :alt="pp.platform"
+                                            class="h-6 w-6 rounded-full ring-2 ring-background" />
                                     </div>
-                                    <span v-if="getEnabledPlatforms(post).length > 5" class="text-xs text-muted-foreground">
+                                    <span v-if="getEnabledPlatforms(post).length > 5"
+                                        class="text-xs text-muted-foreground">
                                         +{{ getEnabledPlatforms(post).length - 5 }}
                                     </span>
                                     <span class="text-xs text-muted-foreground ml-2">
@@ -242,12 +241,7 @@ const handleDelete = (post: Post) => {
                                         <IconPencil class="h-4 w-4" />
                                     </Button>
                                 </Link>
-                                <Button
-                                    v-if="canEdit(post)"
-                                    variant="ghost"
-                                    size="icon"
-                                    @click="handleDelete(post)"
-                                >
+                                <Button v-if="canEdit(post)" variant="ghost" size="icon" @click="handleDelete(post)">
                                     <IconTrash class="h-4 w-4 text-red-500" />
                                 </Button>
                             </div>

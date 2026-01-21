@@ -15,6 +15,9 @@ defineProps<{
     email?: string | null;
     redirect?: string | null;
 }>();
+
+// Get user's timezone from browser
+const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 </script>
 
 <template>
@@ -31,6 +34,7 @@ defineProps<{
             class="flex flex-col gap-6"
         >
             <input v-if="redirect" type="hidden" name="redirect" :value="redirect" />
+            <input type="hidden" name="timezone" :value="timezone" />
             <div class="grid gap-6">
                 <div class="grid gap-2">
                     <Label for="name">Name</Label>

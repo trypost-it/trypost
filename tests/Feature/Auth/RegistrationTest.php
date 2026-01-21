@@ -32,6 +32,21 @@ test('new users get a default workspace on registration', function () {
     expect($user)->not->toBeNull();
     expect($user->workspaces)->toHaveCount(1);
     expect($user->workspaces->first()->name)->toBe("Test User's Workspace");
+    expect($user->workspaces->first()->timezone)->toBe('UTC');
+});
+
+test('new users workspace uses provided timezone', function () {
+    $this->post(route('register.store'), [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'password' => 'Password123!',
+        'timezone' => 'America/Sao_Paulo',
+    ]);
+
+    $user = User::where('email', 'test@example.com')->first();
+
+    expect($user)->not->toBeNull();
+    expect($user->workspaces->first()->timezone)->toBe('America/Sao_Paulo');
 });
 
 test('new users do not have verified email by default', function () {

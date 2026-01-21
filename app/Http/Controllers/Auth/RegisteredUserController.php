@@ -40,6 +40,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', Rules\Password::defaults()],
+            'timezone' => ['nullable', 'string', 'timezone'],
         ]);
 
         // Check if registering via invite link (redirect contains /invites/)
@@ -61,7 +62,7 @@ class RegisteredUserController extends Controller
             $workspace = Workspace::create([
                 'user_id' => $user->id,
                 'name' => $user->name."'s Workspace",
-                'timezone' => 'UTC',
+                'timezone' => $request->input('timezone', 'UTC'),
             ]);
 
             // Add user as owner member

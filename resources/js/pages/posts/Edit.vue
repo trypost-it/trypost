@@ -770,21 +770,20 @@ const deletePost = () => {
                     <span class="text-muted-foreground">|</span>
 
                     <Button type="button" variant="outline" size="icon-sm" @click="deletePost"
-                        :disabled="isSaving || isSubmitting"
-                        class="text-muted-foreground hover:text-destructive">
+                        :disabled="isSaving || isSubmitting" class="text-muted-foreground hover:text-destructive">
                         <IconTrash class="h-4 w-4" />
                     </Button>
 
-                    <Button type="button" variant="secondary" size="sm" :disabled="!canSubmit || isSubmitting || isSaving"
-                        @click="submit('scheduled')">
-                        <IconClock class="mr-2 h-4 w-4" />
-                        Schedule
+                    <Button type="button" variant="secondary" size="icon-sm" class="xl:w-auto xl:px-3"
+                        :disabled="!canSubmit || isSubmitting || isSaving" @click="submit('scheduled')">
+                        <IconClock class="h-4 w-4" />
+                        <span class="hidden xl:inline">Schedule</span>
                     </Button>
 
-                    <Button type="button" size="sm" :disabled="!canSubmit || isSubmitting || isSaving"
-                        @click="submit('publishing')">
-                        <IconSend class="mr-2 h-4 w-4" />
-                        Publish
+                    <Button type="button" size="icon-sm" class="xl:w-auto xl:px-3"
+                        :disabled="!canSubmit || isSubmitting || isSaving" @click="submit('publishing')">
+                        <IconSend class="h-4 w-4" />
+                        <span class="hidden xl:inline">Publish</span>
                     </Button>
                 </div>
 
@@ -1012,10 +1011,8 @@ const deletePost = () => {
                             <div v-else class="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
                                 <span class="text-sm font-medium">{{ pp.social_account.display_name?.charAt(0) }}</span>
                             </div>
-                            <div
-                                class="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-background ring-2 ring-background flex items-center justify-center">
-                                <component :is="getPlatformIcon(pp.platform)" class="h-4 w-4 text-neutral-600" />
-                            </div>
+                            <img :src="getPlatformLogo(pp.platform)" :alt="pp.platform"
+                                class="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full ring-2 ring-background" />
                         </div>
                         <div class="min-w-0">
                             <p class="font-medium text-sm truncate">{{ pp.social_account.display_name }}</p>

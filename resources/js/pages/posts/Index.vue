@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, InfiniteScroll } from '@inertiajs/vue3';
 import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconPlus, IconEye, IconPencil, IconTrash } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 import { Badge } from '@/components/ui/badge';
@@ -65,29 +66,24 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const statusLabels: Record<string, string> = {
-    draft: 'Draft',
-    scheduled: 'Scheduled',
-    published: 'Published',
-};
-
 const pageTitle = computed(() => {
-    if (props.currentStatus && statusLabels[props.currentStatus]) {
-        return `Posts - ${statusLabels[props.currentStatus]}`;
+    if (props.currentStatus) {
+        const statusLabel = trans(`posts.status.${props.currentStatus}`);
+        return `${trans('posts.title')} - ${statusLabel}`;
     }
-    return 'All Posts';
+    return trans('posts.all_posts');
 });
 
 const pageDescription = computed(() => {
-    if (props.currentStatus === 'draft') return 'Posts waiting to be scheduled';
-    if (props.currentStatus === 'scheduled') return 'Posts scheduled for publishing';
-    if (props.currentStatus === 'published') return 'Posts already published';
-    return 'Manage all your posts';
+    if (props.currentStatus === 'draft') return trans('posts.descriptions.draft');
+    if (props.currentStatus === 'scheduled') return trans('posts.descriptions.scheduled');
+    if (props.currentStatus === 'published') return trans('posts.descriptions.published');
+    return trans('posts.manage_posts');
 });
 
-const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Posts', href: postsIndex.url() },
-];
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
+    { title: trans('posts.title'), href: postsIndex.url() },
+]);
 
 const getPlatformLogo = (platform: string): string => {
     const logos: Record<string, string> = {
@@ -107,15 +103,19 @@ const getPlatformLogo = (platform: string): string => {
 };
 
 const getStatusConfig = (status: string) => {
-    const configs: Record<string, { label: string; color: string; icon: typeof IconFileText }> = {
-        'draft': { label: 'Draft', color: 'bg-gray-100 text-gray-800', icon: IconFileText },
-        'scheduled': { label: 'Scheduled', color: 'bg-blue-100 text-blue-800', icon: IconClock },
-        'publishing': { label: 'Publishing', color: 'bg-yellow-100 text-yellow-800', icon: IconLoader2 },
-        'published': { label: 'Published', color: 'bg-green-100 text-green-800', icon: IconCircleCheck },
-        'partially_published': { label: 'Partially Published', color: 'bg-orange-100 text-orange-800', icon: IconAlertCircle },
-        'failed': { label: 'Failed', color: 'bg-red-100 text-red-800', icon: IconAlertCircle },
+    const configs: Record<string, { color: string; icon: typeof IconFileText }> = {
+        'draft': { color: 'bg-gray-100 text-gray-800', icon: IconFileText },
+        'scheduled': { color: 'bg-blue-100 text-blue-800', icon: IconClock },
+        'publishing': { color: 'bg-yellow-100 text-yellow-800', icon: IconLoader2 },
+        'published': { color: 'bg-green-100 text-green-800', icon: IconCircleCheck },
+        'partially_published': { color: 'bg-orange-100 text-orange-800', icon: IconAlertCircle },
+        'failed': { color: 'bg-red-100 text-red-800', icon: IconAlertCircle },
     };
-    return configs[status] || configs['draft'];
+    const config = configs[status] || configs['draft'];
+    return {
+        ...config,
+        label: trans(`posts.status.${status}`),
+    };
 };
 
 const formatDateTime = (date: string | null): string => {
@@ -129,10 +129,11 @@ const getEnabledPlatforms = (post: Post) => {
 
 const getPostPreview = (post: Post): string => {
     const enabledPlatforms = getEnabledPlatforms(post);
-    if (enabledPlatforms.length === 0) return 'No content';
+    const noContent = trans('calendar.no_content');
+    if (enabledPlatforms.length === 0) return noContent;
     const firstPlatform = enabledPlatforms[0];
     const content = firstPlatform.content || '';
-    return content.length > 100 ? content.substring(0, 100) + '...' : content || 'No content';
+    return content.length > 100 ? content.substring(0, 100) + '...' : content || noContent;
 };
 
 const canEdit = (post: Post): boolean => {
@@ -140,7 +141,7 @@ const canEdit = (post: Post): boolean => {
 };
 
 const handleDelete = (post: Post) => {
-    if (confirm('Are you sure you want to delete this post?')) {
+    if (confirm(trans('posts.delete_confirm'))) {
         router.delete(destroyPost.url(post.id));
     }
 };
@@ -162,7 +163,7 @@ const handleDelete = (post: Post) => {
                 <div class="flex gap-2">
                     <Link :href="createPost.url()">
                         <Button>
-                            New Post
+                            {{ $t('posts.new_post') }}
                         </Button>
                     </Link>
                 </div>
@@ -172,96 +173,89 @@ const handleDelete = (post: Post) => {
                 <Card>
                     <CardContent class="flex flex-col items-center justify-center py-12">
                         <IconFileText class="h-12 w-12 text-muted-foreground" />
-                        <h3 class="mt-4 text-lg font-semibold">No posts found</h3>
+                        <h3 class="mt-4 text-lg font-semibold">{{ $t('posts.no_posts') }}</h3>
                         <p class="mt-2 text-sm text-muted-foreground">
-                            {{ currentStatus ? `No ${currentStatus} posts yet.` : 'Start by creating your first post.'
-                            }}
+                            {{ currentStatus ? $t('posts.no_posts_status', { status: $t(`posts.status.${currentStatus}`) }) : $t('posts.start_creating') }}
                         </p>
                         <Link v-if="!currentStatus" :href="createPost.url()" class="mt-4">
                             <Button>
                                 <IconPlus class="h-4 w-4" />
-                                Create Post
+                                {{ $t('posts.create_post') }}
                             </Button>
                         </Link>
                     </CardContent>
                 </Card>
             </div>
 
-            <div v-else class="space-y-4">
-                <Card v-for="post in posts.data" :key="post.id">
-                    <CardContent class="p-4">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <Badge :class="getStatusConfig(post.status).color">
-                                        <component :is="getStatusConfig(post.status).icon" class="mr-1 h-3 w-3" />
-                                        {{ getStatusConfig(post.status).label }}
-                                    </Badge>
-                                    <span class="text-sm text-muted-foreground">
-                                        {{ formatDateTime(post.scheduled_at) }}
-                                    </span>
-                                </div>
+            <div v-else>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <Card v-for="post in posts.data" :key="post.id" class="flex flex-col py-0">
+                        <CardContent class="p-4 flex-1 flex flex-col">
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <Badge :class="getStatusConfig(post.status).color">
+                                    <component :is="getStatusConfig(post.status).icon" class="mr-1 h-3 w-3" />
+                                    {{ getStatusConfig(post.status).label }}
+                                </Badge>
+                                <span class="text-xs text-muted-foreground">
+                                    {{ formatDateTime(post.scheduled_at) }}
+                                </span>
+                            </div>
 
-                                <p class="text-sm text-foreground line-clamp-2 mb-3">
-                                    {{ getPostPreview(post) }}
-                                </p>
+                            <p class="text-sm text-foreground line-clamp-3 mb-4 flex-1">
+                                {{ getPostPreview(post) }}
+                            </p>
 
+                            <div class="flex items-center justify-between mt-auto">
                                 <div class="flex items-center gap-2">
                                     <div class="flex -space-x-2">
-                                        <img v-for="pp in getEnabledPlatforms(post).slice(0, 5)" :key="pp.id"
+                                        <img v-for="pp in getEnabledPlatforms(post).slice(0, 4)" :key="pp.id"
                                             :src="getPlatformLogo(pp.platform)" :alt="pp.platform"
                                             class="h-6 w-6 rounded-full ring-2 ring-background" />
                                     </div>
-                                    <span v-if="getEnabledPlatforms(post).length > 5"
+                                    <span v-if="getEnabledPlatforms(post).length > 4"
                                         class="text-xs text-muted-foreground">
-                                        +{{ getEnabledPlatforms(post).length - 5 }}
-                                    </span>
-                                    <span class="text-xs text-muted-foreground ml-2">
-                                        by {{ post.user.name }}
+                                        +{{ getEnabledPlatforms(post).length - 4 }}
                                     </span>
                                 </div>
-                            </div>
 
-                            <div class="flex items-center gap-1">
-                                <Link :href="editPost.url(post.id)">
-                                    <Button variant="ghost" size="icon">
-                                        <IconEye class="h-4 w-4" />
+                                <div class="flex items-center gap-1">
+                                    <Link :href="editPost.url(post.id)">
+                                        <Button variant="ghost" size="icon" class="h-8 w-8">
+                                            <IconEye class="h-4 w-4" />
+                                        </Button>
+                                    </Link>
+                                    <Button v-if="canEdit(post)" variant="ghost" size="icon" class="h-8 w-8"
+                                        @click="handleDelete(post)">
+                                        <IconTrash class="h-4 w-4 text-red-500" />
                                     </Button>
-                                </Link>
-                                <Link v-if="canEdit(post)" :href="editPost.url(post.id)">
-                                    <Button variant="ghost" size="icon">
-                                        <IconPencil class="h-4 w-4" />
-                                    </Button>
-                                </Link>
-                                <Button v-if="canEdit(post)" variant="ghost" size="icon" @click="handleDelete(post)">
-                                    <IconTrash class="h-4 w-4 text-red-500" />
-                                </Button>
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </div>
 
                 <InfiniteScroll data="posts" #default="{ loading }">
-                    <div v-if="loading" class="space-y-4">
+                    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                         <Card v-for="i in 3" :key="i">
                             <CardContent class="p-4">
-                                <div class="flex items-start gap-4">
-                                    <div class="flex-1 space-y-3">
-                                        <div class="flex items-center gap-2">
-                                            <Skeleton class="h-5 w-20" />
-                                            <Skeleton class="h-4 w-32" />
-                                        </div>
-                                        <Skeleton class="h-4 w-full" />
-                                        <Skeleton class="h-4 w-3/4" />
-                                        <div class="flex items-center gap-2">
-                                            <Skeleton class="h-6 w-6 rounded-full" />
-                                            <Skeleton class="h-6 w-6 rounded-full" />
-                                            <Skeleton class="h-4 w-24" />
-                                        </div>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <Skeleton class="h-5 w-20" />
+                                        <Skeleton class="h-4 w-24" />
                                     </div>
-                                    <div class="flex gap-1">
-                                        <Skeleton class="h-8 w-8" />
-                                        <Skeleton class="h-8 w-8" />
+                                    <Skeleton class="h-4 w-full" />
+                                    <Skeleton class="h-4 w-full" />
+                                    <Skeleton class="h-4 w-3/4" />
+                                    <div class="flex items-center justify-between pt-2">
+                                        <div class="flex -space-x-2">
+                                            <Skeleton class="h-6 w-6 rounded-full" />
+                                            <Skeleton class="h-6 w-6 rounded-full" />
+                                            <Skeleton class="h-6 w-6 rounded-full" />
+                                        </div>
+                                        <div class="flex gap-1">
+                                            <Skeleton class="h-8 w-8" />
+                                            <Skeleton class="h-8 w-8" />
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>

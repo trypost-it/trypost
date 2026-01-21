@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { IconChevronLeft, IconChevronRight, IconPlus } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -46,9 +47,19 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Calendar', href: calendar.url() },
-];
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
+    { title: trans('calendar.title'), href: calendar.url() },
+]);
+
+// Generate weekday names based on dayjs locale (respects weekStart config)
+const weekdayNames = computed(() => {
+    const names = [];
+    const start = dayjs().startOf('week');
+    for (let i = 0; i < 7; i++) {
+        names.push(start.add(i, 'day').format('dddd'));
+    }
+    return names;
+});
 
 // Week view computed
 const weekStart = computed(() => dayjs(props.currentWeekStart));
@@ -193,7 +204,7 @@ const formatTime = (scheduledAt: string): string => {
 
 <template>
 
-    <Head title="Calendar" />
+    <Head :title="$t('calendar.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col h-full">
@@ -209,7 +220,7 @@ const formatTime = (scheduledAt: string): string => {
                         </Button>
                     </div>
                     <Button variant="outline" size="sm" @click="goToToday">
-                        Today
+                        {{ $t('calendar.today') }}
                     </Button>
                     <h1 class="text-lg font-semibold">
                         {{ headerTitle }}
@@ -218,14 +229,13 @@ const formatTime = (scheduledAt: string): string => {
                 <div class="flex items-center gap-4">
                     <Tabs :default-value="view" @update:model-value="switchView">
                         <TabsList>
-                            <TabsTrigger value="week">Week</TabsTrigger>
-                            <TabsTrigger value="month">Month</TabsTrigger>
+                            <TabsTrigger value="week">{{ $t('calendar.week') }}</TabsTrigger>
+                            <TabsTrigger value="month">{{ $t('calendar.month') }}</TabsTrigger>
                         </TabsList>
                     </Tabs>
                     <Link :href="createPost.url()">
                         <Button>
-                            <IconPlus class="h-4 w-4" />
-                            New Post
+                            {{ $t('calendar.new_post') }}
                         </Button>
                     </Link>
                 </div>
@@ -237,15 +247,14 @@ const formatTime = (scheduledAt: string): string => {
                     :class="{ 'bg-primary/5': isToday(day) }">
                     <!-- Day Header -->
                     <div class="flex flex-col items-center py-3 border-b bg-muted/30">
-                        <span class="text-xs font-medium text-muted-foreground uppercase">
-                            {{ day.format('ddd') }}
+                        <span class="text-xs font-medium text-muted-foreground">
+                            {{ day.format('dddd') }}
                         </span>
-                        <span class="mt-1 flex items-center justify-center w-8 h-8 text-sm font-semibold rounded-full"
-                            :class="{
-                                'bg-primary text-primary-foreground': isToday(day),
-                                'text-foreground': !isToday(day),
-                            }">
-                            {{ day.format('D') }}
+                        <span class="mt-1 text-sm font-semibold" :class="{
+                            'text-primary': isToday(day),
+                            'text-foreground': !isToday(day),
+                        }">
+                            {{ day.format('D/MMMM') }}
                         </span>
                     </div>
 
@@ -279,7 +288,7 @@ const formatTime = (scheduledAt: string): string => {
 
                                 <!-- Content Preview -->
                                 <p class="text-xs line-clamp-2 opacity-80">
-                                    {{ post.post_platforms[0]?.content || 'No content' }}
+                                    {{ post.post_platforms[0]?.content || $t('calendar.no_content') }}
                                 </p>
                             </div>
                         </Link>
@@ -288,11 +297,11 @@ const formatTime = (scheduledAt: string): string => {
             </div>
 
             <!-- Month View -->
-            <div v-else class="flex-1 flex flex-col overflow-hidden border-l">
+            <div v-else class="flex-1 flex flex-col overflow-hidden">
                 <!-- Weekday Headers -->
                 <div class="grid grid-cols-7 divide-x border-b bg-muted/30">
-                    <div v-for="day in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']" :key="day"
-                        class="py-3 text-center text-xs font-medium text-muted-foreground uppercase">
+                    <div v-for="day in weekdayNames" :key="day"
+                        class="py-3 text-center text-xs font-medium text-muted-foreground">
                         {{ day }}
                     </div>
                 </div>
@@ -343,7 +352,7 @@ const formatTime = (scheduledAt: string): string => {
                                 </Link>
                                 <div v-if="getPostsForDay(day).length > 3"
                                     class="text-xs text-muted-foreground px-2 py-0.5">
-                                    +{{ getPostsForDay(day).length - 3 }} more
+                                    {{ $t('calendar.more', { count: getPostsForDay(day).length - 3 }) }}
                                 </div>
                             </div>
                         </div>

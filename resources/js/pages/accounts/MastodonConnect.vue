@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { IconInfoCircle } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -28,13 +29,13 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
 </script>
 
 <template>
-    <PopupLayout title="Connect Mastodon">
+    <PopupLayout :title="$t('accounts.mastodon.title')">
         <div class="max-w-md mx-auto">
             <div class="flex items-center gap-3 mb-6">
                 <img src="/images/accounts/mastodon.png" alt="Mastodon" class="h-12 w-12" />
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Connect Mastodon</h1>
-                    <p class="text-sm text-muted-foreground">Enter your Mastodon instance</p>
+                    <h1 class="text-xl font-bold tracking-tight">{{ $t('accounts.mastodon.title') }}</h1>
+                    <p class="text-sm text-muted-foreground">{{ $t('accounts.mastodon.description') }}</p>
                 </div>
             </div>
 
@@ -48,13 +49,13 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                 <input type="hidden" name="_token" :value="csrfToken" />
 
                 <div class="space-y-2">
-                    <Label for="instance">Instance URL</Label>
+                    <Label for="instance">{{ $t('accounts.mastodon.instance_url') }}</Label>
                     <Input
                         id="instance"
                         name="instance"
                         v-model="instance"
                         type="url"
-                        placeholder="https://mastodon.social"
+                        :placeholder="trans('accounts.mastodon.instance_placeholder')"
                         :class="{ 'border-destructive': errors?.instance }"
                         required
                     />
@@ -65,11 +66,11 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
 
                 <Alert>
                     <IconInfoCircle class="h-4 w-4" />
-                    <AlertDescription class="inline">Enter your Mastodon instance URL (e.g., mastodon.social, techhub.social)</AlertDescription>
+                    <AlertDescription class="inline">{{ $t('accounts.mastodon.instance_hint') }}</AlertDescription>
                 </Alert>
 
                 <Button type="submit" :disabled="isSubmitting" class="w-full">
-                    {{ isSubmitting ? 'Connecting...' : 'Continue with Mastodon' }}
+                    {{ isSubmitting ? $t('accounts.mastodon.submitting') : $t('accounts.mastodon.submit') }}
                 </Button>
             </form>
         </div>

@@ -344,7 +344,7 @@ function handleLogout() {
             <div v-if="currentWorkspace" class="px-2 py-2">
                 <Link :href="createPost.url()">
                     <Button :size="sidebarState === 'collapsed' ? 'icon' : 'default'" class="w-full">
-                        <IconPlus class="size-4" />
+                        <IconPlus v-if="sidebarState === 'collapsed'" class="size-4" />
                         <span v-if="sidebarState === 'expanded'">{{ $t('sidebar.create_post') }}</span>
                     </Button>
                 </Link>

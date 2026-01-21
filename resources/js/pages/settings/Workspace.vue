@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
+import { computed } from 'vue';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
@@ -31,12 +33,12 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const breadcrumbItems: BreadcrumbItem[] = [
+const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     {
-        title: 'Workspace settings',
+        title: trans('settings.workspace.title'),
         href: settings().url,
     },
-];
+]);
 
 const form = useForm({
     name: props.workspace.name,
@@ -50,19 +52,19 @@ const submit = () => {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Workspace settings" />
+        <Head :title="$t('settings.workspace.title')" />
 
-        <h1 class="sr-only">Workspace Settings</h1>
+        <h1 class="sr-only">{{ $t('settings.workspace.title') }}</h1>
 
         <SettingsLayout>
             <div class="flex flex-col space-y-6">
                 <HeadingSmall
-                    title="Workspace settings"
-                    description="Update your workspace name, logo, and timezone"
+                    :title="$t('settings.workspace.heading')"
+                    :description="$t('settings.workspace.description')"
                 />
 
                 <div class="grid gap-2">
-                    <Label>Logo</Label>
+                    <Label>{{ $t('settings.workspace.logo') }}</Label>
                     <PhotoUpload
                         :model-id="workspace.id"
                         model-type="App\Models\Workspace"
@@ -75,19 +77,19 @@ const submit = () => {
 
                 <form @submit.prevent="submit" class="space-y-6">
                     <div class="grid gap-2">
-                        <Label for="name">Name</Label>
+                        <Label for="name">{{ $t('settings.workspace.name') }}</Label>
                         <Input
                             id="name"
                             v-model="form.name"
                             class="mt-1 block w-full"
                             required
-                            placeholder="My Workspace"
+                            :placeholder="trans('settings.workspace.name_placeholder')"
                         />
                         <InputError class="mt-2" :message="form.errors.name" />
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="timezone">Timezone</Label>
+                        <Label for="timezone">{{ $t('settings.workspace.timezone') }}</Label>
                         <TimezoneCombobox
                             v-model="form.timezone"
                             :timezones="timezones"
@@ -96,7 +98,7 @@ const submit = () => {
                     </div>
 
                     <div class="flex items-center gap-4">
-                        <Button :disabled="form.processing">Save</Button>
+                        <Button :disabled="form.processing">{{ $t('settings.workspace.save') }}</Button>
 
                         <Transition
                             enter-active-class="transition ease-in-out"
@@ -108,7 +110,7 @@ const submit = () => {
                                 v-show="form.recentlySuccessful"
                                 class="text-sm text-neutral-600"
                             >
-                                Saved.
+                                {{ $t('settings.workspace.saved') }}
                             </p>
                         </Transition>
                     </div>

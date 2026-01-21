@@ -2,7 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { IconPlus, IconTag, IconPencil, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import CreateDialog from '@/components/labels/CreateDialog.vue';
@@ -37,9 +37,9 @@ const isCreateDialogOpen = ref(false);
 const isEditDialogOpen = ref(false);
 const editingLabel = ref<Label | null>(null);
 
-const breadcrumbs: BreadcrumbItemType[] = [
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
     { title: trans('labels.title'), href: labelsIndex.url() },
-];
+]);
 
 const openEditDialog = (label: Label) => {
     editingLabel.value = label;

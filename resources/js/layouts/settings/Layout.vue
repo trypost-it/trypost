@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 import Heading from '@/components/Heading.vue';
@@ -19,11 +20,11 @@ const canManageWorkspace = computed(() => auth.value.role !== 'member');
 const navItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [
         {
-            title: 'Profile',
+            title: trans('settings.nav.profile'),
             href: editProfile(),
         },
         {
-            title: 'Password',
+            title: trans('settings.nav.password'),
             href: editPassword(),
         },
     ];
@@ -31,18 +32,18 @@ const navItems = computed<NavItem[]>(() => {
     if (canManageWorkspace.value) {
         items.push(
             {
-                title: 'Workspace',
+                title: trans('settings.nav.workspace'),
                 href: workspaceSettings(),
             },
             {
-                title: 'Members',
+                title: trans('settings.nav.members'),
                 href: members(),
             },
         );
 
         if (!page.props.selfHosted) {
             items.push({
-                title: 'Billing',
+                title: trans('settings.nav.billing'),
                 href: billing(),
             });
         }
@@ -58,8 +59,8 @@ const { urlIsActive } = useActiveUrl();
     <div class="px-4 py-6">
         <div class="flex flex-col items-center gap-6">
             <Heading
-                title="Settings"
-                description="Manage your profile and account settings"
+                :title="$t('settings.title')"
+                :description="$t('settings.description')"
                 class="w-full max-w-2xl"
             />
 

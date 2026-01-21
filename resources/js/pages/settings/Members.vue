@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { IconUserPlus, IconUsers, IconMail, IconTrash, IconCrown, IconUser, IconShield } from '@tabler/icons-vue';
+import { computed } from 'vue';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
@@ -49,9 +51,9 @@ interface Props {
 
 defineProps<Props>();
 
-const breadcrumbItems: BreadcrumbItem[] = [
-    { title: 'Members', href: membersRoute.url() },
-];
+const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
+    { title: trans('settings.members.title'), href: membersRoute.url() },
+]);
 
 const form = useForm({
     email: '',
@@ -68,7 +70,7 @@ function submitInvite() {
 }
 
 function cancelInvite(inviteId: string) {
-    if (confirm('Are you sure you want to cancel this invite?')) {
+    if (confirm(trans('settings.members.invite.cancel_confirm'))) {
         router.delete(destroyInvite.url(inviteId), {
             preserveScroll: true,
         });
@@ -76,7 +78,7 @@ function cancelInvite(inviteId: string) {
 }
 
 function handleRemoveMember(memberId: string) {
-    if (confirm('Are you sure you want to remove this member?')) {
+    if (confirm(trans('settings.members.list.remove_confirm'))) {
         router.delete(removeMember.url(memberId), {
             preserveScroll: true,
         });
@@ -84,12 +86,7 @@ function handleRemoveMember(memberId: string) {
 }
 
 function getRoleLabel(role: string): string {
-    const labels: Record<string, string> = {
-        owner: 'Owner',
-        admin: 'Admin',
-        member: 'Member',
-    };
-    return labels[role] || role;
+    return trans(`settings.members.roles.${role}`);
 }
 
 function getRoleIcon(role: string) {
@@ -100,36 +97,36 @@ function getRoleIcon(role: string) {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Members" />
+        <Head :title="$t('settings.members.title')" />
 
-        <h1 class="sr-only">Members</h1>
+        <h1 class="sr-only">{{ $t('settings.members.title') }}</h1>
 
         <SettingsLayout>
             <div class="flex flex-col space-y-6">
                 <HeadingSmall
-                    title="Team members"
-                    description="Manage members and invites for this workspace"
+                    :title="$t('settings.members.heading')"
+                    :description="$t('settings.members.description')"
                 />
 
                 <Card>
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
                             <IconUserPlus class="h-5 w-5" />
-                            Invite Member
+                            {{ $t('settings.members.invite.title') }}
                         </CardTitle>
                         <CardDescription>
-                            Send an email invite to add collaborators
+                            {{ $t('settings.members.invite.description') }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form @submit.prevent="submitInvite" class="space-y-4">
                             <div class="space-y-2">
-                                <Label for="email">Email</Label>
+                                <Label for="email">{{ $t('settings.members.invite.email') }}</Label>
                                 <Input
                                     id="email"
                                     v-model="form.email"
                                     type="email"
-                                    placeholder="collaborator@email.com"
+                                    :placeholder="trans('settings.members.invite.email_placeholder')"
                                     :class="{ 'border-red-500': form.errors.email }"
                                 />
                                 <p v-if="form.errors.email" class="text-sm text-red-500">
@@ -138,10 +135,10 @@ function getRoleIcon(role: string) {
                             </div>
 
                             <div class="space-y-2">
-                                <Label for="role">Role</Label>
+                                <Label for="role">{{ $t('settings.members.invite.role') }}</Label>
                                 <Select v-model="form.role">
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select a role" />
+                                        <SelectValue :placeholder="trans('settings.members.invite.role_placeholder')" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem
@@ -157,7 +154,7 @@ function getRoleIcon(role: string) {
 
                             <Button type="submit" :disabled="form.processing" class="w-full">
                                 <IconMail class="mr-2 h-4 w-4" />
-                                Send Invite
+                                {{ $t('settings.members.invite.submit') }}
                             </Button>
                         </form>
                     </CardContent>
@@ -167,15 +164,15 @@ function getRoleIcon(role: string) {
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
                             <IconMail class="h-5 w-5" />
-                            Pending Invites
+                            {{ $t('settings.members.pending.title') }}
                         </CardTitle>
                         <CardDescription>
-                            Invites awaiting acceptance
+                            {{ $t('settings.members.pending.description') }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div v-if="invites.length === 0" class="text-center py-6 text-muted-foreground">
-                            No pending invites
+                            {{ $t('settings.members.pending.empty') }}
                         </div>
                         <div v-else class="space-y-3">
                             <div
@@ -205,10 +202,10 @@ function getRoleIcon(role: string) {
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
                             <IconUsers class="h-5 w-5" />
-                            Members
+                            {{ $t('settings.members.list.title') }}
                         </CardTitle>
                         <CardDescription>
-                            People with access to this workspace
+                            {{ $t('settings.members.list.description') }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -223,7 +220,7 @@ function getRoleIcon(role: string) {
                                         <p class="text-sm text-muted-foreground">{{ owner.email }}</p>
                                     </div>
                                 </div>
-                                <Badge>Owner</Badge>
+                                <Badge>{{ $t('settings.members.roles.owner') }}</Badge>
                             </div>
 
                             <div
@@ -241,7 +238,7 @@ function getRoleIcon(role: string) {
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <Badge variant="outline" class="capitalize">{{ member.role }}</Badge>
+                                    <Badge variant="outline">{{ getRoleLabel(member.role) }}</Badge>
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -253,7 +250,7 @@ function getRoleIcon(role: string) {
                             </div>
 
                             <div v-if="members.length === 0" class="text-center py-6 text-muted-foreground">
-                                No members besides the owner
+                                {{ $t('settings.members.list.empty') }}
                             </div>
                         </div>
                     </CardContent>

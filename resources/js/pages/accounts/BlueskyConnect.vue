@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { IconInfoCircle } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -29,13 +30,13 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
 </script>
 
 <template>
-    <PopupLayout title="Connect Bluesky">
+    <PopupLayout :title="$t('accounts.bluesky.title')">
         <div class="max-w-md mx-auto">
             <div class="flex items-center gap-3 mb-6">
                 <img src="/images/accounts/bluesky.png" alt="Bluesky" class="h-12 w-12" />
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Connect Bluesky</h1>
-                    <p class="text-sm text-muted-foreground">Enter your credentials to connect</p>
+                    <h1 class="text-xl font-bold tracking-tight">{{ $t('accounts.bluesky.title') }}</h1>
+                    <p class="text-sm text-muted-foreground">{{ $t('accounts.bluesky.description') }}</p>
                 </div>
             </div>
 
@@ -43,9 +44,9 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                 <input type="hidden" name="_token" :value="csrfToken" />
 
                 <div class="space-y-2">
-                    <Label for="identifier">Email</Label>
+                    <Label for="identifier">{{ $t('accounts.bluesky.email') }}</Label>
                     <Input id="identifier" name="identifier" v-model="identifier" type="text"
-                        placeholder="yourhandle.bsky.social" :class="{ 'border-destructive': errors?.identifier }"
+                        :placeholder="trans('accounts.bluesky.email_placeholder')" :class="{ 'border-destructive': errors?.identifier }"
                         required />
                     <p v-if="errors?.identifier" class="text-sm text-destructive">
                         {{ errors.identifier }}
@@ -53,9 +54,9 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="password">App Password</Label>
+                    <Label for="password">{{ $t('accounts.bluesky.app_password') }}</Label>
                     <Input id="password" name="password" v-model="password" type="password"
-                        placeholder="xxxx-xxxx-xxxx-xxxx" :class="{ 'border-destructive': errors?.password }"
+                        :placeholder="trans('accounts.bluesky.app_password_placeholder')" :class="{ 'border-destructive': errors?.password }"
                         required />
                     <p v-if="errors?.password" class="text-sm text-destructive">
                         {{ errors.password }}
@@ -64,15 +65,11 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
 
                 <Alert>
                     <IconInfoCircle class="h-4 w-4" />
-                    <AlertDescription class="inline">
-                        Use an <strong>App Password</strong> for security. Create one at <a
-                            href="https://bsky.app/settings/app-passwords" target="_blank"
-                            class="underline">bsky.app/settings</a>.
-                    </AlertDescription>
+                    <AlertDescription class="inline" v-html="$t('accounts.bluesky.app_password_hint')" />
                 </Alert>
 
                 <Button type="submit" :disabled="isSubmitting" class="w-full">
-                    {{ isSubmitting ? 'Connecting...' : 'Connect Bluesky' }}
+                    {{ isSubmitting ? $t('accounts.bluesky.submitting') : $t('accounts.bluesky.submit') }}
                 </Button>
             </form>
         </div>

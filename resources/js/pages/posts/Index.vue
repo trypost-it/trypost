@@ -9,7 +9,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { calendar } from '@/routes';
 import { index as postsIndex, create as createPost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
 import { type BreadcrumbItemType } from '@/types';
 
@@ -161,15 +160,8 @@ const handleDelete = (post: Post) => {
                     </p>
                 </div>
                 <div class="flex gap-2">
-                    <Link :href="calendar.url()">
-                        <Button variant="outline">
-                            <IconClock class="mr-2 h-4 w-4" />
-                            Calendar
-                        </Button>
-                    </Link>
                     <Link :href="createPost.url()">
                         <Button>
-                            <IconPlus class="mr-2 h-4 w-4" />
                             New Post
                         </Button>
                     </Link>

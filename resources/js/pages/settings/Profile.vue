@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Form, Head, Link, usePage } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
+import { computed } from 'vue';
 
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/DeleteUser.vue';
@@ -25,30 +27,30 @@ defineProps<Props>();
 const page = usePage();
 const user = page.props.auth.user;
 
-const breadcrumbItems: BreadcrumbItem[] = [
+const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     {
-        title: 'Profile settings',
+        title: trans('settings.profile.title'),
         href: edit().url,
     },
-];
+]);
 </script>
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="Profile settings" />
+        <Head :title="$t('settings.profile.title')" />
 
-        <h1 class="sr-only">Profile Settings</h1>
+        <h1 class="sr-only">{{ $t('settings.profile.title') }}</h1>
 
         <SettingsLayout>
             <div class="space-y-10">
                 <div class="space-y-6">
                     <HeadingSmall
-                        title="Profile information"
-                        description="Update your name and email address"
+                        :title="$t('settings.profile.heading')"
+                        :description="$t('settings.profile.description')"
                     />
 
                     <div class="grid gap-2">
-                        <Label>Avatar</Label>
+                        <Label>{{ $t('settings.profile.avatar') }}</Label>
                         <PhotoUpload
                             :model-id="user.id"
                             model-type="App\Models\User"
@@ -65,20 +67,20 @@ const breadcrumbItems: BreadcrumbItem[] = [
                         v-slot="{ errors, processing }"
                     >
                         <div class="grid gap-2">
-                            <Label for="name">Name</Label>
+                            <Label for="name">{{ $t('settings.profile.name') }}</Label>
                             <Input
                                 id="name"
                                 name="name"
                                 :default-value="user.name"
                                 required
                                 autocomplete="name"
-                                placeholder="Full name"
+                                :placeholder="trans('settings.profile.name_placeholder')"
                             />
                             <InputError :message="errors.name" />
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="email">Email address</Label>
+                            <Label for="email">{{ $t('settings.profile.email') }}</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -86,20 +88,20 @@ const breadcrumbItems: BreadcrumbItem[] = [
                                 :default-value="user.email"
                                 required
                                 autocomplete="username"
-                                placeholder="Email address"
+                                :placeholder="trans('settings.profile.email_placeholder')"
                             />
                             <InputError :message="errors.email" />
                         </div>
 
                         <div v-if="mustVerifyEmail && !user.email_verified_at">
                             <p class="-mt-4 text-sm text-muted-foreground">
-                                Your email address is unverified.
+                                {{ $t('settings.profile.email_unverified') }}
                                 <Link
                                     :href="send()"
                                     as="button"
                                     class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
                                 >
-                                    Click here to resend the verification email.
+                                    {{ $t('settings.profile.resend_verification') }}
                                 </Link>
                             </p>
 
@@ -107,8 +109,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
                                 v-if="status === 'verification-link-sent'"
                                 class="mt-2 text-sm font-medium text-green-600"
                             >
-                                A new verification link has been sent to your email
-                                address.
+                                {{ $t('settings.profile.verification_sent') }}
                             </div>
                         </div>
 
@@ -116,7 +117,7 @@ const breadcrumbItems: BreadcrumbItem[] = [
                             :disabled="processing"
                             data-test="update-profile-button"
                         >
-                            Save
+                            {{ $t('settings.profile.save') }}
                         </Button>
                     </Form>
                 </div>

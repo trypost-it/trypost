@@ -12,6 +12,7 @@ import weekday from 'dayjs/plugin/weekday';
 
 // Import locales
 import 'dayjs/locale/en';
+import "dayjs/locale/pt-br"
 
 // Extend dayjs with plugins
 dayjs.extend(utc);
@@ -25,10 +26,12 @@ dayjs.extend(advancedFormat);
 dayjs.extend(weekday);
 dayjs.extend(isBetween);
 
-dayjs.locale('en');
-
 // Set Monday as first day of week (to match Carbon/Laravel)
 dayjs.updateLocale('en', {
+    weekStart: 1,
+});
+
+dayjs.updateLocale('pt-br', {
     weekStart: 1,
 });
 

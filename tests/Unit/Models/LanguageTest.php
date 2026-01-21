@@ -14,9 +14,9 @@ test('language has users relationship', function () {
 test('language has fillable attributes', function () {
     $language = Language::factory()->create([
         'name' => 'Portuguese',
-        'code' => 'pt-BR',
+        'code' => 'pt-br',
     ]);
 
     expect($language->name)->toBe('Portuguese');
-    expect($language->code)->toBe('pt-BR');
+    expect($language->code)->toBe('pt-br');
 });

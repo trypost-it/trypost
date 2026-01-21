@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { IconBrandFacebook, IconCheck } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -40,7 +41,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
 </script>
 
 <template>
-    <PopupLayout title="Select Facebook Page">
+    <PopupLayout :title="$t('accounts.facebook.title')">
         <!-- Hidden form for regular POST submission -->
         <form ref="formRef" :action="selectFacebookPage.url()" method="POST" class="hidden">
             <input type="hidden" name="_token" :value="csrfToken" />
@@ -51,8 +52,8 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
             <div class="flex items-center gap-3">
                 <img src="/images/accounts/facebook.png" alt="Facebook" class="h-10 w-10" />
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Select Facebook Page</h1>
-                    <p class="text-sm text-muted-foreground">Choose which page you want to connect</p>
+                    <h1 class="text-xl font-bold tracking-tight">{{ $t('accounts.facebook.title') }}</h1>
+                    <p class="text-sm text-muted-foreground">{{ $t('accounts.facebook.description') }}</p>
                 </div>
             </div>
 
@@ -64,9 +65,9 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
                     <IconBrandFacebook class="h-7 w-7 text-muted-foreground" />
                 </div>
-                <h3 class="mt-4 text-lg font-semibold">No pages found</h3>
+                <h3 class="mt-4 text-lg font-semibold">{{ $t('accounts.facebook.no_pages') }}</h3>
                 <p class="mt-1 text-sm text-muted-foreground">
-                    You are not an admin of any Facebook page.
+                    {{ $t('accounts.facebook.no_pages_description') }}
                 </p>
             </div>
 
@@ -91,7 +92,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                             <p v-if="page.username" class="text-sm text-muted-foreground truncate">
                                 facebook.com/{{ page.username }}
                             </p>
-                            <p v-else class="text-sm text-muted-foreground">Facebook Page</p>
+                            <p v-else class="text-sm text-muted-foreground">{{ $t('accounts.facebook.page_label') }}</p>
                         </div>
                         <div class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                             <div

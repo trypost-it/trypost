@@ -2,7 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { IconPlus, IconHash, IconPencil, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import CreateDialog from '@/components/hashtags/CreateDialog.vue';
@@ -37,9 +37,9 @@ const isCreateDialogOpen = ref(false);
 const isEditDialogOpen = ref(false);
 const editingHashtag = ref<Hashtag | null>(null);
 
-const breadcrumbs: BreadcrumbItemType[] = [
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
     { title: trans('hashtags.title'), href: hashtagsIndex.url() },
-];
+]);
 
 const openEditDialog = (hashtag: Hashtag) => {
     editingHashtag.value = hashtag;

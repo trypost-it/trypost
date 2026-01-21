@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { IconAlertCircle, IconCheck, IconExternalLink, IconRefresh, IconTrash } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted, onUnmounted } from 'vue';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -171,7 +172,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                         @{{ platform.account.username || platform.account.display_name }}
                     </p>
                     <p v-else class="text-sm text-muted-foreground">
-                        Not connected
+                        {{ trans('accounts.not_connected') }}
                     </p>
                 </div>
             </div>
@@ -182,7 +183,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                 <div v-if="isDisconnected(platform.account)" class="mb-3 flex items-start gap-2 rounded-lg bg-red-100 p-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
                     <IconAlertCircle class="h-4 w-4 mt-0.5 shrink-0" />
                     <div class="flex-1 min-w-0">
-                        <p class="font-medium">Connection lost</p>
+                        <p class="font-medium">{{ trans('accounts.connection_lost') }}</p>
                         <p v-if="platform.account.error_message" class="text-xs truncate opacity-80">
                             {{ platform.account.error_message }}
                         </p>
@@ -214,7 +215,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                                     </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>Reconnect account</p>
+                                    <p>{{ trans('accounts.reconnect_account') }}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
@@ -230,7 +231,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                                     </a>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>View profile</p>
+                                    <p>{{ trans('accounts.view_profile') }}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
@@ -245,7 +246,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                                     </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>Disconnect</p>
+                                    <p>{{ trans('accounts.disconnect') }}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
@@ -256,7 +257,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
             <!-- Not Connected State -->
             <div v-else class="border-t px-4 py-3">
                 <Button variant="outline" class="w-full" size="sm" @click="openOAuthPopup(platform.value)">
-                    Connect
+                    {{ trans('accounts.connect') }}
                 </Button>
             </div>
         </div>

@@ -8,6 +8,7 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 
 import { initializeTheme } from './composables/useAppearance';
+import dayjs from './dayjs';
 
 configureEcho({
     broadcaster: 'reverb',
@@ -23,6 +24,10 @@ createInertiaApp({
             import.meta.glob<DefineComponent>('./pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
+        // Set dayjs locale based on user's language
+        const userLanguage = (props.initialPage.props as { auth?: { user?: { language?: { code?: string } } } })?.auth?.user?.language?.code;
+        dayjs.locale(userLanguage?.toLowerCase() || 'en');
+
         createApp({ render: () => h(App, props) })
             .use(i18nVue, {
                 resolve: async (lang: string) => {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { trans } from 'laravel-vue-i18n';
+import { computed, ref } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import SocialAccountsGrid, { type Platform } from '@/components/SocialAccountsGrid.vue';
@@ -23,9 +24,9 @@ defineProps<Props>();
 
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 
-const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Accounts', href: accounts.url() },
-];
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
+    { title: trans('accounts.title'), href: accounts.url() },
+]);
 
 const handleDisconnect = (accountId: string) => {
     deleteModal.value?.open({
@@ -35,14 +36,14 @@ const handleDisconnect = (accountId: string) => {
 </script>
 
 <template>
-    <Head title="Connected Accounts" />
+    <Head :title="$t('accounts.page_title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-8 p-6">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight">Connected Accounts</h1>
+                <h1 class="text-2xl font-bold tracking-tight">{{ $t('accounts.page_title') }}</h1>
                 <p class="text-muted-foreground">
-                    Connect your social networks to schedule and publish posts
+                    {{ $t('accounts.description') }}
                 </p>
             </div>
 
@@ -55,9 +56,9 @@ const handleDisconnect = (accountId: string) => {
 
     <ConfirmDeleteModal
         ref="deleteModal"
-        title="Disconnect Account"
-        description="Are you sure you want to disconnect this account? You can reconnect it at any time."
-        action="Disconnect"
-        cancel="Cancel"
+        :title="$t('accounts.disconnect_modal.title')"
+        :description="$t('accounts.disconnect_modal.description')"
+        :action="$t('accounts.disconnect_modal.confirm')"
+        :cancel="$t('accounts.disconnect_modal.cancel')"
     />
 </template>

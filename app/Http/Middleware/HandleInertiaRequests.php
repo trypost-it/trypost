@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Language;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -62,6 +63,7 @@ class HandleInertiaRequests extends Middleware
             'env' => config('app.env'),
             'locale' => app()->getLocale(),
             'selfHosted' => config('trypost.self_hosted'),
+            'languages' => Language::all(),
         ];
     }
 }

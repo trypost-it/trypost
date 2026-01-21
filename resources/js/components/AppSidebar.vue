@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { IconBrandDiscord, IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconAffiliate, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop } from '@tabler/icons-vue';
+import { IconBrandDiscord, IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconAffiliate, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop, IconLanguage } from '@tabler/icons-vue';
 import { Button } from '@/components/ui/button';
 import { create as createPost } from '@/actions/App/Http/Controllers/PostController';
+import { updateLanguage } from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { computed } from 'vue';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -54,10 +55,18 @@ interface Workspace {
     };
 }
 
+interface Language {
+    id: string;
+    name: string;
+    code: string;
+}
+
 const page = usePage();
 const auth = computed(() => page.props.auth);
 const currentWorkspace = computed<Workspace | null>(() => page.props.currentWorkspace as Workspace | null);
 const workspaces = computed<Workspace[]>(() => page.props.workspaces as Workspace[]);
+const languages = computed<Language[]>(() => page.props.languages as Language[]);
+const currentLanguage = computed(() => languages.value.find(l => l.id === auth.value.user.language_id));
 
 const { getInitials } = useInitials();
 const { appearance, updateAppearance } = useAppearance();
@@ -158,6 +167,12 @@ function switchWorkspace(workspace: Workspace) {
     });
 }
 
+function switchLanguage(languageId: string) {
+    router.patch(updateLanguage.url(), { language_id: languageId }, {
+        preserveScroll: true,
+    });
+}
+
 function createWorkspace() {
     router.visit(createWorkspaceRoute.url());
 }
@@ -211,7 +226,7 @@ function handleLogout() {
                                     <div class="grid flex-1 text-left text-sm leading-tight">
                                         <span class="truncate font-semibold">{{ auth.user.name }}</span>
                                         <span class="truncate text-xs text-muted-foreground">{{ auth.user.email
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                 </div>
                             </DropdownMenuLabel>
@@ -269,6 +284,27 @@ function handleLogout() {
                                             <DropdownMenuRadioItem value="system">
                                                 <IconDeviceDesktop class="mr-2 size-4" />
                                                 <span>System</span>
+                                            </DropdownMenuRadioItem>
+                                        </DropdownMenuRadioGroup>
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuSub>
+
+                            <DropdownMenuSeparator />
+
+                            <!-- Language -->
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                    <IconLanguage class="mr-2 size-4" />
+                                    <span>Language: {{ currentLanguage?.name || 'Select' }}</span>
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuSubContent>
+                                        <DropdownMenuRadioGroup :model-value="currentLanguage?.id"
+                                            @update:model-value="switchLanguage">
+                                            <DropdownMenuRadioItem v-for="language in languages" :key="language.id"
+                                                :value="language.id">
+                                                <span>{{ language.name }}</span>
                                             </DropdownMenuRadioItem>
                                         </DropdownMenuRadioGroup>
                                     </DropdownMenuSubContent>

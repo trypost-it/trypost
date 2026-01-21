@@ -12,7 +12,7 @@ class LanguageSeeder extends Seeder
      */
     public function run(): void
     {
-        Language::create(['name' => 'English', 'code' => 'en-US']);
-        Language::create(['name' => 'Português', 'code' => 'pt-BR']);
+        Language::create(['name' => 'English (US)', 'code' => 'en-US']);
+        Language::create(['name' => 'Português (BR)', 'code' => 'pt-BR']);
     }
 }

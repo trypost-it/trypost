@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Plus, Calendar, Users, Settings } from 'lucide-vue-next';
+import { IconPlus, IconCalendar, IconUsers, IconSettings } from '@tabler/icons-vue';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -51,7 +51,7 @@ function switchAndNavigate(workspaceId: string, destination: string) {
                 </div>
                 <Link :href="createWorkspace.url()">
                     <Button>
-                        <Plus class="mr-2 h-4 w-4" />
+                        <IconPlus class="mr-2 h-4 w-4" />
                         Novo Workspace
                     </Button>
                 </Link>
@@ -65,7 +65,7 @@ function switchAndNavigate(workspaceId: string, destination: string) {
                     </p>
                     <Link :href="createWorkspace.url()">
                         <Button>
-                            <Plus class="mr-2 h-4 w-4" />
+                            <IconPlus class="mr-2 h-4 w-4" />
                             Criar Workspace
                         </Button>
                     </Link>
@@ -84,19 +84,19 @@ function switchAndNavigate(workspaceId: string, destination: string) {
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4 text-sm text-muted-foreground">
                                 <span class="flex items-center gap-1">
-                                    <Calendar class="h-4 w-4" />
+                                    <IconCalendar class="h-4 w-4" />
                                     {{ workspace.posts_count }} posts
                                 </span>
                             </div>
                             <div class="flex gap-2">
                                 <Button variant="outline" size="sm" @click="switchAndNavigate(workspace.id, calendar.url())">
-                                    <Calendar class="h-4 w-4" />
+                                    <IconCalendar class="h-4 w-4" />
                                 </Button>
                                 <Button variant="outline" size="sm" @click="switchAndNavigate(workspace.id, accounts.url())">
-                                    <Users class="h-4 w-4" />
+                                    <IconUsers class="h-4 w-4" />
                                 </Button>
                                 <Button variant="outline" size="sm" @click="switchAndNavigate(workspace.id, settings.url())">
-                                    <Settings class="h-4 w-4" />
+                                    <IconSettings class="h-4 w-4" />
                                 </Button>
                             </div>
                         </div>

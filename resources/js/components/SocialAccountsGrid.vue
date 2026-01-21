@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { AlertCircle, Check, ExternalLink, RefreshCw, Trash2 } from 'lucide-vue-next';
+import { IconAlertCircle, IconCheck, IconExternalLink, IconRefresh, IconTrash } from '@tabler/icons-vue';
 import { computed, onMounted, onUnmounted } from 'vue';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -154,13 +154,13 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                         v-if="platform.connected && !isDisconnected(platform.account)"
                         class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white ring-2 ring-white dark:ring-gray-900"
                     >
-                        <Check class="h-3 w-3" />
+                        <IconCheck class="h-3 w-3" />
                     </div>
                     <div
                         v-else-if="platform.connected && isDisconnected(platform.account)"
                         class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white ring-2 ring-white dark:ring-gray-900"
                     >
-                        <AlertCircle class="h-3 w-3" />
+                        <IconAlertCircle class="h-3 w-3" />
                     </div>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -180,7 +180,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
             <div v-if="platform.connected && platform.account" class="border-t px-4 py-3">
                 <!-- Disconnected Warning -->
                 <div v-if="isDisconnected(platform.account)" class="mb-3 flex items-start gap-2 rounded-lg bg-red-100 p-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
-                    <AlertCircle class="h-4 w-4 mt-0.5 shrink-0" />
+                    <IconAlertCircle class="h-4 w-4 mt-0.5 shrink-0" />
                     <div class="flex-1 min-w-0">
                         <p class="font-medium">Connection lost</p>
                         <p v-if="platform.account.error_message" class="text-xs truncate opacity-80">
@@ -210,7 +210,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                                         @click="openOAuthPopup(platform.value)"
                                         class="p-2 text-amber-600 hover:text-amber-700 transition-colors"
                                     >
-                                        <RefreshCw class="h-4 w-4" />
+                                        <IconRefresh class="h-4 w-4" />
                                     </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -226,7 +226,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                                         target="_blank"
                                         class="p-2 text-muted-foreground hover:text-foreground transition-colors"
                                     >
-                                        <ExternalLink class="h-4 w-4" />
+                                        <IconExternalLink class="h-4 w-4" />
                                     </a>
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -241,7 +241,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                                         @click="emit('disconnect', platform.account.id)"
                                         class="p-2 text-muted-foreground hover:text-red-600 transition-colors"
                                     >
-                                        <Trash2 class="h-4 w-4" />
+                                        <IconTrash class="h-4 w-4" />
                                     </button>
                                 </TooltipTrigger>
                                 <TooltipContent>

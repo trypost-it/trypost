@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { InertiaLinkProps } from '@inertiajs/vue3';
 import { Link, usePage } from '@inertiajs/vue3';
-import { Calendar, Menu, Settings, Share2, Users } from 'lucide-vue-next';
+import { IconCalendar, IconMenu2, IconSettings, IconShare, IconUsers } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
@@ -55,22 +55,22 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Calendar',
         href: '/calendar',
-        icon: Calendar,
+        icon: IconCalendar,
     },
     {
         title: 'Accounts',
         href: '/accounts',
-        icon: Share2,
+        icon: IconShare,
     },
     {
         title: 'Members',
         href: '/members',
-        icon: Users,
+        icon: IconUsers,
     },
     {
         title: 'Settings',
         href: '/settings',
-        icon: Settings,
+        icon: IconSettings,
     },
 ];
 </script>
@@ -84,7 +84,7 @@ const mainNavItems: NavItem[] = [
                     <Sheet>
                         <SheetTrigger :as-child="true">
                             <Button variant="ghost" size="icon" class="mr-2 h-9 w-9">
-                                <Menu class="h-5 w-5" />
+                                <IconMenu2 class="h-5 w-5" />
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" class="w-[300px] p-6">

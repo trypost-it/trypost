@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
-import { Loader2, CheckCircle, XCircle } from 'lucide-vue-next';
+import { IconLoader2, IconCircleCheck, IconCircleX } from '@tabler/icons-vue';
 import { ref, onMounted } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -62,7 +62,7 @@ function retry() {
             <!-- Processing -->
             <template v-if="currentStatus === 'processing'">
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
-                    <Loader2 class="w-10 h-10 text-primary animate-spin" />
+                    <IconLoader2 class="w-10 h-10 text-primary animate-spin" />
                 </div>
                 <h1 class="text-2xl font-bold tracking-tight mb-3">Processing your subscription</h1>
                 <p class="text-muted-foreground">
@@ -73,7 +73,7 @@ function retry() {
             <!-- Success -->
             <template v-else-if="currentStatus === 'success'">
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mb-6">
-                    <CheckCircle class="w-10 h-10 text-green-600" />
+                    <IconCircleCheck class="w-10 h-10 text-green-600" />
                 </div>
                 <h1 class="text-2xl font-bold tracking-tight mb-3">You're all set!</h1>
                 <p class="text-muted-foreground">
@@ -84,7 +84,7 @@ function retry() {
             <!-- Cancelled -->
             <template v-else-if="currentStatus === 'cancelled'">
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mb-6">
-                    <XCircle class="w-10 h-10 text-red-600" />
+                    <IconCircleX class="w-10 h-10 text-red-600" />
                 </div>
                 <h1 class="text-2xl font-bold tracking-tight mb-3">Checkout cancelled</h1>
                 <p class="text-muted-foreground mb-6">

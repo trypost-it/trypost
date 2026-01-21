@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { CreditCard, FileText, Building2, ExternalLink, Sparkles } from 'lucide-vue-next';
+import { IconCreditCard, IconFileText, IconBuilding, IconExternalLink, IconSparkles } from '@tabler/icons-vue';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -86,7 +86,7 @@ function getStatusVariant(status: string): 'default' | 'secondary' | 'destructiv
             </div>
 
             <Alert v-if="onTrial" class="border-primary/50 bg-primary/5">
-                <Sparkles class="h-4 w-4 text-primary" />
+                <IconSparkles class="h-4 w-4 text-primary" />
                 <AlertTitle>Trial period active</AlertTitle>
                 <AlertDescription>
                     Your trial ends on <strong>{{ trialEndsAt }}</strong>.
@@ -99,7 +99,7 @@ function getStatusVariant(status: string): 'default' | 'secondary' | 'destructiv
                     <CardHeader>
                         <div class="flex items-center justify-between">
                             <CardTitle class="flex items-center gap-2">
-                                <Building2 class="h-5 w-5" />
+                                <IconBuilding class="h-5 w-5" />
                                 Your Subscription
                             </CardTitle>
                             <Badge :variant="getStatusVariant(subscription?.stripe_status || '')">
@@ -120,7 +120,7 @@ function getStatusVariant(status: string): 'default' | 'secondary' | 'destructiv
                         </div>
 
                         <div v-if="defaultPaymentMethod" class="flex items-center gap-3 p-3 border rounded-lg">
-                            <CreditCard class="h-8 w-8 text-muted-foreground" />
+                            <IconCreditCard class="h-8 w-8 text-muted-foreground" />
                             <div>
                                 <p class="font-medium capitalize">{{ defaultPaymentMethod.brand }} **** {{ defaultPaymentMethod.last4 }}</p>
                                 <p class="text-sm text-muted-foreground">
@@ -137,7 +137,7 @@ function getStatusVariant(status: string): 'default' | 'secondary' | 'destructiv
                     </CardContent>
                     <CardFooter>
                         <Button @click="openPortal" variant="outline" class="w-full">
-                            <ExternalLink class="mr-2 h-4 w-4" />
+                            <IconExternalLink class="mr-2 h-4 w-4" />
                             Manage on Stripe
                         </Button>
                     </CardFooter>
@@ -146,7 +146,7 @@ function getStatusVariant(status: string): 'default' | 'secondary' | 'destructiv
                 <Card>
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
-                            <FileText class="h-5 w-5" />
+                            <IconFileText class="h-5 w-5" />
                             Invoices
                         </CardTitle>
                         <CardDescription>

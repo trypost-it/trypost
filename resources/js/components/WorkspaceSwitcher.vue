@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router, usePage } from '@inertiajs/vue3';
-import { Check, ChevronsUpDown, Plus } from 'lucide-vue-next';
+import { IconCheck, IconPlus, IconSelector } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ function createWorkspace() {
         <DropdownMenuTrigger :as-child="true">
             <Button variant="outline" class="w-full justify-between gap-2 px-3" :class="{ 'text-muted-foreground': !currentWorkspace }">
                 <span class="truncate">{{ currentWorkspace?.name || 'Select workspace' }}</span>
-                <ChevronsUpDown class="h-4 w-4 shrink-0 opacity-50" />
+                <IconSelector class="h-4 w-4 shrink-0 opacity-50" />
             </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" class="w-56">
@@ -53,12 +53,12 @@ function createWorkspace() {
             >
                 <div class="flex w-full items-center justify-between">
                     <span class="truncate">{{ workspace.name }}</span>
-                    <Check v-if="currentWorkspace?.id === workspace.id" class="h-4 w-4 shrink-0" />
+                    <IconCheck v-if="currentWorkspace?.id === workspace.id" class="h-4 w-4 shrink-0" />
                 </div>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem class="cursor-pointer" @click="createWorkspace">
-                <Plus class="mr-2 h-4 w-4" />
+                <IconPlus class="mr-2 h-4 w-4" />
                 Create workspace
             </DropdownMenuItem>
         </DropdownMenuContent>

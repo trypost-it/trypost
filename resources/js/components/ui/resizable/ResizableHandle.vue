@@ -2,7 +2,7 @@
 import type { SplitterResizeHandleEmits, SplitterResizeHandleProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"
 import { reactiveOmit } from "@vueuse/core"
-import { GripVertical } from "lucide-vue-next"
+import { IconGripVertical } from "@tabler/icons-vue"
 import { SplitterResizeHandle, useForwardPropsEmits } from "reka-ui"
 import { cn } from "@/lib/utils"
 
@@ -22,7 +22,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     <template v-if="props.withHandle">
       <div class="bg-border z-10 flex h-4 w-3 items-center justify-center rounded-xs border">
         <slot>
-          <GripVertical class="size-2.5" />
+          <IconGripVertical class="size-2.5" />
         </slot>
       </div>
     </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { Plus, Tag, Pencil, Trash2 } from 'lucide-vue-next';
+import { IconPlus, IconTag, IconPencil, IconTrash } from '@tabler/icons-vue';
 import { ref } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
@@ -65,21 +65,21 @@ const handleDelete = (labelId: string) => {
                     </p>
                 </div>
                 <Button @click="isCreateDialogOpen = true">
-                    <Plus class="mr-2 h-4 w-4" />
+                    <IconPlus class="mr-2 h-4 w-4" />
                     New Label
                 </Button>
             </div>
 
             <div v-if="labels.length === 0" class="flex flex-col items-center justify-center py-16">
                 <div class="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <Tag class="h-8 w-8 text-muted-foreground" />
+                    <IconTag class="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 class="text-lg font-semibold mb-2">No labels yet</h3>
                 <p class="text-muted-foreground mb-4 text-center max-w-sm">
                     Create labels to organize and categorize your posts
                 </p>
                 <Button @click="isCreateDialogOpen = true">
-                    <Plus class="mr-2 h-4 w-4" />
+                    <IconPlus class="mr-2 h-4 w-4" />
                     Create your first label
                 </Button>
             </div>
@@ -102,7 +102,7 @@ const handleDelete = (labelId: string) => {
                                     class="h-8 w-8"
                                     @click="openEditDialog(label)"
                                 >
-                                    <Pencil class="h-4 w-4" />
+                                    <IconPencil class="h-4 w-4" />
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -110,7 +110,7 @@ const handleDelete = (labelId: string) => {
                                     class="h-8 w-8 text-destructive hover:text-destructive"
                                     @click="handleDelete(label.id)"
                                 >
-                                    <Trash2 class="h-4 w-4" />
+                                    <IconTrash class="h-4 w-4" />
                                 </Button>
                             </div>
                         </div>

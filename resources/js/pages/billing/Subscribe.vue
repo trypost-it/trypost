@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { Sparkles, Calendar, Users, ImageIcon, Video, Clock, BarChart3 } from 'lucide-vue-next';
+import { IconSparkles, IconCalendar, IconUsers, IconPhoto, IconVideo, IconClock, IconChartBar } from '@tabler/icons-vue';
 import { ref } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -31,12 +31,12 @@ const platforms = [
 ];
 
 const features = [
-    { icon: Calendar, title: 'Visual Calendar', description: 'Plan and schedule your content with an intuitive drag-and-drop calendar' },
-    { icon: Clock, title: 'Unlimited Scheduling', description: 'Schedule as many posts as you want, whenever you want' },
-    { icon: ImageIcon, title: 'Images & Carousels', description: 'Share single images or create engaging carousel posts' },
-    { icon: Video, title: 'Video Publishing', description: 'Upload and publish videos across all your social accounts' },
-    { icon: Users, title: 'Team Collaboration', description: 'Invite your team members and work together seamlessly' },
-    { icon: BarChart3, title: 'Analytics', description: 'Track your post performance and engagement metrics' },
+    { icon: IconCalendar, title: 'Visual Calendar', description: 'Plan and schedule your content with an intuitive drag-and-drop calendar' },
+    { icon: IconClock, title: 'Unlimited Scheduling', description: 'Schedule as many posts as you want, whenever you want' },
+    { icon: IconPhoto, title: 'Images & Carousels', description: 'Share single images or create engaging carousel posts' },
+    { icon: IconVideo, title: 'Video Publishing', description: 'Upload and publish videos across all your social accounts' },
+    { icon: IconUsers, title: 'Team Collaboration', description: 'Invite your team members and work together seamlessly' },
+    { icon: IconChartBar, title: 'Analytics', description: 'Track your post performance and engagement metrics' },
 ];
 </script>
 
@@ -48,7 +48,7 @@ const features = [
             <!-- Header -->
             <div class="text-center mb-12">
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 mb-6">
-                    <Sparkles class="w-10 h-10 text-primary" />
+                    <IconSparkles class="w-10 h-10 text-primary" />
                 </div>
                 <h1 class="text-4xl font-bold tracking-tight mb-3">Welcome to TryPost!</h1>
                 <p class="text-xl text-muted-foreground">

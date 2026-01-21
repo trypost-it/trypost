@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { Building, Building2, Rocket, Sparkles, Store, User } from 'lucide-vue-next';
+import { IconBuilding, IconRocket, IconSparkles, IconBuildingStore, IconUser } from '@tabler/icons-vue';
 
 import { storeStep1 } from '@/actions/App/Http/Controllers/OnboardingController';
 import { Button } from '@/components/ui/button';
@@ -23,13 +23,13 @@ const form = useForm({
     persona: '',
 });
 
-const icons: Record<string, typeof Rocket> = {
-    rocket: Rocket,
-    sparkles: Sparkles,
-    building: Building,
-    'building-2': Building2,
-    store: Store,
-    user: User,
+const icons: Record<string, typeof IconRocket> = {
+    rocket: IconRocket,
+    sparkles: IconSparkles,
+    building: IconBuilding,
+    'building-2': IconBuilding,
+    store: IconBuildingStore,
+    user: IconUser,
 };
 
 const submit = () => {

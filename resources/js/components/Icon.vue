@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import * as icons from 'lucide-vue-next';
+import * as icons from '@tabler/icons-vue';
 import { computed } from 'vue';
 
 import { cn } from '@/lib/utils';
@@ -21,7 +21,8 @@ const props = withDefaults(defineProps<Props>(), {
 const className = computed(() => cn('h-4 w-4', props.class));
 
 const icon = computed(() => {
-    const iconName = props.name.charAt(0).toUpperCase() + props.name.slice(1);
+    // Tabler icons are prefixed with 'Icon', e.g., 'IconUser', 'IconSettings'
+    const iconName = 'Icon' + props.name.charAt(0).toUpperCase() + props.name.slice(1);
     return (icons as Record<string, any>)[iconName];
 });
 </script>

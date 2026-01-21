@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-vue-next';
+import { IconChevronLeft, IconChevronRight, IconPlus } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -202,10 +202,10 @@ const formatTime = (scheduledAt: string): string => {
                 <div class="flex items-center gap-4">
                     <div class="flex items-center gap-1">
                         <Button variant="outline" size="icon" @click="navigate(-1)">
-                            <ChevronLeft class="h-4 w-4" />
+                            <IconChevronLeft class="h-4 w-4" />
                         </Button>
                         <Button variant="outline" size="icon" @click="navigate(1)">
-                            <ChevronRight class="h-4 w-4" />
+                            <IconChevronRight class="h-4 w-4" />
                         </Button>
                     </div>
                     <Button variant="outline" size="sm" @click="goToToday">
@@ -224,7 +224,7 @@ const formatTime = (scheduledAt: string): string => {
                     </Tabs>
                     <Link :href="createPost.url()">
                         <Button>
-                            <Plus class="mr-2 h-4 w-4" />
+                            <IconPlus class="mr-2 h-4 w-4" />
                             New Post
                         </Button>
                     </Link>
@@ -254,7 +254,7 @@ const formatTime = (scheduledAt: string): string => {
                         <!-- Add Post Button -->
                         <Link :href="createPost.url({ query: { date: day.format('YYYY-MM-DD') } })"
                             class="flex items-center justify-center p-2 rounded border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors">
-                            <Plus class="h-4 w-4" />
+                            <IconPlus class="h-4 w-4" />
                         </Link>
 
                         <!-- Posts -->
@@ -319,7 +319,7 @@ const formatTime = (scheduledAt: string): string => {
                                 </span>
                                 <Link :href="createPost.url({ query: { date: day.format('YYYY-MM-DD') } })"
                                     class="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all">
-                                    <Plus class="h-4 w-4" />
+                                    <IconPlus class="h-4 w-4" />
                                 </Link>
                             </div>
 

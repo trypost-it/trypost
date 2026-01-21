@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Trash2, Upload, User } from 'lucide-vue-next';
+import { IconTrash, IconUpload, IconUser } from '@tabler/icons-vue';
 import { ref, watch } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -164,7 +164,7 @@ const closeDialog = () => {
                     roundedClasses[rounded],
                 ]"
             >
-                <User class="h-8 w-8 text-muted-foreground" />
+                <IconUser class="h-8 w-8 text-muted-foreground" />
             </div>
         </div>
 
@@ -188,7 +188,7 @@ const closeDialog = () => {
                             :disabled="uploading"
                             @click="openDialog"
                         >
-                            <Upload class="h-4 w-4" />
+                            <IconUpload class="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -213,7 +213,7 @@ const closeDialog = () => {
                             class="px-2"
                             @click="removePhoto"
                         >
-                            <Trash2 class="h-4 w-4" />
+                            <IconTrash class="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -232,7 +232,7 @@ const closeDialog = () => {
 
                 <div class="flex flex-col items-center gap-4 py-8">
                     <div class="rounded-full bg-muted p-6">
-                        <Upload class="h-12 w-12 text-muted-foreground" />
+                        <IconUpload class="h-12 w-12 text-muted-foreground" />
                     </div>
                     <p class="text-center text-sm text-muted-foreground">
                         Select an image from your computer

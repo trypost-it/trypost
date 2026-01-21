@@ -13,8 +13,21 @@ import {
     IconBrandX,
     IconBrandYoutube,
 } from '@tabler/icons-vue';
-import { Clock, AlertCircle, Trash2, Send, Link2, MoreHorizontal, Plus, CheckCircle, ExternalLink, Loader2 } from 'lucide-vue-next';
-import { computed, ref, watch, type Component } from 'vue';
+import {
+    IconClock,
+    IconAlertCircle,
+    IconTrash,
+    IconSend,
+    IconLink,
+    IconDots,
+    IconPlus,
+    IconCircleCheck,
+    IconExternalLink,
+    IconLoader2,
+} from '@tabler/icons-vue';
+import { computed, onUnmounted, ref, watch, type Component } from 'vue';
+
+import debounce from '@/debounce';
 
 import { Badge } from '@/components/ui/badge';
 
@@ -48,7 +61,8 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { destroy as destroyPost, update as updatePost } from '@/routes/posts';
+import { destroy as destroyPost, index as postsIndex, update as updatePost } from '@/routes/posts';
+import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
     id: string;
@@ -118,6 +132,11 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const breadcrumbs: BreadcrumbItemType[] = [
+    { title: 'Posts', href: postsIndex.url() },
+    { title: 'Edit Post', href: '#' },
+];
+
 // Reactive state for real-time updates
 const post = ref(props.post);
 
@@ -178,7 +197,12 @@ const {
     postPlatforms: postPlatformsRef,
 });
 
+// Check if any platform is currently uploading
+const isAnyUploading = computed(() => Object.values(isUploading.value).some(v => v));
+
 const isSubmitting = ref(false);
+const isSaving = ref(false);
+const showSaved = ref(false);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const showEnableSyncDialog = ref(false);
 const showDisableSyncDialog = ref(false);
@@ -263,12 +287,12 @@ const getPlatformIcon = (platform: string): Component => {
 
 const getStatusConfig = (status: string) => {
     const configs: Record<string, { label: string; color: string; icon: any }> = {
-        'draft': { label: 'Draft', color: 'bg-gray-100 text-gray-800', icon: Clock },
-        'scheduled': { label: 'Scheduled', color: 'bg-blue-100 text-blue-800', icon: Clock },
-        'publishing': { label: 'Publishing', color: 'bg-yellow-100 text-yellow-800', icon: Loader2 },
-        'published': { label: 'Published', color: 'bg-green-100 text-green-800', icon: CheckCircle },
-        'partially_published': { label: 'Partially Published', color: 'bg-orange-100 text-orange-800', icon: AlertCircle },
-        'failed': { label: 'Failed', color: 'bg-red-100 text-red-800', icon: AlertCircle },
+        'draft': { label: 'Draft', color: 'bg-gray-100 text-gray-800', icon: IconClock },
+        'scheduled': { label: 'Scheduled', color: 'bg-blue-100 text-blue-800', icon: IconClock },
+        'publishing': { label: 'Publishing', color: 'bg-yellow-100 text-yellow-800', icon: IconLoader2 },
+        'published': { label: 'Published', color: 'bg-green-100 text-green-800', icon: IconCircleCheck },
+        'partially_published': { label: 'Partially Published', color: 'bg-orange-100 text-orange-800', icon: IconAlertCircle },
+        'failed': { label: 'Failed', color: 'bg-red-100 text-red-800', icon: IconAlertCircle },
     };
     return configs[status] || configs['draft'];
 };
@@ -364,6 +388,67 @@ const getContent = (platformId: string): string => {
     return platformContents.value[platformId] || '';
 };
 
+// === Autosave Logic ===
+const getSubmitData = () => {
+    const platforms = post.value.post_platforms
+        .filter(pp => selectedPlatformIds.value.includes(pp.id))
+        .map(pp => ({
+            id: pp.id,
+            content: synced.value ? globalContent.value : platformContents.value[pp.id],
+            content_type: platformContentTypes.value[pp.id],
+            meta: platformMeta.value[pp.id] || {},
+        }));
+
+    return { platforms, scheduled_at: scheduledDateTime.value || null };
+};
+
+const save = () => {
+    if (isSubmitting.value || isReadOnly.value || isSaving.value) return;
+
+    const { platforms, scheduled_at } = getSubmitData();
+
+    isSaving.value = true;
+    showSaved.value = false;
+
+    router.put(updatePost.url(post.value.id), {
+        status: post.value.status,
+        synced: synced.value,
+        scheduled_at,
+        platforms,
+    }, {
+        preserveScroll: true,
+        onFinish: () => {
+            isSaving.value = false;
+            showSaved.value = true;
+            setTimeout(() => {
+                showSaved.value = false;
+            }, 2000);
+        },
+    });
+};
+
+const debouncedSave = debounce(() => {
+    if (!isReadOnly.value && !isAnyUploading.value && !isSubmitting.value) {
+        save();
+    }
+}, 1500);
+
+const triggerAutosave = () => {
+    if (!isReadOnly.value) {
+        showSaved.value = false;
+        debouncedSave();
+    }
+};
+
+// Watch other form data for autosave
+watch([selectedPlatformIds, synced, scheduledDateTime], triggerAutosave, { deep: true });
+
+// Cleanup on unmount
+onUnmounted(() => {
+    debouncedSave.cancel();
+});
+
+// === Content Setters ===
 // Set content for a platform
 const setContent = (platformId: string, value: string) => {
     if (synced.value) {
@@ -375,6 +460,7 @@ const setContent = (platformId: string, value: string) => {
     } else {
         platformContents.value[platformId] = value;
     }
+    triggerAutosave();
 };
 
 // Active platform
@@ -398,6 +484,13 @@ const currentContentType = computed(() => {
 // Set content type for a platform
 const setContentType = (platformId: string, value: string) => {
     platformContentTypes.value[platformId] = value;
+    triggerAutosave();
+};
+
+// Set meta for a platform
+const setMeta = (platformId: string, value: Record<string, any>) => {
+    platformMeta.value[platformId] = value;
+    triggerAutosave();
 };
 
 // Selected platforms (for tabs)
@@ -545,41 +638,11 @@ const togglePlatform = (platformId: string) => {
     }
 };
 
-const getSubmitData = () => {
-    const platforms = post.value.post_platforms
-        .filter(pp => selectedPlatformIds.value.includes(pp.id))
-        .map(pp => ({
-            id: pp.id,
-            content: synced.value ? globalContent.value : platformContents.value[pp.id],
-            content_type: platformContentTypes.value[pp.id],
-            meta: platformMeta.value[pp.id] || {},
-        }));
-
-    return { platforms, scheduled_at: scheduledDateTime.value || null };
-};
-
-const save = () => {
-    if (isSubmitting.value || isReadOnly.value) return;
-
-    const { platforms, scheduled_at } = getSubmitData();
-
-    isSubmitting.value = true;
-
-    router.put(updatePost.url(post.value.id), {
-        status: post.value.status,
-        synced: synced.value,
-        scheduled_at,
-        platforms,
-    }, {
-        preserveScroll: true,
-        onFinish: () => {
-            isSubmitting.value = false;
-        },
-    });
-};
-
 const submit = (status: string = 'scheduled') => {
     if (isSubmitting.value || isReadOnly.value) return;
+
+    // Cancel any pending autosave
+    debouncedSave.cancel();
 
     const { platforms, scheduled_at } = getSubmitData();
 
@@ -609,7 +672,7 @@ const deletePost = () => {
 
     <Head :title="isReadOnly ? 'View Post' : 'Edit Post'" />
 
-    <AppLayout>
+    <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col h-screen">
             <!-- Top Bar with Tabs and Actions -->
             <div class="relative flex items-center justify-between border-b px-4 py-2 bg-background">
@@ -665,7 +728,7 @@ const deletePost = () => {
                             <TooltipTrigger asChild>
                                 <button type="button" @click="showPlatformsDialog = true"
                                     class="p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                                    <MoreHorizontal class="h-5 w-5 text-muted-foreground" />
+                                    <IconDots class="h-5 w-5 text-muted-foreground" />
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent>
@@ -682,7 +745,7 @@ const deletePost = () => {
                         <Switch id="sync-content" v-model="synced" />
                     </div>
                     <Label for="sync-content" class="text-sm cursor-pointer flex items-center gap-1.5">
-                        <Link2 class="h-4 w-4" />
+                        <IconLink class="h-4 w-4" />
                         <span>Sync</span>
                         <span class="flex items-center gap-1">
                             <component v-for="op in otherSelectedPlatforms.slice(0, 3)" :key="op.id"
@@ -707,24 +770,20 @@ const deletePost = () => {
                     <span class="text-muted-foreground">|</span>
 
                     <Button type="button" variant="outline" size="icon-sm" @click="deletePost"
+                        :disabled="isSaving || isSubmitting"
                         class="text-muted-foreground hover:text-destructive">
-                        <Trash2 class="h-4 w-4" />
+                        <IconTrash class="h-4 w-4" />
                     </Button>
 
-                    <Button type="button" variant="outline" size="sm"
-                        :disabled="selectedPlatformIds.length === 0 || isSubmitting" @click="save">
-                        {{ isSubmitting ? 'Saving...' : 'Save' }}
-                    </Button>
-
-                    <Button type="button" variant="secondary" size="sm" :disabled="!canSubmit || isSubmitting"
+                    <Button type="button" variant="secondary" size="sm" :disabled="!canSubmit || isSubmitting || isSaving"
                         @click="submit('scheduled')">
-                        <Clock class="mr-2 h-4 w-4" />
+                        <IconClock class="mr-2 h-4 w-4" />
                         Schedule
                     </Button>
 
-                    <Button type="button" size="sm" :disabled="!canSubmit || isSubmitting"
+                    <Button type="button" size="sm" :disabled="!canSubmit || isSubmitting || isSaving"
                         @click="submit('publishing')">
-                        <Send class="mr-2 h-4 w-4" />
+                        <IconSend class="mr-2 h-4 w-4" />
                         Publish
                     </Button>
                 </div>
@@ -740,7 +799,18 @@ const deletePost = () => {
             <div class="flex-1 overflow-hidden">
                 <div v-if="activePlatform && selectedPlatformIds.length > 0" class="h-full flex">
                     <!-- Left Side: Form -->
-                    <div class="w-1/2 border-r overflow-y-auto">
+                    <div class="w-1/2 border-r overflow-y-auto relative">
+                        <!-- Autosave indicator -->
+                        <div v-if="!isReadOnly && (isSaving || showSaved)" class="absolute top-4 left-6 z-10">
+                            <span v-if="isSaving" class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <IconLoader2 class="h-3 w-3 animate-spin" />
+                                Saving...
+                            </span>
+                            <span v-else-if="showSaved" class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <IconCircleCheck class="h-3 w-3 text-green-500" />
+                                Saved
+                            </span>
+                        </div>
                         <div class="max-w-lg mx-auto py-8 px-6">
                             <!-- Publication Result (read-only mode) -->
                             <div v-if="isReadOnly" class="mb-6 space-y-3">
@@ -765,14 +835,14 @@ const deletePost = () => {
                                         <a v-if="activePlatform.platform_url" :href="activePlatform.platform_url"
                                             target="_blank"
                                             class="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground">
-                                            <ExternalLink class="h-4 w-4" />
+                                            <IconExternalLink class="h-4 w-4" />
                                         </a>
                                     </div>
                                 </div>
 
                                 <!-- Error Message -->
                                 <Alert v-if="activePlatform.error_message" variant="destructive">
-                                    <AlertCircle class="h-4 w-4" />
+                                    <IconAlertCircle class="h-4 w-4" />
                                     <AlertDescription>
                                         {{ activePlatform.error_message }}
                                     </AlertDescription>
@@ -822,14 +892,14 @@ const deletePost = () => {
                                 :is-uploading="isUploading[activePlatform.id]" :disabled="isReadOnly"
                                 @update:content="setContent(activePlatform.id, $event)"
                                 @update:content-type="setContentType(activePlatform.id, $event)"
-                                @update:meta="platformMeta[activePlatform.id] = $event"
+                                @update:meta="setMeta(activePlatform.id, $event)"
                                 @upload="uploadMedia($event, activePlatform.id)"
                                 @remove-media="removeMedia(activePlatform.id, $event)"
                                 @reorder-media="reorderMedia(activePlatform.id, $event)" />
 
                             <!-- Media Validation Errors -->
                             <Alert v-if="!isReadOnly && mediaValidation.length > 0" variant="destructive" class="mt-4">
-                                <AlertCircle class="h-4 w-4" />
+                                <IconAlertCircle class="h-4 w-4" />
                                 <AlertDescription>
                                     <ul class="list-disc list-inside">
                                         <li v-for="error in mediaValidation" :key="error">{{ error }}</li>
@@ -855,7 +925,7 @@ const deletePost = () => {
                 <!-- Empty State -->
                 <div v-else class="flex flex-col items-center justify-center h-full text-center p-8">
                     <div class="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                        <Plus class="h-8 w-8 text-muted-foreground" />
+                        <IconPlus class="h-8 w-8 text-muted-foreground" />
                     </div>
                     <h3 class="text-lg font-semibold mb-2">No platforms selected</h3>
                     <p class="text-muted-foreground mb-4">Select at least one platform to create your post</p>
@@ -893,7 +963,7 @@ const deletePost = () => {
             <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction @click="confirmEnableSync">
-                    <Link2 class="mr-2 h-4 w-4" />
+                    <IconLink class="mr-2 h-4 w-4" />
                     Sync with {{ getPlatformLabel(firstSelectedPlatform?.platform || '') }}
                 </AlertDialogAction>
             </AlertDialogFooter>

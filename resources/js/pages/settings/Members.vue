@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { UserPlus, Users, Mail, Trash2, Crown, User, Shield } from 'lucide-vue-next';
+import { IconUserPlus, IconUsers, IconMail, IconTrash, IconCrown, IconUser, IconShield } from '@tabler/icons-vue';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
@@ -93,8 +93,8 @@ function getRoleLabel(role: string): string {
 }
 
 function getRoleIcon(role: string) {
-    if (role === 'admin') return Shield;
-    return User;
+    if (role === 'admin') return IconShield;
+    return IconUser;
 }
 </script>
 
@@ -114,7 +114,7 @@ function getRoleIcon(role: string) {
                 <Card>
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
-                            <UserPlus class="h-5 w-5" />
+                            <IconUserPlus class="h-5 w-5" />
                             Invite Member
                         </CardTitle>
                         <CardDescription>
@@ -156,7 +156,7 @@ function getRoleIcon(role: string) {
                             </div>
 
                             <Button type="submit" :disabled="form.processing" class="w-full">
-                                <Mail class="mr-2 h-4 w-4" />
+                                <IconMail class="mr-2 h-4 w-4" />
                                 Send Invite
                             </Button>
                         </form>
@@ -166,7 +166,7 @@ function getRoleIcon(role: string) {
                 <Card>
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
-                            <Mail class="h-5 w-5" />
+                            <IconMail class="h-5 w-5" />
                             Pending Invites
                         </CardTitle>
                         <CardDescription>
@@ -194,7 +194,7 @@ function getRoleIcon(role: string) {
                                     size="icon"
                                     @click="cancelInvite(invite.id)"
                                 >
-                                    <Trash2 class="h-4 w-4 text-red-500" />
+                                    <IconTrash class="h-4 w-4 text-red-500" />
                                 </Button>
                             </div>
                         </div>
@@ -204,7 +204,7 @@ function getRoleIcon(role: string) {
                 <Card>
                     <CardHeader>
                         <CardTitle class="flex items-center gap-2">
-                            <Users class="h-5 w-5" />
+                            <IconUsers class="h-5 w-5" />
                             Members
                         </CardTitle>
                         <CardDescription>
@@ -216,7 +216,7 @@ function getRoleIcon(role: string) {
                             <div class="flex items-center justify-between p-3 rounded-lg border bg-muted/50">
                                 <div class="flex items-center gap-3">
                                     <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                                        <Crown class="h-5 w-5" />
+                                        <IconCrown class="h-5 w-5" />
                                     </div>
                                     <div>
                                         <p class="font-medium">{{ owner.name }}</p>
@@ -247,7 +247,7 @@ function getRoleIcon(role: string) {
                                         size="icon"
                                         @click="handleRemoveMember(member.id)"
                                     >
-                                        <Trash2 class="h-4 w-4 text-red-500" />
+                                        <IconTrash class="h-4 w-4 text-red-500" />
                                     </Button>
                                 </div>
                             </div>

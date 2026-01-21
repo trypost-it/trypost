@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Facebook, Check } from 'lucide-vue-next';
+import { IconBrandFacebook, IconCheck } from '@tabler/icons-vue';
 import { ref } from 'vue';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -62,7 +62,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
 
             <div v-if="pages.length === 0 && !error" class="text-center py-12">
                 <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-                    <Facebook class="h-7 w-7 text-muted-foreground" />
+                    <IconBrandFacebook class="h-7 w-7 text-muted-foreground" />
                 </div>
                 <h3 class="mt-4 text-lg font-semibold">No pages found</h3>
                 <p class="mt-1 text-sm text-muted-foreground">
@@ -81,7 +81,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                         <Avatar class="h-12 w-12 rounded-lg">
                             <AvatarImage v-if="page.picture" :src="page.picture" class="object-cover" />
                             <AvatarFallback class="rounded-lg bg-blue-100 dark:bg-blue-900">
-                                <Facebook class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                                <IconBrandFacebook class="h-6 w-6 text-blue-600 dark:text-blue-400" />
                             </AvatarFallback>
                         </Avatar>
                         <div class="flex-1 min-w-0">
@@ -97,7 +97,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                             <div
                                 class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground"
                             >
-                                <Check class="h-4 w-4" />
+                                <IconCheck class="h-4 w-4" />
                             </div>
                         </div>
                     </div>

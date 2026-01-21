@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { WithClassAsProps } from "./interface"
 import type { ButtonVariants } from '@/components/ui/button'
-import { ArrowLeft } from "lucide-vue-next"
+import { IconArrowLeft } from "@tabler/icons-vue"
 import { cn } from "@/lib/utils"
 import { Button } from '@/components/ui/button'
 import { useCarousel } from "./useCarousel"
@@ -34,7 +34,7 @@ const { orientation, canScrollPrev, scrollPrev } = useCarousel()
     @click="scrollPrev"
   >
     <slot>
-      <ArrowLeft />
+      <IconArrowLeft />
       <span class="sr-only">Previous Slide</span>
     </slot>
   </Button>

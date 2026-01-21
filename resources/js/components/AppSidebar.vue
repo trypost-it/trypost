@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconShare2, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop } from '@tabler/icons-vue';
+import { IconBrandDiscord, IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconAffiliate, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop } from '@tabler/icons-vue';
 import { Button } from '@/components/ui/button';
 import { create as createPost } from '@/actions/App/Http/Controllers/PostController';
 import { computed } from 'vue';
@@ -102,7 +102,7 @@ const configNavItems = computed(() => {
         {
             title: 'Connections',
             href: accounts.url(),
-            icon: IconShare2,
+            icon: IconAffiliate,
         },
         {
             title: 'Hashtags',
@@ -128,6 +128,11 @@ const configNavItems = computed(() => {
 });
 
 const supportNavItems: NavItem[] = [
+    {
+        title: 'Discord',
+        href: 'https://trypost.it/discord',
+        icon: IconBrandDiscord,
+    },
     {
         title: 'Share feedback',
         href: 'https://github.com/trypost-it/trypost/discussions',
@@ -156,7 +161,8 @@ function createWorkspace() {
 }
 
 function isActive(href: string): boolean {
-    return page.url.startsWith(href);
+    // Exact match or match with query string
+    return page.url === href || page.url.startsWith(href + '?');
 }
 
 function handleLogout() {
@@ -203,7 +209,7 @@ function handleLogout() {
                                     <div class="grid flex-1 text-left text-sm leading-tight">
                                         <span class="truncate font-semibold">{{ auth.user.name }}</span>
                                         <span class="truncate text-xs text-muted-foreground">{{ auth.user.email
-                                        }}</span>
+                                            }}</span>
                                     </div>
                                 </div>
                             </DropdownMenuLabel>

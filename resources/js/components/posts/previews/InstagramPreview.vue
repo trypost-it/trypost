@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import {
     IconDots,
-    IconVideo,
-    IconX,
-    IconPhoto,
     IconHeart,
     IconMessageCircle,
     IconSend,
     IconBookmark,
     IconMusic,
+    IconVolume,
+    IconCamera,
+    IconPlayerPlayFilled,
+    IconPhoto,
+    IconChevronLeft,
+    IconChevronRight,
 } from '@tabler/icons-vue';
-import { computed } from 'vue';
-
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { computed, ref, watch } from 'vue';
 
 interface SocialAccount {
     id: string;
@@ -47,383 +42,298 @@ interface Props {
     media: MediaItem[];
     contentType?: string;
     contentTypeOptions?: ContentTypeOption[];
-    charCount: number;
-    maxLength: number;
-    isValid: boolean;
-    validationMessage: string;
-    isUploading?: boolean;
-    readonly?: boolean;
+    charCount?: number;
+    maxLength?: number;
+    isValid?: boolean;
+    validationMessage?: string;
 }
 
 const props = defineProps<Props>();
 
-// Computed helpers for content type
+// Content type helpers
 const isReel = computed(() => props.contentType === 'instagram_reel');
 const isStory = computed(() => props.contentType === 'instagram_story');
-const hasMultipleContentTypes = computed(() => (props.contentTypeOptions?.length || 0) > 1);
+const isFeed = computed(() => !isReel.value && !isStory.value);
 
-const emit = defineEmits<{
-    'update:content': [value: string];
-    'update:contentType': [value: string];
-    'upload': [event: Event];
-    'remove-media': [mediaId: string];
-}>();
+// Carousel state
+const currentIndex = ref(0);
+
+// Reset carousel index when media changes
+watch(() => props.media.length, () => {
+    if (currentIndex.value >= props.media.length) {
+        currentIndex.value = Math.max(0, props.media.length - 1);
+    }
+});
+
+// Format numbers like Instagram
+const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'm';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return num.toString();
+};
+
+// Truncate caption for display
+const truncatedCaption = computed(() => {
+    if (!props.content) return '';
+    if (props.content.length <= 80) return props.content;
+    return props.content.substring(0, 80) + '...';
+});
+
+const username = computed(() => props.socialAccount.username || props.socialAccount.display_name);
+
+// Carousel navigation
+const goToPrevious = () => {
+    if (currentIndex.value > 0) {
+        currentIndex.value--;
+    }
+};
+
+const goToNext = () => {
+    if (currentIndex.value < props.media.length - 1) {
+        currentIndex.value++;
+    }
+};
+
+const goToSlide = (index: number) => {
+    currentIndex.value = index;
+};
 </script>
 
 <template>
-    <div class="space-y-4">
-        <!-- Content Type Selector -->
-        <div v-if="hasMultipleContentTypes && !props.readonly" class="flex items-center justify-center gap-2">
-            <span class="text-sm text-muted-foreground">Type:</span>
-            <Select
-                :model-value="contentType"
-                @update:model-value="emit('update:contentType', $event)"
-            >
-                <SelectTrigger class="w-[140px] h-8">
-                    <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem
-                        v-for="option in contentTypeOptions"
-                        :key="option.value"
-                        :value="option.value"
-                    >
-                        {{ option.label }}
-                    </SelectItem>
-                </SelectContent>
-            </Select>
-        </div>
+    <div class="w-full h-full bg-white dark:bg-black text-[#262626] dark:text-[#f5f5f5] overflow-hidden flex flex-col">
 
-        <!-- Reel/Story Preview (vertical) -->
-        <div v-if="isReel || isStory" class="mx-auto" style="max-width: 320px;">
-        <div class="relative bg-black rounded-2xl overflow-hidden" style="aspect-ratio: 9/16;">
-            <!-- Media Area -->
-            <div v-if="media.length > 0" class="w-full h-full">
-                <img
-                    v-if="media[0].type === 'image'"
-                    :src="media[0].url"
-                    :alt="media[0].original_filename"
-                    class="w-full h-full object-cover"
-                />
-                <video
-                    v-else
-                    :src="media[0].url"
-                    class="w-full h-full object-cover bg-black"
-                    muted
-                    loop
-                    playsinline
-                />
-                <!-- Remove button -->
-                <button
-                    v-if="!props.readonly"
-                    type="button"
-                    @click="emit('remove-media', media[0].id)"
-                    class="absolute top-3 right-3 bg-black/70 text-white rounded-full p-2 z-20"
-                >
-                    <IconX class="h-4 w-4" />
-                </button>
-            </div>
-            <div v-else-if="!props.readonly" class="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                <IconVideo class="h-16 w-16 mb-2" />
-                <p class="text-sm">Add a {{ isReel ? 'video' : 'photo or video' }}</p>
-                <label class="mt-2 cursor-pointer text-blue-500 font-medium text-sm hover:text-blue-600">
-                    <input
-                        type="file"
-                        :accept="isReel ? 'video/*' : 'image/*,video/*'"
-                        class="hidden"
-                        @change="emit('upload', $event)"
-                        :disabled="isUploading"
-                    />
-                    Upload
-                </label>
-            </div>
-            <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                <IconVideo class="h-16 w-16 mb-2" />
-                <p class="text-sm">No media</p>
+        <!-- ==================== FEED POST ==================== -->
+        <template v-if="isFeed">
+            <!-- Instagram Header -->
+            <div class="flex-shrink-0 h-11 border-b border-[#dbdbdb] dark:border-[#262626] flex items-center px-3">
+                <div class="text-lg font-semibold tracking-tight"
+                    style="font-family: 'Instagram Sans', -apple-system, BlinkMacSystemFont, sans-serif;">
+                    Instagram
+                </div>
             </div>
 
-            <!-- Overlay UI -->
-            <div class="absolute inset-0 pointer-events-none">
-                <!-- Top bar -->
-                <div class="absolute top-0 left-0 right-0 p-3 flex items-center justify-between">
-                    <div v-if="isStory" class="flex items-center gap-2">
-                        <div class="p-0.5 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 rounded-full">
-                            <div class="p-0.5 bg-black rounded-full">
-                                <img
-                                    v-if="socialAccount.avatar_url"
-                                    :src="socialAccount.avatar_url"
-                                    :alt="socialAccount.display_name"
-                                    class="h-8 w-8 rounded-full object-cover"
-                                />
-                                <div v-else class="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">
-                                    {{ socialAccount.display_name?.charAt(0) }}
+            <!-- Post Content - No scroll -->
+            <div class="flex-1 flex flex-col min-h-0 pb-6">
+                <!-- Post Header -->
+                <div class="flex-shrink-0 flex items-center px-2.5 py-1.5">
+                    <div class="flex items-center gap-2 flex-1">
+                        <!-- Avatar with gradient ring -->
+                        <div class="p-[2px] rounded-full"
+                            style="background: conic-gradient(from 180deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75)">
+                            <div class="p-[1.5px] bg-white dark:bg-black rounded-full">
+                                <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url"
+                                    :alt="socialAccount.display_name" class="w-7 h-7 rounded-full object-cover" />
+                                <div v-else
+                                    class="w-7 h-7 rounded-full bg-gradient-to-br from-[#833ab4] to-[#fd1d1d] flex items-center justify-center text-white font-semibold text-[10px]">
+                                    {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
                                 </div>
                             </div>
                         </div>
-                        <span class="text-white text-sm font-semibold">{{ socialAccount.username || socialAccount.display_name }}</span>
-                    </div>
-                    <div v-if="isReel" class="bg-black/50 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                        <IconVideo class="h-3 w-3" />
-                        Reel
-                    </div>
-                </div>
-
-                <!-- Right sidebar actions (Reels) -->
-                <div v-if="isReel" class="absolute bottom-20 right-3 flex flex-col items-center gap-4">
-                    <button class="flex flex-col items-center gap-1">
-                        <IconHeart class="h-7 w-7 text-white drop-shadow" />
-                        <span class="text-white text-xs drop-shadow">1.2K</span>
-                    </button>
-                    <button class="flex flex-col items-center gap-1">
-                        <IconMessageCircle class="h-7 w-7 text-white drop-shadow" />
-                        <span class="text-white text-xs drop-shadow">89</span>
-                    </button>
-                    <button class="flex flex-col items-center gap-1">
-                        <IconSend class="h-7 w-7 text-white drop-shadow" />
-                    </button>
-                    <button class="flex flex-col items-center gap-1">
-                        <IconDots class="h-7 w-7 text-white drop-shadow" />
-                    </button>
-                </div>
-
-                <!-- Bottom content (Reels) -->
-                <div v-if="isReel" class="absolute bottom-3 left-3 right-14">
-                    <div class="flex items-center gap-2 mb-2">
-                        <img
-                            v-if="socialAccount.avatar_url"
-                            :src="socialAccount.avatar_url"
-                            :alt="socialAccount.display_name"
-                            class="h-8 w-8 rounded-full object-cover border-2 border-white"
-                        />
-                        <div v-else class="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm border-2 border-white">
-                            {{ socialAccount.display_name?.charAt(0) }}
-                        </div>
-                        <span class="text-white text-sm font-semibold drop-shadow">{{ socialAccount.username || socialAccount.display_name }}</span>
-                        <button class="ml-1 px-3 py-1 bg-white/20 text-white text-xs font-semibold rounded">Follow</button>
-                    </div>
-                    <p v-if="content" class="text-white text-sm drop-shadow line-clamp-2">{{ content }}</p>
-                    <div class="flex items-center gap-1 mt-2 text-white/80 text-xs">
-                        <IconMusic class="h-3 w-3" />
-                        <span class="truncate">Original audio</span>
-                    </div>
-                </div>
-
-                <!-- Story reply bar -->
-                <div v-if="isStory" class="absolute bottom-3 left-3 right-3">
-                    <div class="flex items-center gap-2">
-                        <div class="flex-1 bg-white/20 backdrop-blur rounded-full px-4 py-2 text-white/80 text-sm">
-                            Send message
-                        </div>
-                        <IconHeart class="h-6 w-6 text-white" />
-                        <IconSend class="h-6 w-6 text-white" />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Caption input for Reels -->
-        <div v-if="isReel" class="mt-4 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Caption</label>
-            <div v-if="props.readonly" class="w-full min-h-[80px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
-                {{ content || 'No content' }}
-            </div>
-            <textarea
-                v-else
-                :value="content"
-                @input="emit('update:content', ($event.target as HTMLTextAreaElement).value)"
-                class="w-full min-h-[80px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-pink-500 placeholder:text-gray-500"
-                placeholder="Write a caption..."
-            />
-            <div v-if="!props.readonly" class="flex items-center justify-between mt-2">
-                <span
-                    class="text-xs px-2 py-1 rounded-full"
-                    :class="isValid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
-                >
-                    {{ validationMessage }}
-                </span>
-                <label class="cursor-pointer p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <input
-                        type="file"
-                        accept="video/*"
-                        class="hidden"
-                        @change="emit('upload', $event)"
-                        :disabled="isUploading"
-                    />
-                    <IconPhoto class="h-5 w-5 text-gray-500" />
-                </label>
-            </div>
-        </div>
-
-        <!-- Story note -->
-        <div v-if="isStory" class="mt-4 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
-            <p class="text-sm text-gray-500 dark:text-gray-400 text-center">Stories disappear after 24 hours</p>
-            <div v-if="!props.readonly" class="flex items-center justify-between mt-2">
-                <span
-                    class="text-xs px-2 py-1 rounded-full"
-                    :class="isValid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
-                >
-                    {{ validationMessage }}
-                </span>
-                <label class="cursor-pointer p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-                    <input
-                        type="file"
-                        accept="image/*,video/*"
-                        class="hidden"
-                        @change="emit('upload', $event)"
-                        :disabled="isUploading"
-                    />
-                    <IconPhoto class="h-5 w-5 text-gray-500" />
-                </label>
-            </div>
-        </div>
-    </div>
-
-    <!-- Feed Post Preview (original layout) -->
-    <div v-else class="bg-white dark:bg-black rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800">
-        <!-- Post Header -->
-        <div class="px-3 py-2.5 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <!-- Avatar with gradient ring -->
-                <div class="p-0.5 bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 rounded-full">
-                    <div class="p-0.5 bg-white dark:bg-black rounded-full">
-                        <img
-                            v-if="socialAccount.avatar_url"
-                            :src="socialAccount.avatar_url"
-                            :alt="socialAccount.display_name"
-                            class="h-8 w-8 rounded-full object-cover"
-                        />
-                        <div v-else class="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">
-                            {{ socialAccount.display_name?.charAt(0) }}
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[12px] font-semibold leading-tight truncate">{{ username }}</span>
                         </div>
                     </div>
+                    <IconDots class="w-4 h-4 flex-shrink-0" />
                 </div>
-                <div>
-                    <p class="font-semibold text-sm text-gray-900 dark:text-white">
-                        {{ socialAccount.username || socialAccount.display_name }}
+
+                <!-- Post Media - Fixed height to prevent overflow -->
+                <div class="flex-1 relative bg-black min-h-0">
+                    <template v-if="media.length > 0">
+                        <img v-if="media[currentIndex]?.type === 'image'" :src="media[currentIndex].url"
+                            :alt="media[currentIndex].original_filename" class="w-full h-full object-cover" />
+                        <video v-else-if="media[currentIndex]" :src="media[currentIndex].url"
+                            class="w-full h-full object-cover" muted loop playsinline />
+
+                        <!-- Carousel navigation arrows -->
+                        <template v-if="media.length > 1">
+                            <!-- Previous arrow -->
+                            <button v-if="currentIndex > 0" @click="goToPrevious"
+                                class="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors z-10">
+                                <IconChevronLeft class="w-4 h-4 text-[#262626]" />
+                            </button>
+                            <!-- Next arrow -->
+                            <button v-if="currentIndex < media.length - 1" @click="goToNext"
+                                class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors z-10">
+                                <IconChevronRight class="w-4 h-4 text-[#262626]" />
+                            </button>
+                            <!-- Carousel dots -->
+                            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                                <button v-for="(_, i) in media" :key="i" @click="goToSlide(i)"
+                                    class="w-[6px] h-[6px] rounded-full transition-colors"
+                                    :class="i === currentIndex ? 'bg-[#0095f6]' : 'bg-white/50 hover:bg-white/70'" />
+                            </div>
+                        </template>
+                    </template>
+                    <div v-else class="w-full h-full flex items-center justify-center bg-[#fafafa] dark:bg-[#121212]">
+                        <IconPhoto class="w-12 h-12 text-[#dbdbdb] dark:text-[#363636]" />
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex-shrink-0 flex items-center justify-between px-2.5 py-1.5">
+                    <div class="flex items-center gap-3">
+                        <IconHeart class="w-5 h-5" />
+                        <IconMessageCircle class="w-5 h-5 -scale-x-100" />
+                        <IconSend class="w-5 h-5 -rotate-12" />
+                    </div>
+                    <IconBookmark class="w-5 h-5" />
+                </div>
+
+                <!-- Likes -->
+                <div class="flex-shrink-0 px-2.5">
+                    <span class="text-[12px] font-semibold">{{ formatNumber(1234) }} likes</span>
+                </div>
+
+                <!-- Caption -->
+                <div v-if="content" class="flex-shrink-0 px-2.5 py-0.5">
+                    <p class="text-[12px] line-clamp-2">
+                        <span class="font-semibold">{{ username }}</span>
+                        <span class="ml-1">{{ content }}</span>
                     </p>
                 </div>
             </div>
-            <button class="p-1">
-                <IconDots class="h-5 w-5 text-gray-900 dark:text-white" />
-            </button>
-        </div>
+        </template>
 
-        <!-- Media (required for Instagram) -->
-        <div class="relative aspect-square bg-gray-100 dark:bg-gray-900 group">
-            <div v-if="media.length > 0" class="w-full h-full">
-                <img
-                    v-if="media[0].type === 'image'"
-                    :src="media[0].url"
-                    :alt="media[0].original_filename"
-                    class="w-full h-full object-cover"
-                />
-                <video
-                    v-else
-                    :src="media[0].url"
-                    class="w-full h-full object-cover bg-black"
-                    muted
-                    loop
-                    playsinline
-                />
-                <!-- Remove button -->
-                <button
-                    v-if="!props.readonly"
-                    type="button"
-                    @click="emit('remove-media', media[0].id)"
-                    class="absolute top-3 right-3 bg-black/70 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                    <IconX class="h-4 w-4" />
-                </button>
-            </div>
-            <div v-else-if="!props.readonly" class="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                <IconPhoto class="h-16 w-16 mb-2" />
-                <p class="text-sm">Add a photo or video</p>
-                <label class="mt-2 cursor-pointer text-blue-500 font-medium text-sm hover:text-blue-600">
-                    <input
-                        type="file"
-                        accept="image/*,video/*"
-                        class="hidden"
-                        @change="emit('upload', $event)"
-                        :disabled="isUploading"
-                    />
-                    Upload
-                </label>
-            </div>
-            <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                <IconPhoto class="h-16 w-16 mb-2" />
-                <p class="text-sm">No media</p>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="px-3 py-2 flex items-center justify-between">
-            <div class="flex items-center gap-4">
-                <button class="hover:opacity-60 transition-opacity">
-                    <IconHeart class="h-6 w-6 text-gray-900 dark:text-white" />
-                </button>
-                <button class="hover:opacity-60 transition-opacity">
-                    <IconMessageCircle class="h-6 w-6 text-gray-900 dark:text-white" />
-                </button>
-                <button class="hover:opacity-60 transition-opacity">
-                    <IconSend class="h-6 w-6 text-gray-900 dark:text-white" />
-                </button>
-            </div>
-            <button class="hover:opacity-60 transition-opacity">
-                <IconBookmark class="h-6 w-6 text-gray-900 dark:text-white" />
-            </button>
-        </div>
-
-        <!-- Likes -->
-        <div class="px-3 pb-1">
-            <p class="font-semibold text-sm text-gray-900 dark:text-white">1,234 likes</p>
-        </div>
-
-        <!-- Caption -->
-        <div class="px-3 pb-2">
-            <div class="text-sm">
-                <span class="font-semibold text-gray-900 dark:text-white mr-1">
-                    {{ socialAccount.username || socialAccount.display_name }}
-                </span>
-                <div v-if="props.readonly" class="w-full min-h-[60px] text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
-                    {{ content || 'No content' }}
+        <!-- ==================== REELS ==================== -->
+        <template v-else-if="isReel">
+            <div class="relative flex-1 bg-[#fafafa] dark:bg-black overflow-hidden">
+                <!-- Video/Media - Full screen -->
+                <div class="absolute inset-0">
+                    <template v-if="media.length > 0">
+                        <img v-if="media[0].type === 'image'" :src="media[0].url" class="w-full h-full object-cover" />
+                        <video v-else :src="media[0].url" class="w-full h-full object-cover" muted loop playsinline />
+                    </template>
+                    <div v-else class="w-full h-full flex items-center justify-center">
+                        <IconPlayerPlayFilled class="w-12 h-12 text-[#dbdbdb] dark:text-white/30" />
+                    </div>
                 </div>
-                <textarea
-                    v-else
-                    :value="content"
-                    @input="emit('update:content', ($event.target as HTMLTextAreaElement).value)"
-                    class="w-full min-h-[60px] bg-transparent border-0 p-0 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-0 placeholder:text-gray-500"
-                    placeholder="Write a caption..."
-                />
-            </div>
-        </div>
 
-        <!-- Timestamp -->
-        <div class="px-3 pb-3">
-            <p class="text-[10px] text-gray-500 uppercase tracking-wide">Just now</p>
-        </div>
+                <!-- Top Bar - below status bar -->
+                <div class="absolute top-1 left-0 right-0 px-3 flex items-center justify-between z-10">
+                    <span class="text-[#262626] dark:text-white text-[14px] font-semibold"
+                        :class="media.length > 0 ? 'drop-shadow-lg dark:drop-shadow-lg text-white' : ''">Reels</span>
+                    <IconCamera class="w-5 h-5"
+                        :class="media.length > 0 ? 'text-white drop-shadow-lg' : 'text-[#262626] dark:text-white'" />
+                </div>
 
-        <!-- Footer with char count (only in edit mode) -->
-        <div v-if="!props.readonly" class="border-t border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50">
-            <div class="flex items-center gap-2">
-                <span
-                    class="text-xs px-2 py-1 rounded-full"
-                    :class="isValid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
-                >
-                    {{ validationMessage }}
-                </span>
+                <!-- Right Sidebar Actions (only show when media exists) -->
+                <div v-if="media.length > 0" class="absolute right-2 bottom-3 flex flex-col items-center gap-4 z-10">
+                    <div class="flex flex-col items-center">
+                        <IconHeart class="w-6 h-6 text-white drop-shadow-lg" />
+                        <span class="text-white text-[10px] font-semibold mt-0.5 drop-shadow">{{ formatNumber(12453)
+                        }}</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <IconMessageCircle class="w-6 h-6 text-white drop-shadow-lg" />
+                        <span class="text-white text-[10px] font-semibold mt-0.5 drop-shadow">{{ formatNumber(892)
+                        }}</span>
+                    </div>
+                    <div class="flex flex-col items-center mb-4">
+                        <IconSend class="w-6 h-6 text-white drop-shadow-lg -rotate-12" />
+                    </div>
+                </div>
+
+                <!-- Bottom Info (only show when media exists) -->
+                <div v-if="media.length > 0" class="absolute left-0 right-10 bottom-3 px-3 z-10">
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url"
+                            class="w-7 h-7 rounded-full object-cover border border-white/30" />
+                        <div v-else
+                            class="w-7 h-7 rounded-full bg-gradient-to-br from-[#833ab4] to-[#fd1d1d] flex items-center justify-center text-white font-semibold text-[10px] border border-white/30">
+                            {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
+                        </div>
+                        <span class="text-white text-[12px] font-semibold drop-shadow-lg">{{ username }}</span>
+                        <button class="px-2 py-0.5 border border-white/70 rounded text-white text-[10px] font-semibold">
+                            Follow
+                        </button>
+                    </div>
+                    <p v-if="content" class="text-white text-[11px] drop-shadow-lg line-clamp-2 mb-1.5">
+                        {{ truncatedCaption }}
+                    </p>
+                    <div class="flex items-center">
+                        <div class="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2 py-0.5">
+                            <IconMusic class="w-2.5 h-2.5 text-white" />
+                            <span class="text-white text-[9px] truncate max-w-[100px]">Original audio</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <label v-if="media.length > 0" class="cursor-pointer p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
-                <input
-                    type="file"
-                    accept="image/*,video/*"
-                    multiple
-                    class="hidden"
-                    @change="emit('upload', $event)"
-                    :disabled="isUploading"
-                />
-                <IconPhoto class="h-5 w-5 text-gray-500" />
-            </label>
-        </div>
-    </div>
+        </template>
+
+        <!-- ==================== STORIES ==================== -->
+        <template v-else-if="isStory">
+            <div class="relative flex-1 bg-[#fafafa] dark:bg-black overflow-hidden">
+                <!-- Media - Full screen -->
+                <div class="absolute inset-0">
+                    <template v-if="media.length > 0">
+                        <img v-if="media[0].type === 'image'" :src="media[0].url" class="w-full h-full object-cover" />
+                        <video v-else :src="media[0].url" class="w-full h-full object-cover" muted loop playsinline />
+                    </template>
+                    <div v-else class="w-full h-full flex items-center justify-center">
+                        <IconPhoto class="w-12 h-12 text-[#dbdbdb] dark:text-white/30" />
+                    </div>
+                </div>
+
+                <!-- Progress Bars - below status bar -->
+                <div class="absolute top-0.5 left-2 right-2 flex gap-0.5 z-10">
+                    <div class="flex-1 h-[2px] rounded-full overflow-hidden"
+                        :class="media.length > 0 ? 'bg-white/30' : 'bg-[#dbdbdb] dark:bg-white/30'">
+                        <div class="h-full w-1/3 rounded-full"
+                            :class="media.length > 0 ? 'bg-white' : 'bg-[#262626] dark:bg-white'" />
+                    </div>
+                </div>
+
+                <!-- User Info -->
+                <div class="absolute top-3 left-0 right-0 px-2.5 flex items-center justify-between z-10">
+                    <div class="flex items-center gap-2">
+                        <div class="p-[2px] rounded-full"
+                            style="background: conic-gradient(from 180deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75)">
+                            <div class="p-[1.5px] bg-white dark:bg-black rounded-full">
+                                <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url"
+                                    class="w-7 h-7 rounded-full object-cover" />
+                                <div v-else
+                                    class="w-7 h-7 rounded-full bg-gradient-to-br from-[#833ab4] to-[#fd1d1d] flex items-center justify-center text-white font-semibold text-[10px]">
+                                    {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-[12px] font-semibold"
+                            :class="media.length > 0 ? 'text-white drop-shadow-lg' : 'text-[#262626] dark:text-white'">{{
+                                username
+                            }}</span>
+                        <span class="text-[10px]"
+                            :class="media.length > 0 ? 'text-white/70 drop-shadow' : 'text-[#737373] dark:text-white/70'">2h</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <IconVolume class="w-4 h-4"
+                            :class="media.length > 0 ? 'text-white drop-shadow-lg' : 'text-[#262626] dark:text-white'" />
+                        <IconDots class="w-4 h-4"
+                            :class="media.length > 0 ? 'text-white drop-shadow-lg' : 'text-[#262626] dark:text-white'" />
+                    </div>
+                </div>
+
+                <!-- Caption overlay (if content exists, only show when media) -->
+                <div v-if="content && media.length > 0" class="absolute bottom-14 left-2.5 right-2.5 z-10">
+                    <p
+                        class="text-white text-[12px] text-center drop-shadow-lg bg-black/20 backdrop-blur-sm rounded-lg px-2.5 py-1.5 line-clamp-2">
+                        {{ content }}
+                    </p>
+                </div>
+
+                <!-- Bottom Reply Bar (only show when media exists) -->
+                <div v-if="media.length > 0"
+                    class="absolute bottom-2.5 left-2.5 right-2.5 flex items-center gap-2 z-10">
+                    <div class="flex-1 bg-white/20 backdrop-blur-md rounded-full px-3 py-2 border border-white/20">
+                        <span class="text-white/80 text-[12px]">Send message</span>
+                    </div>
+                    <IconHeart class="w-6 h-6 text-white drop-shadow-lg" />
+                    <IconSend class="w-6 h-6 text-white drop-shadow-lg -rotate-12" />
+                </div>
+            </div>
+        </template>
     </div>
 </template>

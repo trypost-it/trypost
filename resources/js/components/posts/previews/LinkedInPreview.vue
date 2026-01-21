@@ -1,16 +1,4 @@
 <script setup lang="ts">
-import {
-    IconWorld,
-    IconThumbUp,
-    IconMessageCircle,
-    IconRepeat,
-    IconSend,
-    IconDots,
-    IconX,
-    IconPhoto,
-    IconHeart,
-} from '@tabler/icons-vue';
-
 interface SocialAccount {
     id: string;
     platform: string;
@@ -30,181 +18,127 @@ interface Props {
     socialAccount: SocialAccount;
     content: string;
     media: MediaItem[];
-    charCount: number;
-    maxLength: number;
-    isValid: boolean;
-    validationMessage: string;
-    isUploading?: boolean;
-    readonly?: boolean;
 }
 
 const props = defineProps<Props>();
-
-const emit = defineEmits<{
-    'update:content': [value: string];
-    'upload': [event: Event];
-    'remove-media': [mediaId: string];
-}>();
 </script>
 
 <template>
-    <div class="bg-white dark:bg-[#1b1f23] rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-        <!-- Post Header -->
-        <div class="p-4">
-            <div class="flex items-start gap-3">
-                <img
-                    v-if="socialAccount.avatar_url"
-                    :src="socialAccount.avatar_url"
-                    :alt="socialAccount.display_name"
-                    class="h-12 w-12 rounded-full object-cover"
-                />
-                <div v-else class="h-12 w-12 rounded-full bg-[#0a66c2] flex items-center justify-center text-white font-semibold">
-                    {{ socialAccount.display_name?.charAt(0) }}
-                </div>
-                <div class="flex-1 min-w-0">
-                    <p class="font-semibold text-sm text-gray-900 dark:text-white hover:text-[#0a66c2] hover:underline cursor-pointer">
-                        {{ socialAccount.display_name }}
-                    </p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        Software Engineer
-                    </p>
-                    <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                        <span>now</span>
-                        <span>·</span>
-                        <IconWorld class="h-3 w-3" />
+    <div
+        class="w-full h-full bg-white dark:bg-[#1b1f23] text-[#000000e6] dark:text-[#ffffffe6] overflow-hidden flex flex-col">
+        <!-- Post Content -->
+        <div class="flex-1 overflow-y-auto mt-4">
+            <!-- Post Header -->
+            <div class="px-4 pb-3">
+                <div class="flex items-start gap-3">
+                    <div class="relative flex-shrink-0">
+                        <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url"
+                            :alt="socialAccount.display_name" class="h-12 w-12 rounded-full object-cover" />
+                        <div v-else
+                            class="h-12 w-12 rounded-full bg-[#0a66c2] flex items-center justify-center text-white font-semibold text-lg">
+                            {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1">
+                            <p class="font-semibold text-[15px] text-[#000000e6] dark:text-[#ffffffe6]">
+                                {{ socialAccount.display_name }}
+                            </p>
+                            <span class="text-[14px] text-[#00000099] dark:text-[#ffffff99]">• 1st</span>
+                        </div>
+                        <p class="text-[13px] text-[#00000099] dark:text-[#ffffff99] leading-[18px] line-clamp-1">
+                            CEO
+                        </p>
+                        <div class="flex items-center gap-1 text-[13px] text-[#00000099] dark:text-[#ffffff99]">
+                            <span>1h</span>
+                            <span>•</span>
+                            <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor">
+                                <path
+                                    d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm-.5 14.5v-2h1v2a6.5 6.5 0 0 1-1 0zm4.7-1.2a6.5 6.5 0 0 1-3.2.7v-1h2a1 1 0 0 0 1-1V9.5h1.5a6.5 6.5 0 0 1-1.3 3.8zM14.5 8a6.5 6.5 0 0 1-.5 2.5H12V9a1 1 0 0 0-1-1h-1V6a1 1 0 0 0-1-1H6.5V3.5h2a1 1 0 0 0 1-1V1.7a6.5 6.5 0 0 1 5 6.3zM1.5 8a6.5 6.5 0 0 1 3-5.5V4a1 1 0 0 0 1 1h1v2a1 1 0 0 0 1 1h2v3H6a1 1 0 0 0-1 1v2.5A6.5 6.5 0 0 1 1.5 8z" />
+                            </svg>
+                        </div>
                     </div>
                 </div>
-                <button class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
-                    <IconDots class="h-5 w-5 text-gray-500" />
-                </button>
             </div>
 
             <!-- Content -->
-            <div class="mt-3">
-                <div v-if="props.readonly" class="w-full min-h-[60px] text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
-                    {{ content || 'No content' }}
+            <div v-if="content" class="px-4 pb-3">
+                <div class="text-[15px] text-[#000000e6] dark:text-[#ffffffe6] whitespace-pre-wrap leading-[22px]">
+                    {{ content }}
                 </div>
-                <textarea
-                    v-else
-                    :value="content"
-                    @input="emit('update:content', ($event.target as HTMLTextAreaElement).value)"
-                    class="w-full min-h-[120px] bg-transparent border-0 p-0 text-sm text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-0 placeholder:text-gray-500"
-                    placeholder="What do you want to talk about?"
-                />
             </div>
-        </div>
 
-        <!-- Media -->
-        <div v-if="media.length > 0" class="border-t border-gray-200 dark:border-gray-700">
-            <div
-                class="grid"
-                :class="{
+            <!-- Media -->
+            <div v-if="media.length > 0">
+                <div class="grid" :class="{
                     'grid-cols-1': media.length === 1,
                     'grid-cols-2': media.length >= 2,
-                }"
-            >
-                <div
-                    v-for="(item, index) in media.slice(0, 4)"
-                    :key="item.id"
-                    class="relative group aspect-square overflow-hidden"
-                    :class="{
-                        'col-span-2 aspect-video': media.length === 1,
-                        'row-span-2': media.length === 3 && index === 0,
-                    }"
-                >
-                    <img
-                        v-if="item.type === 'image'"
-                        :src="item.url"
-                        :alt="item.original_filename"
-                        class="w-full h-full object-cover"
-                    />
-                    <video
-                        v-else
-                        :src="item.url"
-                        class="w-full h-full object-cover bg-black"
-                        muted
-                        loop
-                        playsinline
-                    />
-                    <button
-                        v-if="!props.readonly"
-                        type="button"
-                        @click="emit('remove-media', item.id)"
-                        class="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                        <IconX class="h-4 w-4" />
-                    </button>
-                    <div
-                        v-if="media.length > 4 && index === 3"
-                        class="absolute inset-0 bg-black/60 flex items-center justify-center"
-                    >
-                        <span class="text-white text-2xl font-semibold">+{{ media.length - 4 }}</span>
+                }">
+                    <div v-for="(item, index) in media.slice(0, 4)" :key="item.id"
+                        class="relative overflow-hidden" :class="{
+                            'col-span-2': media.length === 1,
+                            'row-span-2': media.length === 3 && index === 0,
+                            'aspect-square': media.length > 1,
+                        }">
+                        <img v-if="item.type === 'image'" :src="item.url" :alt="item.original_filename"
+                            class="w-full h-full object-cover" />
+                        <video v-else :src="item.url" class="w-full h-full object-cover bg-black" muted loop
+                            playsinline />
+                        <div v-if="media.length > 4 && index === 3"
+                            class="absolute inset-0 bg-black/70 flex items-center justify-center">
+                            <span class="text-white text-3xl font-semibold">+{{ media.length - 4 }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Engagement Stats -->
-        <div class="px-4 py-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700">
-            <div class="flex items-center gap-1">
-                <div class="flex -space-x-1">
-                    <div class="h-4 w-4 rounded-full bg-[#0a66c2] flex items-center justify-center">
-                        <IconThumbUp class="h-2.5 w-2.5 text-white" />
+            <!-- Engagement Stats -->
+            <div
+                class="px-4 py-2.5 flex items-center justify-between text-[13px] text-[#00000099] dark:text-[#ffffff99]">
+                <div class="flex items-center gap-1.5">
+                    <div class="flex -space-x-0.5">
+                        <!-- Like (blue) -->
+                        <div class="h-[18px] w-[18px] rounded-full bg-[#0a66c2] flex items-center justify-center">
+                            <svg class="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                            </svg>
+                        </div>
+                        <!-- Love (red) -->
+                        <div class="h-[18px] w-[18px] rounded-full bg-[#df704d] flex items-center justify-center">
+                            <svg class="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                            </svg>
+                        </div>
                     </div>
-                    <div class="h-4 w-4 rounded-full bg-red-500 flex items-center justify-center">
-                        <IconHeart class="h-2.5 w-2.5 text-white" />
-                    </div>
+                    <span>Tim and 8 others</span>
                 </div>
-                <span>24</span>
+                <span>1 comment</span>
             </div>
-            <div class="flex items-center gap-2">
-                <span>3 comments</span>
-                <span>·</span>
-                <span>1 repost</span>
-            </div>
-        </div>
 
-        <!-- Actions -->
-        <div class="px-2 py-1 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
-            <button class="flex-1 flex items-center justify-center gap-2 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-600 dark:text-gray-400 font-medium text-sm">
-                <IconThumbUp class="h-5 w-5" />
-                <span class="hidden sm:inline">Like</span>
-            </button>
-            <button class="flex-1 flex items-center justify-center gap-2 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-600 dark:text-gray-400 font-medium text-sm">
-                <IconMessageCircle class="h-5 w-5" />
-                <span class="hidden sm:inline">Comment</span>
-            </button>
-            <button class="flex-1 flex items-center justify-center gap-2 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-600 dark:text-gray-400 font-medium text-sm">
-                <IconRepeat class="h-5 w-5" />
-                <span class="hidden sm:inline">Repost</span>
-            </button>
-            <button class="flex-1 flex items-center justify-center gap-2 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-600 dark:text-gray-400 font-medium text-sm">
-                <IconSend class="h-5 w-5" />
-                <span class="hidden sm:inline">Send</span>
-            </button>
-        </div>
+            <!-- Divider -->
+            <div class="border-t border-[#e0dfdc] dark:border-[#38434f]" />
 
-        <!-- Footer with upload and char count (only in edit mode) -->
-        <div v-if="!props.readonly" class="border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-800/50">
-            <div class="flex items-center gap-2">
-                <span
-                    class="text-xs px-2 py-1 rounded-full"
-                    :class="isValid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
-                >
-                    {{ validationMessage }}
-                </span>
+            <!-- Comment Input -->
+            <div class="px-2 py-4 flex items-center gap-2">
+                <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url" :alt="socialAccount.display_name"
+                    class="h-8 w-8 rounded-full object-cover shrink-0" />
+                <div v-else
+                    class="h-8 w-8 rounded-full bg-[#0a66c2] flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                    {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
+                </div>
+                <div class="flex-1 bg-[#f4f2ee] dark:bg-[#38434f] rounded-full px-4 py-2">
+                    <span class="text-[14px] text-[#00000099] dark:text-[#ffffff99]">Leave your thoughts...</span>
+                </div>
+                <button class="p-1">
+                    <svg class="w-6 h-6 text-[#00000099] dark:text-[#ffffff99]" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="4" />
+                        <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" />
+                    </svg>
+                </button>
             </div>
-            <label class="cursor-pointer p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                <input
-                    type="file"
-                    accept="image/*,video/*"
-                    multiple
-                    class="hidden"
-                    @change="emit('upload', $event)"
-                    :disabled="isUploading"
-                />
-                <IconPhoto class="h-5 w-5 text-gray-500" />
-            </label>
         </div>
     </div>
 </template>

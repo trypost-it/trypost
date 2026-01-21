@@ -8,9 +8,9 @@ use Illuminate\Validation\Rule;
 class StoreMediaRequest extends FormRequest
 {
     protected array $allowedModels = [
-        'App\Models\PostPlatform',
-        'App\Models\Workspace',
-        'App\Models\User',
+        'postPlatform',
+        'workspace',
+        'user',
     ];
 
     public function authorize(): bool

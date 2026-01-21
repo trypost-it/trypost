@@ -1,14 +1,4 @@
 <script setup lang="ts">
-import {
-    IconDots,
-    IconX,
-    IconPhoto,
-    IconHeart,
-    IconMessageCircle,
-    IconRepeat,
-    IconShare,
-} from '@tabler/icons-vue';
-
 interface SocialAccount {
     id: string;
     platform: string;
@@ -28,170 +18,169 @@ interface Props {
     socialAccount: SocialAccount;
     content: string;
     media: MediaItem[];
-    charCount: number;
-    maxLength: number;
-    isValid: boolean;
-    validationMessage: string;
-    isUploading?: boolean;
-    readonly?: boolean;
 }
 
 const props = defineProps<Props>();
-
-const emit = defineEmits<{
-    'update:content': [value: string];
-    'upload': [event: Event];
-    'remove-media': [mediaId: string];
-}>();
 </script>
 
 <template>
-    <div class="bg-white dark:bg-[#161e27] rounded-xl overflow-hidden border border-gray-200 dark:border-[#2e3f50]">
-        <!-- Post Content -->
-        <div class="p-4">
-            <div class="flex gap-3">
-                <!-- Avatar -->
-                <div class="shrink-0">
-                    <img
-                        v-if="socialAccount.avatar_url"
-                        :src="socialAccount.avatar_url"
-                        :alt="socialAccount.display_name"
-                        class="h-11 w-11 rounded-full object-cover"
-                    />
-                    <div v-else class="h-11 w-11 rounded-full bg-[#0085ff] flex items-center justify-center text-white font-bold">
+    <div class="w-full h-full bg-white dark:bg-[#0a1424] text-black dark:text-white overflow-hidden flex flex-col">
+        <!-- Bluesky Mobile Header -->
+        <div
+            class="flex-shrink-0 h-11 flex items-center justify-between px-4 border-b border-gray-200 dark:border-[#1e3a5f]">
+            <!-- Back arrow -->
+            <button class="p-1 -ml-1">
+                <svg class="h-5 w-5 text-black dark:text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+            </button>
+
+            <!-- Title -->
+            <span class="text-[16px] font-semibold">Post</span>
+
+            <!-- More options -->
+            <button class="p-1 -mr-1">
+                <svg class="h-5 w-5 text-black dark:text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="1.5" />
+                    <circle cx="12" cy="6" r="1.5" />
+                    <circle cx="12" cy="18" r="1.5" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-y-auto">
+            <!-- Post -->
+            <div class="px-3 pt-3 pb-2">
+                <!-- Author row -->
+                <div class="flex items-start gap-3">
+                    <!-- Avatar -->
+                    <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url"
+                        :alt="socialAccount.display_name" class="h-11 w-11 rounded-full object-cover shrink-0" />
+                    <div v-else
+                        class="h-11 w-11 rounded-full bg-gradient-to-br from-[#0085ff] to-[#00d4ff] flex items-center justify-center text-white font-semibold shrink-0">
                         {{ socialAccount.display_name?.charAt(0) }}
+                    </div>
+
+                    <!-- Name and handle -->
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-[15px] text-black dark:text-white">
+                            {{ socialAccount.display_name }}
+                        </div>
+                        <div class="text-[14px] text-gray-500 dark:text-[#7b8d9e] truncate">
+                            @{{ socialAccount.username || 'handle' }}.bsky.social
+                        </div>
                     </div>
                 </div>
 
-                <!-- Content Area -->
-                <div class="flex-1 min-w-0">
-                    <!-- Header -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-1">
-                            <span class="font-semibold text-[15px] text-gray-900 dark:text-white">
-                                {{ socialAccount.display_name }}
-                            </span>
-                            <span class="text-gray-500 text-sm">
-                                @{{ socialAccount.username }}
-                            </span>
-                            <span class="text-gray-400 text-sm">· now</span>
-                        </div>
-                        <button class="p-1 hover:bg-gray-100 dark:hover:bg-[#1e2a35] rounded-full">
-                            <IconDots class="h-5 w-5 text-gray-400" />
-                        </button>
-                    </div>
+                <!-- Post content -->
+                <div v-if="content" class="mt-3 text-[16px] text-black dark:text-white leading-[22px] whitespace-pre-wrap">
+                    {{ content }}
+                </div>
 
-                    <!-- Post Content -->
-                    <div class="mt-1">
-                        <div v-if="props.readonly" class="w-full min-h-[60px] text-[15px] text-gray-900 dark:text-white whitespace-pre-wrap">
-                            {{ content || 'No content' }}
-                        </div>
-                        <textarea
-                            v-else
-                            :value="content"
-                            @input="emit('update:content', ($event.target as HTMLTextAreaElement).value)"
-                            class="w-full min-h-[60px] bg-transparent border-0 p-0 text-[15px] text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-0 placeholder:text-gray-400"
-                            placeholder="What's up?"
-                        />
-                    </div>
-
-                    <!-- Media -->
-                    <div v-if="media.length > 0" class="mt-3">
-                        <div
-                            class="grid gap-1 rounded-lg overflow-hidden"
-                            :class="{
-                                'grid-cols-1': media.length === 1,
-                                'grid-cols-2': media.length === 2,
-                                'grid-cols-2 grid-rows-2': media.length >= 3,
-                            }"
-                        >
-                            <div
-                                v-for="(item, index) in media.slice(0, 4)"
-                                :key="item.id"
-                                class="relative group overflow-hidden"
-                                :class="{
-                                    'aspect-video': media.length === 1,
-                                    'aspect-square': media.length > 1,
-                                    'col-span-2': media.length === 3 && index === 0,
-                                }"
-                            >
-                                <img
-                                    v-if="item.type === 'image'"
-                                    :src="item.url"
-                                    :alt="item.original_filename"
-                                    class="w-full h-full object-cover"
-                                />
-                                <video
-                                    v-else
-                                    :src="item.url"
-                                    class="w-full h-full object-cover bg-black"
-                                    muted
-                                    loop
-                                    playsinline
-                                />
-                                <button
-                                    v-if="!props.readonly"
-                                    type="button"
-                                    @click="emit('remove-media', item.id)"
-                                    class="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <IconX class="h-4 w-4" />
-                                </button>
-                                <div
-                                    v-if="media.length > 4 && index === 3"
-                                    class="absolute inset-0 bg-black/60 flex items-center justify-center"
-                                >
-                                    <span class="text-white text-xl font-semibold">+{{ media.length - 4 }}</span>
-                                </div>
+                <!-- Media -->
+                <div v-if="media.length > 0" class="mt-3">
+                    <div class="rounded-lg overflow-hidden" :class="{
+                        'grid grid-cols-2 gap-0.5': media.length >= 2,
+                    }">
+                        <div v-for="(item, index) in media.slice(0, 4)" :key="item.id"
+                            class="relative overflow-hidden" :class="{
+                                'aspect-[4/3]': media.length === 1,
+                                'aspect-square': media.length > 1,
+                                'col-span-2': media.length === 3 && index === 0,
+                            }">
+                            <img v-if="item.type === 'image'" :src="item.url" :alt="item.original_filename"
+                                class="w-full h-full object-cover" />
+                            <video v-else :src="item.url" class="w-full h-full object-cover bg-black" muted loop
+                                playsinline />
+                            <div v-if="media.length > 4 && index === 3"
+                                class="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <span class="text-white text-xl font-semibold">+{{ media.length - 4 }}</span>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Engagement Actions -->
-                    <div class="flex items-center justify-between mt-3 -ml-2">
-                        <div class="flex items-center gap-1">
-                            <button class="flex items-center gap-1 px-2 py-1.5 hover:bg-[#0085ff]/10 rounded-full group text-gray-500">
-                                <IconMessageCircle class="h-5 w-5 group-hover:text-[#0085ff]" />
-                                <span class="text-sm group-hover:text-[#0085ff]">12</span>
-                            </button>
-                            <button class="flex items-center gap-1 px-2 py-1.5 hover:bg-green-500/10 rounded-full group text-gray-500">
-                                <IconRepeat class="h-5 w-5 group-hover:text-green-500" />
-                                <span class="text-sm group-hover:text-green-500">5</span>
-                            </button>
-                            <button class="flex items-center gap-1 px-2 py-1.5 hover:bg-red-500/10 rounded-full group text-gray-500">
-                                <IconHeart class="h-5 w-5 group-hover:text-red-500" />
-                                <span class="text-sm group-hover:text-red-500">89</span>
-                            </button>
-                        </div>
-                        <button class="p-1.5 hover:bg-[#0085ff]/10 rounded-full group text-gray-500">
-                            <IconShare class="h-5 w-5 group-hover:text-[#0085ff]" />
-                        </button>
-                    </div>
+                <!-- Timestamp -->
+                <div class="mt-3 text-[13px] text-gray-500 dark:text-[#7b8d9e]">
+                    4:18 PM · Jan 21, 2026
                 </div>
             </div>
-        </div>
 
-        <!-- Footer with upload and char count (only in edit mode) -->
-        <div v-if="!props.readonly" class="border-t border-gray-200 dark:border-[#2e3f50] px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-[#1a2634]">
-            <div class="flex items-center gap-2">
-                <span
-                    class="text-xs px-2 py-1 rounded-full"
-                    :class="isValid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'"
-                >
-                    {{ validationMessage }}
-                </span>
+            <!-- Engagement Actions -->
+            <div class="border-t border-gray-200 dark:border-[#1e3a5f]">
+                <div class="flex items-center justify-between px-3 py-1">
+                    <!-- Reply -->
+                    <button class="p-2 hover:bg-gray-100 dark:hover:bg-[#1e3a5f]/50 rounded-full group">
+                        <svg class="h-5 w-5 text-gray-500 dark:text-[#7b8d9e] group-hover:text-[#1185fe]"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                    </button>
+
+                    <!-- Repost -->
+                    <button class="p-2 hover:bg-gray-100 dark:hover:bg-[#1e3a5f]/50 rounded-full group">
+                        <svg class="h-5 w-5 text-gray-500 dark:text-[#7b8d9e] group-hover:text-[#00ba7c]"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M17 1l4 4-4 4" />
+                            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                            <path d="M7 23l-4-4 4-4" />
+                            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                        </svg>
+                    </button>
+
+                    <!-- Like -->
+                    <button class="p-2 hover:bg-gray-100 dark:hover:bg-[#1e3a5f]/50 rounded-full group">
+                        <svg class="h-5 w-5 text-gray-500 dark:text-[#7b8d9e] group-hover:text-[#f91880]"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path
+                                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                    </button>
+
+                    <!-- Bookmark -->
+                    <button class="p-2 hover:bg-gray-100 dark:hover:bg-[#1e3a5f]/50 rounded-full group">
+                        <svg class="h-5 w-5 text-gray-500 dark:text-[#7b8d9e] group-hover:text-[#1185fe]"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg>
+                    </button>
+
+                    <!-- Share -->
+                    <button class="p-2 hover:bg-gray-100 dark:hover:bg-[#1e3a5f]/50 rounded-full group">
+                        <svg class="h-5 w-5 text-gray-500 dark:text-[#7b8d9e] group-hover:text-[#1185fe]"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                            <polyline points="16 6 12 2 8 6" />
+                            <line x1="12" y1="2" x2="12" y2="15" />
+                        </svg>
+                    </button>
+
+                    <!-- More -->
+                    <button class="p-2 hover:bg-gray-100 dark:hover:bg-[#1e3a5f]/50 rounded-full group">
+                        <svg class="h-5 w-5 text-gray-500 dark:text-[#7b8d9e] group-hover:text-[#1185fe]"
+                            viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="1.5" />
+                            <circle cx="19" cy="12" r="1.5" />
+                            <circle cx="5" cy="12" r="1.5" />
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <label class="cursor-pointer p-2 rounded-full hover:bg-gray-200 dark:hover:bg-[#2e3f50] transition-colors">
-                <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    class="hidden"
-                    @change="emit('upload', $event)"
-                    :disabled="isUploading"
-                />
-                <IconPhoto class="h-5 w-5 text-gray-500" />
-            </label>
+
+            <!-- Reply input -->
+            <div class="px-4 py-3 border-t border-gray-200 dark:border-[#1e3a5f] flex items-center gap-3">
+                <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url" :alt="socialAccount.display_name"
+                    class="h-8 w-8 rounded-full object-cover shrink-0" />
+                <div v-else
+                    class="h-8 w-8 rounded-full bg-gradient-to-br from-[#0085ff] to-[#00d4ff] flex items-center justify-center text-white text-xs font-semibold shrink-0">
+                    {{ socialAccount.display_name?.charAt(0) }}
+                </div>
+                <div class="flex-1 text-[15px] text-gray-400 dark:text-[#7b8d9e]">
+                    Write your reply
+                </div>
+            </div>
         </div>
     </div>
 </template>

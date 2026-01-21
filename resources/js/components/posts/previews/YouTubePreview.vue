@@ -1,14 +1,5 @@
 <script setup lang="ts">
-import {
-    IconVideo,
-    IconX,
-    IconPhoto,
-    IconThumbUp,
-    IconThumbDown,
-    IconMessageCircle,
-    IconShare,
-    IconDots,
-} from '@tabler/icons-vue';
+import { computed } from 'vue';
 
 interface SocialAccount {
     id: string;
@@ -29,183 +20,219 @@ interface Props {
     socialAccount: SocialAccount;
     content: string;
     media: MediaItem[];
-    charCount: number;
-    maxLength: number;
-    isValid: boolean;
-    validationMessage: string;
-    isUploading?: boolean;
-    readonly?: boolean;
 }
 
 const props = defineProps<Props>();
 
-const emit = defineEmits<{
-    'update:content': [value: string];
-    'upload': [event: Event];
-    'remove-media': [mediaId: string];
-}>();
+// Format engagement numbers like YouTube does
+const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    }
+    return num.toString();
+};
+
+const username = computed(() => props.socialAccount.username || props.socialAccount.display_name);
 </script>
 
 <template>
-    <div class="bg-[#0f0f0f] rounded-xl overflow-hidden relative" style="aspect-ratio: 9/16; max-height: 600px;">
-        <!-- Video Area -->
+    <div class="w-full h-full bg-[#0f0f0f] text-white overflow-hidden flex flex-col relative">
+        <!-- Video/Media Area - Full screen -->
         <div class="absolute inset-0">
+            <!-- Video content -->
             <div v-if="media.length > 0 && media[0].type === 'video'" class="w-full h-full">
                 <video :src="media[0].url" class="w-full h-full object-cover" muted loop playsinline />
-                <button
-                    v-if="!props.readonly"
-                    type="button"
-                    @click="emit('remove-media', media[0].id)"
-                    class="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2"
-                >
-                    <IconX class="h-5 w-5" />
-                </button>
             </div>
             <div v-else-if="media.length > 0 && media[0].type === 'image'" class="w-full h-full">
                 <img :src="media[0].url" :alt="media[0].original_filename" class="w-full h-full object-cover" />
-                <button
-                    v-if="!props.readonly"
-                    type="button"
-                    @click="emit('remove-media', media[0].id)"
-                    class="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2"
-                >
-                    <IconX class="h-5 w-5" />
+            </div>
+            <div v-else class="w-full h-full flex items-center justify-center bg-[#0f0f0f]">
+                <!-- YouTube Shorts icon -->
+                <svg class="h-12 w-12 text-white/20" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M10 14.65v-5.3L15 12l-5 2.65zm7.77-4.33c-.77-.32-1.2-.5-1.2-.5L18 9.06c1.84-.96 2.53-3.23 1.56-5.06s-3.24-2.53-5.07-1.56L6 6.94c-1.29.68-2.07 2.04-2 3.49.07 1.42.93 2.67 2.22 3.25.03.01 1.2.5 1.2.5L6 14.93c-1.83.97-2.53 3.24-1.56 5.07.97 1.83 3.24 2.53 5.07 1.56l8.5-4.5c1.29-.68 2.06-2.04 1.99-3.49-.07-1.42-.94-2.68-2.23-3.25z" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Top Header -->
+        <div v-if="media.length > 0"
+            class="absolute top-0 left-0 right-0 px-3 pt-1 flex items-center justify-between z-10">
+            <!-- Shorts logo -->
+            <div class="flex items-center gap-1">
+                <svg class="h-5 w-auto" viewBox="0 0 24 24" fill="#ff0000">
+                    <path
+                        d="M10 14.65v-5.3L15 12l-5 2.65zm7.77-4.33c-.77-.32-1.2-.5-1.2-.5L18 9.06c1.84-.96 2.53-3.23 1.56-5.06s-3.24-2.53-5.07-1.56L6 6.94c-1.29.68-2.07 2.04-2 3.49.07 1.42.93 2.67 2.22 3.25.03.01 1.2.5 1.2.5L6 14.93c-1.83.97-2.53 3.24-1.56 5.07.97 1.83 3.24 2.53 5.07 1.56l8.5-4.5c1.29-.68 2.06-2.04 1.99-3.49-.07-1.42-.94-2.68-2.23-3.25z" />
+                </svg>
+                <span class="text-white font-medium text-[14px]">Shorts</span>
+            </div>
+
+            <!-- Search and camera icons -->
+            <div class="flex items-center gap-4">
+                <button>
+                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
                 </button>
-            </div>
-            <div v-else-if="!props.readonly" class="w-full h-full flex flex-col items-center justify-center bg-[#0f0f0f] text-gray-400">
-                <IconVideo class="h-20 w-20 mb-4" />
-                <p class="text-sm mb-2">Add a Short video</p>
-                <label class="cursor-pointer bg-[#ff0000] text-white px-6 py-2 rounded-full font-semibold text-sm hover:bg-[#cc0000] transition-colors">
-                    <input
-                        type="file"
-                        accept="video/*,image/*"
-                        class="hidden"
-                        @change="emit('upload', $event)"
-                        :disabled="isUploading"
-                    />
-                    Upload
-                </label>
-            </div>
-            <div v-else class="w-full h-full flex flex-col items-center justify-center bg-[#0f0f0f] text-gray-400">
-                <IconVideo class="h-20 w-20 mb-4" />
-                <p class="text-sm">No media</p>
+                <button>
+                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+                    </svg>
+                </button>
             </div>
         </div>
 
         <!-- Gradient overlay at bottom -->
-        <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+        <div v-if="media.length > 0"
+            class="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none z-[5]" />
 
         <!-- Right side actions -->
-        <div class="absolute right-3 bottom-28 flex flex-col items-center gap-5">
+        <div v-if="media.length > 0" class="absolute right-2 bottom-[72px] flex flex-col items-center gap-3 z-10">
             <!-- Like -->
             <button class="flex flex-col items-center">
-                <div class="h-12 w-12 bg-[#272727] rounded-full flex items-center justify-center">
-                    <IconThumbUp class="h-6 w-6 text-white" />
+                <div class="w-11 h-11 bg-[#272727]/80 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
+                    </svg>
                 </div>
-                <span class="text-white text-xs mt-1">12K</span>
+                <span class="text-white text-[11px] mt-1 font-medium">{{ formatNumber(12400) }}</span>
             </button>
 
             <!-- Dislike -->
             <button class="flex flex-col items-center">
-                <div class="h-12 w-12 bg-[#272727] rounded-full flex items-center justify-center">
-                    <IconThumbDown class="h-6 w-6 text-white" />
+                <div class="w-11 h-11 bg-[#272727]/80 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M15 3H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 23l6.59-6.59c.36-.36.58-.86.58-1.41V5c0-1.1-.9-2-2-2zm4 0v12h4V3h-4z" />
+                    </svg>
                 </div>
-                <span class="text-white text-xs mt-1">Dislike</span>
+                <span class="text-white text-[11px] mt-1 font-medium">Dislike</span>
             </button>
 
-            <!-- Comment -->
+            <!-- Comments -->
             <button class="flex flex-col items-center">
-                <div class="h-12 w-12 bg-[#272727] rounded-full flex items-center justify-center">
-                    <IconMessageCircle class="h-6 w-6 text-white" />
+                <div class="w-11 h-11 bg-[#272727]/80 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z" />
+                    </svg>
                 </div>
-                <span class="text-white text-xs mt-1">234</span>
+                <span class="text-white text-[11px] mt-1 font-medium">{{ formatNumber(234) }}</span>
             </button>
 
             <!-- Share -->
             <button class="flex flex-col items-center">
-                <div class="h-12 w-12 bg-[#272727] rounded-full flex items-center justify-center">
-                    <IconShare class="h-6 w-6 text-white" />
+                <div class="w-11 h-11 bg-[#272727]/80 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M13.12 2.06L7.58 7.6c-.37.37-.58.88-.58 1.41V19c0 1.1.9 2 2 2h9c.8 0 1.52-.48 1.84-1.21l3.26-7.61C23.94 10.2 22.49 8 20.34 8h-5.65l.95-4.58c.1-.5-.05-1.01-.41-1.37-.59-.58-1.53-.58-2.11.01zM3 21c1.1 0 2-.9 2-2v-8c0-1.1-.9-2-2-2s-2 .9-2 2v8c0 1.1.9 2 2 2z" />
+                    </svg>
                 </div>
-                <span class="text-white text-xs mt-1">Share</span>
+                <span class="text-white text-[11px] mt-1 font-medium">Share</span>
             </button>
 
-            <!-- More -->
+            <!-- Remix -->
             <button class="flex flex-col items-center">
-                <div class="h-12 w-12 bg-[#272727] rounded-full flex items-center justify-center">
-                    <IconDots class="h-6 w-6 text-white" />
+                <div class="w-11 h-11 bg-[#272727]/80 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                    </svg>
                 </div>
+                <span class="text-white text-[11px] mt-1 font-medium">Remix</span>
             </button>
-
-            <!-- Channel avatar -->
-            <div class="relative mt-1">
-                <img
-                    v-if="socialAccount.avatar_url"
-                    :src="socialAccount.avatar_url"
-                    :alt="socialAccount.display_name"
-                    class="h-10 w-10 rounded-full object-cover border-2 border-white"
-                />
-                <div v-else class="h-10 w-10 rounded-full bg-[#ff0000] flex items-center justify-center text-white font-bold border-2 border-white text-sm">
-                    {{ socialAccount.display_name?.charAt(0) }}
-                </div>
-            </div>
         </div>
 
         <!-- Bottom info -->
-        <div class="absolute left-3 right-20 bottom-4 text-white">
+        <div v-if="media.length > 0" class="absolute left-3 right-14 bottom-[72px] text-white z-10">
+            <!-- Channel info and subscribe -->
             <div class="flex items-center gap-2 mb-2">
-                <img
-                    v-if="socialAccount.avatar_url"
-                    :src="socialAccount.avatar_url"
-                    :alt="socialAccount.display_name"
-                    class="h-8 w-8 rounded-full object-cover"
-                />
-                <div v-else class="h-8 w-8 rounded-full bg-[#ff0000] flex items-center justify-center text-white font-bold text-xs">
-                    {{ socialAccount.display_name?.charAt(0) }}
+                <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                    <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url"
+                        :alt="socialAccount.display_name" class="w-full h-full object-cover" />
+                    <div v-else
+                        class="w-full h-full bg-[#ff0000] flex items-center justify-center text-white font-bold text-[10px]">
+                        {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
+                    </div>
                 </div>
-                <span class="text-sm font-medium">@{{ socialAccount.username || socialAccount.display_name }}</span>
-                <button class="ml-1 bg-white text-black text-xs font-semibold px-3 py-1 rounded-full hover:bg-gray-200">
+                <span class="text-[13px] font-medium">@{{ username }}</span>
+                <button class="ml-auto bg-white text-black text-[12px] font-medium px-3 py-1 rounded-full">
                     Subscribe
                 </button>
             </div>
-            <div>
-                <div v-if="props.readonly" class="w-full min-h-[40px] max-h-[80px] text-sm text-white whitespace-pre-wrap">
-                    {{ content || 'No content' }}
+
+            <!-- Video title -->
+            <div class="text-[13px] text-white line-clamp-2 leading-[18px] mb-1.5">
+                {{ content || 'No title' }}
+            </div>
+
+            <!-- Music info -->
+            <div class="flex items-center gap-1.5">
+                <svg class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                </svg>
+                <span class="text-[11px] text-white/80 truncate">{{ socialAccount.display_name }} - Original
+                    audio</span>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <div v-if="media.length > 0"
+            class="absolute bottom-0 left-0 right-0 h-[52px] bg-[#0f0f0f] flex items-center justify-around px-1 z-20 border-t border-white/10">
+            <!-- Home -->
+            <button class="flex flex-col items-center justify-center py-1 min-w-[48px]">
+                <svg class="w-5 h-5 text-white/60" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L4 9v12h5v-7h6v7h5V9l-8-6z" />
+                </svg>
+                <span class="text-[9px] text-white/60 mt-0.5">Home</span>
+            </button>
+
+            <!-- Shorts (active) -->
+            <button class="flex flex-col items-center justify-center py-1 min-w-[48px]">
+                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M10 14.65v-5.3L15 12l-5 2.65zm7.77-4.33c-.77-.32-1.2-.5-1.2-.5L18 9.06c1.84-.96 2.53-3.23 1.56-5.06s-3.24-2.53-5.07-1.56L6 6.94c-1.29.68-2.07 2.04-2 3.49.07 1.42.93 2.67 2.22 3.25.03.01 1.2.5 1.2.5L6 14.93c-1.83.97-2.53 3.24-1.56 5.07.97 1.83 3.24 2.53 5.07 1.56l8.5-4.5c1.29-.68 2.06-2.04 1.99-3.49-.07-1.42-.94-2.68-2.23-3.25z" />
+                </svg>
+                <span class="text-[9px] text-white mt-0.5">Shorts</span>
+            </button>
+
+            <!-- Create -->
+            <button class="flex items-center justify-center">
+                <div class="w-10 h-7 bg-white rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-black" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                    </svg>
                 </div>
-                <textarea
-                    v-else
-                    :value="content"
-                    @input="emit('update:content', ($event.target as HTMLTextAreaElement).value)"
-                    class="w-full min-h-[40px] max-h-[80px] bg-transparent border-0 p-0 text-sm text-white resize-none focus:outline-none focus:ring-0 placeholder:text-gray-400"
-                    placeholder="Add a title..."
-                />
-            </div>
+            </button>
+
+            <!-- Subscriptions -->
+            <button class="flex flex-col items-center justify-center py-1 min-w-[48px]">
+                <svg class="w-5 h-5 text-white/60" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M4 6h16v2H4zm2-4h12v2H6zm14 8H4c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2v-8c0-1.1-.9-2-2-2zm-8 12.5c-2.49 0-4.5-2.01-4.5-4.5s2.01-4.5 4.5-4.5 4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-6.5l-2 2.5h4l-2-2.5z" />
+                </svg>
+                <span class="text-[9px] text-white/60 mt-0.5">Subscriptions</span>
+            </button>
+
+            <!-- Library -->
+            <button class="flex flex-col items-center justify-center py-1 min-w-[48px]">
+                <svg class="w-5 h-5 text-white/60" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8 12.5v-9l6 4.5-6 4.5z" />
+                </svg>
+                <span class="text-[9px] text-white/60 mt-0.5">Library</span>
+            </button>
         </div>
 
-        <!-- Shorts badge -->
-        <div class="absolute top-4 left-3 flex items-center gap-2">
-            <div class="bg-[#ff0000] text-white text-xs font-bold px-2 py-1 rounded">
-                Shorts
-            </div>
-        </div>
-
-        <!-- Footer with char count (only in edit mode) -->
-        <div v-if="!props.readonly" class="absolute top-4 right-3 flex items-center gap-2">
-            <span
-                class="text-xs px-2 py-1 rounded-full"
-                :class="isValid ? 'bg-green-500/30 text-green-300' : 'bg-red-500/30 text-red-300'"
-            >
-                {{ validationMessage }}
-            </span>
-            <label v-if="media.length > 0" class="cursor-pointer p-2 rounded-full bg-black/30 hover:bg-black/50 transition-colors">
-                <input
-                    type="file"
-                    accept="video/*,image/*"
-                    class="hidden"
-                    @change="emit('upload', $event)"
-                    :disabled="isUploading"
-                />
-                <IconPhoto class="h-5 w-5 text-white" />
-            </label>
+        <!-- Video progress bar (above nav) -->
+        <div v-if="media.length > 0" class="absolute bottom-[52px] left-0 right-0 h-[3px] bg-white/20 z-20">
+            <div class="h-full w-2/5 bg-[#ff0000]"></div>
         </div>
     </div>
 </template>

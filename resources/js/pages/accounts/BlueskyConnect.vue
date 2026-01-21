@@ -39,26 +39,14 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                 </div>
             </div>
 
-            <form
-                ref="formRef"
-                :action="storeBluesky.url()"
-                method="POST"
-                @submit.prevent="submit"
-                class="space-y-4"
-            >
+            <form ref="formRef" :action="storeBluesky.url()" method="POST" @submit.prevent="submit" class="space-y-4">
                 <input type="hidden" name="_token" :value="csrfToken" />
 
                 <div class="space-y-2">
-                    <Label for="identifier">Handle or Email</Label>
-                    <Input
-                        id="identifier"
-                        name="identifier"
-                        v-model="identifier"
-                        type="text"
-                        placeholder="yourhandle.bsky.social"
-                        :class="{ 'border-destructive': errors?.identifier }"
-                        required
-                    />
+                    <Label for="identifier">Email</Label>
+                    <Input id="identifier" name="identifier" v-model="identifier" type="text"
+                        placeholder="yourhandle.bsky.social" :class="{ 'border-destructive': errors?.identifier }"
+                        required />
                     <p v-if="errors?.identifier" class="text-sm text-destructive">
                         {{ errors.identifier }}
                     </p>
@@ -66,15 +54,9 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
 
                 <div class="space-y-2">
                     <Label for="password">App Password</Label>
-                    <Input
-                        id="password"
-                        name="password"
-                        v-model="password"
-                        type="password"
-                        placeholder="xxxx-xxxx-xxxx-xxxx"
-                        :class="{ 'border-destructive': errors?.password }"
-                        required
-                    />
+                    <Input id="password" name="password" v-model="password" type="password"
+                        placeholder="xxxx-xxxx-xxxx-xxxx" :class="{ 'border-destructive': errors?.password }"
+                        required />
                     <p v-if="errors?.password" class="text-sm text-destructive">
                         {{ errors.password }}
                     </p>
@@ -83,15 +65,13 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                 <Alert>
                     <IconInfoCircle class="h-4 w-4" />
                     <AlertDescription class="inline">
-                        Use an <strong>App Password</strong> for security. Create one at <a href="https://bsky.app/settings/app-passwords" target="_blank" class="underline">bsky.app/settings</a>.
+                        Use an <strong>App Password</strong> for security. Create one at <a
+                            href="https://bsky.app/settings/app-passwords" target="_blank"
+                            class="underline">bsky.app/settings</a>.
                     </AlertDescription>
                 </Alert>
 
-                <Button
-                    type="submit"
-                    :disabled="isSubmitting"
-                    class="w-full"
-                >
+                <Button type="submit" :disabled="isSubmitting" class="w-full">
                     {{ isSubmitting ? 'Connecting...' : 'Connect Bluesky' }}
                 </Button>
             </form>

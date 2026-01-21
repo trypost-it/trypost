@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('medias', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->uuid('group_id')->nullable()->index();
             $table->uuidMorphs('mediable');
             $table->string('collection')->default('default');
             $table->string('type');

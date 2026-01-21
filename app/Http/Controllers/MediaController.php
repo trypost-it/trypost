@@ -29,6 +29,7 @@ class MediaController extends Controller
 
         return response()->json([
             'id' => $media->id,
+            'group_id' => $media->group_id,
             'url' => $media->url,
             'type' => $media->type->value,
             'original_filename' => $media->original_filename,
@@ -71,6 +72,7 @@ class MediaController extends Controller
             return response()->json([
                 'done' => true,
                 'id' => $media->id,
+                'group_id' => $media->group_id,
                 'url' => $media->url,
                 'type' => $media->type->value,
                 'original_filename' => $media->original_filename,
@@ -96,6 +98,21 @@ class MediaController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function reorder(Request $request): JsonResponse
+    {
+        $request->validate([
+            'media' => 'required|array',
+            'media.*.id' => 'required|exists:medias,id',
+            'media.*.order' => 'required|integer|min:0',
+        ]);
+
+        foreach ($request->input('media') as $item) {
+            Media::where('id', $item['id'])->update(['order' => $item['order']]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     public function duplicate(Media $media, Request $request): JsonResponse
     {
         $targets = $request->input('targets', []);
@@ -111,6 +128,7 @@ class MediaController extends Controller
             $model = $modelClass::findOrFail($modelId);
 
             $duplicate = $model->media()->create([
+                'group_id' => $media->group_id,
                 'collection' => $collection,
                 'type' => $media->type,
                 'path' => $media->path,
@@ -123,6 +141,7 @@ class MediaController extends Controller
 
             $duplicates[] = [
                 'id' => $duplicate->id,
+                'group_id' => $duplicate->group_id,
                 'mediable_id' => $duplicate->mediable_id,
                 'mediable_type' => $duplicate->mediable_type,
                 'url' => $duplicate->url,

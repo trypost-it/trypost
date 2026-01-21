@@ -1,158 +1,226 @@
 <script setup lang="ts">
 import { parseDate } from '@internationalized/date';
 import { IconCalendar } from '@tabler/icons-vue';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { InputMask } from '@/components/ui/input';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from '@/components/ui/popover';
-import { useDateMaska } from '@/composables/useDateMaska';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import dayjs from '@/dayjs';
 
 const props = defineProps({
-  name: {
-    type: String,
-    required: true,
-  },
-  modelValue: {
-    type: String,
-    default: '',
-  },
-  align: {
-    type: String as () => 'start' | 'center' | 'end',
-    default: 'end',
-    validator: (value: string) => ['start', 'end'].includes(value),
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
+    name: {
+        type: String,
+        required: true,
+    },
+    modelValue: {
+        type: String,
+        default: '',
+    },
+    align: {
+        type: String as () => 'start' | 'center' | 'end',
+        default: 'end',
+        validator: (value: string) => ['start', 'center', 'end'].includes(value),
+    },
+    disabled: {
+        type: Boolean,
+        default: false,
+    },
+    showTime: {
+        type: Boolean,
+        default: true,
+    },
+    placeholder: {
+        type: String,
+        default: 'Select date',
+    },
 });
 
 const emit = defineEmits(['update:modelValue']);
 
-const { dateOptions } = useDateMaska();
-
 // Parse input value into date
 function parseInput(value: string) {
-  if (!value) return undefined;
+    if (!value) return undefined;
 
-  // Parse date string (YYYY-MM-DD format)
-  try {
-    return parseDate(value);
-  } catch {
+    try {
+        const date = dayjs(value);
+        if (date.isValid()) {
+            return parseDate(date.format('YYYY-MM-DD'));
+        }
+    } catch {
+        return undefined;
+    }
     return undefined;
-  }
 }
 
 const internalDate = ref(parseInput(props.modelValue));
-const displayValue = ref(
-  props.modelValue && dayjs(props.modelValue).isValid()
-    ? dayjs(props.modelValue).format('MM/DD/YYYY')
-    : '',
-);
 const popoverOpen = ref(false);
 
-// Parse American date format (MM/DD/YYYY) to YYYY-MM-DD
-function parseAmericanDate(value: string): string | null {
-  if (!value) return null;
+// Time state (24-hour format)
+const selectedHour = ref(
+    props.modelValue && dayjs(props.modelValue).isValid()
+        ? dayjs(props.modelValue).format('HH')
+        : '09',
+);
+const selectedMinute = ref(
+    props.modelValue && dayjs(props.modelValue).isValid()
+        ? dayjs(props.modelValue).format('mm')
+        : '00',
+);
 
-  // Remove any non-digit characters
-  const digits = value.replace(/\D/g, '');
+// Generate hours (00-23)
+const hours = computed(() => {
+    return Array.from({ length: 24 }, (_, i) => {
+        return i.toString().padStart(2, '0');
+    });
+});
 
-  // Try to parse MM/DD/YYYY format
-  if (digits.length === 8) {
-    const month = digits.substring(0, 2);
-    const day = digits.substring(2, 4);
-    const year = digits.substring(4, 8);
+// Generate minutes (00-59 in 5-minute intervals)
+const minutes = computed(() => {
+    return Array.from({ length: 12 }, (_, i) => {
+        return (i * 5).toString().padStart(2, '0');
+    });
+});
 
-    const dateStr = `${year}-${month}-${day}`;
-    const parsed = dayjs(dateStr, 'YYYY-MM-DD');
+// Build full datetime string
+function buildDateTime(dateStr: string | null): string | null {
+    if (!dateStr) return null;
 
-    if (parsed.isValid()) {
-      return dateStr;
+    if (!props.showTime) {
+        return dateStr;
     }
-  }
 
-  return null;
+    const timeStr = `${selectedHour.value}:${selectedMinute.value}:00`;
+    return `${dateStr}T${timeStr}`;
 }
 
-// Handle manual input change
-function onInputChange(event: Event) {
-  const value = (event.target as HTMLInputElement).value;
-  displayValue.value = value;
-
-  const parsedDate = parseAmericanDate(value);
-  if (parsedDate) {
-    internalDate.value = parseInput(parsedDate);
-    emit('update:modelValue', parsedDate);
-  }
+// Handle time change
+function onTimeChange() {
+    if (internalDate.value) {
+        const dateStr = internalDate.value.toString();
+        emit('update:modelValue', buildDateTime(dateStr));
+    }
 }
 
 // Parse input value into date component
 const isInternalUpdate = ref(false);
 
 watch(
-  () => props.modelValue,
-  (newVal) => {
-    if (isInternalUpdate.value) {
-      isInternalUpdate.value = false;
-      return;
-    }
+    () => props.modelValue,
+    (newVal) => {
+        if (isInternalUpdate.value) {
+            isInternalUpdate.value = false;
+            return;
+        }
 
-    internalDate.value = parseInput(newVal);
+        internalDate.value = parseInput(newVal);
 
-    // Update display value
-    if (newVal) {
-      const parsed = dayjs(newVal);
-      if (parsed.isValid()) {
-        displayValue.value = parsed.format('MM/DD/YYYY');
-      }
-    } else {
-      displayValue.value = '';
-    }
-  },
-  { immediate: true },
+        if (newVal) {
+            const parsed = dayjs(newVal);
+            if (parsed.isValid()) {
+                if (props.showTime) {
+                    selectedHour.value = parsed.format('HH');
+                    selectedMinute.value = parsed.format('mm');
+                }
+            }
+        } else {
+            selectedHour.value = '09';
+            selectedMinute.value = '00';
+        }
+    },
+    { immediate: true },
 );
 
 // Watch internal date changes from calendar
 watch(internalDate, (newDate) => {
-  if (!newDate || isInternalUpdate.value) return;
+    if (!newDate || isInternalUpdate.value) return;
 
-  isInternalUpdate.value = true;
-  const formatted = newDate.toString();
-  emit('update:modelValue', formatted);
-  popoverOpen.value = false;
+    isInternalUpdate.value = true;
+    const formatted = newDate.toString();
+    emit('update:modelValue', buildDateTime(formatted));
 
-  // Update display value when date is selected from calendar
-  if (formatted) {
-    const parsed = dayjs(formatted);
-    if (parsed.isValid()) {
-      displayValue.value = parsed.format('MM/DD/YYYY');
+    if (!props.showTime) {
+        popoverOpen.value = false;
     }
-  }
+});
+
+// Display string for the button
+const displayText = computed(() => {
+    if (!props.modelValue || !dayjs(props.modelValue).isValid()) {
+        return null;
+    }
+
+    const parsed = dayjs(props.modelValue);
+
+    if (props.showTime) {
+        return parsed.format('MMM D, YYYY [at] HH:mm');
+    }
+
+    return parsed.format('MMM D, YYYY');
 });
 </script>
 
 <template>
-  <div class="relative">
-    <InputMask :id="name" v-model="displayValue" :mask-options="dateOptions" placeholder="MM/DD/YYYY"
-      @input="onInputChange" class="pr-10" :disabled="disabled" />
     <Popover v-model:open="popoverOpen">
-      <PopoverTrigger :disabled="disabled">
-        <Button type="button" variant="ghost" size="sm" class="absolute top-0 right-0 z-10 h-full" :disabled="disabled">
-          <IconCalendar class="h-4 w-4" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent class="w-auto p-0" :align="align">
-        <Calendar v-model="internalDate" :placeholder="internalDate" layout="month-and-year" locale="en-US"
-          calendar-label="Date picker" initial-focus />
-      </PopoverContent>
+        <PopoverTrigger as-child :disabled="disabled">
+            <Button
+                :id="name"
+                type="button"
+                variant="outline"
+                class="justify-between text-left font-normal"
+                :class="{ 'text-muted-foreground': !displayText }"
+                :disabled="disabled"
+            >
+                <span>{{ displayText || placeholder }}</span>
+                <IconCalendar class="ml-2 h-4 w-4" />
+            </Button>
+        </PopoverTrigger>
+        <PopoverContent class="w-auto p-0" :align="align">
+            <Calendar
+                v-model="internalDate"
+                :placeholder="internalDate"
+                layout="month-and-year"
+                locale="en-US"
+                calendar-label="Date picker"
+                initial-focus
+            />
+            <!-- Time Picker -->
+            <div v-if="showTime" class="border-t p-3">
+                <div class="flex items-center gap-2">
+                    <Select v-model="selectedHour" @update:model-value="onTimeChange">
+                        <SelectTrigger class="w-[70px]">
+                            <SelectValue placeholder="HH" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem v-for="h in hours" :key="h" :value="h">
+                                {{ h }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <span class="text-muted-foreground">:</span>
+                    <Select v-model="selectedMinute" @update:model-value="onTimeChange">
+                        <SelectTrigger class="w-[70px]">
+                            <SelectValue placeholder="MM" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem v-for="m in minutes" :key="m" :value="m">
+                                {{ m }}
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+        </PopoverContent>
     </Popover>
-  </div>
 </template>

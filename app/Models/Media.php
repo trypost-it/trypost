@@ -22,6 +22,7 @@ class Media extends Model
     protected $fillable = [
         'mediable_id',
         'mediable_type',
+        'group_id',
         'collection',
         'type',
         'path',
@@ -64,7 +65,14 @@ class Media extends Model
 
     public function delete(): bool
     {
-        Storage::delete($this->path);
+        // Only delete the file if no other media records use the same path
+        $otherMediaWithSamePath = static::where('path', $this->path)
+            ->where('id', '!=', $this->id)
+            ->exists();
+
+        if (! $otherMediaWithSamePath) {
+            Storage::delete($this->path);
+        }
 
         return parent::delete();
     }

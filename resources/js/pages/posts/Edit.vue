@@ -1,16 +1,29 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
-import axios from 'axios';
+import {
+    IconBrandBluesky,
+    IconBrandFacebook,
+    IconBrandInstagram,
+    IconBrandLinkedin,
+    IconBrandMastodon,
+    IconBrandPinterest,
+    IconBrandThreads,
+    IconBrandTiktok,
+    IconBrandX,
+    IconBrandYoutube,
+} from '@tabler/icons-vue';
 import { Clock, AlertCircle, Trash2, Send, Link2, MoreHorizontal, Plus, CheckCircle, ExternalLink, Loader2 } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, type Component } from 'vue';
 
 import { Badge } from '@/components/ui/badge';
 
-import { store as storeMedia, storeChunked as storeMediaChunked, destroy as destroyMedia, duplicate as duplicateMedia } from '@/actions/App/Http/Controllers/MediaController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import DatePicker from '@/components/DatePicker.vue';
+import PhoneMockup from '@/components/PhoneMockup.vue';
+import PostForm from '@/components/posts/PostForm.vue';
 import { PlatformPreview } from '@/components/posts/previews';
+import { useMediaManager, type MediaItem } from '@/composables/useMediaManager';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
     AlertDialog,
@@ -30,17 +43,12 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { calendar } from '@/routes';
 import { destroy as destroyPost, update as updatePost } from '@/routes/posts';
-import { type BreadcrumbItemType } from '@/types';
-import { uploadChunked, shouldUseChunkedUpload } from '@/utils/chunkedUpload';
 
 interface SocialAccount {
     id: string;
@@ -50,12 +58,6 @@ interface SocialAccount {
     avatar_url: string | null;
 }
 
-interface MediaItem {
-    id: string;
-    url: string;
-    type: string;
-    original_filename: string;
-}
 
 interface PostPlatform {
     id: string;
@@ -142,11 +144,6 @@ useEcho(
 // Check if post is in read-only mode (published, failed, publishing, partially_published)
 const isReadOnly = computed(() => ['published', 'failed', 'publishing', 'partially_published'].includes(post.value.status));
 
-const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
-    { title: 'Calendar', href: calendar.url() },
-    { title: isReadOnly.value ? 'View Post' : 'Edit Post', href: '#' },
-]);
-
 // State
 const selectedPlatformIds = ref<string[]>(
     post.value.post_platforms.filter(pp => pp.enabled).map(pp => pp.id)
@@ -159,16 +156,28 @@ const globalContent = ref(
 const platformContents = ref<Record<string, string>>(
     Object.fromEntries(post.value.post_platforms.map(pp => [pp.id, pp.content]))
 );
-const platformMedia = ref<Record<string, MediaItem[]>>(
-    Object.fromEntries(post.value.post_platforms.map(pp => [pp.id, pp.media || []]))
-);
 const platformContentTypes = ref<Record<string, string>>(
     Object.fromEntries(post.value.post_platforms.map(pp => [pp.id, pp.content_type || getDefaultContentType(pp.platform)]))
 );
 const platformMeta = ref<Record<string, Record<string, any>>>(
     Object.fromEntries(post.value.post_platforms.map(pp => [pp.id, pp.meta || {}]))
 );
-const isUploading = ref<Record<string, boolean>>({});
+
+// Media manager composable
+const postPlatformsRef = computed(() => post.value.post_platforms);
+const {
+    platformMedia,
+    isUploading,
+    upload: uploadMedia,
+    remove: removeMedia,
+    reorder: reorderMedia,
+} = useMediaManager({
+    synced,
+    selectedPlatformIds,
+    platformContentTypes,
+    postPlatforms: postPlatformsRef,
+});
+
 const isSubmitting = ref(false);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const showEnableSyncDialog = ref(false);
@@ -188,18 +197,13 @@ watch(selectedPlatformIds, (newIds) => {
 // Convert UTC to workspace timezone for display
 const getLocalSchedule = () => {
     if (!post.value.scheduled_at) {
-        return { date: '', time: '09:00' };
+        return '';
     }
     const local = dayjs.utc(post.value.scheduled_at).tz(props.workspace.timezone);
-    return {
-        date: local.format('YYYY-MM-DD'),
-        time: local.format('HH:mm'),
-    };
+    return local.format('YYYY-MM-DDTHH:mm:00');
 };
 
-const { date: initialDate, time: initialTime } = getLocalSchedule();
-const scheduledDate = ref(initialDate);
-const scheduledTime = ref(initialTime);
+const scheduledDateTime = ref(getLocalSchedule());
 
 const timezoneAbbr = computed(() => {
     return dayjs().tz(props.workspace.timezone).format('z');
@@ -238,6 +242,23 @@ const getPlatformLabel = (platform: string): string => {
         'mastodon': 'Mastodon',
     };
     return labels[platform] || platform;
+};
+
+const getPlatformIcon = (platform: string): Component => {
+    const icons: Record<string, Component> = {
+        'linkedin': IconBrandLinkedin,
+        'linkedin-page': IconBrandLinkedin,
+        'x': IconBrandX,
+        'tiktok': IconBrandTiktok,
+        'youtube': IconBrandYoutube,
+        'facebook': IconBrandFacebook,
+        'instagram': IconBrandInstagram,
+        'threads': IconBrandThreads,
+        'pinterest': IconBrandPinterest,
+        'bluesky': IconBrandBluesky,
+        'mastodon': IconBrandMastodon,
+    };
+    return icons[platform];
 };
 
 const getStatusConfig = (status: string) => {
@@ -373,6 +394,7 @@ const currentContentType = computed(() => {
     return platformContentTypes.value[activePlatform.value.id] || '';
 });
 
+
 // Set content type for a platform
 const setContentType = (platformId: string, value: string) => {
     platformContentTypes.value[platformId] = value;
@@ -444,9 +466,22 @@ const contentValidation = computed(() => {
         const hasMedia = media.length > 0;
         const meta = platformMeta.value[pp.id] || {};
 
+        // Check media type compatibility
+        const imageCount = media.filter(m => m.type === 'image').length;
+        const videoCount = media.filter(m => m.type === 'video').length;
+        const hasUnsupportedImages = config.maxImages === 0 && imageCount > 0;
+        const hasTooManyImages = imageCount > config.maxImages && config.maxImages > 0;
+        const hasUnsupportedVideos = !config.allowedMediaTypes.includes('video') && videoCount > 0;
+
         // Pinterest requires a board
         if (pp.platform === 'pinterest' && !meta.board_id) {
             results[pp.id] = { valid: false, message: 'Select a board', charCount, maxLength: config.maxContentLength };
+        } else if (hasUnsupportedImages) {
+            results[pp.id] = { valid: false, message: 'Images not supported', charCount, maxLength: config.maxContentLength };
+        } else if (hasUnsupportedVideos) {
+            results[pp.id] = { valid: false, message: 'Videos not supported', charCount, maxLength: config.maxContentLength };
+        } else if (hasTooManyImages) {
+            results[pp.id] = { valid: false, message: `Max ${config.maxImages} images`, charCount, maxLength: config.maxContentLength };
         } else if (!config.supportsTextOnly && !hasMedia) {
             results[pp.id] = { valid: false, message: 'Requires media', charCount, maxLength: config.maxContentLength };
         } else if (!hasContent && !hasMedia) {
@@ -490,7 +525,7 @@ const mediaValidation = computed(() => {
 
 const canSubmit = computed(() => {
     if (selectedPlatformIds.value.length === 0) return false;
-    if (!scheduledDate.value) return false;
+    if (!scheduledDateTime.value) return false;
 
     const selectedValidations = Object.entries(contentValidation.value)
         .filter(([id]) => selectedPlatformIds.value.includes(id));
@@ -510,139 +545,6 @@ const togglePlatform = (platformId: string) => {
     }
 };
 
-// Platforms that only support single media (replace instead of add)
-const singleMediaPlatforms = ['tiktok', 'youtube', 'instagram'];
-
-const isSingleMediaPlatform = (platformId: string): boolean => {
-    const platform = post.value.post_platforms.find(pp => pp.id === platformId);
-    return platform ? singleMediaPlatforms.includes(platform.platform) : false;
-};
-
-const clearPlatformMedia = async (platformId: string) => {
-    const media = platformMedia.value[platformId] || [];
-
-    for (const m of media) {
-        await axios.delete(destroyMedia.url({ modelId: platformId, media: m.id }));
-    }
-
-    platformMedia.value[platformId] = [];
-};
-
-const handleFileUpload = async (event: Event, postPlatformId: string) => {
-    const input = event.target as HTMLInputElement;
-    const files = input.files;
-
-    if (!files || files.length === 0) return;
-
-    // Get other platforms to duplicate to (if synced)
-    const otherPlatformIds = synced.value
-        ? selectedPlatformIds.value.filter(id => id !== postPlatformId)
-        : [];
-
-    // Mark all as uploading
-    isUploading.value[postPlatformId] = true;
-    for (const id of otherPlatformIds) {
-        isUploading.value[id] = true;
-    }
-
-    // For single-media platforms, clear existing media first
-    if (isSingleMediaPlatform(postPlatformId)) {
-        await clearPlatformMedia(postPlatformId);
-    }
-
-    for (const file of Array.from(files)) {
-        try {
-            let data;
-
-            // Use chunked upload for large files (> 10MB)
-            if (shouldUseChunkedUpload(file)) {
-                data = await uploadChunked({
-                    file,
-                    url: storeMediaChunked.url(),
-                    model: 'postPlatform',
-                    modelId: postPlatformId,
-                    collection: 'default',
-                    onProgress: (progress) => {
-                        console.log(`Upload progress: ${progress}%`);
-                    },
-                });
-            } else {
-                // Regular upload for small files
-                const formData = new FormData();
-                formData.append('media', file);
-                formData.append('model', 'postPlatform');
-                formData.append('model_id', postPlatformId);
-
-                const response = await axios.post(storeMedia.url(), formData);
-                data = response.data;
-            }
-
-            // Add to current platform (use spread for reactivity)
-            const currentMedia = platformMedia.value[postPlatformId] || [];
-            platformMedia.value[postPlatformId] = [...currentMedia, data];
-
-            // 2. If synced, duplicate to other platforms
-            if (otherPlatformIds.length > 0) {
-                const targets = otherPlatformIds.map(id => ({
-                    model: 'postPlatform',
-                    model_id: id,
-                }));
-
-                const duplicateResponse = await axios.post(
-                    duplicateMedia.url({ media: data.id }),
-                    { targets }
-                );
-
-                const duplicates = duplicateResponse.data;
-                for (const dup of duplicates) {
-                    // For single-media platforms, clear first
-                    if (isSingleMediaPlatform(dup.mediable_id)) {
-                        await clearPlatformMedia(dup.mediable_id);
-                    }
-                    const existingMedia = platformMedia.value[dup.mediable_id] || [];
-                    platformMedia.value[dup.mediable_id] = [...existingMedia, dup];
-                }
-            }
-        } catch (error) {
-            console.error('Upload failed:', error);
-        }
-    }
-
-    // Mark all as done
-    isUploading.value[postPlatformId] = false;
-    for (const id of otherPlatformIds) {
-        isUploading.value[id] = false;
-    }
-    input.value = '';
-};
-
-const removeMedia = async (postPlatformId: string, mediaId: string) => {
-    // Find the media to get its filename for synced removal
-    const mediaToRemove = platformMedia.value[postPlatformId]?.find(m => m.id === mediaId);
-
-    if (!mediaToRemove) return;
-
-    // Get target platforms - all selected if synced, otherwise just the current one
-    const targetPlatformIds = synced.value ? selectedPlatformIds.value : [postPlatformId];
-
-    for (const targetId of targetPlatformIds) {
-        // Find media with same filename in this platform
-        const mediaInPlatform = platformMedia.value[targetId]?.find(
-            m => m.original_filename === mediaToRemove.original_filename
-        );
-
-        if (mediaInPlatform) {
-            // Remove from local state
-            platformMedia.value[targetId] = platformMedia.value[targetId].filter(
-                m => m.id !== mediaInPlatform.id
-            );
-
-            // Delete from server
-            await axios.delete(destroyMedia.url({ modelId: targetId, media: mediaInPlatform.id }));
-        }
-    }
-};
-
 const getSubmitData = () => {
     const platforms = post.value.post_platforms
         .filter(pp => selectedPlatformIds.value.includes(pp.id))
@@ -653,12 +555,7 @@ const getSubmitData = () => {
             meta: platformMeta.value[pp.id] || {},
         }));
 
-    // Combine date and time into ISO format
-    const scheduled_at = scheduledDate.value
-        ? `${scheduledDate.value}T${scheduledTime.value}:00`
-        : null;
-
-    return { platforms, scheduled_at };
+    return { platforms, scheduled_at: scheduledDateTime.value || null };
 };
 
 const save = () => {
@@ -709,67 +606,65 @@ const deletePost = () => {
 </script>
 
 <template>
+
     <Head :title="isReadOnly ? 'View Post' : 'Edit Post'" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col h-[calc(100vh-4rem)]">
+    <AppLayout>
+        <div class="flex flex-col h-screen">
             <!-- Top Bar with Tabs and Actions -->
-            <div class="flex items-center justify-between border-b px-4 py-2 bg-background">
+            <div class="relative flex items-center justify-between border-b px-4 py-2 bg-background">
                 <!-- Platform Tabs -->
                 <div class="flex items-center gap-2">
                     <!-- Status Badge (when read-only) -->
                     <Badge v-if="isReadOnly" :class="getStatusConfig(post.status).color" class="mr-2">
-                        <component :is="getStatusConfig(post.status).icon" class="mr-1 h-3 w-3" :class="{ 'animate-spin': post.status === 'publishing' }" />
+                        <component :is="getStatusConfig(post.status).icon" class="mr-1 h-3 w-3"
+                            :class="{ 'animate-spin': post.status === 'publishing' }" />
                         {{ getStatusConfig(post.status).label }}
                     </Badge>
 
-                    <Tabs v-model="activeTabId" v-if="selectedPlatforms.length > 0">
-                        <TabsList class="h-auto p-1 gap-1">
-                            <TooltipProvider v-for="pp in selectedPlatforms" :key="pp.id">
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <TabsTrigger :value="pp.id" class="relative px-2 py-1.5">
-                                            <img
-                                                :src="getPlatformLogo(pp.platform)"
-                                                :alt="getPlatformLabel(pp.platform)"
-                                                class="h-6 w-6 rounded"
-                                            />
-                                            <!-- Status indicator (read-only) or Validation indicator (edit mode) -->
-                                            <span
-                                                v-if="isReadOnly"
-                                                class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border border-background"
-                                                :class="{
-                                                    'bg-green-500': pp.status === 'published',
-                                                    'bg-red-500': pp.status === 'failed',
-                                                    'bg-yellow-500 animate-pulse': pp.status === 'publishing',
-                                                    'bg-gray-400': !['published', 'failed', 'publishing'].includes(pp.status)
-                                                }"
-                                            />
-                                            <span
-                                                v-else-if="contentValidation[pp.id]"
-                                                class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border border-background"
-                                                :class="contentValidation[pp.id].valid ? 'bg-green-500' : 'bg-red-500'"
-                                            />
-                                        </TabsTrigger>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{{ pp.social_account.display_name }}</p>
-                                        <p v-if="isReadOnly" class="text-xs text-muted-foreground">{{ getStatusConfig(pp.status).label }}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </TabsList>
-                    </Tabs>
+                    <div v-if="selectedPlatforms.length > 0"
+                        class="bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]">
+                        <TooltipProvider>
+                            <Tooltip v-for="pp in selectedPlatforms" :key="pp.id">
+                                <TooltipTrigger asChild>
+                                    <button type="button" @click="activeTabId = pp.id" :class="[
+                                        'relative inline-flex h-[calc(100%-1px)] items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring',
+                                        activeTabId === pp.id
+                                            ? 'bg-background text-foreground shadow-sm dark:border-input dark:bg-input/30'
+                                            : 'text-foreground dark:text-muted-foreground'
+                                    ]">
+                                        <component :is="getPlatformIcon(pp.platform)"
+                                            class="h-5 w-5 text-neutral-500 rounded-full" />
+                                        <!-- Status indicator (read-only) or Validation indicator (edit mode) -->
+                                        <span v-if="isReadOnly"
+                                            class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border border-background"
+                                            :class="{
+                                                'bg-green-500': pp.status === 'published',
+                                                'bg-red-500': pp.status === 'failed',
+                                                'bg-yellow-500 animate-pulse': pp.status === 'publishing',
+                                                'bg-gray-400': !['published', 'failed', 'publishing'].includes(pp.status)
+                                            }" />
+                                        <span v-else-if="contentValidation[pp.id]"
+                                            class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border border-background"
+                                            :class="contentValidation[pp.id].valid ? 'bg-green-500' : 'bg-red-500'" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{{ pp.social_account.display_name }}</p>
+                                    <p v-if="isReadOnly" class="text-xs text-muted-foreground">
+                                        {{ getStatusConfig(pp.status).label }}
+                                    </p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </div>
 
                     <!-- Platforms Menu Button (only in edit mode) -->
                     <TooltipProvider v-if="!isReadOnly">
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <button
-                                    type="button"
-                                    @click="showPlatformsDialog = true"
-                                    class="p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                                >
+                                <button type="button" @click="showPlatformsDialog = true"
+                                    class="p-2 rounded-lg hover:bg-muted/50 transition-colors">
                                     <MoreHorizontal class="h-5 w-5 text-muted-foreground" />
                                 </button>
                             </TooltipTrigger>
@@ -778,34 +673,32 @@ const deletePost = () => {
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
+                </div>
 
-                    <template v-if="!isReadOnly">
-                        <span class="mx-2 text-muted-foreground">|</span>
-
-                        <button
-                            type="button"
-                            @click="deletePost"
-                            class="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-destructive"
-                        >
-                            <Trash2 class="h-5 w-5" />
-                        </button>
-                    </template>
+                <!-- Sync Toggle (centered, only in edit mode with multiple platforms) -->
+                <div v-if="!isReadOnly && selectedPlatformIds.length > 1"
+                    class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
+                    <div @click.capture="handleSyncClick">
+                        <Switch id="sync-content" v-model="synced" />
+                    </div>
+                    <Label for="sync-content" class="text-sm cursor-pointer flex items-center gap-1.5">
+                        <Link2 class="h-4 w-4" />
+                        <span>Sync</span>
+                        <span class="flex items-center gap-1">
+                            <component v-for="op in otherSelectedPlatforms.slice(0, 3)" :key="op.id"
+                                :is="getPlatformIcon(op.platform)" class="h-4 w-4 text-neutral-600" />
+                            <span v-if="otherSelectedPlatforms.length > 3" class="text-muted-foreground">
+                                +{{ otherSelectedPlatforms.length - 3 }}
+                            </span>
+                        </span>
+                    </Label>
                 </div>
 
                 <!-- Schedule & Actions (only in edit mode) -->
                 <div v-if="!isReadOnly" class="flex items-center gap-3">
-                    <!-- Date/Time Picker -->
+                    <!-- DateTime Picker -->
                     <div class="flex items-center gap-2">
-                        <DatePicker
-                            name="scheduled_date"
-                            v-model="scheduledDate"
-                            class="w-[140px]"
-                        />
-                        <Input
-                            type="time"
-                            v-model="scheduledTime"
-                            class="w-[100px] h-9"
-                        />
+                        <DatePicker name="scheduled_datetime" v-model="scheduledDateTime" :show-time="true" />
                         <span class="text-xs text-muted-foreground">
                             {{ timezoneAbbr }}
                         </span>
@@ -813,33 +706,24 @@ const deletePost = () => {
 
                     <span class="text-muted-foreground">|</span>
 
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        :disabled="selectedPlatformIds.length === 0 || isSubmitting"
-                        @click="save"
-                    >
+                    <Button type="button" variant="outline" size="icon-sm" @click="deletePost"
+                        class="text-muted-foreground hover:text-destructive">
+                        <Trash2 class="h-4 w-4" />
+                    </Button>
+
+                    <Button type="button" variant="outline" size="sm"
+                        :disabled="selectedPlatformIds.length === 0 || isSubmitting" @click="save">
                         {{ isSubmitting ? 'Saving...' : 'Save' }}
                     </Button>
 
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        :disabled="!canSubmit || isSubmitting"
-                        @click="submit('scheduled')"
-                    >
+                    <Button type="button" variant="secondary" size="sm" :disabled="!canSubmit || isSubmitting"
+                        @click="submit('scheduled')">
                         <Clock class="mr-2 h-4 w-4" />
                         Schedule
                     </Button>
 
-                    <Button
-                        type="button"
-                        size="sm"
-                        :disabled="!canSubmit || isSubmitting"
-                        @click="submit('publishing')"
-                    >
+                    <Button type="button" size="sm" :disabled="!canSubmit || isSubmitting"
+                        @click="submit('publishing')">
                         <Send class="mr-2 h-4 w-4" />
                         Publish
                     </Button>
@@ -852,110 +736,120 @@ const deletePost = () => {
                 </div>
             </div>
 
-            <!-- Main Content Area -->
-            <div class="flex-1 overflow-auto">
-                <div v-if="activePlatform && selectedPlatformIds.length > 0" class="max-w-2xl mx-auto py-8 px-4">
-                    <!-- Sync Toggle (only in edit mode) -->
-                    <div v-if="!isReadOnly && selectedPlatformIds.length > 1" class="flex items-center justify-center gap-2 mb-6">
-                        <div @click.capture="handleSyncClick">
-                            <Switch id="sync-content" v-model="synced" />
-                        </div>
-                        <Label for="sync-content" class="text-sm cursor-pointer flex items-center gap-1.5">
-                            <Link2 class="h-4 w-4" />
-                            <span>Sync with</span>
-                            <span class="flex items-center gap-1">
-                                <img
-                                    v-for="op in otherSelectedPlatforms.slice(0, 3)"
-                                    :key="op.id"
-                                    :src="getPlatformLogo(op.platform)"
-                                    class="h-4 w-4 rounded"
-                                />
-                                <span v-if="otherSelectedPlatforms.length > 3" class="text-muted-foreground">
-                                    +{{ otherSelectedPlatforms.length - 3 }}
-                                </span>
-                            </span>
-                        </Label>
-                    </div>
+            <!-- Main Content Area - Split Layout -->
+            <div class="flex-1 overflow-hidden">
+                <div v-if="activePlatform && selectedPlatformIds.length > 0" class="h-full flex">
+                    <!-- Left Side: Form -->
+                    <div class="w-1/2 border-r overflow-y-auto">
+                        <div class="max-w-lg mx-auto py-8 px-6">
+                            <!-- Publication Result (read-only mode) -->
+                            <div v-if="isReadOnly" class="mb-6 space-y-3">
+                                <!-- Platform Status -->
+                                <div class="flex items-center justify-between p-4 rounded-lg border">
+                                    <div class="flex items-center gap-3">
+                                        <component :is="getPlatformIcon(activePlatform.platform)"
+                                            class="h-8 w-8 text-neutral-600" />
+                                        <div>
+                                            <p class="font-medium">{{ activePlatform.social_account.display_name }}</p>
+                                            <p class="text-sm text-muted-foreground">{{
+                                                getPlatformLabel(activePlatform.platform) }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <Badge :class="getStatusConfig(activePlatform.status).color">
+                                            <component :is="getStatusConfig(activePlatform.status).icon"
+                                                class="mr-1 h-3 w-3"
+                                                :class="{ 'animate-spin': activePlatform.status === 'publishing' }" />
+                                            {{ getStatusConfig(activePlatform.status).label }}
+                                        </Badge>
+                                        <a v-if="activePlatform.platform_url" :href="activePlatform.platform_url"
+                                            target="_blank"
+                                            class="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground">
+                                            <ExternalLink class="h-4 w-4" />
+                                        </a>
+                                    </div>
+                                </div>
 
-                    <!-- Publication Result (read-only mode) -->
-                    <div v-if="isReadOnly" class="mb-6 space-y-3">
-                        <!-- Platform Status -->
-                        <div class="flex items-center justify-between p-4 rounded-lg border">
-                            <div class="flex items-center gap-3">
-                                <img
-                                    :src="getPlatformLogo(activePlatform.platform)"
-                                    :alt="getPlatformLabel(activePlatform.platform)"
-                                    class="h-8 w-8 rounded"
-                                />
-                                <div>
-                                    <p class="font-medium">{{ activePlatform.social_account.display_name }}</p>
-                                    <p class="text-sm text-muted-foreground">{{ getPlatformLabel(activePlatform.platform) }}</p>
+                                <!-- Error Message -->
+                                <Alert v-if="activePlatform.error_message" variant="destructive">
+                                    <AlertCircle class="h-4 w-4" />
+                                    <AlertDescription>
+                                        {{ activePlatform.error_message }}
+                                    </AlertDescription>
+                                </Alert>
+
+                                <!-- Published Date -->
+                                <p v-if="activePlatform.published_at" class="text-sm text-muted-foreground text-center">
+                                    Published {{ formatDateTime(activePlatform.published_at) }}
+                                </p>
+
+                                <!-- Read-only content display -->
+                                <div class="mt-6 space-y-4">
+                                    <!-- Media -->
+                                    <div v-if="currentPlatformMedia.length > 0">
+                                        <p class="text-sm font-medium mb-2">Media</p>
+                                        <div class="grid grid-cols-3 gap-2">
+                                            <div v-for="item in currentPlatformMedia" :key="item.id"
+                                                class="aspect-square rounded-lg overflow-hidden bg-muted">
+                                                <img v-if="item.type === 'image'" :src="item.url"
+                                                    :alt="item.original_filename" class="w-full h-full object-cover" />
+                                                <video v-else :src="item.url"
+                                                    class="w-full h-full object-cover bg-black" muted />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Content -->
+                                    <div>
+                                        <p class="text-sm font-medium mb-2">Caption</p>
+                                        <p class="text-sm text-muted-foreground whitespace-pre-wrap">
+                                            {{ getContent(activePlatform.id) || 'No caption' }}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <Badge :class="getStatusConfig(activePlatform.status).color">
-                                    <component :is="getStatusConfig(activePlatform.status).icon" class="mr-1 h-3 w-3" :class="{ 'animate-spin': activePlatform.status === 'publishing' }" />
-                                    {{ getStatusConfig(activePlatform.status).label }}
-                                </Badge>
-                                <a
-                                    v-if="activePlatform.platform_url"
-                                    :href="activePlatform.platform_url"
-                                    target="_blank"
-                                    class="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
-                                >
-                                    <ExternalLink class="h-4 w-4" />
-                                </a>
-                            </div>
+
+                            <!-- Edit Form -->
+                            <PostForm v-else :platform="activePlatform.platform"
+                                :content="getContent(activePlatform.id)" :media="currentPlatformMedia"
+                                :content-type="currentContentType"
+                                :content-type-options="getContentTypeOptions(activePlatform.platform)"
+                                :meta="platformMeta[activePlatform.id]"
+                                :platform-data="getPlatformData(activePlatform.platform)"
+                                :char-count="contentValidation[activePlatform.id]?.charCount || 0"
+                                :max-length="contentValidation[activePlatform.id]?.maxLength || 5000"
+                                :is-valid="contentValidation[activePlatform.id]?.valid ?? false"
+                                :validation-message="contentValidation[activePlatform.id]?.message || ''"
+                                :is-uploading="isUploading[activePlatform.id]" :disabled="isReadOnly"
+                                @update:content="setContent(activePlatform.id, $event)"
+                                @update:content-type="setContentType(activePlatform.id, $event)"
+                                @update:meta="platformMeta[activePlatform.id] = $event"
+                                @upload="uploadMedia($event, activePlatform.id)"
+                                @remove-media="removeMedia(activePlatform.id, $event)"
+                                @reorder-media="reorderMedia(activePlatform.id, $event)" />
+
+                            <!-- Media Validation Errors -->
+                            <Alert v-if="!isReadOnly && mediaValidation.length > 0" variant="destructive" class="mt-4">
+                                <AlertCircle class="h-4 w-4" />
+                                <AlertDescription>
+                                    <ul class="list-disc list-inside">
+                                        <li v-for="error in mediaValidation" :key="error">{{ error }}</li>
+                                    </ul>
+                                </AlertDescription>
+                            </Alert>
                         </div>
-
-                        <!-- Error Message -->
-                        <Alert v-if="activePlatform.error_message" variant="destructive">
-                            <AlertCircle class="h-4 w-4" />
-                            <AlertDescription>
-                                {{ activePlatform.error_message }}
-                            </AlertDescription>
-                        </Alert>
-
-                        <!-- Published Date -->
-                        <p v-if="activePlatform.published_at" class="text-sm text-muted-foreground text-center">
-                            Published {{ formatDateTime(activePlatform.published_at) }}
-                        </p>
                     </div>
 
-                    <!-- Platform Preview -->
-                    <PlatformPreview
-                        :key="activePlatform.id"
-                        :platform="activePlatform.platform"
-                        :social-account="activePlatform.social_account"
-                        :content="getContent(activePlatform.id)"
-                        :media="currentPlatformMedia"
-                        :content-type="currentContentType"
-                        :content-type-options="getContentTypeOptions(activePlatform.platform)"
-                        :meta="platformMeta[activePlatform.id]"
-                        :platform-data="getPlatformData(activePlatform.platform)"
-                        :char-count="contentValidation[activePlatform.id]?.charCount || 0"
-                        :max-length="contentValidation[activePlatform.id]?.maxLength || 5000"
-                        :is-valid="contentValidation[activePlatform.id]?.valid ?? false"
-                        :validation-message="contentValidation[activePlatform.id]?.message || ''"
-                        :is-uploading="isUploading[activePlatform.id]"
-                        :readonly="isReadOnly"
-                        @update:content="setContent(activePlatform.id, $event)"
-                        @update:content-type="setContentType(activePlatform.id, $event)"
-                        @update:meta="platformMeta[activePlatform.id] = $event"
-                        @upload="handleFileUpload($event, activePlatform.id)"
-                        @remove-media="removeMedia(activePlatform.id, $event)"
-                    />
-
-                    <!-- Media Validation Errors (only in edit mode) -->
-                    <Alert v-if="!isReadOnly && mediaValidation.length > 0" variant="destructive" class="mt-4">
-                        <AlertCircle class="h-4 w-4" />
-                        <AlertDescription>
-                            <ul class="list-disc list-inside">
-                                <li v-for="error in mediaValidation" :key="error">{{ error }}</li>
-                            </ul>
-                        </AlertDescription>
-                    </Alert>
-
+                    <!-- Right Side: Phone Preview -->
+                    <div class="w-1/2 bg-muted/30 overflow-y-auto">
+                        <div class="flex items-center justify-center min-h-full py-8 px-4">
+                            <PhoneMockup>
+                                <PlatformPreview :key="activePlatform.id" :platform="activePlatform.platform"
+                                    :social-account="activePlatform.social_account"
+                                    :content="getContent(activePlatform.id)" :media="currentPlatformMedia"
+                                    :content-type="currentContentType" />
+                            </PhoneMockup>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Empty State -->
@@ -966,14 +860,10 @@ const deletePost = () => {
                     <h3 class="text-lg font-semibold mb-2">No platforms selected</h3>
                     <p class="text-muted-foreground mb-4">Select at least one platform to create your post</p>
                     <div class="flex flex-wrap justify-center gap-2">
-                        <button
-                            v-for="pp in post.post_platforms"
-                            :key="pp.id"
-                            type="button"
+                        <button v-for="pp in post.post_platforms" :key="pp.id" type="button"
                             @click="togglePlatform(pp.id)"
-                            class="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-muted transition-colors"
-                        >
-                            <img :src="getPlatformLogo(pp.platform)" class="h-5 w-5" />
+                            class="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-muted transition-colors">
+                            <component :is="getPlatformIcon(pp.platform)" class="h-5 w-5 text-neutral-600" />
                             <span class="text-sm">{{ pp.social_account.display_name }}</span>
                         </button>
                     </div>
@@ -982,13 +872,9 @@ const deletePost = () => {
         </div>
     </AppLayout>
 
-    <ConfirmDeleteModal
-        ref="deleteModal"
-        title="Delete Post"
-        description="Are you sure you want to delete this post? This action cannot be undone."
-        action="Delete"
-        cancel="Cancel"
-    />
+    <ConfirmDeleteModal ref="deleteModal" title="Delete Post"
+        description="Are you sure you want to delete this post? This action cannot be undone." action="Delete"
+        cancel="Cancel" />
 
     <!-- Enable Sync Confirmation Dialog -->
     <AlertDialog :open="showEnableSyncDialog" @update:open="showEnableSyncDialog = $event">
@@ -1000,7 +886,8 @@ const deletePost = () => {
                 <AlertDialogDescription>
                     If you enable syncing, you'll lose all edits made specifically to other platforms.
                     <br /><br />
-                    Are you sure you want to sync with the {{ getPlatformLabel(firstSelectedPlatform?.platform || '') }} version?
+                    Are you sure you want to sync with the {{ getPlatformLabel(firstSelectedPlatform?.platform || '') }}
+                    version?
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -1021,7 +908,8 @@ const deletePost = () => {
                     Disable sync?
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                    Each platform will keep its current content, but future edits will only apply to the platform you're editing.
+                    Each platform will keep its current content, but future edits will only apply to the platform you're
+                    editing.
                     <br /><br />
                     You'll be able to customize the content for each platform individually.
                 </AlertDialogDescription>
@@ -1045,27 +933,19 @@ const deletePost = () => {
                 </DialogDescription>
             </DialogHeader>
             <div class="grid grid-cols-2 gap-3 py-4">
-                <div
-                    v-for="pp in post.post_platforms"
-                    :key="pp.id"
-                    class="flex items-center justify-between p-3 rounded-lg border"
-                >
+                <div v-for="pp in post.post_platforms" :key="pp.id"
+                    class="flex items-center justify-between p-3 rounded-lg border">
                     <div class="flex items-center gap-3">
                         <div class="relative shrink-0">
-                            <img
-                                v-if="pp.social_account.avatar_url"
-                                :src="pp.social_account.avatar_url"
-                                :alt="pp.social_account.display_name"
-                                class="h-10 w-10 rounded-full object-cover"
-                            />
+                            <img v-if="pp.social_account.avatar_url" :src="pp.social_account.avatar_url"
+                                :alt="pp.social_account.display_name" class="h-10 w-10 rounded-full object-cover" />
                             <div v-else class="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
                                 <span class="text-sm font-medium">{{ pp.social_account.display_name?.charAt(0) }}</span>
                             </div>
-                            <img
-                                :src="getPlatformLogo(pp.platform)"
-                                :alt="pp.platform"
-                                class="absolute -bottom-1 -right-1 h-5 w-5 rounded ring-2 ring-background"
-                            />
+                            <div
+                                class="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-background ring-2 ring-background flex items-center justify-center">
+                                <component :is="getPlatformIcon(pp.platform)" class="h-4 w-4 text-neutral-600" />
+                            </div>
                         </div>
                         <div class="min-w-0">
                             <p class="font-medium text-sm truncate">{{ pp.social_account.display_name }}</p>

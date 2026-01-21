@@ -27,38 +27,15 @@ interface MediaItem {
     original_filename: string;
 }
 
-interface ContentTypeOption {
-    value: string;
-    label: string;
-    description: string;
-}
-
 interface Props {
     platform: string;
     socialAccount: SocialAccount;
     content: string;
     media: MediaItem[];
     contentType?: string;
-    contentTypeOptions?: ContentTypeOption[];
-    meta?: Record<string, any>;
-    platformData?: Record<string, any>;
-    charCount: number;
-    maxLength: number;
-    isValid: boolean;
-    validationMessage: string;
-    isUploading?: boolean;
-    readonly?: boolean;
 }
 
 const props = defineProps<Props>();
-
-const emit = defineEmits<{
-    'update:content': [value: string];
-    'update:contentType': [value: string];
-    'update:meta': [value: Record<string, any>];
-    'upload': [event: Event];
-    'remove-media': [mediaId: string];
-}>();
 
 const previewComponent = computed(() => {
     switch (props.platform) {
@@ -87,26 +64,6 @@ const previewComponent = computed(() => {
             return LinkedInPreview;
     }
 });
-
-const handleContentUpdate = (value: string) => {
-    emit('update:content', value);
-};
-
-const handleContentTypeUpdate = (value: string) => {
-    emit('update:contentType', value);
-};
-
-const handleMetaUpdate = (value: Record<string, any>) => {
-    emit('update:meta', value);
-};
-
-const handleUpload = (event: Event) => {
-    emit('upload', event);
-};
-
-const handleRemoveMedia = (mediaId: string) => {
-    emit('remove-media', mediaId);
-};
 </script>
 
 <template>
@@ -116,19 +73,5 @@ const handleRemoveMedia = (mediaId: string) => {
         :content="content"
         :media="media"
         :content-type="contentType"
-        :content-type-options="contentTypeOptions"
-        :meta="meta"
-        :platform-data="platformData"
-        :char-count="charCount"
-        :max-length="maxLength"
-        :is-valid="isValid"
-        :validation-message="validationMessage"
-        :is-uploading="isUploading"
-        :readonly="readonly"
-        @update:content="handleContentUpdate"
-        @update:content-type="handleContentTypeUpdate"
-        @update:meta="handleMetaUpdate"
-        @upload="handleUpload"
-        @remove-media="handleRemoveMedia"
     />
 </template>

@@ -64,7 +64,7 @@ trait HasMedia
      * Add media to a collection.
      * If the collection is configured as 'single', it will clear existing media first.
      */
-    public function addMedia(UploadedFile $file, string $collection = 'default', array $meta = []): Media
+    public function addMedia(UploadedFile $file, string $collection = 'default', array $meta = [], ?string $groupId = null): Media
     {
         if ($this->isSingleMediaCollection($collection)) {
             $this->clearMediaCollection($collection);
@@ -80,6 +80,7 @@ trait HasMedia
         Storage::put($path, file_get_contents($file->getPathname()));
 
         return $this->media()->create([
+            'group_id' => $groupId ?? Str::uuid()->toString(),
             'collection' => $collection,
             'type' => $type,
             'path' => $path,
@@ -94,7 +95,7 @@ trait HasMedia
     /**
      * Add media from a file path (used for chunked uploads).
      */
-    public function addMediaFromPath(string $filePath, string $originalFilename, string $collection = 'default', array $meta = []): Media
+    public function addMediaFromPath(string $filePath, string $originalFilename, string $collection = 'default', array $meta = [], ?string $groupId = null): Media
     {
         if ($this->isSingleMediaCollection($collection)) {
             $this->clearMediaCollection($collection);
@@ -120,6 +121,7 @@ trait HasMedia
         }
 
         return $this->media()->create([
+            'group_id' => $groupId ?? Str::uuid()->toString(),
             'collection' => $collection,
             'type' => $type,
             'path' => $storagePath,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { watch } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -66,18 +67,18 @@ const submit = () => {
     <Dialog v-model:open="open">
         <DialogContent class="sm:max-w-md">
             <DialogHeader>
-                <DialogTitle>Edit Label</DialogTitle>
+                <DialogTitle>{{ $t('labels.edit.title') }}</DialogTitle>
                 <DialogDescription>
-                    Update the name and color for this label
+                    {{ $t('labels.edit.description') }}
                 </DialogDescription>
             </DialogHeader>
             <form @submit.prevent="submit" class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="edit-name">Name</Label>
+                    <Label for="edit-name">{{ $t('labels.edit.name') }}</Label>
                     <Input
                         id="edit-name"
                         v-model="form.name"
-                        placeholder="Enter label name..."
+                        :placeholder="trans('labels.edit.name_placeholder')"
                         :class="{ 'border-destructive': form.errors.name }"
                     />
                     <p v-if="form.errors.name" class="text-sm text-destructive">
@@ -86,7 +87,7 @@ const submit = () => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label>Color</Label>
+                    <Label>{{ $t('labels.edit.color') }}</Label>
                     <div class="flex flex-wrap gap-2">
                         <button
                             v-for="color in colors"
@@ -109,7 +110,7 @@ const submit = () => {
 
                 <DialogFooter>
                     <Button type="submit" :disabled="form.processing">
-                        {{ form.processing ? 'Saving...' : 'Save Changes' }}
+                        {{ form.processing ? $t('labels.edit.submitting') : $t('labels.edit.submit') }}
                     </Button>
                 </DialogFooter>
             </form>

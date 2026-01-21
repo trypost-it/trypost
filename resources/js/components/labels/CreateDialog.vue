@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -56,18 +57,18 @@ const handleOpenChange = (value: boolean) => {
     <Dialog :open="open" @update:open="handleOpenChange">
         <DialogContent class="sm:max-w-md">
             <DialogHeader>
-                <DialogTitle>Create Label</DialogTitle>
+                <DialogTitle>{{ $t('labels.create.title') }}</DialogTitle>
                 <DialogDescription>
-                    Give your label a name and pick a color
+                    {{ $t('labels.create.description') }}
                 </DialogDescription>
             </DialogHeader>
             <form @submit.prevent="submit" class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="create-name">Name</Label>
+                    <Label for="create-name">{{ $t('labels.create.name') }}</Label>
                     <Input
                         id="create-name"
                         v-model="form.name"
-                        placeholder="Enter label name..."
+                        :placeholder="trans('labels.create.name_placeholder')"
                         :class="{ 'border-destructive': form.errors.name }"
                     />
                     <p v-if="form.errors.name" class="text-sm text-destructive">
@@ -76,7 +77,7 @@ const handleOpenChange = (value: boolean) => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label>Color</Label>
+                    <Label>{{ $t('labels.create.color') }}</Label>
                     <div class="flex flex-wrap gap-2">
                         <button
                             v-for="color in colors"
@@ -99,7 +100,7 @@ const handleOpenChange = (value: boolean) => {
 
                 <DialogFooter>
                     <Button type="submit" :disabled="form.processing">
-                        {{ form.processing ? 'Creating...' : 'Create Label' }}
+                        {{ form.processing ? $t('labels.create.submitting') : $t('labels.create.submit') }}
                     </Button>
                 </DialogFooter>
             </form>

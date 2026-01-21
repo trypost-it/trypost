@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { IconPlus, IconTag, IconPencil, IconTrash } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
@@ -37,7 +38,7 @@ const isEditDialogOpen = ref(false);
 const editingLabel = ref<Label | null>(null);
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Labels', href: labelsIndex.url() },
+    { title: trans('labels.title'), href: labelsIndex.url() },
 ];
 
 const openEditDialog = (label: Label) => {
@@ -53,20 +54,20 @@ const handleDelete = (labelId: string) => {
 </script>
 
 <template>
-    <Head title="Labels" />
+    <Head :title="$t('labels.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-6">
             <div v-if="labels.length > 0" class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Labels</h1>
+                    <h1 class="text-2xl font-bold tracking-tight">{{ $t('labels.title') }}</h1>
                     <p class="text-muted-foreground">
-                        Create labels to organize and categorize your posts
+                        {{ $t('labels.description') }}
                     </p>
                 </div>
                 <Button @click="isCreateDialogOpen = true">
                     <IconPlus class="mr-2 h-4 w-4" />
-                    New Label
+                    {{ $t('labels.new_label') }}
                 </Button>
             </div>
 
@@ -74,13 +75,13 @@ const handleDelete = (labelId: string) => {
                 <div class="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
                     <IconTag class="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 class="text-lg font-semibold mb-2">No labels yet</h3>
+                <h3 class="text-lg font-semibold mb-2">{{ $t('labels.no_labels_yet') }}</h3>
                 <p class="text-muted-foreground mb-4 text-center max-w-sm">
-                    Create labels to organize and categorize your posts
+                    {{ $t('labels.description') }}
                 </p>
                 <Button @click="isCreateDialogOpen = true">
                     <IconPlus class="mr-2 h-4 w-4" />
-                    Create your first label
+                    {{ $t('labels.create_first_label') }}
                 </Button>
             </div>
 
@@ -125,9 +126,9 @@ const handleDelete = (labelId: string) => {
 
     <ConfirmDeleteModal
         ref="deleteModal"
-        title="Delete Label"
-        description="Are you sure you want to delete this label? This action cannot be undone."
-        action="Delete"
-        cancel="Cancel"
+        :title="$t('labels.delete.title')"
+        :description="$t('labels.delete.description')"
+        :action="$t('labels.delete.confirm')"
+        :cancel="$t('labels.delete.cancel')"
     />
 </template>

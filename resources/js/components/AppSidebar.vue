@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { IconBrandDiscord, IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconAffiliate, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop, IconLanguage } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { Button } from '@/components/ui/button';
 import { create as createPost } from '@/actions/App/Http/Controllers/PostController';
 import { updateLanguage } from '@/actions/App/Http/Controllers/Settings/ProfileController';
@@ -72,56 +73,56 @@ const { getInitials } = useInitials();
 const { appearance, updateAppearance } = useAppearance();
 const { state: sidebarState } = useSidebar();
 
-const themeLabels: Record<string, string> = {
-    light: 'Light',
-    dark: 'Dark',
-    system: 'System',
-};
+const themeLabels = computed(() => ({
+    light: trans('sidebar.theme_light'),
+    dark: trans('sidebar.theme_dark'),
+    system: trans('sidebar.theme_system'),
+}));
 
-const postsNavItems: NavItem[] = [
+const postsNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Calendar',
+        title: trans('sidebar.posts.calendar'),
         href: calendar.url(),
         icon: IconCalendar,
     },
     {
-        title: 'All',
+        title: trans('sidebar.posts.all'),
         href: postsIndex.url(),
         icon: IconFileText,
     },
     {
-        title: 'Scheduled',
+        title: trans('sidebar.posts.scheduled'),
         href: postsIndex.url('scheduled'),
         icon: IconClock,
     },
     {
-        title: 'Posted',
+        title: trans('sidebar.posts.posted'),
         href: postsIndex.url('published'),
         icon: IconFileCheck,
     },
     {
-        title: 'Drafts',
+        title: trans('sidebar.posts.drafts'),
         href: postsIndex.url('draft'),
         icon: IconPencil,
     },
-];
+]);
 
 const canManageWorkspace = computed(() => auth.value.role !== 'member');
 
 const configNavItems = computed(() => {
     const items: NavItem[] = [
         {
-            title: 'Connections',
+            title: trans('sidebar.config.connections'),
             href: accounts.url(),
             icon: IconAffiliate,
         },
         {
-            title: 'Hashtags',
+            title: trans('sidebar.config.hashtags'),
             href: hashtags.url(),
             icon: IconHash,
         },
         {
-            title: 'Labels',
+            title: trans('sidebar.config.labels'),
             href: labels.url(),
             icon: IconTag,
         },
@@ -129,7 +130,7 @@ const configNavItems = computed(() => {
 
     if (canManageWorkspace.value) {
         items.push({
-            title: 'Settings',
+            title: trans('sidebar.config.settings'),
             href: workspaceSettings.url(),
             icon: IconSettings,
         });
@@ -138,28 +139,28 @@ const configNavItems = computed(() => {
     return items;
 });
 
-const supportNavItems: NavItem[] = [
+const supportNavItems = computed<NavItem[]>(() => [
     {
-        title: 'Discord',
+        title: trans('sidebar.support.discord'),
         href: 'https://trypost.it/discord',
         icon: IconBrandDiscord,
     },
     {
-        title: 'Share feedback',
+        title: trans('sidebar.support.share_feedback'),
         href: 'https://github.com/trypost-it/trypost/discussions',
         icon: IconMessageCircle,
     },
     {
-        title: 'Last Updates',
+        title: trans('sidebar.support.last_updates'),
         href: 'https://github.com/trypost-it/trypost/releases',
         icon: IconBell,
     },
     {
-        title: 'Docs',
+        title: trans('sidebar.support.docs'),
         href: 'https://docs.trypost.it',
         icon: IconBook,
     },
-];
+]);
 
 function switchWorkspace(workspace: Workspace) {
     router.post(switchMethod.url(workspace.id), {}, {
@@ -206,7 +207,7 @@ function handleLogout() {
                                 <div class="grid flex-1 text-left text-sm leading-tight">
                                     <span class="truncate font-semibold">{{ auth.user.name }}</span>
                                     <span class="truncate text-xs text-muted-foreground">{{ currentWorkspace?.name ||
-                                        'Select workspace' }}</span>
+                                        $t('sidebar.select_workspace') }}</span>
                                 </div>
                                 <IconSelector class="ml-auto size-4" />
                             </SidebarMenuButton>
@@ -237,7 +238,7 @@ function handleLogout() {
                                 <DropdownMenuSubTrigger>
                                     <img v-if="currentWorkspace?.logo.url" :src="currentWorkspace.logo.url"
                                         :alt="currentWorkspace.name" class="mr-2 size-4 rounded-full object-cover" />
-                                    <span>Workspace: {{ currentWorkspace?.name || 'Select' }}</span>
+                                    <span>{{ currentWorkspace ? $t('sidebar.workspace', { name: currentWorkspace.name }) : $t('sidebar.workspace_select') }}</span>
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
@@ -253,7 +254,7 @@ function handleLogout() {
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem class="cursor-pointer gap-2" @click="createWorkspace">
                                             <IconPlus class="size-4" />
-                                            <span>Create workspace</span>
+                                            <span>{{ $t('sidebar.create_workspace') }}</span>
                                         </DropdownMenuItem>
                                     </DropdownMenuSubContent>
                                 </DropdownMenuPortal>
@@ -267,7 +268,7 @@ function handleLogout() {
                                     <IconSun v-if="appearance === 'light'" class="mr-2 size-4" />
                                     <IconMoon v-else-if="appearance === 'dark'" class="mr-2 size-4" />
                                     <IconDeviceDesktop v-else class="mr-2 size-4" />
-                                    <span>Theme: {{ themeLabels[appearance] }}</span>
+                                    <span>{{ $t('sidebar.theme', { name: themeLabels[appearance] }) }}</span>
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
@@ -275,15 +276,15 @@ function handleLogout() {
                                             @update:model-value="updateAppearance">
                                             <DropdownMenuRadioItem value="light">
                                                 <IconSun class="mr-2 size-4" />
-                                                <span>Light</span>
+                                                <span>{{ $t('sidebar.theme_light') }}</span>
                                             </DropdownMenuRadioItem>
                                             <DropdownMenuRadioItem value="dark">
                                                 <IconMoon class="mr-2 size-4" />
-                                                <span>Dark</span>
+                                                <span>{{ $t('sidebar.theme_dark') }}</span>
                                             </DropdownMenuRadioItem>
                                             <DropdownMenuRadioItem value="system">
                                                 <IconDeviceDesktop class="mr-2 size-4" />
-                                                <span>System</span>
+                                                <span>{{ $t('sidebar.theme_system') }}</span>
                                             </DropdownMenuRadioItem>
                                         </DropdownMenuRadioGroup>
                                     </DropdownMenuSubContent>
@@ -296,7 +297,7 @@ function handleLogout() {
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger>
                                     <IconLanguage class="mr-2 size-4" />
-                                    <span>Language: {{ currentLanguage?.name || 'Select' }}</span>
+                                    <span>{{ currentLanguage ? $t('sidebar.language', { name: currentLanguage.name }) : $t('sidebar.language_select') }}</span>
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
@@ -318,7 +319,7 @@ function handleLogout() {
                                 <DropdownMenuItem as-child>
                                     <Link class="cursor-pointer" :href="editProfile()">
                                         <IconUser class="mr-2 size-4" />
-                                        Profile
+                                        {{ $t('sidebar.profile') }}
                                     </Link>
                                 </DropdownMenuItem>
                             </DropdownMenuGroup>
@@ -329,7 +330,7 @@ function handleLogout() {
                             <DropdownMenuItem as-child>
                                 <Link class="w-full cursor-pointer" :href="logout()" @click="handleLogout" as="button">
                                     <IconLogout class="mr-2 size-4" />
-                                    Log out
+                                    {{ $t('sidebar.log_out') }}
                                 </Link>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -344,13 +345,13 @@ function handleLogout() {
                 <Link :href="createPost.url()">
                     <Button :size="sidebarState === 'collapsed' ? 'icon' : 'default'" class="w-full">
                         <IconPlus class="size-4" />
-                        <span v-if="sidebarState === 'expanded'">Create post</span>
+                        <span v-if="sidebarState === 'expanded'">{{ $t('sidebar.create_post') }}</span>
                     </Button>
                 </Link>
             </div>
 
             <SidebarGroup v-if="currentWorkspace">
-                <SidebarGroupLabel>Posts</SidebarGroupLabel>
+                <SidebarGroupLabel>{{ $t('sidebar.groups.posts') }}</SidebarGroupLabel>
                 <SidebarGroupContent>
                     <SidebarMenu>
                         <SidebarMenuItem v-for="item in postsNavItems" :key="item.title">
@@ -367,7 +368,7 @@ function handleLogout() {
             </SidebarGroup>
 
             <SidebarGroup v-if="currentWorkspace">
-                <SidebarGroupLabel>Configuration</SidebarGroupLabel>
+                <SidebarGroupLabel>{{ $t('sidebar.groups.configuration') }}</SidebarGroupLabel>
                 <SidebarGroupContent>
                     <SidebarMenu>
                         <SidebarMenuItem v-for="item in configNavItems" :key="item.title">
@@ -384,7 +385,7 @@ function handleLogout() {
             </SidebarGroup>
 
             <SidebarGroup v-if="currentWorkspace">
-                <SidebarGroupLabel>Support</SidebarGroupLabel>
+                <SidebarGroupLabel>{{ $t('sidebar.groups.support') }}</SidebarGroupLabel>
                 <SidebarGroupContent>
                     <SidebarMenu>
                         <SidebarMenuItem v-for="item in supportNavItems" :key="item.title">

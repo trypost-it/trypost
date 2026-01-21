@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Language;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -37,6 +38,10 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+
+        if ($user) {
+            App::setLocale($user->language->code);
+        }
 
         $currentWorkspace = $user?->currentWorkspace;
         $currentRole = null;

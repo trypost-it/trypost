@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { IconPlus, IconHash, IconPencil, IconTrash } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
@@ -37,7 +38,7 @@ const isEditDialogOpen = ref(false);
 const editingHashtag = ref<Hashtag | null>(null);
 
 const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Hashtags', href: hashtagsIndex.url() },
+    { title: trans('hashtags.title'), href: hashtagsIndex.url() },
 ];
 
 const openEditDialog = (hashtag: Hashtag) => {
@@ -57,20 +58,20 @@ const getHashtagCount = (hashtags: string): number => {
 </script>
 
 <template>
-    <Head title="Hashtags" />
+    <Head :title="$t('hashtags.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col gap-6 p-6">
             <div v-if="hashtags.length > 0" class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Hashtags</h1>
+                    <h1 class="text-2xl font-bold tracking-tight">{{ $t('hashtags.title') }}</h1>
                     <p class="text-muted-foreground">
-                        Create hashtag groups to quickly add to your posts
+                        {{ $t('hashtags.description') }}
                     </p>
                 </div>
                 <Button @click="isCreateDialogOpen = true">
                     <IconPlus class="mr-2 h-4 w-4" />
-                    New Group
+                    {{ $t('hashtags.new_group') }}
                 </Button>
             </div>
 
@@ -78,13 +79,13 @@ const getHashtagCount = (hashtags: string): number => {
                 <div class="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
                     <IconHash class="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 class="text-lg font-semibold mb-2">No hashtag groups yet</h3>
+                <h3 class="text-lg font-semibold mb-2">{{ $t('hashtags.no_groups_yet') }}</h3>
                 <p class="text-muted-foreground mb-4 text-center max-w-sm">
-                    Create hashtag groups to quickly add popular hashtags to your posts
+                    {{ $t('hashtags.no_groups_description') }}
                 </p>
                 <Button @click="isCreateDialogOpen = true">
                     <IconPlus class="mr-2 h-4 w-4" />
-                    Create your first group
+                    {{ $t('hashtags.create_first_group') }}
                 </Button>
             </div>
 
@@ -113,7 +114,7 @@ const getHashtagCount = (hashtags: string): number => {
                             </div>
                         </div>
                         <CardDescription>
-                            {{ getHashtagCount(hashtag.hashtags) }} hashtags
+                            {{ $t('hashtags.hashtags_count', { count: getHashtagCount(hashtag.hashtags) }) }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -131,9 +132,9 @@ const getHashtagCount = (hashtags: string): number => {
 
     <ConfirmDeleteModal
         ref="deleteModal"
-        title="Delete Hashtag Group"
-        description="Are you sure you want to delete this hashtag group? This action cannot be undone."
-        action="Delete"
-        cancel="Cancel"
+        :title="$t('hashtags.delete.title')"
+        :description="$t('hashtags.delete.description')"
+        :action="$t('hashtags.delete.confirm')"
+        :cancel="$t('hashtags.delete.cancel')"
     />
 </template>

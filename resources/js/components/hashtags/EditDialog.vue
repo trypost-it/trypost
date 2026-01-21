@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 import { watch } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -55,18 +56,18 @@ const submit = () => {
     <Dialog v-model:open="open">
         <DialogContent class="sm:max-w-md">
             <DialogHeader>
-                <DialogTitle>Edit Hashtag Group</DialogTitle>
+                <DialogTitle>{{ $t('hashtags.edit.title') }}</DialogTitle>
                 <DialogDescription>
-                    Update the name and hashtags for this group
+                    {{ $t('hashtags.edit.description') }}
                 </DialogDescription>
             </DialogHeader>
             <form @submit.prevent="submit" class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="edit-name">Group Name</Label>
+                    <Label for="edit-name">{{ $t('hashtags.edit.name') }}</Label>
                     <Input
                         id="edit-name"
                         v-model="form.name"
-                        placeholder="e.g. Marketing, Travel, Food"
+                        :placeholder="trans('hashtags.edit.name_placeholder')"
                         :class="{ 'border-destructive': form.errors.name }"
                     />
                     <p v-if="form.errors.name" class="text-sm text-destructive">
@@ -75,16 +76,16 @@ const submit = () => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="edit-hashtags">Hashtags</Label>
+                    <Label for="edit-hashtags">{{ $t('hashtags.edit.hashtags') }}</Label>
                     <Textarea
                         id="edit-hashtags"
                         v-model="form.hashtags"
-                        placeholder="#marketing #socialmedia #business #growth"
+                        :placeholder="trans('hashtags.edit.hashtags_placeholder')"
                         rows="4"
                         :class="{ 'border-destructive': form.errors.hashtags }"
                     />
                     <p class="text-sm text-muted-foreground">
-                        Enter hashtags separated by spaces or commas. Include the # symbol.
+                        {{ $t('hashtags.edit.hashtags_hint') }}
                     </p>
                     <p v-if="form.errors.hashtags" class="text-sm text-destructive">
                         {{ form.errors.hashtags }}
@@ -93,7 +94,7 @@ const submit = () => {
 
                 <DialogFooter>
                     <Button type="submit" :disabled="form.processing">
-                        {{ form.processing ? 'Saving...' : 'Save Changes' }}
+                        {{ form.processing ? $t('hashtags.edit.submitting') : $t('hashtags.edit.submit') }}
                     </Button>
                 </DialogFooter>
             </form>

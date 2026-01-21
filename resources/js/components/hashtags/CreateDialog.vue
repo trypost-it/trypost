@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -44,18 +45,18 @@ const handleOpenChange = (value: boolean) => {
     <Dialog :open="open" @update:open="handleOpenChange">
         <DialogContent class="sm:max-w-md">
             <DialogHeader>
-                <DialogTitle>Create Hashtag Group</DialogTitle>
+                <DialogTitle>{{ $t('hashtags.create.title') }}</DialogTitle>
                 <DialogDescription>
-                    Give your group a name and add hashtags separated by spaces or commas
+                    {{ $t('hashtags.create.description') }}
                 </DialogDescription>
             </DialogHeader>
             <form @submit.prevent="submit" class="space-y-4">
                 <div class="space-y-2">
-                    <Label for="create-name">Group Name</Label>
+                    <Label for="create-name">{{ $t('hashtags.create.name') }}</Label>
                     <Input
                         id="create-name"
                         v-model="form.name"
-                        placeholder="e.g. Marketing, Travel, Food"
+                        :placeholder="trans('hashtags.create.name_placeholder')"
                         :class="{ 'border-destructive': form.errors.name }"
                     />
                     <p v-if="form.errors.name" class="text-sm text-destructive">
@@ -64,16 +65,16 @@ const handleOpenChange = (value: boolean) => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="create-hashtags">Hashtags</Label>
+                    <Label for="create-hashtags">{{ $t('hashtags.create.hashtags') }}</Label>
                     <Textarea
                         id="create-hashtags"
                         v-model="form.hashtags"
-                        placeholder="#marketing #socialmedia #business #growth"
+                        :placeholder="trans('hashtags.create.hashtags_placeholder')"
                         rows="4"
                         :class="{ 'border-destructive': form.errors.hashtags }"
                     />
                     <p class="text-sm text-muted-foreground">
-                        Enter hashtags separated by spaces or commas. Include the # symbol.
+                        {{ $t('hashtags.create.hashtags_hint') }}
                     </p>
                     <p v-if="form.errors.hashtags" class="text-sm text-destructive">
                         {{ form.errors.hashtags }}
@@ -82,7 +83,7 @@ const handleOpenChange = (value: boolean) => {
 
                 <DialogFooter>
                     <Button type="submit" :disabled="form.processing">
-                        {{ form.processing ? 'Creating...' : 'Create Group' }}
+                        {{ form.processing ? $t('hashtags.create.submitting') : $t('hashtags.create.submit') }}
                     </Button>
                 </DialogFooter>
             </form>

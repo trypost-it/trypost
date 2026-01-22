@@ -26,13 +26,6 @@ import {
     ComboboxTrigger,
 } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useMediaRules } from '@/composables/useMediaRules';
 
@@ -248,22 +241,21 @@ const handleDropOnItem = (e: DragEvent, targetId: string) => {
 
 <template>
     <div class="space-y-6">
-        <!-- Content Type Selector -->
+        <!-- Content Type Selector (Tabs Style) -->
         <div v-if="hasMultipleContentTypes">
-            <Label class="text-sm font-medium mb-2 block">Post Type</Label>
-            <Select :model-value="contentType" @update:model-value="emit('update:contentType', $event)">
-                <SelectTrigger class="w-full">
-                    <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem v-for="option in contentTypeOptions" :key="option.value" :value="option.value">
-                        <div class="flex flex-col">
-                            <span>{{ option.label }}</span>
-                            <span class="text-xs text-muted-foreground">{{ option.description }}</span>
-                        </div>
-                    </SelectItem>
-                </SelectContent>
-            </Select>
+            <Label class="text-sm font-medium mb-2 block">{{ $t('posts.form.post_type') }}</Label>
+            <div
+                class="bg-muted text-muted-foreground inline-flex h-10 w-auto items-center justify-start rounded-lg p-1">
+                <button v-for="option in contentTypeOptions" :key="option.value" type="button"
+                    @click="emit('update:contentType', option.value)" :class="[
+                        'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-all',
+                        contentType === option.value
+                            ? 'bg-background text-foreground shadow-sm'
+                            : 'hover:bg-background/50 hover:text-foreground'
+                    ]">
+                    {{ option.label }}
+                </button>
+            </div>
         </div>
 
         <!-- Pinterest Board Selector -->
@@ -282,7 +274,7 @@ const handleDropOnItem = (e: DragEvent, targetId: string) => {
                     </ComboboxAnchor>
                     <ComboboxList class="w-[var(--reka-combobox-trigger-width)]">
                         <div class="relative">
-                            <ComboboxInput placeholder="Search board..." class="pl-9" />
+                            <ComboboxInput placeholder="Search board..." />
                             <span class="absolute inset-y-0 start-0 flex items-center justify-center px-3">
                                 <IconSearch class="size-4 text-muted-foreground" />
                             </span>

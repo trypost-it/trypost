@@ -645,6 +645,7 @@ const deletePost = () => {
         <div class="flex flex-col h-screen">
             <!-- Top Bar with Tabs and Actions -->
             <div class="relative flex items-center justify-between border-b px-4 py-2 bg-background">
+
                 <!-- Platform Tabs -->
                 <div class="flex items-center gap-2">
                     <!-- Status Badge (when read-only) -->
@@ -653,6 +654,14 @@ const deletePost = () => {
                             :class="{ 'animate-spin': post.status === 'publishing' }" />
                         {{ getStatusConfig(post.status).label }}
                     </Badge>
+
+                    <!-- Sync Toggle (centered, only in edit mode with multiple platforms) -->
+                    <div v-if="!isReadOnly && selectedPlatformIds.length > 1" class="flex items-center gap-2">
+                        <Switch id="sync-content" v-model="synced" @click.capture="handleSyncClick" />
+                        <Label for="sync-content">
+                            {{ $t('posts.edit.sync') }}
+                        </Label>
+                    </div>
 
                     <div v-if="selectedPlatforms.length > 0"
                         class="bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]">
@@ -707,24 +716,6 @@ const deletePost = () => {
                     </TooltipProvider>
                 </div>
 
-                <!-- Sync Toggle (centered, only in edit mode with multiple platforms) -->
-                <div v-if="!isReadOnly && selectedPlatformIds.length > 1"
-                    class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-                    <div @click.capture="handleSyncClick">
-                        <Switch id="sync-content" v-model="synced" />
-                    </div>
-                    <Label for="sync-content" class="text-sm cursor-pointer flex items-center gap-1.5">
-                        <span>{{ $t('posts.edit.sync') }}</span>
-                        <span class="flex items-center gap-1">
-                            <component v-for="op in otherSelectedPlatforms.slice(0, 1)" :key="op.id"
-                                :is="getPlatformIcon(op.platform)" class="h-4 w-4 text-neutral-600" />
-                            <span v-if="otherSelectedPlatforms.length > 1" class="text-muted-foreground">
-                                +{{ otherSelectedPlatforms.length - 1 }}
-                            </span>
-                        </span>
-                    </Label>
-                </div>
-
                 <!-- Schedule & Actions (only in edit mode) -->
                 <div v-if="!isReadOnly" class="flex items-center gap-3">
                     <!-- DateTime Picker -->
@@ -747,8 +738,8 @@ const deletePost = () => {
                         {{ $t('posts.edit.schedule') }}
                     </Button>
 
-                    <Button type="button" size="sm"
-                        :disabled="!canSubmit || isSubmitting || isSaving" @click="submit('publishing')">
+                    <Button type="button" size="sm" :disabled="!canSubmit || isSubmitting || isSaving"
+                        @click="submit('publishing')">
                         {{ $t('posts.edit.publish') }}
                     </Button>
                 </div>
@@ -770,11 +761,11 @@ const deletePost = () => {
                         <!-- Autosave indicator -->
                         <div v-if="!isReadOnly && (isSaving || showSaved)" class="absolute top-4 left-6 z-10">
                             <span v-if="isSaving" class="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <IconLoader2 class="h-3 w-3 animate-spin" />
+                                <IconLoader2 class="h-4 w-4 animate-spin" />
                                 {{ $t('posts.edit.saving') }}
                             </span>
                             <span v-else-if="showSaved" class="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <IconCircleCheck class="h-3 w-3 text-green-500" />
+                                <IconCircleCheck class="h-4 w-4 text-green-500" />
                                 {{ $t('posts.edit.saved') }}
                             </span>
                         </div>
@@ -918,27 +909,16 @@ const deletePost = () => {
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>
-                    {{ $t('posts.edit.sync_enable.title', {
-                        platform: getPlatformLabel(firstSelectedPlatform?.platform
-                            || '')
-                    }) }}
+                    {{ $t('posts.edit.sync_enable.title') }}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                     {{ $t('posts.edit.sync_enable.description') }}
-                    <br /><br />
-                    {{ $t('posts.edit.sync_enable.confirm_question', {
-                        platform:
-                            getPlatformLabel(firstSelectedPlatform?.platform || '')
-                    }) }}
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>{{ $t('posts.edit.sync_enable.cancel') }}</AlertDialogCancel>
                 <AlertDialogAction @click="confirmEnableSync">
-                    {{ $t('posts.edit.sync_enable.action', {
-                        platform: getPlatformLabel(firstSelectedPlatform?.platform
-                            || '')
-                    }) }}
+                    {{ $t('posts.edit.sync_enable.action') }}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>

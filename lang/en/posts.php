@@ -17,6 +17,10 @@ return [
         'delete' => 'Delete post',
     ],
 
+    'form' => [
+        'post_type' => 'Post Type',
+    ],
+
     'status' => [
         'draft' => 'Draft',
         'scheduled' => 'Scheduled',
@@ -61,11 +65,10 @@ return [
         ],
 
         'sync_enable' => [
-            'title' => 'Discard text and sync with :platform?',
-            'description' => 'If you enable syncing, you\'ll lose all edits made specifically to other platforms.',
-            'confirm_question' => 'Are you sure you want to sync with the :platform version?',
+            'title' => 'Enable sync?',
+            'description' => 'All platforms will share the same content. Any custom edits made to individual platforms will be replaced with the current content.',
             'cancel' => 'Cancel',
-            'action' => 'Sync with :platform',
+            'action' => 'Enable sync',
         ],
 
         'sync_disable' => [

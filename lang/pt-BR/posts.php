@@ -17,6 +17,10 @@ return [
         'delete' => 'Excluir post',
     ],
 
+    'form' => [
+        'post_type' => 'Tipo de Post',
+    ],
+
     'status' => [
         'draft' => 'Rascunho',
         'scheduled' => 'Agendado',
@@ -61,11 +65,10 @@ return [
         ],
 
         'sync_enable' => [
-            'title' => 'Descartar texto e sincronizar com :platform?',
-            'description' => 'Se você ativar a sincronização, perderá todas as edições feitas especificamente para outras plataformas.',
-            'confirm_question' => 'Tem certeza que deseja sincronizar com a versão do :platform?',
+            'title' => 'Ativar sincronização?',
+            'description' => 'Todas as plataformas compartilharão o mesmo conteúdo. Qualquer edição personalizada feita em plataformas individuais será substituída pelo conteúdo atual.',
             'cancel' => 'Cancelar',
-            'action' => 'Sincronizar com :platform',
+            'action' => 'Ativar sincronização',
         ],
 
         'sync_disable' => [

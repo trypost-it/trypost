@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { IconBrandDiscord, IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconAffiliate, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop, IconLanguage } from '@tabler/icons-vue';
-import { trans } from 'laravel-vue-i18n';
+import { loadLanguageAsync, trans } from 'laravel-vue-i18n';
 import { Button } from '@/components/ui/button';
 import { create as createPost } from '@/actions/App/Http/Controllers/PostController';
 import { updateLanguage } from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { computed } from 'vue';
+import dayjs from '@/dayjs';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -169,8 +170,22 @@ function switchWorkspace(workspace: Workspace) {
 }
 
 function switchLanguage(languageId: string) {
+    const language = languages.value.find(l => l.id === languageId);
+    const languageCode = language?.code || 'en';
+    const previousLanguageCode = currentLanguage.value?.code || 'en';
+
+    // Set locales immediately before the request
+    loadLanguageAsync(languageCode);
+    dayjs.locale(languageCode.toLowerCase());
+
     router.patch(updateLanguage.url(), { language_id: languageId }, {
         preserveScroll: true,
+        preserveState: false,
+        onError: () => {
+            // Revert to previous locale if request fails
+            loadLanguageAsync(previousLanguageCode);
+            dayjs.locale(previousLanguageCode.toLowerCase());
+        },
     });
 }
 
@@ -238,7 +253,8 @@ function handleLogout() {
                                 <DropdownMenuSubTrigger>
                                     <img v-if="currentWorkspace?.logo.url" :src="currentWorkspace.logo.url"
                                         :alt="currentWorkspace.name" class="mr-2 size-4 rounded-full object-cover" />
-                                    <span>{{ currentWorkspace ? $t('sidebar.workspace', { name: currentWorkspace.name }) : $t('sidebar.workspace_select') }}</span>
+                                    <span>{{ currentWorkspace ? $t('sidebar.workspace', { name: currentWorkspace.name })
+                                        : $t('sidebar.workspace_select') }}</span>
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>
@@ -297,7 +313,8 @@ function handleLogout() {
                             <DropdownMenuSub>
                                 <DropdownMenuSubTrigger>
                                     <IconLanguage class="mr-2 size-4" />
-                                    <span>{{ currentLanguage ? $t('sidebar.language', { name: currentLanguage.name }) : $t('sidebar.language_select') }}</span>
+                                    <span>{{ currentLanguage ? $t('sidebar.language', { name: currentLanguage.name }) :
+                                        $t('sidebar.language_select') }}</span>
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuPortal>
                                     <DropdownMenuSubContent>

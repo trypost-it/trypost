@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { Head, Link, router, InfiniteScroll } from '@inertiajs/vue3';
-import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconPlus, IconEye, IconPencil, IconTrash } from '@tabler/icons-vue';
+import { Head, Link, InfiniteScroll } from '@inertiajs/vue3';
+import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconPlus, IconEye, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
+import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index as postsIndex, create as createPost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
@@ -140,10 +142,12 @@ const canEdit = (post: Post): boolean => {
     return ['draft', 'scheduled'].includes(post.status);
 };
 
+const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
+
 const handleDelete = (post: Post) => {
-    if (confirm(trans('posts.delete_confirm'))) {
-        router.delete(destroyPost.url(post.id));
-    }
+    deleteModal.value?.open({
+        url: destroyPost.url(post.id),
+    });
 };
 </script>
 
@@ -218,17 +222,33 @@ const handleDelete = (post: Post) => {
                                     </span>
                                 </div>
 
-                                <div class="flex items-center gap-1">
-                                    <Link :href="editPost.url(post.id)">
-                                        <Button variant="ghost" size="icon" class="h-8 w-8">
-                                            <IconEye class="h-4 w-4" />
-                                        </Button>
-                                    </Link>
-                                    <Button v-if="canEdit(post)" variant="ghost" size="icon" class="h-8 w-8"
-                                        @click="handleDelete(post)">
-                                        <IconTrash class="h-4 w-4 text-red-500" />
-                                    </Button>
-                                </div>
+                                <TooltipProvider>
+                                    <div class="flex items-center gap-1">
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Link :href="editPost.url(post.id)">
+                                                    <Button variant="ghost" size="icon" class="h-8 w-8">
+                                                        <IconEye class="h-4 w-4" />
+                                                    </Button>
+                                                </Link>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                {{ $t('posts.actions.view') }}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip v-if="canEdit(post)">
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon" class="h-8 w-8"
+                                                    @click="handleDelete(post)">
+                                                    <IconTrash class="h-4 w-4 text-red-500" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                {{ $t('posts.actions.delete') }}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </div>
+                                </TooltipProvider>
                             </div>
                         </CardContent>
                     </Card>
@@ -265,4 +285,12 @@ const handleDelete = (post: Post) => {
             </div>
         </div>
     </AppLayout>
+
+    <ConfirmDeleteModal
+        ref="deleteModal"
+        :title="$t('posts.edit.delete_modal.title')"
+        :description="$t('posts.edit.delete_modal.description')"
+        :action="$t('posts.edit.delete_modal.action')"
+        :cancel="$t('posts.edit.delete_modal.cancel')"
+    />
 </template>

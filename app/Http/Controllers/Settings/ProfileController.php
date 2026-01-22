@@ -59,6 +59,9 @@ class ProfileController extends Controller
             'language_id' => $request->language_id,
         ]);
 
+        // Refresh the user model to clear cached language relationship
+        $request->user()->refresh();
+
         session()->flash('flash.banner', 'Language updated successfully!');
         session()->flash('flash.bannerStyle', 'success');
 

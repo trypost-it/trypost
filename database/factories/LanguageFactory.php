@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Language>
-*/
+ */
 class LanguageFactory extends Factory
 {
     /**
@@ -18,7 +18,7 @@ class LanguageFactory extends Factory
     {
         return [
             'name' => 'English',
-            'code' => 'en-US',
+            'code' => 'en',
         ];
     }
 }

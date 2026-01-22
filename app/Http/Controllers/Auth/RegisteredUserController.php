@@ -47,7 +47,7 @@ class RegisteredUserController extends Controller
         $isInviteRegistration = str_contains($request->input('redirect', ''), '/invites/');
 
         $user = DB::transaction(function () use ($request, $isInviteRegistration) {
-            $defaultLanguage = Language::where('code', 'en-US')->first();
+            $defaultLanguage = Language::where('code', 'en')->first();
 
             $user = User::create([
                 'name' => $request->name,

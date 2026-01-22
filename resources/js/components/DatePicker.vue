@@ -181,7 +181,7 @@ const displayText = computed(() => {
             </Button>
         </PopoverTrigger>
         <PopoverContent class="w-auto p-0" :align="align">
-            <Calendar v-model="internalDate" :placeholder="internalDate" layout="month-and-year" locale="en-US"
+            <Calendar v-model="internalDate" :placeholder="internalDate" layout="month-and-year" locale="en"
                 calendar-label="Date picker" initial-focus />
             <!-- Time Picker -->
             <div v-if="showTime" class="border-t p-3">

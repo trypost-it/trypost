@@ -18,13 +18,13 @@ import {
     IconAlertCircle,
     IconTrash,
     IconSend,
-    IconLink,
     IconDots,
     IconPlus,
     IconCircleCheck,
     IconExternalLink,
     IconLoader2,
 } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch, type Component } from 'vue';
 
 import debounce from '@/debounce';
@@ -132,10 +132,10 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Posts', href: postsIndex.url() },
-    { title: 'Edit Post', href: '#' },
-];
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
+    { title: trans('posts.title'), href: postsIndex.url() },
+    { title: trans('posts.edit.title'), href: '#' },
+]);
 
 // Reactive state for real-time updates
 const post = ref(props.post);
@@ -252,20 +252,7 @@ const getPlatformLogo = (platform: string): string => {
 };
 
 const getPlatformLabel = (platform: string): string => {
-    const labels: Record<string, string> = {
-        'linkedin': 'LinkedIn',
-        'linkedin-page': 'LinkedIn Page',
-        'x': 'X',
-        'tiktok': 'TikTok',
-        'youtube': 'YouTube Shorts',
-        'facebook': 'Facebook Page',
-        'instagram': 'Instagram',
-        'threads': 'Threads',
-        'pinterest': 'Pinterest',
-        'bluesky': 'Bluesky',
-        'mastodon': 'Mastodon',
-    };
-    return labels[platform] || platform;
+    return trans(`posts.platforms.${platform}`) || platform;
 };
 
 const getPlatformIcon = (platform: string): Component => {
@@ -286,15 +273,19 @@ const getPlatformIcon = (platform: string): Component => {
 };
 
 const getStatusConfig = (status: string) => {
-    const configs: Record<string, { label: string; color: string; icon: any }> = {
-        'draft': { label: 'Draft', color: 'bg-gray-100 text-gray-800', icon: IconClock },
-        'scheduled': { label: 'Scheduled', color: 'bg-blue-100 text-blue-800', icon: IconClock },
-        'publishing': { label: 'Publishing', color: 'bg-yellow-100 text-yellow-800', icon: IconLoader2 },
-        'published': { label: 'Published', color: 'bg-green-100 text-green-800', icon: IconCircleCheck },
-        'partially_published': { label: 'Partially Published', color: 'bg-orange-100 text-orange-800', icon: IconAlertCircle },
-        'failed': { label: 'Failed', color: 'bg-red-100 text-red-800', icon: IconAlertCircle },
+    const configs: Record<string, { color: string; icon: any }> = {
+        'draft': { color: 'bg-gray-100 text-gray-800', icon: IconClock },
+        'scheduled': { color: 'bg-blue-100 text-blue-800', icon: IconClock },
+        'publishing': { color: 'bg-yellow-100 text-yellow-800', icon: IconLoader2 },
+        'published': { color: 'bg-green-100 text-green-800', icon: IconCircleCheck },
+        'partially_published': { color: 'bg-orange-100 text-orange-800', icon: IconAlertCircle },
+        'failed': { color: 'bg-red-100 text-red-800', icon: IconAlertCircle },
     };
-    return configs[status] || configs['draft'];
+    const config = configs[status] || configs['draft'];
+    return {
+        ...config,
+        label: trans(`posts.status.${status}`),
+    };
 };
 
 const formatDateTime = (date: string | null): string => {
@@ -303,45 +294,18 @@ const formatDateTime = (date: string | null): string => {
 };
 
 // Content type options per platform
-const contentTypeOptions: Record<string, ContentTypeOption[]> = {
-    'instagram': [
-        { value: 'instagram_feed', label: 'Feed Post', description: 'Appears in your feed and profile' },
-        { value: 'instagram_reel', label: 'Reel', description: 'Short video up to 90 seconds' },
-        { value: 'instagram_story', label: 'Story', description: 'Disappears after 24 hours' },
-    ],
-    'linkedin': [
-        { value: 'linkedin_post', label: 'Post', description: 'Standard post with text and media' },
-        { value: 'linkedin_carousel', label: 'Carousel', description: 'Swipeable images' },
-    ],
-    'linkedin-page': [
-        { value: 'linkedin_page_post', label: 'Post', description: 'Standard post with text and media' },
-        { value: 'linkedin_page_carousel', label: 'Carousel', description: 'Swipeable images' },
-    ],
-    'facebook': [
-        { value: 'facebook_post', label: 'Post', description: 'Standard post on your page' },
-        { value: 'facebook_reel', label: 'Reel', description: 'Short video up to 90 seconds' },
-        { value: 'facebook_story', label: 'Story', description: 'Disappears after 24 hours' },
-    ],
-    'tiktok': [
-        { value: 'tiktok_video', label: 'Video', description: 'Short-form video content' },
-    ],
-    'youtube': [
-        { value: 'youtube_short', label: 'Short', description: 'Vertical video up to 60 seconds' },
-    ],
-    'x': [
-        { value: 'x_post', label: 'Post', description: 'Tweet with text and media' },
-    ],
-    'threads': [
-        { value: 'threads_post', label: 'Post', description: 'Text post with optional media' },
-    ],
-    'pinterest': [
-        { value: 'pinterest_pin', label: 'Pin', description: 'Image pin with link' },
-        { value: 'pinterest_video_pin', label: 'Video Pin', description: 'Video content' },
-        { value: 'pinterest_carousel', label: 'Carousel', description: '2-5 images' },
-    ],
-    'bluesky': [
-        { value: 'bluesky_post', label: 'Post', description: 'Text post with optional images' },
-    ],
+const contentTypeKeys: Record<string, string[]> = {
+    'instagram': ['instagram_feed', 'instagram_reel', 'instagram_story'],
+    'linkedin': ['linkedin_post', 'linkedin_carousel'],
+    'linkedin-page': ['linkedin_page_post', 'linkedin_page_carousel'],
+    'facebook': ['facebook_post', 'facebook_reel', 'facebook_story'],
+    'tiktok': ['tiktok_video'],
+    'youtube': ['youtube_short'],
+    'x': ['x_post'],
+    'threads': ['threads_post'],
+    'pinterest': ['pinterest_pin', 'pinterest_video_pin', 'pinterest_carousel'],
+    'bluesky': ['bluesky_post'],
+    'mastodon': ['mastodon_post'],
 };
 
 function getDefaultContentType(platform: string): string {
@@ -361,7 +325,12 @@ function getDefaultContentType(platform: string): string {
 }
 
 function getContentTypeOptions(platform: string): ContentTypeOption[] {
-    return contentTypeOptions[platform] || [];
+    const keys = contentTypeKeys[platform] || [];
+    return keys.map(key => ({
+        value: key,
+        label: trans(`posts.content_types.${key}.label`),
+        description: trans(`posts.content_types.${key}.description`),
+    }));
 }
 
 function getPlatformData(platform: string): Record<string, any> {
@@ -568,19 +537,19 @@ const contentValidation = computed(() => {
 
         // Pinterest requires a board
         if (pp.platform === 'pinterest' && !meta.board_id) {
-            results[pp.id] = { valid: false, message: 'Select a board', charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.select_board'), charCount, maxLength: config.maxContentLength };
         } else if (hasUnsupportedImages) {
-            results[pp.id] = { valid: false, message: 'Images not supported', charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.images_not_supported'), charCount, maxLength: config.maxContentLength };
         } else if (hasUnsupportedVideos) {
-            results[pp.id] = { valid: false, message: 'Videos not supported', charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.videos_not_supported'), charCount, maxLength: config.maxContentLength };
         } else if (hasTooManyImages) {
-            results[pp.id] = { valid: false, message: `Max ${config.maxImages} images`, charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.max_images', { count: config.maxImages }), charCount, maxLength: config.maxContentLength };
         } else if (!config.supportsTextOnly && !hasMedia) {
-            results[pp.id] = { valid: false, message: 'Requires media', charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.requires_media'), charCount, maxLength: config.maxContentLength };
         } else if (!hasContent && !hasMedia) {
-            results[pp.id] = { valid: false, message: 'No content', charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.no_content'), charCount, maxLength: config.maxContentLength };
         } else if (!withinLimit) {
-            results[pp.id] = { valid: false, message: `${charCount - config.maxContentLength} exceeded`, charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.exceeded', { count: charCount - config.maxContentLength }), charCount, maxLength: config.maxContentLength };
         } else {
             results[pp.id] = { valid: true, message: `${charCount}/${config.maxContentLength}`, charCount, maxLength: config.maxContentLength };
         }
@@ -601,15 +570,15 @@ const mediaValidation = computed(() => {
         const videoCount = media.filter(m => m.type === 'video').length;
 
         if (config.maxImages === 0 && imageCount > 0) {
-            errors.push(`${getPlatformLabel(pp.platform)} does not support images`);
+            errors.push(trans('posts.edit.validation.does_not_support_images', { platform: getPlatformLabel(pp.platform) }));
         }
 
         if (imageCount > config.maxImages && config.maxImages > 0) {
-            errors.push(`${getPlatformLabel(pp.platform)} supports up to ${config.maxImages} images`);
+            errors.push(trans('posts.edit.validation.supports_up_to_images', { platform: getPlatformLabel(pp.platform), count: config.maxImages }));
         }
 
         if (!config.allowedMediaTypes.includes('video') && videoCount > 0) {
-            errors.push(`${getPlatformLabel(pp.platform)} does not support videos`);
+            errors.push(trans('posts.edit.validation.does_not_support_videos', { platform: getPlatformLabel(pp.platform) }));
         }
     }
 
@@ -670,7 +639,7 @@ const deletePost = () => {
 
 <template>
 
-    <Head :title="isReadOnly ? 'View Post' : 'Edit Post'" />
+    <Head :title="isReadOnly ? $t('posts.edit.view_title') : $t('posts.edit.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col h-screen">
@@ -732,7 +701,7 @@ const deletePost = () => {
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Manage platforms</p>
+                                <p>{{ $t('posts.edit.manage_platforms') }}</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -745,13 +714,12 @@ const deletePost = () => {
                         <Switch id="sync-content" v-model="synced" />
                     </div>
                     <Label for="sync-content" class="text-sm cursor-pointer flex items-center gap-1.5">
-                        <IconLink class="h-4 w-4" />
-                        <span>Sync</span>
+                        <span>{{ $t('posts.edit.sync') }}</span>
                         <span class="flex items-center gap-1">
-                            <component v-for="op in otherSelectedPlatforms.slice(0, 3)" :key="op.id"
+                            <component v-for="op in otherSelectedPlatforms.slice(0, 1)" :key="op.id"
                                 :is="getPlatformIcon(op.platform)" class="h-4 w-4 text-neutral-600" />
-                            <span v-if="otherSelectedPlatforms.length > 3" class="text-muted-foreground">
-                                +{{ otherSelectedPlatforms.length - 3 }}
+                            <span v-if="otherSelectedPlatforms.length > 1" class="text-muted-foreground">
+                                +{{ otherSelectedPlatforms.length - 1 }}
                             </span>
                         </span>
                     </Label>
@@ -774,23 +742,23 @@ const deletePost = () => {
                         <IconTrash class="h-4 w-4" />
                     </Button>
 
-                    <Button type="button" variant="secondary" size="icon-sm" class="xl:w-auto xl:px-3"
+                    <Button type="button" variant="secondary" size="sm"
                         :disabled="!canSubmit || isSubmitting || isSaving" @click="submit('scheduled')">
-                        <IconClock class="h-4 w-4" />
-                        <span class="hidden xl:inline">Schedule</span>
+                        {{ $t('posts.edit.schedule') }}
                     </Button>
 
-                    <Button type="button" size="icon-sm" class="xl:w-auto xl:px-3"
+                    <Button type="button" size="sm"
                         :disabled="!canSubmit || isSubmitting || isSaving" @click="submit('publishing')">
-                        <IconSend class="h-4 w-4" />
-                        <span class="hidden xl:inline">Publish</span>
+                        {{ $t('posts.edit.publish') }}
                     </Button>
                 </div>
 
                 <!-- Read-only info -->
                 <div v-else class="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span v-if="post.scheduled_at">Scheduled: {{ formatDateTime(post.scheduled_at) }}</span>
-                    <span v-if="post.published_at">Published: {{ formatDateTime(post.published_at) }}</span>
+                    <span v-if="post.scheduled_at">{{ $t('posts.edit.scheduled_at') }} {{
+                        formatDateTime(post.scheduled_at) }}</span>
+                    <span v-if="post.published_at">{{ $t('posts.edit.published_at') }} {{
+                        formatDateTime(post.published_at) }}</span>
                 </div>
             </div>
 
@@ -803,11 +771,11 @@ const deletePost = () => {
                         <div v-if="!isReadOnly && (isSaving || showSaved)" class="absolute top-4 left-6 z-10">
                             <span v-if="isSaving" class="flex items-center gap-1.5 text-xs text-muted-foreground">
                                 <IconLoader2 class="h-3 w-3 animate-spin" />
-                                Saving...
+                                {{ $t('posts.edit.saving') }}
                             </span>
                             <span v-else-if="showSaved" class="flex items-center gap-1.5 text-xs text-muted-foreground">
                                 <IconCircleCheck class="h-3 w-3 text-green-500" />
-                                Saved
+                                {{ $t('posts.edit.saved') }}
                             </span>
                         </div>
                         <div class="max-w-lg mx-auto py-8 px-6">
@@ -856,7 +824,7 @@ const deletePost = () => {
                                 <div class="mt-6 space-y-4">
                                     <!-- Media -->
                                     <div v-if="currentPlatformMedia.length > 0">
-                                        <p class="text-sm font-medium mb-2">Media</p>
+                                        <p class="text-sm font-medium mb-2">{{ $t('posts.edit.media') }}</p>
                                         <div class="grid grid-cols-3 gap-2">
                                             <div v-for="item in currentPlatformMedia" :key="item.id"
                                                 class="aspect-square rounded-lg overflow-hidden bg-muted">
@@ -869,9 +837,9 @@ const deletePost = () => {
                                     </div>
                                     <!-- Content -->
                                     <div>
-                                        <p class="text-sm font-medium mb-2">Caption</p>
+                                        <p class="text-sm font-medium mb-2">{{ $t('posts.edit.caption') }}</p>
                                         <p class="text-sm text-muted-foreground whitespace-pre-wrap">
-                                            {{ getContent(activePlatform.id) || 'No caption' }}
+                                            {{ getContent(activePlatform.id) || $t('posts.edit.no_caption') }}
                                         </p>
                                     </div>
                                 </div>
@@ -926,8 +894,8 @@ const deletePost = () => {
                     <div class="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
                         <IconPlus class="h-8 w-8 text-muted-foreground" />
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">No platforms selected</h3>
-                    <p class="text-muted-foreground mb-4">Select at least one platform to create your post</p>
+                    <h3 class="text-lg font-semibold mb-2">{{ $t('posts.edit.empty_state.title') }}</h3>
+                    <p class="text-muted-foreground mb-4">{{ $t('posts.edit.empty_state.description') }}</p>
                     <div class="flex flex-wrap justify-center gap-2">
                         <button v-for="pp in post.post_platforms" :key="pp.id" type="button"
                             @click="togglePlatform(pp.id)"
@@ -941,29 +909,36 @@ const deletePost = () => {
         </div>
     </AppLayout>
 
-    <ConfirmDeleteModal ref="deleteModal" title="Delete Post"
-        description="Are you sure you want to delete this post? This action cannot be undone." action="Delete"
-        cancel="Cancel" />
+    <ConfirmDeleteModal ref="deleteModal" :title="$t('posts.edit.delete_modal.title')"
+        :description="$t('posts.edit.delete_modal.description')" :action="$t('posts.edit.delete_modal.action')"
+        :cancel="$t('posts.edit.delete_modal.cancel')" />
 
     <!-- Enable Sync Confirmation Dialog -->
     <AlertDialog :open="showEnableSyncDialog" @update:open="showEnableSyncDialog = $event">
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>
-                    Discard text and sync with {{ getPlatformLabel(firstSelectedPlatform?.platform || '') }}?
+                    {{ $t('posts.edit.sync_enable.title', {
+                        platform: getPlatformLabel(firstSelectedPlatform?.platform
+                            || '')
+                    }) }}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                    If you enable syncing, you'll lose all edits made specifically to other platforms.
+                    {{ $t('posts.edit.sync_enable.description') }}
                     <br /><br />
-                    Are you sure you want to sync with the {{ getPlatformLabel(firstSelectedPlatform?.platform || '') }}
-                    version?
+                    {{ $t('posts.edit.sync_enable.confirm_question', {
+                        platform:
+                            getPlatformLabel(firstSelectedPlatform?.platform || '')
+                    }) }}
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{{ $t('posts.edit.sync_enable.cancel') }}</AlertDialogCancel>
                 <AlertDialogAction @click="confirmEnableSync">
-                    <IconLink class="mr-2 h-4 w-4" />
-                    Sync with {{ getPlatformLabel(firstSelectedPlatform?.platform || '') }}
+                    {{ $t('posts.edit.sync_enable.action', {
+                        platform: getPlatformLabel(firstSelectedPlatform?.platform
+                            || '')
+                    }) }}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
@@ -974,19 +949,18 @@ const deletePost = () => {
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>
-                    Disable sync?
+                    {{ $t('posts.edit.sync_disable.title') }}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                    Each platform will keep its current content, but future edits will only apply to the platform you're
-                    editing.
+                    {{ $t('posts.edit.sync_disable.description') }}
                     <br /><br />
-                    You'll be able to customize the content for each platform individually.
+                    {{ $t('posts.edit.sync_disable.customize_note') }}
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{{ $t('posts.edit.sync_disable.cancel') }}</AlertDialogCancel>
                 <AlertDialogAction @click="confirmDisableSync">
-                    Disable sync
+                    {{ $t('posts.edit.sync_disable.action') }}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
@@ -996,9 +970,9 @@ const deletePost = () => {
     <Dialog :open="showPlatformsDialog" @update:open="showPlatformsDialog = $event">
         <DialogContent class="sm:max-w-2xl">
             <DialogHeader>
-                <DialogTitle>Select Platforms</DialogTitle>
+                <DialogTitle>{{ $t('posts.edit.platforms_dialog.title') }}</DialogTitle>
                 <DialogDescription>
-                    Choose which platforms to publish this post to.
+                    {{ $t('posts.edit.platforms_dialog.description') }}
                 </DialogDescription>
             </DialogHeader>
             <div class="grid grid-cols-2 gap-3 py-4">

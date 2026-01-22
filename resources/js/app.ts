@@ -24,12 +24,15 @@ createInertiaApp({
             import.meta.glob<DefineComponent>('./pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
+        // Get locale from shared Inertia props
+        const locale = (props.initialPage.props as { locale?: string })?.locale || 'en';
+
         // Set dayjs locale based on user's language
-        const userLanguage = (props.initialPage.props as { auth?: { user?: { language?: { code?: string } } } })?.auth?.user?.language?.code;
-        dayjs.locale(userLanguage?.toLowerCase() || 'en');
+        dayjs.locale(locale.toLowerCase());
 
         createApp({ render: () => h(App, props) })
             .use(i18nVue, {
+                lang: locale,
                 resolve: async (lang: string) => {
                     const langs = import.meta.glob('../../lang/*.json');
                     return await langs[`../../lang/php_${lang}.json`]();

@@ -303,7 +303,7 @@ class PostController extends Controller
             session()->flash('flash.banner', 'Post is being published!');
             session()->flash('flash.bannerStyle', 'success');
 
-            return redirect()->route('posts.show', $post);
+            return redirect()->route('posts.edit', $post);
         }
 
         // Redirect to show page for schedule action
@@ -311,7 +311,7 @@ class PostController extends Controller
             session()->flash('flash.banner', 'Post scheduled successfully!');
             session()->flash('flash.bannerStyle', 'success');
 
-            return redirect()->route('posts.show', $post);
+            return redirect()->route('posts.edit', $post);
         }
 
         // Stay on edit page for save action
@@ -340,6 +340,6 @@ class PostController extends Controller
         session()->flash('flash.banner', 'Post deleted successfully!');
         session()->flash('flash.bannerStyle', 'success');
 
-        return redirect()->route('calendar');
+        return back();
     }
 }

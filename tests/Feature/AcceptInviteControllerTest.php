@@ -8,7 +8,7 @@ use App\Models\Workspace;
 use App\Models\WorkspaceInvite;
 
 beforeEach(function () {
-    Language::factory()->create(['code' => 'en-US']);
+    Language::factory()->create(['code' => 'en']);
     $this->owner = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->owner->id]);
 });

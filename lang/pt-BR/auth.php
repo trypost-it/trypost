@@ -22,4 +22,74 @@ return [
         'welcome_trial' => 'Bem-vindo ao TryPost! Seu período de teste começou.',
     ],
 
+    'login' => [
+        'title' => 'Entrar na sua conta',
+        'description' => 'Digite seu email e senha abaixo para entrar',
+        'page_title' => 'Entrar',
+        'email' => 'Endereço de email',
+        'password' => 'Senha',
+        'forgot_password' => 'Esqueceu a senha?',
+        'remember_me' => 'Lembrar de mim',
+        'submit' => 'Entrar',
+        'no_account' => 'Não tem uma conta?',
+        'sign_up' => 'Cadastre-se',
+    ],
+
+    'register' => [
+        'title' => 'Criar uma conta',
+        'description' => 'Digite seus dados abaixo para criar sua conta',
+        'page_title' => 'Cadastro',
+        'name' => 'Nome',
+        'name_placeholder' => 'Nome completo',
+        'email' => 'Endereço de email',
+        'password' => 'Senha',
+        'submit' => 'Criar conta',
+        'has_account' => 'Já tem uma conta?',
+        'log_in' => 'Entrar',
+    ],
+
+    'forgot_password' => [
+        'title' => 'Esqueceu a senha',
+        'description' => 'Digite seu email para receber um link de redefinição de senha',
+        'page_title' => 'Esqueceu a senha',
+        'email' => 'Endereço de email',
+        'submit' => 'Enviar link de redefinição',
+        'return_to' => 'Ou, volte para',
+        'log_in' => 'entrar',
+    ],
+
+    'reset_password' => [
+        'title' => 'Redefinir senha',
+        'description' => 'Por favor, digite sua nova senha abaixo',
+        'page_title' => 'Redefinir senha',
+        'email' => 'Email',
+        'password' => 'Senha',
+        'confirm_password' => 'Confirmar Senha',
+        'confirm_placeholder' => 'Confirmar senha',
+        'submit' => 'Redefinir senha',
+    ],
+
+    'verify_email' => [
+        'title' => 'Verificar email',
+        'description' => 'Por favor, verifique seu endereço de email clicando no link que acabamos de enviar.',
+        'page_title' => 'Verificação de email',
+        'link_sent' => 'Um novo link de verificação foi enviado para o endereço de email que você forneceu durante o cadastro.',
+        'resend' => 'Reenviar email de verificação',
+        'log_out' => 'Sair',
+    ],
+
+    'accept_invite' => [
+        'page_title' => 'Aceitar Convite',
+        'title' => 'Você foi convidado!',
+        'description' => 'Você foi convidado para participar do workspace :workspace.',
+        'workspace' => 'Workspace',
+        'your_role' => 'Seu cargo',
+        'email' => 'Email',
+        'accept' => 'Aceitar Convite',
+        'decline' => 'Recusar Convite',
+        'login_prompt' => 'Entre ou crie uma conta para aceitar este convite.',
+        'log_in' => 'Entrar',
+        'create_account' => 'Criar Conta',
+    ],
+
 ];

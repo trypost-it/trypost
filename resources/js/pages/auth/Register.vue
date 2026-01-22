@@ -22,10 +22,10 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 <template>
     <AuthBase
-        title="Create an account"
-        description="Enter your details below to create your account"
+        :title="$t('auth.register.title')"
+        :description="$t('auth.register.description')"
     >
-        <Head title="Register" />
+        <Head :title="$t('auth.register.page_title')" />
 
         <Form
             v-bind="store.form()"
@@ -37,7 +37,7 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             <input type="hidden" name="timezone" :value="timezone" />
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="name">Name</Label>
+                    <Label for="name">{{ $t('auth.register.name') }}</Label>
                     <Input
                         id="name"
                         type="text"
@@ -46,13 +46,13 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                         :tabindex="1"
                         autocomplete="name"
                         name="name"
-                        placeholder="Full name"
+                        :placeholder="$t('auth.register.name_placeholder')"
                     />
                     <InputError :message="errors.name" />
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">{{ $t('auth.register.email') }}</Label>
                     <Input
                         id="email"
                         type="email"
@@ -67,7 +67,7 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="password">Password</Label>
+                    <Label for="password">{{ $t('auth.register.password') }}</Label>
                     <Input
                         id="password"
                         type="password"
@@ -75,7 +75,7 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                         :tabindex="3"
                         autocomplete="new-password"
                         name="password"
-                        placeholder="Password"
+                        :placeholder="$t('auth.register.password')"
                     />
                     <InputError :message="errors.password" />
                 </div>
@@ -88,17 +88,17 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                     data-test="register-user-button"
                 >
                     <Spinner v-if="processing" />
-                    Create account
+                    {{ $t('auth.register.submit') }}
                 </Button>
             </div>
 
             <div class="text-center text-sm text-muted-foreground">
-                Already have an account?
+                {{ $t('auth.register.has_account') }}
                 <TextLink
                     :href="login()"
                     class="underline underline-offset-4"
                     :tabindex="5"
-                    >Log in</TextLink
+                    >{{ $t('auth.register.log_in') }}</TextLink
                 >
             </div>
         </Form>

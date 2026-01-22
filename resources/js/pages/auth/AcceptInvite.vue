@@ -33,7 +33,7 @@ const inviteUrl = computed(() => `/invites/${props.invite.id}`);
 <template>
     <div class="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
 
-        <Head title="Accept Invite" />
+        <Head :title="$t('auth.accept_invite.page_title')" />
 
         <div class="w-full max-w-md">
             <div class="flex flex-col gap-8">
@@ -46,25 +46,23 @@ const inviteUrl = computed(() => `/invites/${props.invite.id}`);
 
                 <Card>
                     <CardHeader class="text-center">
-                        <CardTitle class="text-xl">You've been invited!</CardTitle>
+                        <CardTitle class="text-xl">{{ $t('auth.accept_invite.title') }}</CardTitle>
                         <CardDescription>
-                            You've been invited to join the
-                            <span class="font-medium text-foreground">{{ invite.workspace.name }}</span>
-                            workspace.
+                            {{ $t('auth.accept_invite.description', { workspace: invite.workspace.name }) }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-6">
                         <div class="rounded-lg bg-muted p-4 space-y-2">
                             <div class="flex justify-between text-sm">
-                                <span class="text-muted-foreground">Workspace</span>
+                                <span class="text-muted-foreground">{{ $t('auth.accept_invite.workspace') }}</span>
                                 <span class="font-medium">{{ invite.workspace.name }}</span>
                             </div>
                             <div class="flex justify-between text-sm">
-                                <span class="text-muted-foreground">Your role</span>
+                                <span class="text-muted-foreground">{{ $t('auth.accept_invite.your_role') }}</span>
                                 <span class="font-medium">{{ invite.role.label }}</span>
                             </div>
                             <div class="flex justify-between text-sm">
-                                <span class="text-muted-foreground">Email</span>
+                                <span class="text-muted-foreground">{{ $t('auth.accept_invite.email') }}</span>
                                 <span class="font-medium">{{ invite.email }}</span>
                             </div>
                         </div>
@@ -73,12 +71,12 @@ const inviteUrl = computed(() => `/invites/${props.invite.id}`);
                         <div v-if="isLoggedIn" class="flex flex-col gap-3">
                             <Button as-child size="lg" class="w-full">
                                 <Link :href="accept.url(invite.id)" method="post">
-                                    Accept Invite
+                                    {{ $t('auth.accept_invite.accept') }}
                                 </Link>
                             </Button>
                             <Button as-child variant="outline" size="lg" class="w-full">
                                 <Link :href="decline.url(invite.id)" method="post">
-                                    Decline Invite
+                                    {{ $t('auth.accept_invite.decline') }}
                                 </Link>
                             </Button>
                         </div>
@@ -86,16 +84,16 @@ const inviteUrl = computed(() => `/invites/${props.invite.id}`);
                         <!-- User is not logged in - show Login/Register -->
                         <div v-else class="flex flex-col gap-3">
                             <p class="text-center text-sm text-muted-foreground">
-                                Log in or create an account to accept this invite.
+                                {{ $t('auth.accept_invite.login_prompt') }}
                             </p>
                             <Button as-child size="lg" class="w-full">
                                 <Link :href="login({ query: { redirect: inviteUrl } })">
-                                    Log in
+                                    {{ $t('auth.accept_invite.log_in') }}
                                 </Link>
                             </Button>
                             <Button as-child variant="outline" size="lg" class="w-full">
                                 <Link :href="register({ query: { redirect: inviteUrl } })">
-                                    Create Account
+                                    {{ $t('auth.accept_invite.create_account') }}
                                 </Link>
                             </Button>
                         </div>

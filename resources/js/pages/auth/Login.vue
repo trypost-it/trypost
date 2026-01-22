@@ -21,9 +21,9 @@ defineProps<{
 </script>
 
 <template>
-    <AuthBase title="Log in to your account" description="Enter your email and password below to log in">
+    <AuthBase :title="$t('auth.login.title')" :description="$t('auth.login.description')">
 
-        <Head title="Log in" />
+        <Head :title="$t('auth.login.page_title')" />
 
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
             {{ status }}
@@ -34,7 +34,7 @@ defineProps<{
             <input v-if="redirect" type="hidden" name="redirect" :value="redirect" />
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="email">Email address</Label>
+                    <Label for="email">{{ $t('auth.login.email') }}</Label>
                     <Input id="email" type="email" name="email" required autofocus :tabindex="1" autocomplete="email"
                         placeholder="email@example.com" :default-value="email ?? ''" />
                     <InputError :message="errors.email" />
@@ -42,32 +42,32 @@ defineProps<{
 
                 <div class="grid gap-2">
                     <div class="flex items-center justify-between">
-                        <Label for="password">Password</Label>
+                        <Label for="password">{{ $t('auth.login.password') }}</Label>
                         <TextLink :href="request()" class="text-sm" :tabindex="5">
-                            Forgot password?
+                            {{ $t('auth.login.forgot_password') }}
                         </TextLink>
                     </div>
                     <Input id="password" type="password" name="password" required :tabindex="2"
-                        autocomplete="current-password" placeholder="Password" />
+                        autocomplete="current-password" :placeholder="$t('auth.login.password')" />
                     <InputError :message="errors.password" />
                 </div>
 
                 <div class="flex items-center justify-between">
                     <Label for="remember" class="flex items-center space-x-3">
                         <Checkbox id="remember" name="remember" :tabindex="3" />
-                        <span>Remember me</span>
+                        <span>{{ $t('auth.login.remember_me') }}</span>
                     </Label>
                 </div>
 
                 <Button type="submit" class="mt-4 w-full" :tabindex="4" :disabled="processing" data-test="login-button">
                     <Spinner v-if="processing" />
-                    Log in
+                    {{ $t('auth.login.submit') }}
                 </Button>
             </div>
 
             <div class="text-center text-sm text-muted-foreground">
-                Don't have an account?
-                <TextLink :href="register()" :tabindex="5">Sign up</TextLink>
+                {{ $t('auth.login.no_account') }}
+                <TextLink :href="register()" :tabindex="5">{{ $t('auth.login.sign_up') }}</TextLink>
             </div>
         </Form>
     </AuthBase>

@@ -88,7 +88,7 @@ class WorkspaceInviteController extends Controller
 
         Mail::to($invite->email)->send(new WorkspaceInviteMail($invite));
 
-        session()->flash('flash.banner', 'Invite sent successfully!');
+        session()->flash('flash.banner', __('settings.members.flash.invite_sent'));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();
@@ -110,7 +110,7 @@ class WorkspaceInviteController extends Controller
 
         $invite->delete();
 
-        session()->flash('flash.banner', 'Invite deleted.');
+        session()->flash('flash.banner', __('settings.members.flash.invite_deleted'));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();
@@ -132,7 +132,7 @@ class WorkspaceInviteController extends Controller
 
         $workspace->members()->detach($userId);
 
-        session()->flash('flash.banner', 'Member removed successfully.');
+        session()->flash('flash.banner', __('settings.members.flash.member_removed'));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();

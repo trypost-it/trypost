@@ -86,7 +86,7 @@ class OnboardingController extends Controller
                 'setup' => Setup::Completed,
             ]);
 
-            session()->flash('flash.banner', 'Welcome to TryPost!');
+            session()->flash('flash.banner', __('auth.flash.welcome'));
             session()->flash('flash.bannerStyle', 'success');
 
             return redirect()->route('calendar');
@@ -121,7 +121,7 @@ class OnboardingController extends Controller
             'setup' => Setup::Completed,
         ]);
 
-        session()->flash('flash.banner', 'Welcome to TryPost! Your trial has started.');
+        session()->flash('flash.banner', __('auth.flash.welcome_trial'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('calendar');

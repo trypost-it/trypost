@@ -43,7 +43,7 @@ class WorkspaceLabelController extends Controller
 
         $workspace->labels()->create($validated);
 
-        session()->flash('flash.banner', 'Label created successfully!');
+        session()->flash('flash.banner', __('labels.flash.created'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('labels.index');
@@ -70,7 +70,7 @@ class WorkspaceLabelController extends Controller
 
         $label->update($validated);
 
-        session()->flash('flash.banner', 'Label updated successfully!');
+        session()->flash('flash.banner', __('labels.flash.updated'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('labels.index');
@@ -92,7 +92,7 @@ class WorkspaceLabelController extends Controller
 
         $label->delete();
 
-        session()->flash('flash.banner', 'Label deleted successfully!');
+        session()->flash('flash.banner', __('labels.flash.deleted'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('labels.index');

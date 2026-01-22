@@ -17,4 +17,9 @@ return [
     'password' => 'The provided password is incorrect.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
 
+    'flash' => [
+        'welcome' => 'Welcome to TryPost!',
+        'welcome_trial' => 'Welcome to TryPost! Your trial has started.',
+    ],
+
 ];

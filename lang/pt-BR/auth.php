@@ -17,4 +17,9 @@ return [
     'password' => 'A senha fornecida está incorreta.',
     'throttle' => 'Muitas tentativas de login. Por favor, tente novamente em :seconds segundos.',
 
+    'flash' => [
+        'welcome' => 'Bem-vindo ao TryPost!',
+        'welcome_trial' => 'Bem-vindo ao TryPost! Seu período de teste começou.',
+    ],
+
 ];

@@ -204,4 +204,12 @@ return [
         'bluesky' => 'Bluesky',
         'mastodon' => 'Mastodon',
     ],
+
+    'flash' => [
+        'scheduled' => 'Post agendado com sucesso!',
+        'publishing' => 'Post está sendo publicado!',
+        'deleted' => 'Post excluído com sucesso!',
+        'cannot_edit_published' => 'Posts publicados não podem ser editados.',
+        'connect_first' => 'Conecte pelo menos uma rede social antes de criar um post.',
+    ],
 ];

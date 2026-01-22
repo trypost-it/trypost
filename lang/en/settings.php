@@ -100,5 +100,22 @@ return [
             'admin' => 'Admin',
             'member' => 'Member',
         ],
+
+        'flash' => [
+            'invite_sent' => 'Invite sent successfully!',
+            'invite_deleted' => 'Invite deleted.',
+            'member_removed' => 'Member removed successfully.',
+            'wrong_email' => 'This invite is for a different email address.',
+            'already_member' => 'You are already a member of this workspace.',
+            'invite_accepted' => 'Welcome! You are now a member of the workspace.',
+            'invite_declined' => 'Invite declined.',
+        ],
+    ],
+
+    'flash' => [
+        'profile_updated' => 'Profile updated successfully!',
+        'language_updated' => 'Language updated successfully!',
+        'password_updated' => 'Password updated successfully!',
+        'workspace_updated' => 'Settings updated successfully!',
     ],
 ];

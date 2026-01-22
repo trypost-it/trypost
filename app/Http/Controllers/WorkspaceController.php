@@ -136,7 +136,7 @@ class WorkspaceController extends Controller
 
         $workspace->update($request->validated());
 
-        session()->flash('flash.banner', 'Settings updated successfully!');
+        session()->flash('flash.banner', __('settings.flash.workspace_updated'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('workspace.settings');

@@ -3,7 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { IconBrandDiscord, IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconAffiliate, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop, IconLanguage } from '@tabler/icons-vue';
 import { loadLanguageAsync, trans } from 'laravel-vue-i18n';
 import { Button } from '@/components/ui/button';
-import { create as createPost } from '@/actions/App/Http/Controllers/PostController';
+import { store as storePost } from '@/actions/App/Http/Controllers/PostController';
 import { updateLanguage } from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { computed } from 'vue';
 import dayjs from '@/dayjs';
@@ -242,7 +242,7 @@ function handleLogout() {
                                     <div class="grid flex-1 text-left text-sm leading-tight">
                                         <span class="truncate font-semibold">{{ auth.user.name }}</span>
                                         <span class="truncate text-xs text-muted-foreground">{{ auth.user.email
-                                            }}</span>
+                                        }}</span>
                                     </div>
                                 </div>
                             </DropdownMenuLabel>
@@ -359,7 +359,7 @@ function handleLogout() {
         <SidebarContent>
             <!-- Create Post Button -->
             <div v-if="currentWorkspace" class="px-2 py-2">
-                <Link :href="createPost.url()">
+                <Link :href="storePost.url()" method="post" class="w-full">
                     <Button :size="sidebarState === 'collapsed' ? 'icon' : 'default'" class="w-full">
                         <IconPlus v-if="sidebarState === 'collapsed'" class="size-4" />
                         <span v-if="sidebarState === 'expanded'">{{ $t('sidebar.create_post') }}</span>

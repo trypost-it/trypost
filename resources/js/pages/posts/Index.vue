@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as postsIndex, create as createPost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
+import { index as postsIndex, store as storePost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -165,7 +165,7 @@ const handleDelete = (post: Post) => {
                     </p>
                 </div>
                 <div class="flex gap-2">
-                    <Link :href="createPost.url()">
+                    <Link :href="storePost.url()" method="post">
                         <Button>
                             {{ $t('posts.new_post') }}
                         </Button>
@@ -181,7 +181,7 @@ const handleDelete = (post: Post) => {
                         <p class="mt-2 text-sm text-muted-foreground">
                             {{ currentStatus ? $t('posts.no_posts_status', { status: $t(`posts.status.${currentStatus}`) }) : $t('posts.start_creating') }}
                         </p>
-                        <Link v-if="!currentStatus" :href="createPost.url()" class="mt-4">
+                        <Link v-if="!currentStatus" :href="storePost.url()" method="post" class="mt-4">
                             <Button>
                                 <IconPlus class="h-4 w-4" />
                                 {{ $t('posts.create_post') }}

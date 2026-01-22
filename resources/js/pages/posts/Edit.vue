@@ -757,7 +757,7 @@ const deletePost = () => {
             <div class="flex-1 overflow-hidden">
                 <div v-if="activePlatform && selectedPlatformIds.length > 0" class="h-full flex">
                     <!-- Left Side: Form -->
-                    <div class="w-1/2 border-r overflow-y-auto relative">
+                    <div class="w-1/2 border-r overflow-y-auto relative ">
                         <!-- Autosave indicator -->
                         <div v-if="!isReadOnly && (isSaving || showSaved)" class="absolute top-4 left-6 z-10">
                             <span v-if="isSaving" class="flex items-center gap-1.5 text-xs text-muted-foreground">

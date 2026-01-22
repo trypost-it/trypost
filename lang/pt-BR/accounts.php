@@ -56,4 +56,8 @@ return [
         'no_pages_description' => 'Você não é administrador de nenhuma página do LinkedIn.',
         'page_label' => 'Página do LinkedIn',
     ],
+
+    'flash' => [
+        'disconnected' => 'Conta desconectada com sucesso!',
+    ],
 ];

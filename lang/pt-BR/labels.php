@@ -33,4 +33,10 @@ return [
         'confirm' => 'Excluir',
         'cancel' => 'Cancelar',
     ],
+
+    'flash' => [
+        'created' => 'Etiqueta criada com sucesso!',
+        'updated' => 'Etiqueta atualizada com sucesso!',
+        'deleted' => 'Etiqueta excluída com sucesso!',
+    ],
 ];

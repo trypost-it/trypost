@@ -80,23 +80,23 @@ test('calendar supports month view', function () {
     );
 });
 
-// Create tests
-test('create post requires authentication', function () {
-    $response = $this->get(route('posts.create'));
+// Store tests
+test('store post requires authentication', function () {
+    $response = $this->post(route('posts.store'));
 
     $response->assertRedirect(route('login'));
 });
 
-test('create post redirects to accounts if no social accounts connected', function () {
+test('store post redirects to accounts if no social accounts connected', function () {
     $this->socialAccount->delete();
 
-    $response = $this->actingAs($this->user)->get(route('posts.create'));
+    $response = $this->actingAs($this->user)->post(route('posts.store'));
 
     $response->assertRedirect(route('accounts'));
 });
 
-test('create post creates draft and redirects to edit', function () {
-    $response = $this->actingAs($this->user)->get(route('posts.create'));
+test('store post creates draft and redirects to edit', function () {
+    $response = $this->actingAs($this->user)->post(route('posts.store'));
 
     $response->assertRedirect();
 
@@ -247,7 +247,9 @@ test('destroy post deletes the post', function () {
         'user_id' => $this->user->id,
     ]);
 
-    $response = $this->actingAs($this->user)->delete(route('posts.destroy', $post));
+    $response = $this->actingAs($this->user)
+        ->from(route('calendar'))
+        ->delete(route('posts.destroy', $post));
 
     $response->assertRedirect(route('calendar'));
     expect(Post::find($post->id))->toBeNull();

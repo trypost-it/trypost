@@ -45,7 +45,7 @@ class AcceptInviteController extends Controller
 
         // Verify the invite is for this user
         if ($invite->email !== $user->email) {
-            session()->flash('flash.banner', 'This invite is for a different email address.');
+            session()->flash('flash.banner', __('settings.members.flash.wrong_email'));
             session()->flash('flash.bannerStyle', 'danger');
 
             return redirect()->route('calendar');
@@ -55,7 +55,7 @@ class AcceptInviteController extends Controller
         if ($invite->workspace->hasMember($user)) {
             $invite->delete();
 
-            session()->flash('flash.banner', 'You are already a member of this workspace.');
+            session()->flash('flash.banner', __('settings.members.flash.already_member'));
             session()->flash('flash.bannerStyle', 'info');
 
             return redirect()->route('calendar');
@@ -66,7 +66,7 @@ class AcceptInviteController extends Controller
         $invite->accept($user);
         $user->update(['current_workspace_id' => $workspaceId]);
 
-        session()->flash('flash.banner', 'Welcome! You are now a member of the workspace.');
+        session()->flash('flash.banner', __('settings.members.flash.invite_accepted'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('calendar');
@@ -81,7 +81,7 @@ class AcceptInviteController extends Controller
 
         // Verify the invite is for this user
         if ($invite->email !== $user->email) {
-            session()->flash('flash.banner', 'This invite is for a different email address.');
+            session()->flash('flash.banner', __('settings.members.flash.wrong_email'));
             session()->flash('flash.bannerStyle', 'danger');
 
             return redirect()->route('calendar');
@@ -89,7 +89,7 @@ class AcceptInviteController extends Controller
 
         $invite->delete();
 
-        session()->flash('flash.banner', 'Invite declined.');
+        session()->flash('flash.banner', __('settings.members.flash.invite_declined'));
         session()->flash('flash.bannerStyle', 'info');
 
         return redirect()->route('calendar');

@@ -204,4 +204,12 @@ return [
         'bluesky' => 'Bluesky',
         'mastodon' => 'Mastodon',
     ],
+
+    'flash' => [
+        'scheduled' => 'Post scheduled successfully!',
+        'publishing' => 'Post is being published!',
+        'deleted' => 'Post deleted successfully!',
+        'cannot_edit_published' => 'Published posts cannot be edited.',
+        'connect_first' => 'Connect at least one social network before creating a post.',
+    ],
 ];

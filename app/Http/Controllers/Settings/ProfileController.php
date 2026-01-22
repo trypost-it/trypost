@@ -40,7 +40,7 @@ class ProfileController extends Controller
 
         $request->user()->save();
 
-        session()->flash('flash.banner', 'Profile updated successfully!');
+        session()->flash('flash.banner', __('settings.flash.profile_updated'));
         session()->flash('flash.bannerStyle', 'success');
 
         return to_route('profile.edit');
@@ -62,7 +62,7 @@ class ProfileController extends Controller
         // Refresh the user model to clear cached language relationship
         $request->user()->refresh();
 
-        session()->flash('flash.banner', 'Language updated successfully!');
+        session()->flash('flash.banner', __('settings.flash.language_updated'));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();

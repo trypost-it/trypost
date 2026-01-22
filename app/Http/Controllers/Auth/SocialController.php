@@ -73,7 +73,7 @@ class SocialController extends Controller
 
         $account->delete();
 
-        session()->flash('flash.banner', 'Account disconnected successfully!');
+        session()->flash('flash.banner', __('accounts.flash.disconnected'));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();

@@ -39,4 +39,10 @@ return [
         'confirm' => 'Delete',
         'cancel' => 'Cancel',
     ],
+
+    'flash' => [
+        'created' => 'Hashtag group created successfully!',
+        'updated' => 'Hashtag group updated successfully!',
+        'deleted' => 'Hashtag group deleted successfully!',
+    ],
 ];

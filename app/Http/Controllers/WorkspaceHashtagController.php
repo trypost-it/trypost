@@ -43,7 +43,7 @@ class WorkspaceHashtagController extends Controller
 
         $workspace->hashtags()->create($validated);
 
-        session()->flash('flash.banner', 'Hashtag group created successfully!');
+        session()->flash('flash.banner', __('hashtags.flash.created'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('hashtags.index');
@@ -70,7 +70,7 @@ class WorkspaceHashtagController extends Controller
 
         $hashtag->update($validated);
 
-        session()->flash('flash.banner', 'Hashtag group updated successfully!');
+        session()->flash('flash.banner', __('hashtags.flash.updated'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('hashtags.index');
@@ -92,7 +92,7 @@ class WorkspaceHashtagController extends Controller
 
         $hashtag->delete();
 
-        session()->flash('flash.banner', 'Hashtag group deleted successfully!');
+        session()->flash('flash.banner', __('hashtags.flash.deleted'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('hashtags.index');

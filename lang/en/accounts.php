@@ -56,4 +56,8 @@ return [
         'no_pages_description' => 'You are not an administrator of any LinkedIn page.',
         'page_label' => 'LinkedIn Page',
     ],
+
+    'flash' => [
+        'disconnected' => 'Account disconnected successfully!',
+    ],
 ];

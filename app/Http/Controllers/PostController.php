@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
-use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Jobs\PublishPost;
 use App\Models\Post;
@@ -98,7 +97,7 @@ class PostController extends Controller
         ]);
     }
 
-    public function create(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -111,7 +110,7 @@ class PostController extends Controller
         $socialAccounts = $workspace->socialAccounts;
 
         if ($socialAccounts->isEmpty()) {
-            session()->flash('flash.banner', 'Connect at least one social network before creating a post.');
+            session()->flash('flash.banner', __('posts.flash.connect_first'));
             session()->flash('flash.bannerStyle', 'danger');
 
             return redirect()->route('accounts');
@@ -143,50 +142,6 @@ class PostController extends Controller
         }
 
         return redirect()->route('posts.edit', $post);
-    }
-
-    public function store(StorePostRequest $request): RedirectResponse
-    {
-        $workspace = $request->user()->currentWorkspace;
-
-        if (! $workspace) {
-            return redirect()->route('workspaces.create');
-        }
-
-        $this->authorize('view', $workspace);
-
-        $post = $workspace->posts()->create([
-            'user_id' => $request->user()->id,
-            'status' => $request->input('status', PostStatus::Draft),
-            'synced' => $request->input('synced', true),
-            'scheduled_at' => $request->input('scheduled_at'),
-        ]);
-
-        foreach ($request->input('platforms', []) as $platformData) {
-            $postPlatform = $post->postPlatforms()->create([
-                'social_account_id' => $platformData['social_account_id'],
-                'platform' => $platformData['platform'],
-                'content' => $platformData['content'],
-                'content_type' => $platformData['content_type'] ?? null,
-                'status' => 'pending',
-                'enabled' => $platformData['enabled'] ?? true,
-            ]);
-
-            if (! empty($platformData['media_ids'])) {
-                $postPlatform->media()->whereIn('id', $platformData['media_ids'])->update([
-                    'post_platform_id' => $postPlatform->id,
-                ]);
-            }
-        }
-
-        $route = $request->input('status') === PostStatus::Scheduled->value
-            ? 'calendar'
-            : 'posts.index';
-
-        session()->flash('flash.banner', 'Post created successfully!');
-        session()->flash('flash.bannerStyle', 'success');
-
-        return redirect()->route($route);
     }
 
     public function edit(Request $request, Post $post): Response|RedirectResponse
@@ -254,7 +209,7 @@ class PostController extends Controller
         }
 
         if ($post->status === PostStatus::Published) {
-            session()->flash('flash.banner', 'Published posts cannot be edited.');
+            session()->flash('flash.banner', __('posts.flash.cannot_edit_published'));
             session()->flash('flash.bannerStyle', 'danger');
 
             return back();
@@ -300,7 +255,7 @@ class PostController extends Controller
         if ($status === 'publishing') {
             PublishPost::dispatch($post);
 
-            session()->flash('flash.banner', 'Post is being published!');
+            session()->flash('flash.banner', __('posts.flash.publishing'));
             session()->flash('flash.bannerStyle', 'success');
 
             return redirect()->route('posts.edit', $post);
@@ -308,15 +263,11 @@ class PostController extends Controller
 
         // Redirect to show page for schedule action
         if ($status === 'scheduled') {
-            session()->flash('flash.banner', 'Post scheduled successfully!');
+            session()->flash('flash.banner', __('posts.flash.scheduled'));
             session()->flash('flash.bannerStyle', 'success');
 
             return redirect()->route('posts.edit', $post);
         }
-
-        // Stay on edit page for save action
-        session()->flash('flash.banner', 'Post saved!');
-        session()->flash('flash.bannerStyle', 'success');
 
         return back();
     }
@@ -337,7 +288,7 @@ class PostController extends Controller
 
         $post->delete();
 
-        session()->flash('flash.banner', 'Post deleted successfully!');
+        session()->flash('flash.banner', __('posts.flash.deleted'));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();

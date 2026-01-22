@@ -27,7 +27,7 @@ class PasswordController extends Controller
             'password' => $request->password,
         ]);
 
-        session()->flash('flash.banner', 'Password updated successfully!');
+        session()->flash('flash.banner', __('settings.flash.password_updated'));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();

@@ -39,4 +39,10 @@ return [
         'confirm' => 'Excluir',
         'cancel' => 'Cancelar',
     ],
+
+    'flash' => [
+        'created' => 'Grupo de hashtags criado com sucesso!',
+        'updated' => 'Grupo de hashtags atualizado com sucesso!',
+        'deleted' => 'Grupo de hashtags excluído com sucesso!',
+    ],
 ];

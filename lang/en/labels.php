@@ -33,4 +33,10 @@ return [
         'confirm' => 'Delete',
         'cancel' => 'Cancel',
     ],
+
+    'flash' => [
+        'created' => 'Label created successfully!',
+        'updated' => 'Label updated successfully!',
+        'deleted' => 'Label deleted successfully!',
+    ],
 ];

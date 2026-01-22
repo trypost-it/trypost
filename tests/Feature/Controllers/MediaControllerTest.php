@@ -29,7 +29,7 @@ test('user can upload media to workspace', function () {
 
     $response = $this->actingAs($this->user)->postJson(route('medias.store'), [
         'media' => $file,
-        'model' => 'App\Models\Workspace',
+        'model' => 'workspace',
         'model_id' => $this->workspace->id,
         'collection' => 'logo',
     ]);

@@ -40,7 +40,7 @@ test('store media requires authentication', function () {
 
 test('store media uploads file', function () {
     $response = $this->actingAs($this->user)->post(route('medias.store'), [
-        'model' => 'App\Models\PostPlatform',
+        'model' => 'postPlatform',
         'model_id' => $this->postPlatform->id,
         'media' => UploadedFile::fake()->image('test.jpg'),
     ]);

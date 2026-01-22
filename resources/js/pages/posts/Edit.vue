@@ -869,7 +869,7 @@ const deletePost = () => {
 
                     <!-- Right Side: Phone Preview -->
                     <div class="w-1/2 bg-muted/30 overflow-y-auto">
-                        <div class="flex items-center justify-center min-h-full py-8 px-4">
+                        <div class="flex justify-center py-8 px-4">
                             <PhoneMockup>
                                 <PlatformPreview :key="activePlatform.id" :platform="activePlatform.platform"
                                     :social-account="activePlatform.social_account"

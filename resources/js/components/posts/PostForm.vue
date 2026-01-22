@@ -260,26 +260,26 @@ const handleDropOnItem = (e: DragEvent, targetId: string) => {
 
         <!-- Pinterest Board Selector -->
         <div v-if="platform === 'pinterest' && boards.length > 0">
-            <Label class="text-sm font-medium mb-2 block">Board</Label>
+            <Label class="text-sm font-medium mb-2 block">{{ $t('posts.form.board') }}</Label>
             <FocusScope as-child>
                 <Combobox v-model="selectedBoard">
                     <ComboboxAnchor as-child>
                         <ComboboxTrigger as-child>
                             <button type="button"
                                 class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                                {{ selectedBoard ? selectedBoard.label : 'Select a board' }}
+                                {{ selectedBoard ? selectedBoard.label : $t('posts.form.select_board') }}
                                 <IconChevronDown class="h-4 w-4 opacity-50" />
                             </button>
                         </ComboboxTrigger>
                     </ComboboxAnchor>
                     <ComboboxList class="w-[var(--reka-combobox-trigger-width)]">
                         <div class="relative">
-                            <ComboboxInput placeholder="Search board..." />
+                            <ComboboxInput :placeholder="$t('posts.form.search_board')" />
                             <span class="absolute inset-y-0 start-0 flex items-center justify-center px-3">
                                 <IconSearch class="size-4 text-muted-foreground" />
                             </span>
                         </div>
-                        <ComboboxEmpty>No board found</ComboboxEmpty>
+                        <ComboboxEmpty>{{ $t('posts.form.no_board_found') }}</ComboboxEmpty>
                         <ComboboxGroup>
                             <ComboboxItem v-for="board in boardOptions" :key="board.value" :value="board">
                                 <span class="min-w-0 flex-1 truncate">{{ board.label }}</span>
@@ -296,12 +296,12 @@ const handleDropOnItem = (e: DragEvent, targetId: string) => {
         <!-- Media Upload Area -->
         <div>
             <Label class="text-sm font-medium mb-2 block">
-                Media
+                {{ $t('posts.form.media') }}
                 <span class="text-muted-foreground font-normal ml-1">
                     ({{ props.media.length }}/{{ mediaRules.maxFiles }})
                 </span>
                 <span v-if="mediaRules.minFiles && mediaRules.minFiles > 1" class="text-muted-foreground font-normal">
-                    · Min {{ mediaRules.minFiles }}
+                    · {{ $t('posts.form.min') }} {{ mediaRules.minFiles }}
                 </span>
             </Label>
 
@@ -314,7 +314,7 @@ const handleDropOnItem = (e: DragEvent, targetId: string) => {
                     @click="openFilePicker">
                     <div v-if="isUploading" class="flex flex-col items-center gap-3">
                         <IconLoader2 class="h-10 w-10 text-muted-foreground animate-spin" />
-                        <p class="text-sm text-muted-foreground">Uploading...</p>
+                        <p class="text-sm text-muted-foreground">{{ $t('posts.form.uploading') }}</p>
                     </div>
                     <div v-else class="flex flex-col items-center gap-3">
                         <div class="p-4 rounded-full transition-colors"
@@ -325,11 +325,11 @@ const handleDropOnItem = (e: DragEvent, targetId: string) => {
                         </div>
                         <div class="text-center">
                             <p class="text-sm font-medium">
-                                {{ isDraggingFile ? 'Drop to upload' : 'Drag & drop or click to upload' }}
+                                {{ isDraggingFile ? $t('posts.form.drop_to_upload') : $t('posts.form.drag_and_drop') }}
                             </p>
                             <p class="text-xs text-muted-foreground mt-1">
-                                {{ mediaRules.acceptImages && mediaRules.acceptVideos ? 'Photos and videos' :
-                                    (mediaRules.acceptImages ? 'Photos only' : 'Videos only') }}
+                                {{ mediaRules.acceptImages && mediaRules.acceptVideos ? $t('posts.form.photos_and_videos') :
+                                    (mediaRules.acceptImages ? $t('posts.form.photos_only') : $t('posts.form.videos_only')) }}
                             </p>
                         </div>
                     </div>
@@ -384,7 +384,7 @@ const handleDropOnItem = (e: DragEvent, targetId: string) => {
                         </button>
                     </div>
                     <p v-if="media.length > 1" class="text-xs text-muted-foreground mt-2 text-center">
-                        Drag to reorder
+                        {{ $t('posts.form.drag_to_reorder') }}
                     </p>
                 </div>
             </div>
@@ -397,14 +397,14 @@ const handleDropOnItem = (e: DragEvent, targetId: string) => {
         <!-- Caption/Text Input -->
         <div>
             <div class="flex items-center justify-between mb-2">
-                <Label class="text-sm font-medium">Caption</Label>
+                <Label class="text-sm font-medium">{{ $t('posts.form.caption') }}</Label>
                 <span class="text-xs px-2 py-0.5 rounded-full"
                     :class="isValid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'">
                     {{ validationMessage }}
                 </span>
             </div>
             <Textarea :model-value="content" @update:model-value="emit('update:content', $event)"
-                placeholder="Write your caption..." class="min-h-[120px] resize-none" :disabled="props.disabled" />
+                :placeholder="$t('posts.form.write_caption')" class="min-h-[120px] resize-none" :disabled="props.disabled" />
         </div>
     </div>
 </template>

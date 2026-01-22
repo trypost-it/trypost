@@ -19,6 +19,21 @@ return [
 
     'form' => [
         'post_type' => 'Tipo de Post',
+        'board' => 'Pasta',
+        'select_board' => 'Selecione uma pasta',
+        'search_board' => 'Buscar pasta...',
+        'no_board_found' => 'Nenhuma pasta encontrada',
+        'media' => 'Mídia',
+        'min' => 'Mín',
+        'uploading' => 'Enviando...',
+        'drop_to_upload' => 'Solte para enviar',
+        'drag_and_drop' => 'Arraste e solte ou clique para enviar',
+        'photos_and_videos' => 'Fotos e vídeos',
+        'photos_only' => 'Apenas fotos',
+        'videos_only' => 'Apenas vídeos',
+        'drag_to_reorder' => 'Arraste para reordenar',
+        'caption' => 'Legenda',
+        'write_caption' => 'Escreva sua legenda...',
     ],
 
     'status' => [

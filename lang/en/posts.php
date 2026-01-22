@@ -19,6 +19,21 @@ return [
 
     'form' => [
         'post_type' => 'Post Type',
+        'board' => 'Board',
+        'select_board' => 'Select a board',
+        'search_board' => 'Search board...',
+        'no_board_found' => 'No board found',
+        'media' => 'Media',
+        'min' => 'Min',
+        'uploading' => 'Uploading...',
+        'drop_to_upload' => 'Drop to upload',
+        'drag_and_drop' => 'Drag & drop or click to upload',
+        'photos_and_videos' => 'Photos and videos',
+        'photos_only' => 'Photos only',
+        'videos_only' => 'Videos only',
+        'drag_to_reorder' => 'Drag to reorder',
+        'caption' => 'Caption',
+        'write_caption' => 'Write your caption...',
     ],
 
     'status' => [

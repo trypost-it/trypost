@@ -328,11 +328,12 @@ class XPublisher
             throw new TokenExpiredException('No refresh token available for X account');
         }
 
-        $response = Http::asForm()->post("{$this->baseUrl}/2/oauth2/token", [
-            'grant_type' => 'refresh_token',
-            'refresh_token' => $account->refresh_token,
-            'client_id' => config('services.x.client_id'),
-        ]);
+        $response = Http::asForm()
+            ->withBasicAuth(config('services.x.client_id'), config('services.x.client_secret'))
+            ->post("{$this->baseUrl}/2/oauth2/token", [
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $account->refresh_token,
+            ]);
 
         if ($response->failed()) {
             $this->handleApiError($response, 'Failed to refresh X token');

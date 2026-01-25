@@ -124,7 +124,14 @@ test('x publisher refreshes token when expired', function () {
     $this->publisher->publish($this->postPlatform);
 
     Http::assertSent(function ($request) {
-        return str_contains($request->url(), 'oauth2/token');
+        if (! str_contains($request->url(), 'oauth2/token')) {
+            return false;
+        }
+
+        // Verify Basic Auth is used for confidential client authentication
+        $authHeader = $request->header('Authorization')[0] ?? '';
+
+        return str_starts_with($authHeader, 'Basic ');
     });
 
     $this->socialAccount->refresh();

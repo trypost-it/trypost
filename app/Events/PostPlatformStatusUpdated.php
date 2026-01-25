@@ -24,7 +24,6 @@ class PostPlatformStatusUpdated implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
-        $this->postPlatform->refresh();
         $post = $this->postPlatform->post->fresh();
 
         return [

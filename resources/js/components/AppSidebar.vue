@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { IconBrandDiscord, IconCalendar, IconCheck, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconAffiliate, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop, IconLanguage } from '@tabler/icons-vue';
+import { IconBrandDiscord, IconCalendar, IconSelector, IconFileText, IconHash, IconLogout, IconPlus, IconSettings, IconAffiliate, IconPencil, IconFileCheck, IconTag, IconUser, IconClock, IconMessageCircle, IconBell, IconBook, IconSun, IconMoon, IconDeviceDesktop, IconLanguage } from '@tabler/icons-vue';
 import { loadLanguageAsync, trans } from 'laravel-vue-i18n';
-import { Button } from '@/components/ui/button';
-import { store as storePost } from '@/actions/App/Http/Controllers/PostController';
-import { updateLanguage } from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { computed } from 'vue';
-import dayjs from '@/dayjs';
 
+import { store as storePost } from '@/actions/App/Http/Controllers/PostController';
+import { index as postsIndex } from '@/actions/App/Http/Controllers/PostController';
+import { updateLanguage } from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -39,10 +39,10 @@ import {
 } from '@/components/ui/sidebar';
 import { useAppearance } from '@/composables/useAppearance';
 import { useInitials } from '@/composables/useInitials';
+import dayjs from '@/dayjs';
 import { accounts, calendar, logout } from '@/routes';
 import { index as hashtags } from '@/routes/hashtags';
 import { index as labels } from '@/routes/labels';
-import { index as postsIndex } from '@/actions/App/Http/Controllers/PostController';
 import { edit as editProfile } from '@/routes/profile';
 import { settings as workspaceSettings } from '@/routes/workspace';
 import { create as createWorkspaceRoute, switchMethod } from '@/routes/workspaces';

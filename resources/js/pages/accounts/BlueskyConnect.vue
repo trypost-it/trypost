@@ -65,7 +65,9 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
 
                 <Alert>
                     <IconInfoCircle class="h-4 w-4" />
-                    <AlertDescription class="inline" v-html="$t('accounts.bluesky.app_password_hint')" />
+                    <AlertDescription class="inline">
+                        <span v-html="$t('accounts.bluesky.app_password_hint')" />
+                    </AlertDescription>
                 </Alert>
 
                 <Button type="submit" :disabled="isSubmitting" class="w-full">

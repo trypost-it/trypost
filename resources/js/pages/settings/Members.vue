@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { trans } from 'laravel-vue-i18n';
 import { IconUserPlus, IconUsers, IconMail, IconTrash, IconCrown, IconUser, IconShield } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';

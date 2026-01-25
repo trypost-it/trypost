@@ -20,7 +20,7 @@ interface Props {
     media: MediaItem[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 </script>
 
 <template>

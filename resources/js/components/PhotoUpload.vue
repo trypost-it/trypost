@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import axios from 'axios';
 import { IconTrash, IconUpload, IconUser } from '@tabler/icons-vue';
+import axios from 'axios';
 import { ref, watch } from 'vue';
 
 import { Button } from '@/components/ui/button';

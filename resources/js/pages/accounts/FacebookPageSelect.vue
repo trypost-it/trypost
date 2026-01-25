@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { IconBrandFacebook, IconCheck } from '@tabler/icons-vue';
-import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';

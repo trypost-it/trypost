@@ -17,7 +17,6 @@ import {
     IconClock,
     IconAlertCircle,
     IconTrash,
-    IconSend,
     IconDots,
     IconPlus,
     IconCircleCheck,
@@ -27,16 +26,13 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch, type Component } from 'vue';
 
-import debounce from '@/debounce';
 
-import { Badge } from '@/components/ui/badge';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import DatePicker from '@/components/DatePicker.vue';
 import PhoneMockup from '@/components/PhoneMockup.vue';
 import PostForm from '@/components/posts/PostForm.vue';
 import { PlatformPreview } from '@/components/posts/previews';
-import { useMediaManager, type MediaItem } from '@/composables/useMediaManager';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
     AlertDialog,
@@ -48,6 +44,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -59,7 +56,9 @@ import {
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useMediaManager, type MediaItem } from '@/composables/useMediaManager';
 import dayjs from '@/dayjs';
+import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { destroy as destroyPost, index as postsIndex, update as updatePost } from '@/routes/posts';
 import { type BreadcrumbItemType } from '@/types';
@@ -465,11 +464,6 @@ const setMeta = (platformId: string, value: Record<string, any>) => {
 // Selected platforms (for tabs)
 const selectedPlatforms = computed(() => {
     return post.value.post_platforms.filter(pp => selectedPlatformIds.value.includes(pp.id));
-});
-
-// Other selected platforms (for sync label)
-const otherSelectedPlatforms = computed(() => {
-    return selectedPlatforms.value.filter(pp => pp.id !== activeTabId.value);
 });
 
 // First selected platform (for sync confirmation)

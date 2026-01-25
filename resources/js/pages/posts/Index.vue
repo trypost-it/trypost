@@ -4,6 +4,7 @@ import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText,
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
+import { index as postsIndex, store as storePost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as postsIndex, store as storePost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {

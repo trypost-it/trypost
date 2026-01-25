@@ -138,12 +138,12 @@ return [
     'plans' => [
         'monthly' => [
             'price_id' => env('STRIPE_PRICE_MONTHLY'),
-            'price' => 25,
+            'price' => 20,
             'interval' => 'month',
         ],
         'yearly' => [
             'price_id' => env('STRIPE_PRICE_YEARLY'),
-            'price' => 20,
+            'price' => 16,
             'interval' => 'year',
         ],
     ],

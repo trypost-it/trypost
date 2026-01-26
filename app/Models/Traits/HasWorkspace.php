@@ -52,9 +52,14 @@ trait HasWorkspace
 
     /**
      * Check if user can create more workspaces based on subscription.
+     * In self-hosted mode, users can create unlimited workspaces.
      */
     public function canCreateWorkspace(): bool
     {
+        if (config('trypost.self_hosted')) {
+            return true;
+        }
+
         if (! $this->hasActiveSubscription()) {
             return $this->ownedWorkspacesCount() === 0;
         }
@@ -66,9 +71,14 @@ trait HasWorkspace
 
     /**
      * Increment workspace quantity on subscription.
+     * Skipped in self-hosted mode (no Stripe subscription).
      */
     public function incrementWorkspaceQuantity(): void
     {
+        if (config('trypost.self_hosted')) {
+            return;
+        }
+
         if ($this->hasActiveSubscription()) {
             $this->subscription('default')->incrementQuantity();
         }
@@ -76,9 +86,14 @@ trait HasWorkspace
 
     /**
      * Decrement workspace quantity on subscription.
+     * Skipped in self-hosted mode (no Stripe subscription).
      */
     public function decrementWorkspaceQuantity(): void
     {
+        if (config('trypost.self_hosted')) {
+            return;
+        }
+
         if ($this->hasActiveSubscription()) {
             $subscription = $this->subscription('default');
 
@@ -90,9 +105,14 @@ trait HasWorkspace
 
     /**
      * Sync subscription quantity with actual workspace count.
+     * Skipped in self-hosted mode (no Stripe subscription).
      */
     public function syncWorkspaceQuantity(): void
     {
+        if (config('trypost.self_hosted')) {
+            return;
+        }
+
         if ($this->hasActiveSubscription()) {
             $count = $this->ownedWorkspacesCount();
 

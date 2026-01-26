@@ -81,13 +81,17 @@ test('user can get owned workspaces count', function () {
     expect($user->ownedWorkspacesCount())->toBe(3);
 });
 
-test('user without subscription can create first workspace', function () {
+test('user without subscription can create first workspace in SaaS mode', function () {
+    config(['trypost.self_hosted' => false]);
+
     $user = User::factory()->create();
 
     expect($user->canCreateWorkspace())->toBeTrue();
 });
 
-test('user without subscription cannot create second workspace', function () {
+test('user without subscription cannot create second workspace in SaaS mode', function () {
+    config(['trypost.self_hosted' => false]);
+
     $user = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
     $workspace->members()->attach($user->id, ['role' => 'owner']);
@@ -95,7 +99,22 @@ test('user without subscription cannot create second workspace', function () {
     expect($user->canCreateWorkspace())->toBeFalse();
 });
 
-test('user with subscription can create workspaces up to quantity', function () {
+test('user can create unlimited workspaces in self-hosted mode', function () {
+    config(['trypost.self_hosted' => true]);
+
+    $user = User::factory()->create();
+    $workspaces = Workspace::factory()->count(5)->create(['user_id' => $user->id]);
+
+    foreach ($workspaces as $workspace) {
+        $workspace->members()->attach($user->id, ['role' => 'owner']);
+    }
+
+    expect($user->canCreateWorkspace())->toBeTrue();
+});
+
+test('user with subscription can create workspaces up to quantity in SaaS mode', function () {
+    config(['trypost.self_hosted' => false]);
+
     $user = User::factory()->create();
     $user->subscriptions()->create([
         'type' => 'default',
@@ -111,7 +130,9 @@ test('user with subscription can create workspaces up to quantity', function () 
     expect($user->canCreateWorkspace())->toBeTrue();
 });
 
-test('user with subscription cannot exceed workspace quantity', function () {
+test('user with subscription cannot exceed workspace quantity in SaaS mode', function () {
+    config(['trypost.self_hosted' => false]);
+
     $user = User::factory()->create();
     $user->subscriptions()->create([
         'type' => 'default',
@@ -130,7 +151,9 @@ test('user with subscription cannot exceed workspace quantity', function () {
     expect($user->canCreateWorkspace())->toBeFalse();
 });
 
-test('increment workspace quantity does nothing without subscription', function () {
+test('increment workspace quantity does nothing without subscription in SaaS mode', function () {
+    config(['trypost.self_hosted' => false]);
+
     $user = User::factory()->create();
 
     $user->incrementWorkspaceQuantity();
@@ -138,7 +161,20 @@ test('increment workspace quantity does nothing without subscription', function 
     expect($user->subscription('default'))->toBeNull();
 });
 
-test('decrement workspace quantity does nothing without subscription', function () {
+test('increment workspace quantity is skipped in self-hosted mode', function () {
+    config(['trypost.self_hosted' => true]);
+
+    $user = User::factory()->create();
+
+    // Should not throw any errors even without subscription
+    $user->incrementWorkspaceQuantity();
+
+    expect($user->subscription('default'))->toBeNull();
+});
+
+test('decrement workspace quantity does nothing without subscription in SaaS mode', function () {
+    config(['trypost.self_hosted' => false]);
+
     $user = User::factory()->create();
 
     $user->decrementWorkspaceQuantity();
@@ -146,7 +182,20 @@ test('decrement workspace quantity does nothing without subscription', function 
     expect($user->subscription('default'))->toBeNull();
 });
 
-test('sync workspace quantity does nothing without subscription', function () {
+test('decrement workspace quantity is skipped in self-hosted mode', function () {
+    config(['trypost.self_hosted' => true]);
+
+    $user = User::factory()->create();
+
+    // Should not throw any errors even without subscription
+    $user->decrementWorkspaceQuantity();
+
+    expect($user->subscription('default'))->toBeNull();
+});
+
+test('sync workspace quantity does nothing without subscription in SaaS mode', function () {
+    config(['trypost.self_hosted' => false]);
+
     $user = User::factory()->create();
     $workspaces = Workspace::factory()->count(2)->create(['user_id' => $user->id]);
 
@@ -159,7 +208,25 @@ test('sync workspace quantity does nothing without subscription', function () {
     expect($user->subscription('default'))->toBeNull();
 });
 
+test('sync workspace quantity is skipped in self-hosted mode', function () {
+    config(['trypost.self_hosted' => true]);
+
+    $user = User::factory()->create();
+    $workspaces = Workspace::factory()->count(2)->create(['user_id' => $user->id]);
+
+    foreach ($workspaces as $workspace) {
+        $workspace->members()->attach($user->id, ['role' => 'owner']);
+    }
+
+    // Should not throw any errors even without subscription
+    $user->syncWorkspaceQuantity();
+
+    expect($user->subscription('default'))->toBeNull();
+});
+
 test('sync workspace quantity does nothing with zero workspaces', function () {
+    config(['trypost.self_hosted' => false]);
+
     $user = User::factory()->create();
     $user->subscriptions()->create([
         'type' => 'default',

@@ -88,9 +88,14 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * Check if user has an active subscription.
+     * In self-hosted mode, always returns true (no subscription required).
      */
     public function hasActiveSubscription(): bool
     {
+        if (config('trypost.self_hosted')) {
+            return true;
+        }
+
         return $this->subscribed('default');
     }
 

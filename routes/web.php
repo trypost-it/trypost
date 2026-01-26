@@ -140,9 +140,9 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::put('labels/{label}', [WorkspaceLabelController::class, 'update'])->name('labels.update');
     Route::delete('labels/{label}', [WorkspaceLabelController::class, 'destroy'])->name('labels.destroy');
 
-    // Billing
-    Route::get('billing', [BillingController::class, 'index'])->name('billing.index');
-    Route::get('billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+    // Billing (under settings prefix)
+    Route::get('settings/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::get('settings/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
 });
 
 require __DIR__.'/settings.php';

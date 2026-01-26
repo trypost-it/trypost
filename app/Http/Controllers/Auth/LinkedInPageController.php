@@ -49,7 +49,10 @@ class LinkedInPageController extends SocialController
             ->first();
 
         if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            return back()->with('error', 'This platform is already connected.');
+            session()->flash('flash.banner', __('accounts.flash.already_connected'));
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return back();
         }
 
         session([
@@ -128,15 +131,19 @@ class LinkedInPageController extends SocialController
         $pendingData = session('linkedin_page_pending');
 
         if (! $pendingData) {
-            return redirect()->route('dashboard')
-                ->with('error', 'Session expired. Please try again.');
+            session()->flash('flash.banner', __('accounts.flash.session_expired'));
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('accounts');
         }
 
         $workspace = Workspace::find($pendingData['workspace_id']);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return redirect()->route('dashboard')
-                ->with('error', 'Workspace not found.');
+            session()->flash('flash.banner', __('accounts.flash.workspace_not_found'));
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('accounts');
         }
 
         return Inertia::render('accounts/LinkedInPageSelect', [

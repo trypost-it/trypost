@@ -41,7 +41,10 @@ class YouTubeController extends SocialController
             ->first();
 
         if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            return back()->with('error', 'This platform is already connected.');
+            session()->flash('flash.banner', __('accounts.flash.already_connected'));
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return back();
         }
 
         session([
@@ -164,15 +167,19 @@ class YouTubeController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $oauthData || ! $workspaceId) {
-            return redirect()->route('dashboard')
-                ->with('error', 'Session expired. Please try again.');
+            session()->flash('flash.banner', __('accounts.flash.session_expired'));
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('accounts');
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace) {
-            return redirect()->route('dashboard')
-                ->with('error', 'Workspace not found.');
+            session()->flash('flash.banner', __('accounts.flash.workspace_not_found'));
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route('accounts');
         }
 
         // Fetch YouTube channels
@@ -183,8 +190,10 @@ class YouTubeController extends SocialController
             $this->forgetSocialConnectSession();
             session()->forget('youtube_oauth');
 
-            return redirect()->route($redirectRoute)
-                ->with('error', 'No YouTube channels found. Please create a channel first.');
+            session()->flash('flash.banner', __('accounts.flash.no_youtube_channels'));
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return redirect()->route($redirectRoute);
         }
 
         return inertia('accounts/YouTubeChannelSelect', [

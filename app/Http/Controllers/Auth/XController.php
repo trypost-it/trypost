@@ -39,7 +39,10 @@ class XController extends SocialController
             ->first();
 
         if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            return back()->with('error', 'This platform is already connected.');
+            session()->flash('flash.banner', __('accounts.flash.already_connected'));
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return back();
         }
 
         return $this->redirectToProvider($request, $this->driver, $this->scopes);

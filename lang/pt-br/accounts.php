@@ -59,5 +59,10 @@ return [
 
     'flash' => [
         'disconnected' => 'Conta desconectada com sucesso!',
+        'connected' => 'Conta conectada com sucesso!',
+        'session_expired' => 'Sessão expirada. Por favor, tente novamente.',
+        'workspace_not_found' => 'Workspace não encontrado.',
+        'already_connected' => 'Esta plataforma já está conectada.',
+        'no_youtube_channels' => 'Nenhum canal do YouTube encontrado. Por favor, crie um canal primeiro.',
     ],
 ];

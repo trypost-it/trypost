@@ -89,9 +89,9 @@ class BillingController extends Controller
         $user = $request->user();
         $status = $request->query('status', 'processing');
 
-        // If already subscribed, redirect to dashboard
+        // If already subscribed, redirect to calendar
         if ($user->subscribed('default')) {
-            return redirect()->route('dashboard');
+            return redirect()->route('calendar');
         }
 
         // Validate status

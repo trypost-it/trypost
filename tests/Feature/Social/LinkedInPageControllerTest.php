@@ -186,7 +186,8 @@ test('user cannot connect linkedin page if already connected via connect route',
     $response = $this->actingAs($this->user)->get(route('social.linkedin-page.connect'));
 
     $response->assertRedirect();
-    $response->assertSessionHas('error', 'This platform is already connected.');
+    $response->assertSessionHas('flash.banner', __('accounts.flash.already_connected'));
+    $response->assertSessionHas('flash.bannerStyle', 'danger');
 });
 
 test('user can reconnect disconnected linkedin page account', function () {

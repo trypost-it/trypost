@@ -54,10 +54,15 @@ test('create workspace shows form for user with no workspaces', function () {
     );
 });
 
-test('create workspace redirects to billing if user already has workspace and no subscription', function () {
+test('create workspace shows form when user already has workspace in self-hosted mode', function () {
+    config(['trypost.self_hosted' => true]);
+
     $response = $this->actingAs($this->user)->get(route('workspaces.create'));
 
-    $response->assertRedirect(route('billing.index'));
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('workspaces/Create', false)
+    );
 });
 
 // Store tests
@@ -84,12 +89,19 @@ test('store workspace creates first workspace', function () {
     ]);
 });
 
-test('store workspace redirects to billing for second workspace without subscription', function () {
+test('store workspace creates second workspace in self-hosted mode', function () {
+    config(['trypost.self_hosted' => true]);
+
     $response = $this->actingAs($this->user)->post(route('workspaces.store'), [
         'name' => 'Second Workspace',
     ]);
 
-    $response->assertRedirect(route('billing.index'));
+    $response->assertRedirect(route('calendar'));
+
+    $this->assertDatabaseHas('workspaces', [
+        'name' => 'Second Workspace',
+        'user_id' => $this->user->id,
+    ]);
 });
 
 test('store workspace validates name is required', function () {

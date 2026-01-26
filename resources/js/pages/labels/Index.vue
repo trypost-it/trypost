@@ -54,6 +54,7 @@ const handleDelete = (labelId: string) => {
 </script>
 
 <template>
+
     <Head :title="$t('labels.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
@@ -66,7 +67,6 @@ const handleDelete = (labelId: string) => {
                     </p>
                 </div>
                 <Button @click="isCreateDialogOpen = true">
-                    <IconPlus class="mr-2 h-4 w-4" />
                     {{ $t('labels.new_label') }}
                 </Button>
             </div>
@@ -90,27 +90,16 @@ const handleDelete = (labelId: string) => {
                     <CardHeader class="pb-3">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div
-                                    class="h-6 w-6 rounded-md"
-                                    :style="{ backgroundColor: label.color }"
-                                />
+                                <div class="h-6 w-6 rounded-md" :style="{ backgroundColor: label.color }" />
                                 <CardTitle class="text-lg">{{ label.name }}</CardTitle>
                             </div>
                             <div class="flex items-center gap-1">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    class="h-8 w-8"
-                                    @click="openEditDialog(label)"
-                                >
+                                <Button variant="ghost" size="icon" class="h-8 w-8" @click="openEditDialog(label)">
                                     <IconPencil class="h-4 w-4" />
                                 </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
+                                <Button variant="ghost" size="icon"
                                     class="h-8 w-8 text-destructive hover:text-destructive"
-                                    @click="handleDelete(label.id)"
-                                >
+                                    @click="handleDelete(label.id)">
                                     <IconTrash class="h-4 w-4" />
                                 </Button>
                             </div>
@@ -124,11 +113,7 @@ const handleDelete = (labelId: string) => {
     <CreateDialog v-model:open="isCreateDialogOpen" />
     <EditDialog v-model:open="isEditDialogOpen" :label="editingLabel" />
 
-    <ConfirmDeleteModal
-        ref="deleteModal"
-        :title="$t('labels.delete.title')"
-        :description="$t('labels.delete.description')"
-        :action="$t('labels.delete.confirm')"
-        :cancel="$t('labels.delete.cancel')"
-    />
+    <ConfirmDeleteModal ref="deleteModal" :title="$t('labels.delete.title')"
+        :description="$t('labels.delete.description')" :action="$t('labels.delete.confirm')"
+        :cancel="$t('labels.delete.cancel')" />
 </template>

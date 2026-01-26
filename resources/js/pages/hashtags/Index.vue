@@ -58,6 +58,7 @@ const getHashtagCount = (hashtags: string): number => {
 </script>
 
 <template>
+
     <Head :title="$t('hashtags.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
@@ -70,7 +71,6 @@ const getHashtagCount = (hashtags: string): number => {
                     </p>
                 </div>
                 <Button @click="isCreateDialogOpen = true">
-                    <IconPlus class="mr-2 h-4 w-4" />
                     {{ $t('hashtags.new_group') }}
                 </Button>
             </div>
@@ -95,20 +95,12 @@ const getHashtagCount = (hashtags: string): number => {
                         <div class="flex items-center justify-between">
                             <CardTitle class="text-lg">{{ hashtag.name }}</CardTitle>
                             <div class="flex items-center gap-1">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    class="h-8 w-8"
-                                    @click="openEditDialog(hashtag)"
-                                >
+                                <Button variant="ghost" size="icon" class="h-8 w-8" @click="openEditDialog(hashtag)">
                                     <IconPencil class="h-4 w-4" />
                                 </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
+                                <Button variant="ghost" size="icon"
                                     class="h-8 w-8 text-destructive hover:text-destructive"
-                                    @click="handleDelete(hashtag.id)"
-                                >
+                                    @click="handleDelete(hashtag.id)">
                                     <IconTrash class="h-4 w-4" />
                                 </Button>
                             </div>
@@ -130,11 +122,7 @@ const getHashtagCount = (hashtags: string): number => {
     <CreateDialog v-model:open="isCreateDialogOpen" />
     <EditDialog v-model:open="isEditDialogOpen" :hashtag="editingHashtag" />
 
-    <ConfirmDeleteModal
-        ref="deleteModal"
-        :title="$t('hashtags.delete.title')"
-        :description="$t('hashtags.delete.description')"
-        :action="$t('hashtags.delete.confirm')"
-        :cancel="$t('hashtags.delete.cancel')"
-    />
+    <ConfirmDeleteModal ref="deleteModal" :title="$t('hashtags.delete.title')"
+        :description="$t('hashtags.delete.description')" :action="$t('hashtags.delete.confirm')"
+        :cancel="$t('hashtags.delete.cancel')" />
 </template>

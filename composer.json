@@ -26,6 +26,12 @@
         "issues": "https://github.com/trypost-it/trypost/issues",
         "source": "https://github.com/trypost-it/trypost"
     },
+    "authors": [
+        {
+            "name": "Paulo Castellano",
+            "homepage": "https://github.com/paulocastellano"
+        }
+    ],
     "require": {
         "php": "^8.2",
         "inertiajs/inertia-laravel": "^2.0",

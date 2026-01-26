@@ -221,8 +221,9 @@ function handleLogout() {
                                 </Avatar>
                                 <div class="grid flex-1 text-left text-sm leading-tight">
                                     <span class="truncate font-semibold">{{ auth.user.name }}</span>
-                                    <span class="truncate text-xs text-muted-foreground">{{ currentWorkspace?.name ||
-                                        $t('sidebar.select_workspace') }}</span>
+                                    <span class="truncate text-xs">
+                                        {{ currentWorkspace?.name || $t('sidebar.select_workspace') }}
+                                    </span>
                                 </div>
                                 <IconSelector class="ml-auto size-4" />
                             </SidebarMenuButton>

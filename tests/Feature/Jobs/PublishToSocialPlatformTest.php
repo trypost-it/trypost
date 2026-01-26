@@ -174,7 +174,7 @@ test('publish to social platform skips publishing when account is disconnected',
 
     $this->postPlatform->refresh();
     expect($this->postPlatform->status)->toBe('failed');
-    expect($this->postPlatform->error_message)->toBe('Social account is disconnected');
+    expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_disconnected'));
 });
 
 test('publish to social platform skips publishing when account token is expired', function () {
@@ -193,5 +193,5 @@ test('publish to social platform skips publishing when account token is expired'
 
     $this->postPlatform->refresh();
     expect($this->postPlatform->status)->toBe('failed');
-    expect($this->postPlatform->error_message)->toBe('Social account is disconnected');
+    expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_disconnected'));
 });

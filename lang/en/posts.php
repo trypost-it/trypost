@@ -212,4 +212,8 @@ return [
         'cannot_edit_published' => 'Published posts cannot be edited.',
         'connect_first' => 'Connect at least one social network before creating a post.',
     ],
+
+    'errors' => [
+        'account_disconnected' => 'Social account is disconnected',
+    ],
 ];

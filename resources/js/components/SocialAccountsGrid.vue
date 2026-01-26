@@ -134,33 +134,22 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
 
 <template>
     <div class="grid gap-4" :class="gridClass">
-        <div
-            v-for="platform in platforms"
-            :key="platform.value"
-            class="group relative overflow-hidden rounded-xl border bg-card transition-all hover:shadow-md"
-            :class="{
+        <div v-for="platform in platforms" :key="platform.value"
+            class="group relative overflow-hidden rounded-xl border bg-card transition-all hover:shadow-md" :class="{
                 'border-green-500/30 bg-green-50/50 dark:bg-green-950/20': platform.connected && !isDisconnected(platform.account),
                 'border-red-500/30 bg-red-50/50 dark:bg-red-950/20': platform.connected && isDisconnected(platform.account),
-            }"
-        >
+            }">
             <!-- Platform Header -->
             <div class="flex items-center gap-3 p-4">
                 <div class="relative">
-                    <img
-                        :src="getPlatformLogo(platform.value)"
-                        :alt="platform.label"
-                        class="h-12 w-12 rounded-lg object-contain"
-                    />
-                    <div
-                        v-if="platform.connected && !isDisconnected(platform.account)"
-                        class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white ring-2 ring-white dark:ring-gray-900"
-                    >
+                    <img :src="getPlatformLogo(platform.value)" :alt="platform.label"
+                        class="h-12 w-12 rounded-lg object-contain" />
+                    <div v-if="platform.connected && !isDisconnected(platform.account)"
+                        class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white ring-2 ring-white dark:ring-neutral-900">
                         <IconCheck class="h-3 w-3" />
                     </div>
-                    <div
-                        v-else-if="platform.connected && isDisconnected(platform.account)"
-                        class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white ring-2 ring-white dark:ring-gray-900"
-                    >
+                    <div v-else-if="platform.connected && isDisconnected(platform.account)"
+                        class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white ring-2 ring-white dark:ring-neutral-900">
                         <IconAlertCircle class="h-3 w-3" />
                     </div>
                 </div>
@@ -180,7 +169,8 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
             <!-- Connected State -->
             <div v-if="platform.connected && platform.account" class="border-t px-4 py-3">
                 <!-- Disconnected Warning -->
-                <div v-if="isDisconnected(platform.account)" class="mb-3 flex items-start gap-2 rounded-lg bg-red-100 p-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                <div v-if="isDisconnected(platform.account)"
+                    class="mb-3 flex items-start gap-2 rounded-lg bg-red-100 p-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
                     <IconAlertCircle class="h-4 w-4 mt-0.5 shrink-0" />
                     <div class="flex-1 min-w-0">
                         <p class="font-medium">{{ trans('accounts.connection_lost') }}</p>
@@ -207,10 +197,8 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                         <TooltipProvider v-if="showReconnect && isDisconnected(platform.account)">
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <button
-                                        @click="openOAuthPopup(platform.value)"
-                                        class="p-2 text-amber-600 hover:text-amber-700 transition-colors"
-                                    >
+                                    <button @click="openOAuthPopup(platform.value)"
+                                        class="p-2 text-amber-600 hover:text-amber-700 transition-colors">
                                         <IconRefresh class="h-4 w-4" />
                                     </button>
                                 </TooltipTrigger>
@@ -219,14 +207,12 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
-                        <TooltipProvider v-if="showViewProfile && getProfileUrl(platform.value, platform.account.username)">
+                        <TooltipProvider
+                            v-if="showViewProfile && getProfileUrl(platform.value, platform.account.username)">
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <a
-                                        :href="getProfileUrl(platform.value, platform.account.username)!"
-                                        target="_blank"
-                                        class="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                                    >
+                                    <a :href="getProfileUrl(platform.value, platform.account.username)!" target="_blank"
+                                        class="p-2 text-muted-foreground hover:text-foreground transition-colors">
                                         <IconExternalLink class="h-4 w-4" />
                                     </a>
                                 </TooltipTrigger>
@@ -238,10 +224,8 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                         <TooltipProvider v-if="showDisconnect">
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <button
-                                        @click="emit('disconnect', platform.account.id)"
-                                        class="p-2 text-muted-foreground hover:text-red-600 transition-colors"
-                                    >
+                                    <button @click="emit('disconnect', platform.account.id)"
+                                        class="p-2 text-muted-foreground hover:text-red-600 transition-colors">
                                         <IconTrash class="h-4 w-4" />
                                     </button>
                                 </TooltipTrigger>

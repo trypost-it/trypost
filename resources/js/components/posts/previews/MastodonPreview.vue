@@ -58,8 +58,8 @@ defineProps<Props>();
                     <div class="rounded-lg overflow-hidden" :class="{
                         'grid grid-cols-2 gap-0.5': media.length >= 2,
                     }">
-                        <div v-for="(item, index) in media.slice(0, 4)" :key="item.id"
-                            class="relative overflow-hidden" :class="{
+                        <div v-for="(item, index) in media.slice(0, 4)" :key="item.id" class="relative overflow-hidden"
+                            :class="{
                                 'aspect-[4/3]': media.length === 1,
                                 'aspect-square': media.length > 1,
                             }">
@@ -68,7 +68,8 @@ defineProps<Props>();
                             <video v-else :src="item.url" class="w-full h-full object-cover bg-black" muted loop
                                 playsinline />
                             <!-- Hide button -->
-                            <button class="absolute top-2 right-2 bg-black/60 text-white text-[12px] px-2 py-0.5 rounded">
+                            <button
+                                class="absolute top-2 right-2 bg-black/60 text-white text-[12px] px-2 py-0.5 rounded">
                                 Hide
                             </button>
                             <div v-if="media.length > 4 && index === 3"
@@ -140,7 +141,7 @@ defineProps<Props>();
                         </svg>
                     </button>
                     <!-- More -->
-                    <button class="p-2 hover:bg-gray-100 dark:hover:bg-[#313543] rounded-full">
+                    <button class="p-2 hover:bg-neutral-100 dark:hover:bg-[#313543] rounded-full">
                         <svg class="h-5 w-5 text-[#606984] dark:text-[#9baec8]" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="12" r="1.5" />
                             <circle cx="6" cy="12" r="1.5" />

@@ -106,7 +106,7 @@ const getPlatformLogo = (platform: string): string => {
 
 const getStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; icon: typeof IconFileText }> = {
-        'draft': { color: 'bg-gray-100 text-gray-800', icon: IconFileText },
+        'draft': { color: 'bg-neutral-100 text-neutral-800', icon: IconFileText },
         'scheduled': { color: 'bg-blue-100 text-blue-800', icon: IconClock },
         'publishing': { color: 'bg-yellow-100 text-yellow-800', icon: IconLoader2 },
         'published': { color: 'bg-green-100 text-green-800', icon: IconCircleCheck },
@@ -179,7 +179,9 @@ const handleDelete = (post: Post) => {
                         <IconFileText class="h-12 w-12 text-muted-foreground" />
                         <h3 class="mt-4 text-lg font-semibold">{{ $t('posts.no_posts') }}</h3>
                         <p class="mt-2 text-sm text-muted-foreground">
-                            {{ currentStatus ? $t('posts.no_posts_status', { status: $t(`posts.status.${currentStatus}`) }) : $t('posts.start_creating') }}
+                            {{ currentStatus ? $t('posts.no_posts_status', {
+                                status: $t(`posts.status.${currentStatus}`)
+                            }) : $t('posts.start_creating') }}
                         </p>
                         <Link v-if="!currentStatus" :href="storePost.url()" method="post" class="mt-4">
                             <Button>
@@ -286,11 +288,7 @@ const handleDelete = (post: Post) => {
         </div>
     </AppLayout>
 
-    <ConfirmDeleteModal
-        ref="deleteModal"
-        :title="$t('posts.edit.delete_modal.title')"
-        :description="$t('posts.edit.delete_modal.description')"
-        :action="$t('posts.edit.delete_modal.action')"
-        :cancel="$t('posts.edit.delete_modal.cancel')"
-    />
+    <ConfirmDeleteModal ref="deleteModal" :title="$t('posts.edit.delete_modal.title')"
+        :description="$t('posts.edit.delete_modal.description')" :action="$t('posts.edit.delete_modal.action')"
+        :cancel="$t('posts.edit.delete_modal.cancel')" />
 </template>

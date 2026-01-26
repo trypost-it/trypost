@@ -3,7 +3,7 @@
 return [
     'select_workspace' => 'Selecionar workspace',
     'create_workspace' => 'Criar workspace',
-    'create_post' => 'Criar post',
+    'create_post' => 'Novo post',
     'profile' => 'Perfil',
     'log_out' => 'Sair',
 

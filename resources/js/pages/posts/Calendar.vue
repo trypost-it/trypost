@@ -295,7 +295,7 @@ const formatTime = (scheduledAt: string): string => {
                     </Tabs>
                     <Link :href="storePost.url()" method="post">
                         <Button size="sm" class="lg:size-default">
-                            <IconPlus class="h-4 w-4 lg:mr-2" />
+                            <IconPlus class="h-4 w-4 lg:hidden" />
                             <span class="hidden lg:inline">{{ $t('calendar.new_post') }}</span>
                         </Button>
                     </Link>

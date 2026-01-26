@@ -186,14 +186,12 @@ const handleDelete = (post: Post) => {
                         <IconFileText class="h-12 w-12 text-muted-foreground" />
                         <h3 class="mt-4 text-lg font-semibold">{{ $t('posts.no_posts') }}</h3>
                         <p class="mt-2 text-sm text-muted-foreground">
-                            {{ currentStatus ? $t('posts.no_posts_status', {
-                                status: $t(`posts.status.${currentStatus}`)
-                            }) : $t('posts.start_creating') }}
+                            {{ $t('posts.start_creating') }}
                         </p>
-                        <Link v-if="!currentStatus" :href="storePost.url()" method="post" class="mt-4">
+                        <Link :href="storePost.url()" method="post" class="mt-4">
                             <Button>
                                 <IconPlus class="h-4 w-4" />
-                                {{ $t('posts.create_post') }}
+                                {{ $t('posts.new_post') }}
                             </Button>
                         </Link>
                     </CardContent>

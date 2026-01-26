@@ -30,7 +30,17 @@ APP_URL=http://localhost
 SELF_HOSTED=true
 ```
 
-When `SELF_HOSTED=true`, TryPost skips payment/subscription requirements. This is the default for self-hosted installations.
+When `SELF_HOSTED=true`, TryPost runs without any payment or subscription requirements. This is the default for self-hosted installations.
+
+**What changes in self-hosted mode:**
+
+- No Stripe configuration required
+- No subscription or payment checks
+- Unlimited workspaces per user
+- All features available without restrictions
+
+{: .note }
+If you're running TryPost as a SaaS with payments, set `SELF_HOSTED=false` and configure Stripe.
 
 ## Database
 

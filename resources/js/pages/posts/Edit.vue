@@ -627,6 +627,7 @@ const deletePost = () => {
     if (isReadOnly.value) return;
     deleteModal.value?.open({
         url: destroyPost.url(post.value.id),
+        redirect: 'posts.index',
     });
 };
 </script>

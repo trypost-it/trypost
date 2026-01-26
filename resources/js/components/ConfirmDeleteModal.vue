@@ -56,14 +56,19 @@ const emit = defineEmits(['deleted', 'closed']);
 const isOpen = ref<boolean>(false);
 const loading = ref<boolean>(false);
 const url = ref<string | null>(null);
+const redirect = ref<string | null>(null);
 
 function remove() {
   if (!url.value) return;
 
   loading.value = true;
 
+  const targetUrl = redirect.value
+    ? `${url.value}?redirect=${encodeURIComponent(redirect.value)}`
+    : url.value;
+
   router[props.method as 'delete' | 'get' | 'post' | 'put' | 'patch'](
-    url.value,
+    targetUrl,
     {},
     {
       preserveState: props.preserveState,
@@ -82,8 +87,9 @@ function remove() {
   );
 }
 
-function open(data: { url: string }) {
+function open(data: { url: string; redirect?: string }) {
   url.value = data.url;
+  redirect.value = data.redirect ?? null;
   loading.value = false;
   isOpen.value = true;
 }

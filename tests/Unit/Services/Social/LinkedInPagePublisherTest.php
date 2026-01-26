@@ -115,12 +115,16 @@ test('linkedin page publisher throws exception on api error', function () {
         ->toThrow(Exception::class);
 });
 
-test('linkedin page publisher throws token expired exception on auth error', function () {
+test('linkedin page publisher throws token expired exception on auth error after retry', function () {
     Http::fake([
         'https://api.linkedin.com/rest/posts' => Http::response([
             'code' => 'EXPIRED_ACCESS_TOKEN',
             'message' => 'The token used in the request has expired',
         ], 401),
+        'https://www.linkedin.com/oauth/v2/accessToken' => Http::response([
+            'error' => 'invalid_grant',
+            'error_description' => 'The refresh token is invalid',
+        ], 400),
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))

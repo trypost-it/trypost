@@ -30,25 +30,68 @@ class LinkedInPublisher
 
     private string $accessToken;
 
+    private SocialAccount $account;
+
+    private bool $hasRetried = false;
+
     public function publish(PostPlatform $postPlatform): array
     {
-        $account = $postPlatform->socialAccount;
+        $this->account = $postPlatform->socialAccount;
+        $this->hasRetried = false;
 
-        if ($account->is_token_expired || $account->is_token_expiring_soon) {
-            $this->refreshToken($account);
-            $account->refresh();
+        if ($this->account->is_token_expired || $this->account->is_token_expiring_soon) {
+            $this->refreshToken($this->account);
+            $this->account->refresh();
         }
 
-        $this->accessToken = $account->access_token;
+        $this->accessToken = $this->account->access_token;
 
-        $personUrn = "urn:li:person:{$account->platform_user_id}";
+        $personUrn = "urn:li:person:{$this->account->platform_user_id}";
         $contentType = $postPlatform->content_type;
 
-        return match ($contentType) {
-            ContentType::LinkedInCarousel => $this->publishCarousel($personUrn, $postPlatform->content, $postPlatform->media),
-            ContentType::LinkedInPost => $this->publishPost($personUrn, $postPlatform->content, $postPlatform->media),
-            default => throw new \Exception("Unsupported LinkedIn content type: {$contentType?->value}"),
-        };
+        try {
+            return match ($contentType) {
+                ContentType::LinkedInCarousel => $this->publishCarousel($personUrn, $postPlatform->content, $postPlatform->media),
+                ContentType::LinkedInPost => $this->publishPost($personUrn, $postPlatform->content, $postPlatform->media),
+                default => throw new \Exception("Unsupported LinkedIn content type: {$contentType?->value}"),
+            };
+        } catch (TokenExpiredException $e) {
+            return $this->retryWithRefresh($postPlatform, $e);
+        }
+    }
+
+    private function retryWithRefresh(PostPlatform $postPlatform, TokenExpiredException $originalException): array
+    {
+        if ($this->hasRetried) {
+            throw $originalException;
+        }
+
+        $this->hasRetried = true;
+
+        Log::info('LinkedIn token rejected, attempting refresh and retry', [
+            'account_id' => $this->account->id,
+        ]);
+
+        try {
+            $this->refreshToken($this->account);
+            $this->account->refresh();
+            $this->accessToken = $this->account->access_token;
+
+            $personUrn = "urn:li:person:{$this->account->platform_user_id}";
+            $contentType = $postPlatform->content_type;
+
+            return match ($contentType) {
+                ContentType::LinkedInCarousel => $this->publishCarousel($personUrn, $postPlatform->content, $postPlatform->media),
+                ContentType::LinkedInPost => $this->publishPost($personUrn, $postPlatform->content, $postPlatform->media),
+                default => throw new \Exception("Unsupported LinkedIn content type: {$contentType?->value}"),
+            };
+        } catch (\Throwable $e) {
+            Log::error('LinkedIn refresh failed during retry', [
+                'account_id' => $this->account->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $originalException;
+        }
     }
 
     private function publishPost(string $personUrn, string $content, $media): array

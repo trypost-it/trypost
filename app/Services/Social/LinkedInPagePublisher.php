@@ -30,18 +30,23 @@ class LinkedInPagePublisher
 
     private string $accessToken;
 
+    private SocialAccount $account;
+
+    private bool $hasRetried = false;
+
     public function publish(PostPlatform $postPlatform): array
     {
-        $account = $postPlatform->socialAccount;
+        $this->account = $postPlatform->socialAccount;
+        $this->hasRetried = false;
 
-        if ($account->is_token_expired || $account->is_token_expiring_soon) {
-            $this->refreshToken($account);
-            $account->refresh();
+        if ($this->account->is_token_expired || $this->account->is_token_expiring_soon) {
+            $this->refreshToken($this->account);
+            $this->account->refresh();
         }
 
-        $this->accessToken = $account->access_token;
+        $this->accessToken = $this->account->access_token;
 
-        $organizationId = $account->meta['organization_id'] ?? null;
+        $organizationId = $this->account->meta['organization_id'] ?? null;
 
         if (! $organizationId) {
             throw new \Exception('LinkedIn Page organization ID not configured');
@@ -50,11 +55,50 @@ class LinkedInPagePublisher
         $organizationUrn = "urn:li:organization:{$organizationId}";
         $contentType = $postPlatform->content_type;
 
-        return match ($contentType) {
-            ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $postPlatform->content, $postPlatform->media, $account),
-            ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $postPlatform->content, $postPlatform->media, $account),
-            default => throw new \Exception("Unsupported LinkedIn Page content type: {$contentType?->value}"),
-        };
+        try {
+            return match ($contentType) {
+                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
+                default => throw new \Exception("Unsupported LinkedIn Page content type: {$contentType?->value}"),
+            };
+        } catch (TokenExpiredException $e) {
+            return $this->retryWithRefresh($postPlatform, $e);
+        }
+    }
+
+    private function retryWithRefresh(PostPlatform $postPlatform, TokenExpiredException $originalException): array
+    {
+        if ($this->hasRetried) {
+            throw $originalException;
+        }
+
+        $this->hasRetried = true;
+
+        Log::info('LinkedIn Page token rejected, attempting refresh and retry', [
+            'account_id' => $this->account->id,
+        ]);
+
+        try {
+            $this->refreshToken($this->account);
+            $this->account->refresh();
+            $this->accessToken = $this->account->access_token;
+
+            $organizationId = $this->account->meta['organization_id'] ?? null;
+            $organizationUrn = "urn:li:organization:{$organizationId}";
+            $contentType = $postPlatform->content_type;
+
+            return match ($contentType) {
+                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
+                default => throw new \Exception("Unsupported LinkedIn Page content type: {$contentType?->value}"),
+            };
+        } catch (\Throwable $e) {
+            Log::error('LinkedIn Page refresh failed during retry', [
+                'account_id' => $this->account->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw $originalException;
+        }
     }
 
     private function publishPost(string $organizationUrn, string $content, $media, $account): array

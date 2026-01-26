@@ -13,7 +13,7 @@
                 "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
             ],
             "env": {
-                "SITE_PATH": "/Users/paulocastellano/Code/social-media-scheduler"
+                "SITE_PATH": "/Users/paulocastellano/Code/trypost"
             }
         }
     }

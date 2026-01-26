@@ -1,13 +1,10 @@
 {
     "agents": [
-        "claude_code",
-        "gemini"
+        "claude_code"
     ],
     "editors": [
         "claude_code"
     ],
-    "guidelines": [
-        "laravel/fortify"
-    ],
+    "guidelines": [],
     "herd_mcp": true
 }

@@ -1,13 +1,31 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/vue-starter-kit",
+    "name": "trypost-it/trypost",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Open-source social media scheduling for creators and teams",
     "keywords": [
+        "open-source",
+        "self-hosted",
         "laravel",
-        "framework"
+        "social-media",
+        "social-media-scheduler",
+        "social-media-management",
+        "content-scheduling",
+        "twitter",
+        "linkedin",
+        "instagram",
+        "facebook",
+        "tiktok",
+        "youtube",
+        "threads",
+        "pinterest"
     ],
     "license": "MIT",
+    "homepage": "https://trypost.it",
+    "support": {
+        "issues": "https://github.com/trypost-it/trypost/issues",
+        "source": "https://github.com/trypost-it/trypost"
+    },
     "require": {
         "php": "^8.2",
         "inertiajs/inertia-laravel": "^2.0",

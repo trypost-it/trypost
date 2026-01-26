@@ -124,6 +124,20 @@ MAIL_FROM_NAME="${APP_NAME}"
 
 Each social platform requires API credentials. See the [Platforms documentation](../platforms/README.md) for setup instructions.
 
+## Horizon (Queue Dashboard)
+
+[Laravel Horizon](https://laravel.com/docs/horizon) provides a dashboard to monitor your queues. Access it at `/horizon`.
+
+```env
+HORIZON_ALLOWED_EMAILS=admin@example.com,dev@example.com
+```
+
+| Variable | Description |
+|----------|-------------|
+| `HORIZON_ALLOWED_EMAILS` | Comma-separated list of emails allowed to access Horizon in production |
+
+If not set, Horizon dashboard will be inaccessible in non-local environments.
+
 ## Next Steps
 
 - [Connect your social accounts](../platforms/README.md)

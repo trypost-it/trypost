@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\SocialAccount\Status;
 use App\Models\Workspace;
+use App\Services\Social\LinkedInTokenSynchronizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -99,11 +100,14 @@ class LinkedInController extends SocialController
                 ]);
                 $existingAccount->markAsConnected();
 
+                // Sync tokens to LinkedIn Page if it exists
+                app(LinkedInTokenSynchronizer::class)->syncTokens($existingAccount);
+
                 return $this->popupCallback(true, 'LinkedIn account reconnected!', $this->platform->value);
             }
 
             // Create new account
-            $workspace->socialAccounts()->create([
+            $account = $workspace->socialAccounts()->create([
                 'platform' => $this->platform->value,
                 'platform_user_id' => $socialUser->getId(),
                 'username' => $username,
@@ -115,6 +119,9 @@ class LinkedInController extends SocialController
                 'scopes' => $socialUser->approvedScopes ?? null,
                 'status' => Status::Connected,
             ]);
+
+            // Sync tokens to LinkedIn Page if it exists
+            app(LinkedInTokenSynchronizer::class)->syncTokens($account);
 
             return $this->popupCallback(true, 'LinkedIn account connected!', $this->platform->value);
         } catch (\Exception $e) {

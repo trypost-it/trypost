@@ -467,6 +467,9 @@ class LinkedInPagePublisher
             'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
             'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
         ]);
+
+        // Sync tokens to LinkedIn personal if it exists
+        app(LinkedInTokenSynchronizer::class)->syncTokens($account);
     }
 
     private function handleApiError(Response $response, string $context): void

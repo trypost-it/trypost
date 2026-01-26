@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\SocialAccount\Status;
 use App\Models\Workspace;
+use App\Services\Social\LinkedInTokenSynchronizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -190,6 +191,9 @@ class LinkedInPageController extends SocialController
                     ]);
                     $existingAccount->markAsConnected();
 
+                    // Sync tokens to LinkedIn personal if it exists
+                    app(LinkedInTokenSynchronizer::class)->syncTokens($existingAccount);
+
                     session()->forget(['linkedin_page_pending', 'linkedin_page_reconnect_id']);
 
                     return $this->popupCallback(true, 'LinkedIn Page reconnected!', $this->platform->value);
@@ -197,7 +201,7 @@ class LinkedInPageController extends SocialController
             }
 
             // Create new account
-            $workspace->socialAccounts()->create([
+            $account = $workspace->socialAccounts()->create([
                 'platform' => $this->platform->value,
                 'platform_user_id' => $request->organization_id,
                 'username' => $request->organization_vanity_name,
@@ -213,6 +217,9 @@ class LinkedInPageController extends SocialController
                     'admin_name' => $pendingData['name'],
                 ],
             ]);
+
+            // Sync tokens to LinkedIn personal if it exists
+            app(LinkedInTokenSynchronizer::class)->syncTokens($account);
 
             session()->forget(['linkedin_page_pending', 'linkedin_page_reconnect_id']);
 

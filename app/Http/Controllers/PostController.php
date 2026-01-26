@@ -62,6 +62,11 @@ class PostController extends Controller
         $tz = $workspace->timezone;
         $view = $request->input('view', 'week');
 
+        // Day view
+        $currentDay = $request->input('day')
+            ? Carbon::parse($request->input('day'), $tz)->startOfDay()
+            : Carbon::now($tz)->startOfDay();
+
         // Week view
         $weekStart = $request->input('week')
             ? Carbon::parse($request->input('week'), $tz)->startOfWeek()
@@ -75,9 +80,17 @@ class PostController extends Controller
         $monthStart = $monthDate->copy()->startOfMonth()->startOfWeek();
         $monthEnd = $monthDate->copy()->endOfMonth()->endOfWeek();
 
-        // Get posts for both views (we query the larger range to cover both)
-        $rangeStart = $view === 'month' ? $monthStart : $weekStart;
-        $rangeEnd = $view === 'month' ? $monthEnd : $weekEnd;
+        // Get posts based on view
+        $rangeStart = match ($view) {
+            'day' => $currentDay,
+            'month' => $monthStart,
+            default => $weekStart,
+        };
+        $rangeEnd = match ($view) {
+            'day' => $currentDay->copy()->endOfDay(),
+            'month' => $monthEnd,
+            default => $weekEnd,
+        };
 
         $posts = $workspace->posts()
             ->with(['postPlatforms' => function ($query) {
@@ -91,6 +104,7 @@ class PostController extends Controller
         return Inertia::render('posts/Calendar', [
             'workspace' => $workspace,
             'posts' => $posts,
+            'currentDay' => $currentDay->format('Y-m-d'),
             'currentWeekStart' => $weekStart->format('Y-m-d'),
             'currentMonth' => $monthDate->format('Y-m-d'),
             'view' => $view,

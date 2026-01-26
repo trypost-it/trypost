@@ -3,6 +3,7 @@
 return [
     'title' => 'Calendário',
     'today' => 'Hoje',
+    'day' => 'Dia',
     'week' => 'Semana',
     'month' => 'Mês',
     'new_post' => 'Novo Post',

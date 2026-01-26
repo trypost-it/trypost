@@ -2,10 +2,12 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { IconChevronLeft, IconChevronRight, IconPlus } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
+import DatePicker from '@/components/DatePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import date from '@/date';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { calendar } from '@/routes';
@@ -40,12 +42,33 @@ interface Workspace {
 interface Props {
     workspace: Workspace;
     posts: Record<string, Post[]>;
+    currentDay: string;
     currentWeekStart: string;
     currentMonth: string;
-    view: 'week' | 'month';
+    view: 'day' | 'week' | 'month';
 }
 
 const props = defineProps<Props>();
+
+// Mobile detection
+const isMobile = ref(false);
+const checkMobile = () => {
+    isMobile.value = window.innerWidth < 1024;
+};
+
+onMounted(() => {
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile);
+});
+
+// Effective view (force day view on mobile)
+const effectiveView = computed(() => {
+    return isMobile.value ? 'day' : props.view;
+});
 
 const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
     { title: trans('calendar.title'), href: calendar.url() },
@@ -60,6 +83,21 @@ const weekdayNames = computed(() => {
     }
     return names;
 });
+
+// Day view computed
+const currentDay = computed(() => dayjs(props.currentDay));
+
+const dayHeaderTitle = computed(() => {
+    return currentDay.value.format('dddd, D [de] MMMM [de] YYYY');
+});
+
+const dayPosts = computed(() => {
+    const dateKey = currentDay.value.format('YYYY-MM-DD');
+    return props.posts[dateKey] || [];
+});
+
+// Date picker model for day navigation
+const selectedDate = ref(props.currentDay);
 
 // Week view computed
 const weekStart = computed(() => dayjs(props.currentWeekStart));
@@ -113,12 +151,21 @@ const calendarWeeks = computed(() => {
 
 // Header title based on view
 const headerTitle = computed(() => {
-    return props.view === 'month' ? monthHeaderTitle.value : weekHeaderTitle.value;
+    if (effectiveView.value === 'day') return dayHeaderTitle.value;
+    if (effectiveView.value === 'month') return monthHeaderTitle.value;
+    return weekHeaderTitle.value;
 });
 
 const getPostsForDay = (day: dayjs.Dayjs): Post[] => {
     const dateKey = day.format('YYYY-MM-DD');
     return props.posts[dateKey] || [];
+};
+
+const navigateDay = (direction: number) => {
+    const newDay = currentDay.value.add(direction, 'day');
+    router.get(calendar.url({ query: { view: 'day', day: newDay.format('YYYY-MM-DD') } }), {}, {
+        preserveState: true,
+    });
 };
 
 const navigateWeek = (direction: number) => {
@@ -136,7 +183,9 @@ const navigateMonth = (direction: number) => {
 };
 
 const navigate = (direction: number) => {
-    if (props.view === 'month') {
+    if (effectiveView.value === 'day') {
+        navigateDay(direction);
+    } else if (effectiveView.value === 'month') {
         navigateMonth(direction);
     } else {
         navigateWeek(direction);
@@ -144,7 +193,14 @@ const navigate = (direction: number) => {
 };
 
 const goToToday = () => {
-    router.get(calendar.url({ query: { view: props.view } }), {}, {
+    router.get(calendar.url({ query: { view: effectiveView.value } }), {}, {
+        preserveState: true,
+    });
+};
+
+const goToDate = (dateStr: string) => {
+    if (!dateStr) return;
+    router.get(calendar.url({ query: { view: 'day', day: dateStr } }), {}, {
         preserveState: true,
     });
 };
@@ -188,7 +244,6 @@ const getPlatformLogo = (platform: string): string => {
         'pinterest': '/images/accounts/pinterest.png',
         'bluesky': '/images/accounts/bluesky.png',
         'mastodon': '/images/accounts/mastodon.png',
-
     };
     return logos[platform];
 };
@@ -198,7 +253,7 @@ const getPostUrl = (post: Post): string => {
 };
 
 const formatTime = (scheduledAt: string): string => {
-    return dayjs.utc(scheduledAt).tz(props.workspace.timezone).format('h:mm A');
+    return date.formatTime(scheduledAt) || '';
 };
 </script>
 
@@ -209,8 +264,8 @@ const formatTime = (scheduledAt: string): string => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex flex-col h-full">
             <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b">
-                <div class="flex items-center gap-4">
+            <div class="flex items-center justify-between p-4 border-b gap-2">
+                <div class="flex items-center gap-2 lg:gap-4">
                     <div class="flex items-center gap-1">
                         <Button variant="outline" size="icon" @click="navigate(-1)">
                             <IconChevronLeft class="h-4 w-4" />
@@ -222,27 +277,90 @@ const formatTime = (scheduledAt: string): string => {
                     <Button variant="outline" size="sm" @click="goToToday">
                         {{ $t('calendar.today') }}
                     </Button>
-                    <h1 class="text-lg font-semibold">
+                    <!-- Date Picker for mobile day view -->
+                    <DatePicker v-if="isMobile" v-model="selectedDate" @update:model-value="goToDate" />
+                    <!-- Title for desktop -->
+                    <h1 class="hidden lg:block text-lg font-semibold">
                         {{ headerTitle }}
                     </h1>
                 </div>
-                <div class="flex items-center gap-4">
-                    <Tabs :default-value="view" @update:model-value="switchView">
+                <div class="flex items-center gap-2 lg:gap-4">
+                    <!-- View Tabs (hidden on mobile) -->
+                    <Tabs v-if="!isMobile" :default-value="view" @update:model-value="switchView">
                         <TabsList>
+                            <TabsTrigger value="day">{{ $t('calendar.day') }}</TabsTrigger>
                             <TabsTrigger value="week">{{ $t('calendar.week') }}</TabsTrigger>
                             <TabsTrigger value="month">{{ $t('calendar.month') }}</TabsTrigger>
                         </TabsList>
                     </Tabs>
                     <Link :href="storePost.url()" method="post">
-                        <Button>
-                            {{ $t('calendar.new_post') }}
+                        <Button size="sm" class="lg:size-default">
+                            <IconPlus class="h-4 w-4 lg:mr-2" />
+                            <span class="hidden lg:inline">{{ $t('calendar.new_post') }}</span>
                         </Button>
                     </Link>
                 </div>
             </div>
 
+            <!-- Day View (mobile or when view=day) -->
+            <div v-if="effectiveView === 'day'" class="flex-1 overflow-y-auto">
+                <!-- Mobile Header Title -->
+                <div class="lg:hidden px-4 py-3 border-b bg-muted/30">
+                    <h2 class="text-base font-semibold text-center">
+                        {{ dayHeaderTitle }}
+                    </h2>
+                </div>
+
+                <div class="p-4 space-y-3">
+                    <!-- Add Post Button -->
+                    <Link :href="storePost.url({ query: { date: currentDay.format('YYYY-MM-DD') } })" method="post"
+                        class="flex items-center justify-center gap-2 p-4 rounded-lg border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors">
+                        <IconPlus class="h-5 w-5" />
+                        <span>{{ $t('calendar.new_post') }}</span>
+                    </Link>
+
+                    <!-- Posts List -->
+                    <div v-if="dayPosts.length > 0" class="space-y-3">
+                        <Link v-for="post in dayPosts" :key="post.id" :href="getPostUrl(post)" class="block">
+                            <div class="p-4 rounded-lg border transition-all hover:ring-2 hover:ring-primary hover:ring-offset-1"
+                                :class="getStatusColor(post.status)">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex-1 min-w-0">
+                                        <!-- Time -->
+                                        <div class="text-sm font-semibold mb-2">
+                                            {{ formatTime(post.scheduled_at) }}
+                                        </div>
+
+                                        <!-- Platforms -->
+                                        <div class="flex -space-x-1 mb-2">
+                                            <img v-for="pp in post.post_platforms.slice(0, 5)" :key="pp.id"
+                                                :src="getPlatformLogo(pp.platform)" :alt="pp.platform"
+                                                class="h-6 w-6 rounded-full ring-2 ring-background" />
+                                            <span v-if="post.post_platforms.length > 5"
+                                                class="flex items-center justify-center h-6 w-6 rounded-full bg-muted text-xs font-medium ring-2 ring-background">
+                                                +{{ post.post_platforms.length - 5 }}
+                                            </span>
+                                        </div>
+
+                                        <!-- Content Preview -->
+                                        <p class="text-sm line-clamp-2 opacity-80">
+                                            {{ post.post_platforms[0]?.content || $t('calendar.no_content') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </Link>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div v-else class="text-center py-12 text-muted-foreground">
+                        <p>{{ $t('calendar.no_content') }}</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Week View -->
-            <div v-if="view === 'week'" class="flex-1 grid grid-cols-7 divide-x overflow-hidden">
+            <div v-else-if="effectiveView === 'week'" class="flex-1 grid grid-cols-7 divide-x overflow-hidden">
                 <div v-for="day in weekDays" :key="day.format('YYYY-MM-DD')" class="flex flex-col min-h-0"
                     :class="{ 'bg-primary/5': isToday(day) }">
                     <!-- Day Header -->

@@ -24,6 +24,7 @@ import {
     IconLoader2,
     IconTag,
     IconHash,
+    IconSettings,
 } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch, type Component } from 'vue';
@@ -59,6 +60,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMediaManager, type MediaItem } from '@/composables/useMediaManager';
@@ -228,6 +230,7 @@ const hashtagsModal = ref<InstanceType<typeof HashtagsModal> | null>(null);
 const showEnableSyncDialog = ref(false);
 const showDisableSyncDialog = ref(false);
 const showPlatformsDialog = ref(false);
+const showMobileActionsSheet = ref(false);
 
 // Active tab - first selected platform
 const activeTabId = ref<string>(selectedPlatformIds.value[0] || post.value.post_platforms[0]?.id || '');
@@ -697,8 +700,8 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
                         {{ getStatusConfig(post.status).label }}
                     </Badge>
 
-                    <!-- Sync Toggle (centered, only in edit mode with multiple platforms) -->
-                    <div v-if="!isReadOnly && selectedPlatformIds.length > 1" class="flex items-center gap-2">
+                    <!-- Sync Toggle (hidden on mobile, only in edit mode with multiple platforms) -->
+                    <div v-if="!isReadOnly && selectedPlatformIds.length > 1" class="hidden lg:flex items-center gap-2">
                         <Switch id="sync-content" v-model="synced" @click.capture="handleSyncClick" />
                         <Label for="sync-content">
                             {{ $t('posts.edit.sync') }}
@@ -741,8 +744,8 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
                         </TooltipProvider>
                     </div>
 
-                    <!-- Platforms Menu Button (only in edit mode) -->
-                    <TooltipProvider v-if="!isReadOnly">
+                    <!-- Platforms Menu Button (only in edit mode, hidden on mobile) -->
+                    <TooltipProvider v-if="!isReadOnly" class="hidden lg:block">
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <button type="button" @click="showPlatformsDialog = true"
@@ -757,8 +760,19 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
                     </TooltipProvider>
                 </div>
 
-                <!-- Schedule & Actions (only in edit mode) -->
-                <div v-if="!isReadOnly" class="flex items-center gap-3">
+                <!-- Mobile Actions Button (edit mode only) -->
+                <div v-if="!isReadOnly" class="lg:hidden flex items-center gap-2">
+                    <Button type="button" size="sm" :disabled="!canSubmit || isSubmitting || isSaving"
+                        @click="submit('publishing')">
+                        {{ $t('posts.edit.publish') }}
+                    </Button>
+                    <Button type="button" variant="outline" size="icon-sm" @click="showMobileActionsSheet = true">
+                        <IconSettings class="h-4 w-4" />
+                    </Button>
+                </div>
+
+                <!-- Desktop Schedule & Actions (only in edit mode) -->
+                <div v-if="!isReadOnly" class="hidden lg:flex items-center gap-3">
                     <!-- Labels Selector -->
                     <Popover v-if="labels.length > 0">
                         <PopoverTrigger asChild>
@@ -814,9 +828,9 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
                     </Button>
                 </div>
 
-                <!-- Read-only info -->
-                <div v-else class="flex items-center gap-3 text-sm text-muted-foreground">
-                    <span v-if="post.scheduled_at">{{ $t('posts.edit.scheduled_at') }} {{
+                <!-- Read-only info (responsive) -->
+                <div v-else class="flex items-center gap-2 lg:gap-3 text-xs lg:text-sm text-muted-foreground">
+                    <span v-if="post.scheduled_at" class="hidden sm:inline">{{ $t('posts.edit.scheduled_at') }} {{
                         formatDateTime(post.scheduled_at) }}</span>
                     <span v-if="post.published_at">{{ $t('posts.edit.published_at') }} {{
                         formatDateTime(post.published_at) }}</span>
@@ -827,7 +841,7 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
             <div class="flex-1 overflow-hidden">
                 <div v-if="activePlatform && selectedPlatformIds.length > 0" class="h-full flex">
                     <!-- Left Side: Form -->
-                    <div class="w-1/2 border-r overflow-y-auto relative ">
+                    <div class="w-full lg:w-1/2 lg:border-r overflow-y-auto relative">
                         <!-- Autosave indicator -->
                         <div v-if="!isReadOnly && (isSaving || showSaved)" class="absolute top-4 left-6 z-10">
                             <span v-if="isSaving" class="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -937,8 +951,8 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
                         </div>
                     </div>
 
-                    <!-- Right Side: Phone Preview -->
-                    <div class="w-1/2 bg-muted/30 overflow-y-auto">
+                    <!-- Right Side: Phone Preview (hidden on mobile) -->
+                    <div class="hidden lg:block lg:w-1/2 bg-muted/30 overflow-y-auto">
                         <div class="flex justify-center py-8 px-4">
                             <PhoneMockup>
                                 <PlatformPreview :key="activePlatform.id" :platform="activePlatform.platform"
@@ -1052,4 +1066,82 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
             </div>
         </DialogContent>
     </Dialog>
+
+    <!-- Mobile Actions Sheet -->
+    <Sheet :open="showMobileActionsSheet" @update:open="showMobileActionsSheet = $event">
+        <SheetContent side="right" class="w-full">
+            <SheetHeader>
+                <SheetTitle>{{ $t('posts.edit.settings') }}</SheetTitle>
+            </SheetHeader>
+            <div class="space-y-6 py-6 px-4">
+                <!-- Sync Toggle -->
+                <div v-if="selectedPlatformIds.length > 1" class="flex items-center justify-between">
+                    <Label for="sync-content-mobile">{{ $t('posts.edit.sync') }}</Label>
+                    <Switch id="sync-content-mobile" v-model="synced" @click.capture="handleSyncClick" />
+                </div>
+
+                <!-- DateTime Picker -->
+                <div class="space-y-2">
+                    <Label>{{ $t('posts.edit.schedule_for') }}</Label>
+                    <div class="flex items-center gap-2">
+                        <DatePicker name="scheduled_datetime_mobile" v-model="scheduledDateTime" :show-time="true"
+                            class="flex-1" />
+                        <span class="text-xs text-muted-foreground">{{ timezoneAbbr }}</span>
+                    </div>
+                </div>
+
+                <!-- Labels -->
+                <div v-if="labels.length > 0" class="space-y-2">
+                    <Label>{{ $t('posts.edit.labels') }}</Label>
+                    <div class="flex flex-wrap gap-2">
+                        <button v-for="label in labels" :key="label.id" type="button"
+                            class="flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm transition-colors"
+                            :class="selectedLabelIds.includes(label.id) ? 'bg-muted border-foreground/20' : 'border-border'"
+                            @click="toggleLabel(label.id)">
+                            <span class="h-2 w-2 rounded-full" :style="{ backgroundColor: label.color }" />
+                            {{ label.name }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hashtags -->
+                <div v-if="hashtags.length > 0">
+                    <Button type="button" variant="outline" class="w-full justify-start gap-2"
+                        @click="hashtagsModal?.open(); showMobileActionsSheet = false">
+                        <IconHash class="h-4 w-4" />
+                        {{ $t('posts.edit.hashtags') }}
+                    </Button>
+                </div>
+
+                <!-- Platforms -->
+                <div>
+                    <Button type="button" variant="outline" class="w-full justify-start gap-2"
+                        @click="showPlatformsDialog = true; showMobileActionsSheet = false">
+                        <IconDots class="h-4 w-4" />
+                        {{ $t('posts.edit.manage_platforms') }}
+                    </Button>
+                </div>
+
+                <!-- Delete -->
+                <div>
+                    <Button type="button" variant="outline"
+                        class="w-full justify-start gap-2 text-destructive hover:text-destructive"
+                        :disabled="isSaving || isSubmitting"
+                        @click="deletePost(); showMobileActionsSheet = false">
+                        <IconTrash class="h-4 w-4" />
+                        {{ $t('posts.edit.delete') }}
+                    </Button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-2 pt-2">
+                    <Button type="button" variant="secondary" class="flex-1"
+                        :disabled="!canSubmit || isSubmitting || isSaving"
+                        @click="submit('scheduled'); showMobileActionsSheet = false">
+                        {{ $t('posts.edit.schedule') }}
+                    </Button>
+                </div>
+            </div>
+        </SheetContent>
+    </Sheet>
 </template>

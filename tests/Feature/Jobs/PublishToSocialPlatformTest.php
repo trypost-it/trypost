@@ -156,3 +156,42 @@ test('publish to social platform marks post as failed when all platforms fail', 
     $this->post->refresh();
     expect($this->post->status)->toBe(PostStatus::Failed);
 });
+
+test('publish to social platform skips publishing when account is disconnected', function () {
+    Event::fake();
+
+    $this->socialAccount->update([
+        'status' => AccountStatus::Disconnected,
+        'disconnected_at' => now(),
+    ]);
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldNotReceive('publish');
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->postPlatform->refresh();
+    expect($this->postPlatform->status)->toBe('failed');
+    expect($this->postPlatform->error_message)->toBe('Social account is disconnected');
+});
+
+test('publish to social platform skips publishing when account token is expired', function () {
+    Event::fake();
+
+    $this->socialAccount->update([
+        'status' => AccountStatus::TokenExpired,
+    ]);
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldNotReceive('publish');
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->postPlatform->refresh();
+    expect($this->postPlatform->status)->toBe('failed');
+    expect($this->postPlatform->error_message)->toBe('Social account is disconnected');
+});

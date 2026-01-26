@@ -56,6 +56,7 @@ return [
         'view_title' => 'Visualizar Post',
         'manage_platforms' => 'Gerenciar plataformas',
         'sync' => 'Sincronizar',
+        'labels' => 'Etiquetas',
         'schedule' => 'Agendar',
         'publish' => 'Publicar',
         'saving' => 'Salvando...',
@@ -97,6 +98,11 @@ return [
         'platforms_dialog' => [
             'title' => 'Selecionar Plataformas',
             'description' => 'Escolha em quais plataformas publicar este post.',
+        ],
+
+        'hashtags_modal' => [
+            'search' => 'Buscar hashtags...',
+            'no_results' => 'Nenhuma hashtag encontrada.',
         ],
 
         'validation' => [

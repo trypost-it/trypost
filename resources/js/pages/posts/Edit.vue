@@ -22,6 +22,8 @@ import {
     IconCircleCheck,
     IconExternalLink,
     IconLoader2,
+    IconTag,
+    IconHash,
 } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch, type Component } from 'vue';
@@ -31,6 +33,7 @@ import { computed, onUnmounted, ref, watch, type Component } from 'vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import DatePicker from '@/components/DatePicker.vue';
 import PhoneMockup from '@/components/PhoneMockup.vue';
+import HashtagsModal from '@/components/posts/HashtagsModal.vue';
 import PostForm from '@/components/posts/PostForm.vue';
 import { PlatformPreview } from '@/components/posts/previews';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -46,6 +49,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -54,6 +58,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMediaManager, type MediaItem } from '@/composables/useMediaManager';
@@ -93,6 +98,18 @@ interface PinterestBoard {
     name: string;
 }
 
+interface WorkspaceLabel {
+    id: string;
+    name: string;
+    color: string;
+}
+
+interface WorkspaceHashtag {
+    id: string;
+    name: string;
+    hashtags: string;
+}
+
 interface ContentTypeOption {
     value: string;
     label: string;
@@ -106,6 +123,7 @@ interface Post {
     scheduled_at: string | null;
     published_at: string | null;
     post_platforms: PostPlatform[];
+    labels: WorkspaceLabel[];
 }
 
 interface PlatformConfig {
@@ -127,6 +145,8 @@ interface Props {
     socialAccounts: SocialAccount[];
     platformConfigs: Record<string, PlatformConfig>;
     pinterestBoards: PinterestBoard[];
+    labels: WorkspaceLabel[];
+    hashtags: WorkspaceHashtag[];
 }
 
 const props = defineProps<Props>();
@@ -202,7 +222,9 @@ const isAnyUploading = computed(() => Object.values(isUploading.value).some(v =>
 const isSubmitting = ref(false);
 const isSaving = ref(false);
 const showSaved = ref(false);
+const selectedLabelIds = ref<string[]>(post.value.labels?.map(l => l.id) || []);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
+const hashtagsModal = ref<InstanceType<typeof HashtagsModal> | null>(null);
 const showEnableSyncDialog = ref(false);
 const showDisableSyncDialog = ref(false);
 const showPlatformsDialog = ref(false);
@@ -367,13 +389,13 @@ const getSubmitData = () => {
             meta: platformMeta.value[pp.id] || {},
         }));
 
-    return { platforms, scheduled_at: scheduledDateTime.value || null };
+    return { platforms, scheduled_at: scheduledDateTime.value || null, label_ids: selectedLabelIds.value };
 };
 
 const save = () => {
     if (isSubmitting.value || isReadOnly.value || isSaving.value) return;
 
-    const { platforms, scheduled_at } = getSubmitData();
+    const { platforms, scheduled_at, label_ids } = getSubmitData();
 
     isSaving.value = true;
     showSaved.value = false;
@@ -383,6 +405,7 @@ const save = () => {
         synced: synced.value,
         scheduled_at,
         platforms,
+        label_ids,
     }, {
         preserveScroll: true,
         onFinish: () => {
@@ -409,7 +432,7 @@ const triggerAutosave = () => {
 };
 
 // Watch other form data for autosave
-watch([selectedPlatformIds, synced, scheduledDateTime], triggerAutosave, { deep: true });
+watch([selectedPlatformIds, synced, scheduledDateTime, selectedLabelIds], triggerAutosave, { deep: true });
 
 // Cleanup on unmount
 onUnmounted(() => {
@@ -607,7 +630,7 @@ const submit = (status: string = 'scheduled') => {
     // Cancel any pending autosave
     debouncedSave.cancel();
 
-    const { platforms, scheduled_at } = getSubmitData();
+    const { platforms, scheduled_at, label_ids } = getSubmitData();
 
     isSubmitting.value = true;
 
@@ -616,6 +639,7 @@ const submit = (status: string = 'scheduled') => {
         synced: synced.value,
         scheduled_at,
         platforms,
+        label_ids,
     }, {
         onFinish: () => {
             isSubmitting.value = false;
@@ -629,6 +653,29 @@ const deletePost = () => {
         url: destroyPost.url(post.value.id),
         redirect: 'posts.index',
     });
+};
+
+const toggleLabel = (labelId: string) => {
+    const index = selectedLabelIds.value.indexOf(labelId);
+    if (index === -1) {
+        selectedLabelIds.value.push(labelId);
+    } else {
+        selectedLabelIds.value.splice(index, 1);
+    }
+};
+
+const selectedLabels = computed(() => {
+    return props.labels.filter(l => selectedLabelIds.value.includes(l.id));
+});
+
+const appendHashtags = (hashtag: WorkspaceHashtag) => {
+    if (isReadOnly.value || !activePlatform.value) return;
+
+    const currentContent = getContent(activePlatform.value.id);
+    const separator = currentContent.trim() ? '\n\n' : '';
+    const newContent = currentContent + separator + hashtag.hashtags;
+
+    setContent(activePlatform.value.id, newContent);
 };
 </script>
 
@@ -712,6 +759,35 @@ const deletePost = () => {
 
                 <!-- Schedule & Actions (only in edit mode) -->
                 <div v-if="!isReadOnly" class="flex items-center gap-3">
+                    <!-- Labels Selector -->
+                    <Popover v-if="labels.length > 0">
+                        <PopoverTrigger asChild>
+                            <Button type="button" variant="outline" size="sm" class="gap-2">
+                                <IconTag class="h-4 w-4" />
+                                <span v-if="selectedLabels.length === 0">{{ $t('posts.edit.labels') }}</span>
+                                <span v-else>{{ selectedLabels.length }}</span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent class="w-56 p-2" align="end">
+                            <div>
+                                <div v-for="label in labels" :key="label.id"
+                                    class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted cursor-pointer"
+                                    @click="toggleLabel(label.id)">
+                                    <Checkbox :model-value="selectedLabelIds.includes(label.id)" />
+                                    <span class="h-3 w-3 rounded-full shrink-0"
+                                        :style="{ backgroundColor: label.color }" />
+                                    <span class="text-sm truncate">{{ label.name }}</span>
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+
+                    <!-- Hashtags Selector -->
+                    <Button v-if="hashtags.length > 0" type="button" variant="outline" size="icon-sm"
+                        @click="hashtagsModal?.open()">
+                        <IconHash class="h-4 w-4" />
+                    </Button>
+
                     <!-- DateTime Picker -->
                     <div class="flex items-center gap-2">
                         <DatePicker name="scheduled_datetime" v-model="scheduledDateTime" :show-time="true" />
@@ -897,6 +973,8 @@ const deletePost = () => {
     <ConfirmDeleteModal ref="deleteModal" :title="$t('posts.edit.delete_modal.title')"
         :description="$t('posts.edit.delete_modal.description')" :action="$t('posts.edit.delete_modal.action')"
         :cancel="$t('posts.edit.delete_modal.cancel')" />
+
+    <HashtagsModal ref="hashtagsModal" :hashtags="hashtags" @select="appendHashtags" />
 
     <!-- Enable Sync Confirmation Dialog -->
     <AlertDialog :open="showEnableSyncDialog" @update:open="showEnableSyncDialog = $event">

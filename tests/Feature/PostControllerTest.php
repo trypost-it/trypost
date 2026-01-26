@@ -9,6 +9,7 @@ use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceLabel;
 
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
@@ -292,4 +293,170 @@ test('destroy post returns 404 for post from different workspace', function () {
     $response = $this->actingAs($this->user)->delete(route('posts.destroy', $post));
 
     $response->assertNotFound();
+});
+
+// Label tests
+test('edit post includes workspace labels', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $label = WorkspaceLabel::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'name' => 'Marketing',
+        'color' => '#FF0000',
+    ]);
+
+    $response = $this->actingAs($this->user)->get(route('posts.edit', $post));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('posts/Edit')
+        ->has('labels', 1)
+        ->where('labels.0.name', 'Marketing')
+    );
+});
+
+test('update post can attach labels', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $label = WorkspaceLabel::factory()->create([
+        'workspace_id' => $this->workspace->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('posts.update', $post), [
+        'status' => 'draft',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content' => 'Test content',
+                'content_type' => ContentType::LinkedInPost->value,
+            ],
+        ],
+        'label_ids' => [$label->id],
+    ]);
+
+    $response->assertRedirect();
+
+    $post->refresh();
+    expect($post->labels)->toHaveCount(1);
+    expect($post->labels->first()->id)->toBe($label->id);
+});
+
+test('update post can detach labels', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $label = WorkspaceLabel::factory()->create([
+        'workspace_id' => $this->workspace->id,
+    ]);
+
+    $post->labels()->attach($label);
+
+    $response = $this->actingAs($this->user)->put(route('posts.update', $post), [
+        'status' => 'draft',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content' => 'Test content',
+                'content_type' => ContentType::LinkedInPost->value,
+            ],
+        ],
+        'label_ids' => [],
+    ]);
+
+    $response->assertRedirect();
+
+    $post->refresh();
+    expect($post->labels)->toHaveCount(0);
+});
+
+test('update post can sync multiple labels', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $label1 = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+    $label2 = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+    $label3 = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    // Attach initial label
+    $post->labels()->attach($label1);
+
+    // Update with different labels
+    $response = $this->actingAs($this->user)->put(route('posts.update', $post), [
+        'status' => 'draft',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content' => 'Test content',
+                'content_type' => ContentType::LinkedInPost->value,
+            ],
+        ],
+        'label_ids' => [$label2->id, $label3->id],
+    ]);
+
+    $response->assertRedirect();
+
+    $post->refresh();
+    expect($post->labels)->toHaveCount(2);
+    expect($post->labels->pluck('id')->toArray())->toEqualCanonicalizing([$label2->id, $label3->id]);
+});
+
+test('update post validates label_ids exist', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('posts.update', $post), [
+        'status' => 'draft',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content' => 'Test content',
+                'content_type' => ContentType::LinkedInPost->value,
+            ],
+        ],
+        'label_ids' => ['non-existent-uuid'],
+    ]);
+
+    $response->assertSessionHasErrors('label_ids.0');
 });

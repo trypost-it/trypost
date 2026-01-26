@@ -38,6 +38,12 @@ interface User {
     name: string;
 }
 
+interface Label {
+    id: string;
+    name: string;
+    color: string;
+}
+
 interface Post {
     id: string;
     status: string;
@@ -45,6 +51,7 @@ interface Post {
     published_at: string | null;
     post_platforms: PostPlatform[];
     user: User;
+    labels: Label[];
 }
 
 interface ScrollPosts {
@@ -198,11 +205,23 @@ const handleDelete = (post: Post) => {
                     <Card v-for="post in posts.data" :key="post.id" class="flex flex-col py-0">
                         <CardContent class="p-4 flex-1 flex flex-col">
                             <div class="flex items-center justify-between gap-2 mb-3">
-                                <Badge :class="getStatusConfig(post.status).color">
-                                    <component :is="getStatusConfig(post.status).icon" class="mr-1 h-3 w-3" />
-                                    {{ getStatusConfig(post.status).label }}
-                                </Badge>
-                                <span class="text-xs text-muted-foreground">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <Badge :class="getStatusConfig(post.status).color">
+                                        <component :is="getStatusConfig(post.status).icon" class="mr-1 h-3 w-3" />
+                                        {{ getStatusConfig(post.status).label }}
+                                    </Badge>
+                                    <div v-if="post.labels?.length" class="flex items-center gap-1">
+                                        <span v-for="label in post.labels.slice(0, 2)" :key="label.id"
+                                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
+                                            :style="{ backgroundColor: label.color + '20', color: label.color }">
+                                            {{ label.name }}
+                                        </span>
+                                        <span v-if="post.labels.length > 2" class="text-xs text-muted-foreground">
+                                            +{{ post.labels.length - 2 }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-muted-foreground shrink-0">
                                     {{ formatDateTime(post.scheduled_at) }}
                                 </span>
                             </div>

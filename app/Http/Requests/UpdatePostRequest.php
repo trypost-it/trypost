@@ -19,6 +19,8 @@ class UpdatePostRequest extends FormRequest
             'platforms' => ['sometimes', 'array'],
             'platforms.*.id' => ['required', 'uuid', 'exists:post_platforms,id'],
             'platforms.*.content' => ['nullable', 'string', 'max:5000'],
+            'label_ids' => ['sometimes', 'array'],
+            'label_ids.*' => ['uuid', 'exists:workspace_labels,id'],
         ];
     }
 

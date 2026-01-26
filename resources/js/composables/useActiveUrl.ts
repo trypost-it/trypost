@@ -12,10 +12,15 @@ const currentUrlReactive = computed(
 export function useActiveUrl() {
     function urlIsActive(
         urlToCheck: NonNullable<InertiaLinkProps['href']>,
-        currentUrl?: string,
+        options?: { prefix?: boolean },
     ) {
-        const urlToCompare = currentUrl ?? currentUrlReactive.value;
-        return toUrl(urlToCheck) === urlToCompare;
+        const targetUrl = toUrl(urlToCheck);
+
+        if (options?.prefix) {
+            return currentUrlReactive.value.startsWith(targetUrl);
+        }
+
+        return targetUrl === currentUrlReactive.value;
     }
 
     return {

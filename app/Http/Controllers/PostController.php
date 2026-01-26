@@ -30,7 +30,7 @@ class PostController extends Controller
         $query = $workspace->posts()
             ->with(['postPlatforms' => function ($query) {
                 $query->where('enabled', true)->with('socialAccount');
-            }, 'user']);
+            }, 'user', 'labels']);
 
         // Apply status filter if provided
         if ($status) {
@@ -97,7 +97,7 @@ class PostController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -141,7 +141,7 @@ class PostController extends Controller
             ]);
         }
 
-        return redirect()->route('posts.edit', $post);
+        return Inertia::location(route('posts.edit', $post));
     }
 
     public function edit(Request $request, Post $post): Response|RedirectResponse
@@ -158,8 +158,10 @@ class PostController extends Controller
             abort(404);
         }
 
-        $post->load(['postPlatforms.socialAccount', 'postPlatforms.media']);
+        $post->load(['postPlatforms.socialAccount', 'postPlatforms.media', 'labels']);
         $socialAccounts = $workspace->socialAccounts;
+        $labels = $workspace->labels;
+        $hashtags = $workspace->hashtags;
 
         $platformConfigs = $socialAccounts->mapWithKeys(function ($account) {
             $platform = $account->platform;
@@ -191,6 +193,8 @@ class PostController extends Controller
             'socialAccounts' => $socialAccounts,
             'platformConfigs' => $platformConfigs,
             'pinterestBoards' => $pinterestBoards,
+            'labels' => $labels,
+            'hashtags' => $hashtags,
         ]);
     }
 
@@ -227,6 +231,11 @@ class PostController extends Controller
             'synced' => $request->input('synced', $post->synced),
             'scheduled_at' => $scheduledAt,
         ]);
+
+        // Sync labels
+        if ($request->has('label_ids')) {
+            $post->labels()->sync($request->input('label_ids', []));
+        }
 
         // Get selected platform IDs
         $selectedPlatformIds = collect($request->input('platforms', []))->pluck('id')->toArray();

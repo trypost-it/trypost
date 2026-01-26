@@ -194,6 +194,10 @@ function createWorkspace() {
 }
 
 function isActive(href: string): boolean {
+    // For /posts, also match /posts/{id}/edit
+    if (href === '/posts') {
+        return page.url === '/posts' || page.url.startsWith('/posts/') && page.url.includes('/edit');
+    }
     // Exact match or match with query string
     return page.url === href || page.url.startsWith(href + '?');
 }

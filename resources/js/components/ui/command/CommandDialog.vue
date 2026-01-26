@@ -7,9 +7,11 @@ import Command from "./Command.vue"
 const props = withDefaults(defineProps<DialogRootProps & {
   title?: string
   description?: string
+  showCloseButton?: boolean
 }>(), {
   title: "Command Palette",
   description: "Search for a command to run...",
+  showCloseButton: false,
 })
 const emits = defineEmits<DialogRootEmits>()
 
@@ -18,7 +20,7 @@ const forwarded = useForwardPropsEmits(props, emits)
 
 <template>
   <Dialog v-slot="slotProps" v-bind="forwarded">
-    <DialogContent class="overflow-hidden p-0 ">
+    <DialogContent class="overflow-hidden p-0" :show-close-button="showCloseButton">
       <DialogHeader class="sr-only">
         <DialogTitle>{{ title }}</DialogTitle>
         <DialogDescription>{{ description }}</DialogDescription>

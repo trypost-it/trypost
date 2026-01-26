@@ -56,6 +56,7 @@ return [
         'view_title' => 'View Post',
         'manage_platforms' => 'Manage platforms',
         'sync' => 'Sync',
+        'labels' => 'Labels',
         'schedule' => 'Schedule',
         'publish' => 'Publish',
         'saving' => 'Saving...',
@@ -97,6 +98,11 @@ return [
         'platforms_dialog' => [
             'title' => 'Select Platforms',
             'description' => 'Choose which platforms to publish this post to.',
+        ],
+
+        'hashtags_modal' => [
+            'search' => 'Search hashtags...',
+            'no_results' => 'No hashtags found.',
         ],
 
         'validation' => [

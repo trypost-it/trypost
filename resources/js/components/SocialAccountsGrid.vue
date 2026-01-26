@@ -183,7 +183,7 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <Avatar class="h-8 w-8">
-                            <AvatarImage :src="platform.account.avatar_url" />
+                            <AvatarImage v-if="platform.account.avatar_url" :src="platform.account.avatar_url" />
                             <AvatarFallback class="text-xs">
                                 {{ platform.account.display_name?.charAt(0) }}
                             </AvatarFallback>

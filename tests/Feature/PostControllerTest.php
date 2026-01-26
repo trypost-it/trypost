@@ -241,7 +241,7 @@ test('destroy post requires authentication', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('destroy post deletes the post', function () {
+test('destroy post deletes the post and redirects back', function () {
     $post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
@@ -252,6 +252,33 @@ test('destroy post deletes the post', function () {
         ->delete(route('posts.destroy', $post));
 
     $response->assertRedirect(route('calendar'));
+    expect(Post::find($post->id))->toBeNull();
+});
+
+test('destroy post from status filter redirects back to filter', function (string $status) {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->from(route('posts.index', ['status' => $status]))
+        ->delete(route('posts.destroy', $post));
+
+    $response->assertRedirect(route('posts.index', ['status' => $status]));
+    expect(Post::find($post->id))->toBeNull();
+})->with(['draft', 'scheduled', 'published']);
+
+test('destroy post with redirect param redirects to specified route', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->delete(route('posts.destroy', $post).'?redirect=posts.index');
+
+    $response->assertRedirect(route('posts.index'));
     expect(Post::find($post->id))->toBeNull();
 });
 

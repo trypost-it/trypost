@@ -165,14 +165,14 @@ const isCurrentMonth = (day: dayjs.Dayjs): boolean => {
 
 const getStatusColor = (status: string): string => {
     const colors: Record<string, string> = {
-        draft: 'bg-gray-100 border-gray-300 text-gray-700',
-        scheduled: 'bg-blue-50 border-blue-300 text-blue-700',
-        publishing: 'bg-yellow-50 border-yellow-300 text-yellow-700',
-        published: 'bg-green-50 border-green-300 text-green-700',
-        partially_published: 'bg-orange-50 border-orange-300 text-orange-700',
-        failed: 'bg-red-50 border-red-300 text-red-700',
+        draft: 'bg-neutral-100 border-neutral-300 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-300',
+        scheduled: 'bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-300',
+        publishing: 'bg-yellow-50 border-yellow-300 text-yellow-700 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-300',
+        published: 'bg-green-50 border-green-300 text-green-700 dark:bg-green-950 dark:border-green-800 dark:text-green-300',
+        partially_published: 'bg-orange-50 border-orange-300 text-orange-700 dark:bg-orange-950 dark:border-orange-800 dark:text-orange-300',
+        failed: 'bg-red-50 border-red-300 text-red-700 dark:bg-red-950 dark:border-red-800 dark:text-red-300',
     };
-    return colors[status] || 'bg-gray-100 border-gray-300 text-gray-700';
+    return colors[status] || 'bg-neutral-100 border-neutral-300 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-300';
 };
 
 const getPlatformLogo = (platform: string): string => {
@@ -279,9 +279,9 @@ const formatTime = (scheduledAt: string): string => {
                                 <div class="flex -space-x-1 mb-1.5">
                                     <img v-for="pp in post.post_platforms.slice(0, 4)" :key="pp.id"
                                         :src="getPlatformLogo(pp.platform)" :alt="pp.platform"
-                                        class="h-5 w-5 rounded-full ring-2 ring-white" />
+                                        class="h-5 w-5 rounded-full ring-2 ring-background" />
                                     <span v-if="post.post_platforms.length > 4"
-                                        class="flex items-center justify-center h-5 w-5 rounded-full bg-muted text-[10px] font-medium ring-2 ring-white">
+                                        class="flex items-center justify-center h-5 w-5 rounded-full bg-muted text-[10px] font-medium ring-2 ring-background">
                                         +{{ post.post_platforms.length - 4 }}
                                     </span>
                                 </div>
@@ -342,9 +342,9 @@ const formatTime = (scheduledAt: string): string => {
                                         <div class="flex -space-x-1 shrink-0">
                                             <img v-for="pp in post.post_platforms.slice(0, post.post_platforms.length > 4 ? 3 : 4)"
                                                 :key="pp.id" :src="getPlatformLogo(pp.platform)" :alt="pp.platform"
-                                                class="h-4 w-4 rounded-full ring-1 ring-white" />
+                                                class="h-4 w-4 rounded-full ring-1 ring-background" />
                                             <span v-if="post.post_platforms.length > 4"
-                                                class="flex items-center justify-center h-4 w-4 rounded-full bg-muted text-[9px] font-medium ring-1 ring-white">
+                                                class="flex items-center justify-center h-4 w-4 rounded-full bg-muted text-[9px] font-medium ring-1 ring-background">
                                                 +{{ post.post_platforms.length - 3 }}
                                             </span>
                                         </div>

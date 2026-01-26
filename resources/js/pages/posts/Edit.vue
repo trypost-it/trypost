@@ -273,7 +273,7 @@ const getPlatformIcon = (platform: string): Component => {
 
 const getStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; icon: any }> = {
-        'draft': { color: 'bg-gray-100 text-gray-800', icon: IconClock },
+        'draft': { color: 'bg-neutral-100 text-neutral-800', icon: IconClock },
         'scheduled': { color: 'bg-blue-100 text-blue-800', icon: IconClock },
         'publishing': { color: 'bg-yellow-100 text-yellow-800', icon: IconLoader2 },
         'published': { color: 'bg-green-100 text-green-800', icon: IconCircleCheck },
@@ -658,18 +658,17 @@ const deletePost = () => {
                     </div>
 
                     <div v-if="selectedPlatforms.length > 0"
-                        class="bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]">
+                        class="bg-muted text-muted-foreground inline-flex h-9 w-fit items-center justify-center rounded-lg p-1">
                         <TooltipProvider>
                             <Tooltip v-for="pp in selectedPlatforms" :key="pp.id">
                                 <TooltipTrigger asChild>
                                     <button type="button" @click="activeTabId = pp.id" :class="[
-                                        'relative inline-flex h-[calc(100%-1px)] items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring',
+                                        'relative inline-flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium whitespace-nowrap transition-all',
                                         activeTabId === pp.id
-                                            ? 'bg-background text-foreground shadow-sm dark:border-input dark:bg-input/30'
-                                            : 'text-foreground dark:text-muted-foreground'
+                                            ? 'bg-background text-foreground shadow-sm'
+                                            : 'hover:bg-background/50 hover:text-foreground'
                                     ]">
-                                        <component :is="getPlatformIcon(pp.platform)"
-                                            class="h-5 w-5 text-neutral-500 rounded-full" />
+                                        <component :is="getPlatformIcon(pp.platform)" class="h-5 w-5" />
                                         <!-- Status indicator (read-only) or Validation indicator (edit mode) -->
                                         <span v-if="isReadOnly"
                                             class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border border-background"
@@ -677,7 +676,7 @@ const deletePost = () => {
                                                 'bg-green-500': pp.status === 'published',
                                                 'bg-red-500': pp.status === 'failed',
                                                 'bg-yellow-500 animate-pulse': pp.status === 'publishing',
-                                                'bg-gray-400': !['published', 'failed', 'publishing'].includes(pp.status)
+                                                'bg-neutral-400': !['published', 'failed', 'publishing'].includes(pp.status)
                                             }" />
                                         <span v-else-if="contentValidation[pp.id]"
                                             class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full border border-background"
@@ -770,7 +769,7 @@ const deletePost = () => {
                                 <div class="flex items-center justify-between p-4 rounded-lg border">
                                     <div class="flex items-center gap-3">
                                         <component :is="getPlatformIcon(activePlatform.platform)"
-                                            class="h-8 w-8 text-neutral-600" />
+                                            class="h-8 w-8 text-muted-foreground" />
                                         <div>
                                             <p class="font-medium">{{ activePlatform.social_account.display_name }}</p>
                                             <p class="text-sm text-muted-foreground">{{
@@ -885,7 +884,7 @@ const deletePost = () => {
                         <button v-for="pp in post.post_platforms" :key="pp.id" type="button"
                             @click="togglePlatform(pp.id)"
                             class="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-muted transition-colors">
-                            <component :is="getPlatformIcon(pp.platform)" class="h-5 w-5 text-neutral-600" />
+                            <component :is="getPlatformIcon(pp.platform)" class="h-5 w-5 text-muted-foreground" />
                             <span class="text-sm">{{ pp.social_account.display_name }}</span>
                         </button>
                     </div>

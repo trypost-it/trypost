@@ -230,6 +230,39 @@ test('update post cannot update published posts', function () {
     $response->assertRedirect();
 });
 
+test('publish now updates scheduled_at to current time', function () {
+    $this->freezeTime();
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+        'scheduled_at' => now()->addDays(7),
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+        'content' => 'Test content',
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('posts.update', $post), [
+        'status' => 'publishing',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content' => 'Test content',
+                'content_type' => ContentType::LinkedInPost->value,
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect();
+
+    $post->refresh();
+    expect($post->scheduled_at->toDateTimeString())->toBe(now()->toDateTimeString());
+});
+
 // Destroy tests
 test('destroy post requires authentication', function () {
     $post = Post::factory()->create([

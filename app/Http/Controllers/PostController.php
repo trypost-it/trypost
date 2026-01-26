@@ -262,6 +262,7 @@ class PostController extends Controller
 
         // Dispatch publish job if publishing now
         if ($status === 'publishing') {
+            $post->update(['scheduled_at' => now()]);
             PublishPost::dispatch($post);
 
             session()->flash('flash.banner', __('posts.flash.publishing'));

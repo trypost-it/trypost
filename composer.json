@@ -46,6 +46,7 @@
         "league/flysystem-aws-s3-v3": "^3.0",
         "pion/laravel-chunk-upload": "^1.5",
         "predis/predis": "^3.3",
+        "sendkit/sendkit-laravel": "^1.1",
         "socialiteproviders/facebook": "^4.1",
         "socialiteproviders/instagram": "^5.1",
         "socialiteproviders/linkedin": "^5.0",

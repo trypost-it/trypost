@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4065fb80d6fa00560a2aa395b9b46f0d",
+    "content-hash": "85b0b6bb0f8d85c4b3babc7c205014e1",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -5666,6 +5666,115 @@
                 }
             ],
             "time": "2024-06-11T12:45:25+00:00"
+        },
+        {
+            "name": "sendkit/sendkit-laravel",
+            "version": "1.1.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sendkitdev/sendkit-laravel.git",
+                "reference": "4d16ab031a72497b0890eec99561c3fa9faa4788"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sendkitdev/sendkit-laravel/zipball/4d16ab031a72497b0890eec99561c3fa9faa4788",
+                "reference": "4d16ab031a72497b0890eec99561c3fa9faa4788",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "^11.0|^12.0",
+                "php": "^8.2",
+                "sendkit/sendkit-php": "^1.0",
+                "symfony/mailer": "^7.0"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^10.0",
+                "pestphp/pest": "^3.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "SendKit": "SendKit\\Laravel\\Facades\\SendKit"
+                    },
+                    "providers": [
+                        "SendKit\\Laravel\\SendKitServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-main": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SendKit\\Laravel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "SendKit integration for Laravel",
+            "keywords": [
+                "email",
+                "laravel",
+                "mail",
+                "sendkit"
+            ],
+            "support": {
+                "issues": "https://github.com/sendkitdev/sendkit-laravel/issues",
+                "source": "https://github.com/sendkitdev/sendkit-laravel/tree/1.1.3"
+            },
+            "time": "2026-03-16T01:46:13+00:00"
+        },
+        {
+            "name": "sendkit/sendkit-php",
+            "version": "1.1.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sendkitdev/sendkit-php.git",
+                "reference": "77d23c04572330eb0807f143af9c677efb49b62a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sendkitdev/sendkit-php/zipball/77d23c04572330eb0807f143af9c677efb49b62a",
+                "reference": "77d23c04572330eb0807f143af9c677efb49b62a",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.5",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "pestphp/pest": "^3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SendKit\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "PHP SDK for the SendKit email API",
+            "keywords": [
+                "api",
+                "email",
+                "sdk",
+                "sendkit"
+            ],
+            "support": {
+                "issues": "https://github.com/sendkitdev/sendkit-php/issues",
+                "source": "https://github.com/sendkitdev/sendkit-php/tree/1.1.3"
+            },
+            "time": "2026-03-16T01:45:57+00:00"
         },
         {
             "name": "socialiteproviders/facebook",

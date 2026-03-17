@@ -182,8 +182,8 @@ class ConnectionVerifier
         $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $account->refresh_token,
-            'client_id' => config('services.youtube.client_id'),
-            'client_secret' => config('services.youtube.client_secret'),
+            'client_id' => config('services.google.client_id'),
+            'client_secret' => config('services.google.client_secret'),
         ]);
 
         if ($response->failed()) {

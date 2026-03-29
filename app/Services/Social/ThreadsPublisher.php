@@ -47,6 +47,10 @@ class ThreadsPublisher
 
         // Text only post
         if ($media->isEmpty()) {
+            if (empty($postPlatform->content)) {
+                throw new \Exception('Threads text posts require content. Please add text to your post.');
+            }
+
             return $this->publishTextPost($userId, $accessToken, $postPlatform->content);
         }
 
@@ -91,7 +95,7 @@ class ThreadsPublisher
         return $this->publishContainer($userId, $accessToken, $containerId);
     }
 
-    private function publishImagePost(string $userId, string $accessToken, string $content, $media): array
+    private function publishImagePost(string $userId, string $accessToken, ?string $content, $media): array
     {
         Log::info('Threads publishing image post', ['user_id' => $userId, 'image_url' => $media->url]);
 
@@ -122,7 +126,7 @@ class ThreadsPublisher
         return $this->publishContainer($userId, $accessToken, $containerId);
     }
 
-    private function publishVideoPost(string $userId, string $accessToken, string $content, $media): array
+    private function publishVideoPost(string $userId, string $accessToken, ?string $content, $media): array
     {
         Log::info('Threads publishing video post', ['user_id' => $userId]);
 
@@ -151,7 +155,7 @@ class ThreadsPublisher
         return $this->publishContainer($userId, $accessToken, $containerId);
     }
 
-    private function publishCarousel(string $userId, string $accessToken, string $content, $mediaCollection): array
+    private function publishCarousel(string $userId, string $accessToken, ?string $content, $mediaCollection): array
     {
         Log::info('Threads publishing carousel', [
             'user_id' => $userId,

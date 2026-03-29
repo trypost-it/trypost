@@ -94,11 +94,11 @@ class LinkedInPublisher
         }
     }
 
-    private function publishPost(string $personUrn, string $content, $media): array
+    private function publishPost(string $personUrn, ?string $content, $media): array
     {
         $payload = [
             'author' => $personUrn,
-            'commentary' => $content,
+            'commentary' => $content ?? '',
             'visibility' => 'PUBLIC',
             'distribution' => [
                 'feedDistribution' => 'MAIN_FEED',
@@ -142,7 +142,7 @@ class LinkedInPublisher
         ];
     }
 
-    private function publishCarousel(string $personUrn, string $content, $mediaCollection): array
+    private function publishCarousel(string $personUrn, ?string $content, $mediaCollection): array
     {
         Log::info('LinkedIn publishing carousel', [
             'owner' => $personUrn,
@@ -173,7 +173,7 @@ class LinkedInPublisher
 
         $payload = [
             'author' => $personUrn,
-            'commentary' => $content,
+            'commentary' => $content ?? '',
             'visibility' => 'PUBLIC',
             'distribution' => [
                 'feedDistribution' => 'MAIN_FEED',

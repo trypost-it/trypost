@@ -59,7 +59,7 @@ class PublishToSocialPlatform implements ShouldQueue
 
             $this->postPlatform->markAsFailed($e->getMessage());
             $this->postPlatform->socialAccount->markAsDisconnected($e->getMessage());
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to publish to social platform', [
                 'post_platform_id' => $this->postPlatform->id,
                 'platform' => $this->postPlatform->platform->value,

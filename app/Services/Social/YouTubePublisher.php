@@ -68,6 +68,10 @@ class YouTubePublisher
 
     private function publishShort(PostPlatform $postPlatform, $media): array
     {
+        if (empty($postPlatform->content)) {
+            throw new \Exception('YouTube Shorts require a title. Please add text to your post.');
+        }
+
         $title = $this->buildTitle($postPlatform->content);
         $description = $postPlatform->content;
 

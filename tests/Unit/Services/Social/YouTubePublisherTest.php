@@ -144,3 +144,20 @@ test('youtube publisher throws exception on api init error', function () {
 // Note: Testing token expiration on auth error would require mocking file_get_contents
 // which is used to fetch video content. The token refresh test above covers the token
 // expiration handling. Full integration tests should cover the 401 error scenario.
+
+test('youtube publisher throws exception with null content', function () {
+    $this->postPlatform->update(['content' => null]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/test-video.mp4',
+        'original_filename' => 'test.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 1234567,
+        'order' => 0,
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(\Exception::class, 'YouTube Shorts require a title');
+});

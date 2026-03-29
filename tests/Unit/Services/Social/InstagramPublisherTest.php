@@ -470,6 +470,145 @@ test('instagram publisher throws exception when all carousel items fail', functi
         ->toThrow(Exception::class, 'Failed to create any carousel items');
 });
 
+test('instagram publisher can publish single image with null content', function () {
+    $this->postPlatform->update(['content' => null]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/test-image.jpg',
+        'original_filename' => 'test.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 12345,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+            'id' => 'container-123',
+        ], 200),
+        'https://graph.instagram.com/v24.0/container-123*' => Http::response([
+            'status_code' => 'FINISHED',
+        ], 200),
+        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+            'id' => 'media-null-content',
+        ], 200),
+        'https://graph.instagram.com/v24.0/media-null-content*' => Http::response([
+            'permalink' => 'https://www.instagram.com/p/NULL123/',
+        ], 200),
+    ]);
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('media-null-content');
+    expect($result['url'])->toBe('https://www.instagram.com/p/NULL123/');
+});
+
+test('instagram publisher can publish reel with null content', function () {
+    $this->postPlatform->update([
+        'content_type' => ContentType::InstagramReel,
+        'content' => null,
+    ]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/test-video.mp4',
+        'original_filename' => 'test.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 1234567,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+            'id' => 'container-123',
+        ], 200),
+        'https://graph.instagram.com/v24.0/container-123*' => Http::response([
+            'status_code' => 'FINISHED',
+        ], 200),
+        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+            'id' => 'reel-null-content',
+        ], 200),
+        'https://graph.instagram.com/v24.0/reel-null-content*' => Http::response([
+            'permalink' => 'https://www.instagram.com/reel/NULL123/',
+        ], 200),
+    ]);
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('reel-null-content');
+});
+
+test('instagram publisher can publish carousel with null content', function () {
+    $this->postPlatform->update(['content' => null]);
+
+    for ($i = 0; $i < 2; $i++) {
+        $this->postPlatform->media()->create([
+            'collection' => 'default',
+            'type' => 'image',
+            'path' => "media/2026-01/test-image-{$i}.jpg",
+            'original_filename' => "test-{$i}.jpg",
+            'mime_type' => 'image/jpeg',
+            'size' => 12345,
+            'order' => $i,
+        ]);
+    }
+
+    Http::fake([
+        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::sequence()
+            ->push(['id' => 'child-1'], 200)
+            ->push(['id' => 'child-2'], 200)
+            ->push(['id' => 'carousel-container-123'], 200),
+        'https://graph.instagram.com/v24.0/carousel-container-123*' => Http::response([
+            'status_code' => 'FINISHED',
+        ], 200),
+        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+            'id' => 'carousel-null-content',
+        ], 200),
+        'https://graph.instagram.com/v24.0/carousel-null-content*' => Http::response([
+            'permalink' => 'https://www.instagram.com/p/CAROUSELNULL/',
+        ], 200),
+    ]);
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('carousel-null-content');
+});
+
+test('instagram publisher can publish single image with empty string content', function () {
+    $this->postPlatform->update(['content' => '']);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/test-image.jpg',
+        'original_filename' => 'test.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 12345,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+            'id' => 'container-123',
+        ], 200),
+        'https://graph.instagram.com/v24.0/container-123*' => Http::response([
+            'status_code' => 'FINISHED',
+        ], 200),
+        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+            'id' => 'media-empty-content',
+        ], 200),
+        'https://graph.instagram.com/v24.0/media-empty-content*' => Http::response([
+            'permalink' => 'https://www.instagram.com/p/EMPTY123/',
+        ], 200),
+    ]);
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('media-empty-content');
+});
+
 test('instagram publisher handles publish failure', function () {
     $this->postPlatform->media()->create([
         'collection' => 'default',

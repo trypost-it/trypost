@@ -327,3 +327,35 @@ test('facebook publisher throws exception for unsupported media type', function 
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(Exception::class, 'Unsupported media type for Facebook');
 });
+
+test('facebook publisher throws exception for text post with null content', function () {
+    $this->postPlatform->update(['content' => null]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(\Exception::class, 'Facebook text posts require content');
+});
+
+test('facebook publisher can publish single image with null content', function () {
+    $this->postPlatform->update(['content' => null]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/test-image.jpg',
+        'original_filename' => 'test.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 12345,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        'https://graph.facebook.com/v24.0/page_123/photos' => Http::response([
+            'id' => 'photo-123',
+            'post_id' => 'post-123',
+        ], 200),
+    ]);
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('post-123');
+});

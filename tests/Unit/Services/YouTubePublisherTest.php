@@ -33,7 +33,7 @@ test('youtube publisher throws exception when no media', function () {
     $publisher = new YouTubePublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'YouTube Shorts requires a video to publish.');
+        ->toThrow(Exception::class, 'YouTube Shorts requires a video to publish.');
 });
 
 test('youtube publisher throws exception for non video media', function () {
@@ -46,7 +46,7 @@ test('youtube publisher throws exception for non video media', function () {
     $publisher = new YouTubePublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'YouTube Shorts only supports video content.');
+        ->toThrow(Exception::class, 'YouTube Shorts only supports video content.');
 });
 
 test('youtube publisher throws exception when no refresh token for expired token', function () {

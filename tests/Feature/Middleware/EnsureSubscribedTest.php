@@ -13,14 +13,14 @@ test('self hosted mode bypasses subscription check', function () {
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
-        ->get(route('calendar'))
+        ->get(route('app.calendar'))
         ->assertOk();
 });
 
 test('unauthenticated user is redirected to login', function () {
     config(['trypost.self_hosted' => false]);
 
-    $this->get(route('calendar'))
+    $this->get(route('app.calendar'))
         ->assertRedirect(route('login'));
 });
 
@@ -40,7 +40,7 @@ test('user with active subscription can access protected route', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('calendar'))
+        ->get(route('app.calendar'))
         ->assertOk();
 });
 
@@ -62,7 +62,7 @@ test('user on trial subscription can access protected route', function () {
     ]);
 
     $this->actingAs($user)
-        ->get(route('calendar'))
+        ->get(route('app.calendar'))
         ->assertOk();
 });
 
@@ -75,8 +75,8 @@ test('user without subscription is redirected to subscribe page', function () {
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
-        ->get(route('calendar'))
-        ->assertRedirect(route('subscribe'));
+        ->get(route('app.calendar'))
+        ->assertRedirect(route('app.subscribe'));
 });
 
 test('user with expired trial subscription is redirected to subscribe page', function () {
@@ -98,8 +98,8 @@ test('user with expired trial subscription is redirected to subscribe page', fun
     ]);
 
     $this->actingAs($user)
-        ->get(route('calendar'))
-        ->assertRedirect(route('subscribe'));
+        ->get(route('app.calendar'))
+        ->assertRedirect(route('app.subscribe'));
 });
 
 test('user with cancelled subscription is redirected to subscribe page', function () {
@@ -119,8 +119,8 @@ test('user with cancelled subscription is redirected to subscribe page', functio
     ]);
 
     $this->actingAs($user)
-        ->get(route('calendar'))
-        ->assertRedirect(route('subscribe'));
+        ->get(route('app.calendar'))
+        ->assertRedirect(route('app.subscribe'));
 });
 
 test('invited member can access workspace when owner has active subscription', function () {
@@ -142,7 +142,7 @@ test('invited member can access workspace when owner has active subscription', f
     $member->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($member)
-        ->get(route('calendar'))
+        ->get(route('app.calendar'))
         ->assertOk();
 });
 
@@ -158,8 +158,8 @@ test('invited member is redirected to subscribe when owner has no subscription',
     $member->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($member)
-        ->get(route('calendar'))
-        ->assertRedirect(route('subscribe'));
+        ->get(route('app.calendar'))
+        ->assertRedirect(route('app.subscribe'));
 });
 
 test('invited member on own workspace without subscription is redirected to subscribe', function () {
@@ -184,6 +184,6 @@ test('invited member on own workspace without subscription is redirected to subs
     $member->update(['current_workspace_id' => $memberWorkspace->id]);
 
     $this->actingAs($member)
-        ->get(route('calendar'))
-        ->assertRedirect(route('subscribe'));
+        ->get(route('app.calendar'))
+        ->assertRedirect(route('app.subscribe'));
 });

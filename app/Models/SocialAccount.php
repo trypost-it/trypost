@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\SocialAccount\Status;
 use App\Mail\AccountDisconnected;
+use Database\Factories\SocialAccountFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Storage;
 
 class SocialAccount extends Model
 {
-    /** @use HasFactory<\Database\Factories\SocialAccountFactory> */
+    /** @use HasFactory<SocialAccountFactory> */
     use HasFactory, HasUuids;
 
     protected $fillable = [

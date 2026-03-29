@@ -6,10 +6,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\User\Setup;
 use App\Http\Controllers\Controller;
-use App\Rules\Timezone;
 use App\Models\Language;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Rules\Timezone;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -84,6 +84,6 @@ class RegisteredUserController extends Controller
             return redirect($redirect);
         }
 
-        return redirect()->route('onboarding.step1');
+        return redirect()->route('app.onboarding.step1');
     }
 }

@@ -28,7 +28,7 @@ test('linkedin connect redirects to oauth provider', function () {
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')
-        ->get(route('social.linkedin.connect'));
+        ->get(route('app.social.linkedin.connect'));
 
     $response->assertStatus(409); // Inertia::location returns 409 with X-Inertia header
 
@@ -65,7 +65,7 @@ test('linkedin oauth callback creates account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.linkedin.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.linkedin.callback'));
 
     $response->assertOk();
     $response->assertViewIs('auth.social-callback');
@@ -83,7 +83,7 @@ test('linkedin oauth callback creates account', function () {
 test('linkedin callback fails with expired session', function () {
     // No session data - simulating expired session
 
-    $response = $this->actingAs($this->user)->get(route('social.linkedin.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.linkedin.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -115,7 +115,7 @@ test('user cannot connect linkedin if already connected', function () {
             'user' => $socialiteUser,
         ]));
 
-    $response = $this->actingAs($this->user)->get(route('social.linkedin.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.linkedin.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -154,7 +154,7 @@ test('user can reconnect disconnected linkedin account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.linkedin.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.linkedin.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', true);
@@ -170,13 +170,13 @@ test('linkedin callback handles oauth errors gracefully', function () {
     ]);
 
     $mock = Mockery::mock();
-    $mock->shouldReceive('user')->andThrow(new \Exception('OAuth error'));
+    $mock->shouldReceive('user')->andThrow(new Exception('OAuth error'));
 
     Socialite::shouldReceive('driver')
         ->with('linkedin')
         ->andReturn($mock);
 
-    $response = $this->actingAs($this->user)->get(route('social.linkedin.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.linkedin.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);

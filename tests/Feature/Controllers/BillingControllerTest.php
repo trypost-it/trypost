@@ -21,7 +21,7 @@ test('billing index shows subscription info for subscribed user', function () {
         'quantity' => 2,
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('billing.index'));
+    $response = $this->actingAs($this->user)->get(route('app.billing.index'));
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
@@ -33,7 +33,7 @@ test('billing index shows subscription info for subscribed user', function () {
 });
 
 test('billing index shows info for user without subscription', function () {
-    $response = $this->actingAs($this->user)->get(route('billing.index'));
+    $response = $this->actingAs($this->user)->get(route('app.billing.index'));
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
@@ -52,7 +52,7 @@ test('billing index shows trial info when on trial', function () {
         'trial_ends_at' => now()->addDays(14),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('billing.index'));
+    $response = $this->actingAs($this->user)->get(route('app.billing.index'));
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
@@ -63,7 +63,7 @@ test('billing index shows trial info when on trial', function () {
 });
 
 test('processing page shows for user during checkout', function () {
-    $response = $this->actingAs($this->user)->get(route('billing.processing', ['status' => 'success']));
+    $response = $this->actingAs($this->user)->get(route('app.billing.processing', ['status' => 'success']));
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
@@ -74,7 +74,7 @@ test('processing page shows for user during checkout', function () {
 });
 
 test('processing page shows cancelled status', function () {
-    $response = $this->actingAs($this->user)->get(route('billing.processing', ['status' => 'cancelled']));
+    $response = $this->actingAs($this->user)->get(route('app.billing.processing', ['status' => 'cancelled']));
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page
@@ -83,7 +83,7 @@ test('processing page shows cancelled status', function () {
 });
 
 test('processing page defaults to processing status for invalid status', function () {
-    $response = $this->actingAs($this->user)->get(route('billing.processing', ['status' => 'invalid']));
+    $response = $this->actingAs($this->user)->get(route('app.billing.processing', ['status' => 'invalid']));
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page

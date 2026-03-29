@@ -17,7 +17,7 @@ beforeEach(function () {
 
 // Index tests
 test('members index requires authentication', function () {
-    $response = $this->get(route('members'));
+    $response = $this->get(route('app.members'));
 
     $response->assertRedirect(route('login'));
 });
@@ -27,7 +27,7 @@ test('members index shows members and invites', function () {
         'workspace_id' => $this->workspace->id,
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('members'));
+    $response = $this->actingAs($this->user)->get(route('app.members'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -43,14 +43,14 @@ test('members index shows members and invites', function () {
 test('members index redirects if no workspace', function () {
     $this->user->update(['current_workspace_id' => null]);
 
-    $response = $this->actingAs($this->user)->get(route('members'));
+    $response = $this->actingAs($this->user)->get(route('app.members'));
 
-    $response->assertRedirect(route('workspaces.create'));
+    $response->assertRedirect(route('app.workspaces.create'));
 });
 
 // Store invite tests
 test('store invite requires authentication', function () {
-    $response = $this->post(route('invites.store'), [
+    $response = $this->post(route('app.invites.store'), [
         'email' => 'test@example.com',
         'role' => WorkspaceRole::Member->value,
     ]);
@@ -59,7 +59,7 @@ test('store invite requires authentication', function () {
 });
 
 test('store invite creates invite and sends email', function () {
-    $response = $this->actingAs($this->user)->post(route('invites.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.invites.store'), [
         'email' => 'newmember@example.com',
         'role' => WorkspaceRole::Member->value,
     ]);
@@ -80,7 +80,7 @@ test('store invite fails if invite already exists', function () {
         'email' => 'existing@example.com',
     ]);
 
-    $response = $this->actingAs($this->user)->post(route('invites.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.invites.store'), [
         'email' => 'existing@example.com',
         'role' => WorkspaceRole::Member->value,
     ]);
@@ -92,7 +92,7 @@ test('store invite fails if user is already member', function () {
     $member = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
-    $response = $this->actingAs($this->user)->post(route('invites.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.invites.store'), [
         'email' => $member->email,
         'role' => WorkspaceRole::Member->value,
     ]);
@@ -106,7 +106,7 @@ test('destroy invite requires authentication', function () {
         'workspace_id' => $this->workspace->id,
     ]);
 
-    $response = $this->delete(route('invites.destroy', $invite));
+    $response = $this->delete(route('app.invites.destroy', $invite));
 
     $response->assertRedirect(route('login'));
 });
@@ -116,7 +116,7 @@ test('destroy invite deletes invite', function () {
         'workspace_id' => $this->workspace->id,
     ]);
 
-    $response = $this->actingAs($this->user)->delete(route('invites.destroy', $invite));
+    $response = $this->actingAs($this->user)->delete(route('app.invites.destroy', $invite));
 
     $response->assertRedirect();
     expect(WorkspaceInvite::find($invite->id))->toBeNull();
@@ -128,7 +128,7 @@ test('destroy invite returns 404 for other workspace invite', function () {
         'workspace_id' => $otherWorkspace->id,
     ]);
 
-    $response = $this->actingAs($this->user)->delete(route('invites.destroy', $invite));
+    $response = $this->actingAs($this->user)->delete(route('app.invites.destroy', $invite));
 
     $response->assertNotFound();
 });
@@ -138,7 +138,7 @@ test('remove member requires authentication', function () {
     $member = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
-    $response = $this->delete(route('members.remove', $member));
+    $response = $this->delete(route('app.members.remove', $member));
 
     $response->assertRedirect(route('login'));
 });
@@ -147,14 +147,14 @@ test('remove member removes user from workspace', function () {
     $member = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
-    $response = $this->actingAs($this->user)->delete(route('members.remove', $member));
+    $response = $this->actingAs($this->user)->delete(route('app.members.remove', $member));
 
     $response->assertRedirect();
     expect($this->workspace->hasMember($member))->toBeFalse();
 });
 
 test('remove member fails for owner', function () {
-    $response = $this->actingAs($this->user)->delete(route('members.remove', $this->user));
+    $response = $this->actingAs($this->user)->delete(route('app.members.remove', $this->user));
 
     $response->assertSessionHasErrors('member');
 });

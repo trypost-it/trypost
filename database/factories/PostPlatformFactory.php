@@ -5,11 +5,12 @@ namespace Database\Factories;
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Models\Post;
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\PostPlatform>
+ * @extends Factory<PostPlatform>
  */
 class PostPlatformFactory extends Factory
 {

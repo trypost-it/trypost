@@ -1,14 +1,16 @@
 <?php
 
+use App\Enums\UserWorkspace\Role;
 use App\Models\Language;
 use App\Models\User;
+use App\Models\Workspace;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
 
     $response = $this
         ->actingAs($user)
-        ->get(route('profile.edit'));
+        ->get(route('app.profile.edit'));
 
     $response->assertOk();
 });
@@ -18,14 +20,14 @@ test('profile information can be updated', function () {
 
     $response = $this
         ->actingAs($user)
-        ->patch(route('profile.update'), [
+        ->patch(route('app.profile.update'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('profile.edit'));
+        ->assertRedirect(route('app.profile.edit'));
 
     $user->refresh();
 
@@ -39,14 +41,14 @@ test('email verification status is unchanged when the email address is unchanged
 
     $response = $this
         ->actingAs($user)
-        ->patch(route('profile.update'), [
+        ->patch(route('app.profile.update'), [
             'name' => 'Test User',
             'email' => $user->email,
         ]);
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('profile.edit'));
+        ->assertRedirect(route('app.profile.edit'));
 
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
@@ -57,14 +59,14 @@ test('user can update their language', function () {
 
     $response = $this
         ->actingAs($user)
-        ->from(route('posts.index'))
-        ->patch(route('profile.language'), [
+        ->from(route('app.posts.index'))
+        ->patch(route('app.profile.language'), [
             'language_id' => $newLanguage->id,
         ]);
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('posts.index'));
+        ->assertRedirect(route('app.posts.index'));
 
     expect($user->refresh()->language_id)->toBe($newLanguage->id);
 });
@@ -74,7 +76,7 @@ test('user cannot update language with invalid language id', function () {
 
     $response = $this
         ->actingAs($user)
-        ->patch(route('profile.language'), [
+        ->patch(route('app.profile.language'), [
             'language_id' => '00000000-0000-0000-0000-000000000000',
         ]);
 
@@ -86,13 +88,13 @@ test('user can delete their account', function () {
 
     $response = $this
         ->actingAs($user)
-        ->delete(route('profile.destroy'), [
+        ->delete(route('app.profile.destroy'), [
             'password' => 'password',
         ]);
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('home'));
+        ->assertRedirect(route('app.home'));
 
     $this->assertGuest();
     expect($user->fresh())->toBeNull();
@@ -103,14 +105,14 @@ test('correct password must be provided to delete account', function () {
 
     $response = $this
         ->actingAs($user)
-        ->from(route('profile.edit'))
-        ->delete(route('profile.destroy'), [
+        ->from(route('app.profile.edit'))
+        ->delete(route('app.profile.destroy'), [
             'password' => 'wrong-password',
         ]);
 
     $response
         ->assertSessionHasErrors('password')
-        ->assertRedirect(route('profile.edit'));
+        ->assertRedirect(route('app.profile.edit'));
 
     expect($user->fresh())->not->toBeNull();
 });
@@ -120,12 +122,12 @@ test('deleting account updates members current_workspace_id when their workspace
     $member = User::factory()->create();
 
     // Create a workspace owned by the owner
-    $workspace = \App\Models\Workspace::factory()->create(['user_id' => $owner->id]);
-    $owner->workspaces()->attach($workspace->id, ['role' => \App\Enums\UserWorkspace\Role::Owner->value]);
+    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $owner->workspaces()->attach($workspace->id, ['role' => Role::Owner->value]);
     $owner->update(['current_workspace_id' => $workspace->id]);
 
     // Add member to the workspace and set it as their current
-    $member->workspaces()->attach($workspace->id, ['role' => \App\Enums\UserWorkspace\Role::Member->value]);
+    $member->workspaces()->attach($workspace->id, ['role' => Role::Member->value]);
     $member->update(['current_workspace_id' => $workspace->id]);
 
     // Verify setup
@@ -134,7 +136,7 @@ test('deleting account updates members current_workspace_id when their workspace
     // Owner deletes their account
     $this
         ->actingAs($owner)
-        ->delete(route('profile.destroy'), [
+        ->delete(route('app.profile.destroy'), [
             'password' => 'password',
         ]);
 
@@ -148,17 +150,17 @@ test('deleting account updates members current_workspace_id to another workspace
     $otherOwner = User::factory()->create();
 
     // Create workspace owned by the owner being deleted
-    $workspaceToDelete = \App\Models\Workspace::factory()->create(['user_id' => $owner->id]);
-    $owner->workspaces()->attach($workspaceToDelete->id, ['role' => \App\Enums\UserWorkspace\Role::Owner->value]);
+    $workspaceToDelete = Workspace::factory()->create(['user_id' => $owner->id]);
+    $owner->workspaces()->attach($workspaceToDelete->id, ['role' => Role::Owner->value]);
     $owner->update(['current_workspace_id' => $workspaceToDelete->id]);
 
     // Create another workspace owned by a different user
-    $otherWorkspace = \App\Models\Workspace::factory()->create(['user_id' => $otherOwner->id]);
-    $otherOwner->workspaces()->attach($otherWorkspace->id, ['role' => \App\Enums\UserWorkspace\Role::Owner->value]);
+    $otherWorkspace = Workspace::factory()->create(['user_id' => $otherOwner->id]);
+    $otherOwner->workspaces()->attach($otherWorkspace->id, ['role' => Role::Owner->value]);
 
     // Add member to both workspaces
-    $member->workspaces()->attach($workspaceToDelete->id, ['role' => \App\Enums\UserWorkspace\Role::Member->value]);
-    $member->workspaces()->attach($otherWorkspace->id, ['role' => \App\Enums\UserWorkspace\Role::Member->value]);
+    $member->workspaces()->attach($workspaceToDelete->id, ['role' => Role::Member->value]);
+    $member->workspaces()->attach($otherWorkspace->id, ['role' => Role::Member->value]);
     $member->update(['current_workspace_id' => $workspaceToDelete->id]);
 
     // Verify setup
@@ -167,7 +169,7 @@ test('deleting account updates members current_workspace_id to another workspace
     // Owner deletes their account
     $this
         ->actingAs($owner)
-        ->delete(route('profile.destroy'), [
+        ->delete(route('app.profile.destroy'), [
             'password' => 'password',
         ]);
 

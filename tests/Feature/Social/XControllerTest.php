@@ -27,7 +27,7 @@ test('x connect redirects to oauth provider', function () {
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')
-        ->get(route('social.x.connect'));
+        ->get(route('app.social.x.connect'));
 
     $response->assertStatus(409); // Inertia::location returns 409 with X-Inertia header
 
@@ -55,7 +55,7 @@ test('x oauth callback creates account', function () {
             'user' => $socialiteUser,
         ]));
 
-    $response = $this->actingAs($this->user)->get(route('social.x.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.x.callback'));
 
     $response->assertOk();
     $response->assertViewIs('auth.social-callback');
@@ -73,7 +73,7 @@ test('x oauth callback creates account', function () {
 test('x callback fails with expired session', function () {
     // No session data - simulating expired session
 
-    $response = $this->actingAs($this->user)->get(route('social.x.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.x.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -105,7 +105,7 @@ test('user cannot connect x if already connected', function () {
             'user' => $socialiteUser,
         ]));
 
-    $response = $this->actingAs($this->user)->get(route('social.x.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.x.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -138,7 +138,7 @@ test('user can reconnect disconnected x account', function () {
             'user' => $socialiteUser,
         ]));
 
-    $response = $this->actingAs($this->user)->get(route('social.x.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.x.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', true);
@@ -154,13 +154,13 @@ test('x callback handles oauth errors gracefully', function () {
     ]);
 
     $mock = Mockery::mock();
-    $mock->shouldReceive('user')->andThrow(new \Exception('OAuth error'));
+    $mock->shouldReceive('user')->andThrow(new Exception('OAuth error'));
 
     Socialite::shouldReceive('driver')
         ->with('x')
         ->andReturn($mock);
 
-    $response = $this->actingAs($this->user)->get(route('social.x.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.x.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);

@@ -332,7 +332,7 @@ test('facebook publisher throws exception for text post with null content', func
     $this->postPlatform->update(['content' => null]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'Facebook text posts require content');
+        ->toThrow(Exception::class, 'Facebook text posts require content');
 });
 
 test('facebook publisher can publish single image with null content', function () {

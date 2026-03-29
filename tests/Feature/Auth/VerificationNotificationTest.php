@@ -11,7 +11,7 @@ test('sends verification notification', function () {
 
     $this->actingAs($user)
         ->post(route('verification.send'))
-        ->assertRedirect(route('home'));
+        ->assertRedirect(route('app.home'));
 
     Notification::assertSentTo($user, VerifyEmail::class);
 });
@@ -23,7 +23,7 @@ test('does not send verification notification if email is verified', function ()
 
     $this->actingAs($user)
         ->post(route('verification.send'))
-        ->assertRedirect(route('calendar', absolute: false));
+        ->assertRedirect(route('app.calendar', absolute: false));
 
     Notification::assertNothingSent();
 });

@@ -13,13 +13,13 @@ beforeEach(function () {
 
 // Step 1 tests
 test('step1 requires authentication', function () {
-    $response = $this->get(route('onboarding.step1'));
+    $response = $this->get(route('app.onboarding.step1'));
 
     $response->assertRedirect(route('login'));
 });
 
 test('step1 shows persona selection', function () {
-    $response = $this->actingAs($this->user)->get(route('onboarding.step1'));
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.step1'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -30,7 +30,7 @@ test('step1 shows persona selection', function () {
 
 // Store Step 1 tests
 test('store step1 requires authentication', function () {
-    $response = $this->post(route('onboarding.step1.store'), [
+    $response = $this->post(route('app.onboarding.step1.store'), [
         'persona' => Persona::Founder->value,
     ]);
 
@@ -38,11 +38,11 @@ test('store step1 requires authentication', function () {
 });
 
 test('store step1 saves persona and redirects to step2', function () {
-    $response = $this->actingAs($this->user)->post(route('onboarding.step1.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.step1.store'), [
         'persona' => Persona::Founder->value,
     ]);
 
-    $response->assertRedirect(route('onboarding.step2'));
+    $response->assertRedirect(route('app.onboarding.step2'));
 
     $this->user->refresh();
     expect($this->user->persona)->toBe(Persona::Founder);
@@ -50,7 +50,7 @@ test('store step1 saves persona and redirects to step2', function () {
 });
 
 test('store step1 validates persona is required', function () {
-    $response = $this->actingAs($this->user)->post(route('onboarding.step1.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.step1.store'), [
         'persona' => '',
     ]);
 
@@ -58,7 +58,7 @@ test('store step1 validates persona is required', function () {
 });
 
 test('store step1 validates persona is valid enum', function () {
-    $response = $this->actingAs($this->user)->post(route('onboarding.step1.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.step1.store'), [
         'persona' => 'invalid',
     ]);
 
@@ -67,7 +67,7 @@ test('store step1 validates persona is valid enum', function () {
 
 // Step 2 tests
 test('step2 requires authentication', function () {
-    $response = $this->get(route('onboarding.step2'));
+    $response = $this->get(route('app.onboarding.step2'));
 
     $response->assertRedirect(route('login'));
 });
@@ -75,7 +75,7 @@ test('step2 requires authentication', function () {
 test('step2 shows social accounts connection', function () {
     $this->user->update(['setup' => Setup::Connections]);
 
-    $response = $this->actingAs($this->user)->get(route('onboarding.step2'));
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.step2'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -95,7 +95,7 @@ test('step2 shows connected accounts for workspace', function () {
         'platform' => Platform::LinkedIn,
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('onboarding.step2'));
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.step2'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -105,7 +105,7 @@ test('step2 shows connected accounts for workspace', function () {
 
 // Store Step 2 tests
 test('store step2 requires authentication', function () {
-    $response = $this->post(route('onboarding.step2.store'));
+    $response = $this->post(route('app.onboarding.step2.store'));
 
     $response->assertRedirect(route('login'));
 });
@@ -114,9 +114,9 @@ test('store step2 completes setup in self-hosted mode', function () {
     config(['trypost.self_hosted' => true]);
     $this->user->update(['setup' => Setup::Connections]);
 
-    $response = $this->actingAs($this->user)->post(route('onboarding.step2.store'));
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.step2.store'));
 
-    $response->assertRedirect(route('calendar'));
+    $response->assertRedirect(route('app.calendar'));
 
     $this->user->refresh();
     expect($this->user->setup)->toBe(Setup::Completed);
@@ -124,7 +124,7 @@ test('store step2 completes setup in self-hosted mode', function () {
 
 // Complete tests
 test('complete requires authentication', function () {
-    $response = $this->get(route('onboarding.complete'));
+    $response = $this->get(route('app.onboarding.complete'));
 
     $response->assertRedirect(route('login'));
 });
@@ -132,9 +132,9 @@ test('complete requires authentication', function () {
 test('complete marks setup as completed', function () {
     $this->user->update(['setup' => Setup::Subscription]);
 
-    $response = $this->actingAs($this->user)->get(route('onboarding.complete'));
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.complete'));
 
-    $response->assertRedirect(route('calendar'));
+    $response->assertRedirect(route('app.calendar'));
 
     $this->user->refresh();
     expect($this->user->setup)->toBe(Setup::Completed);

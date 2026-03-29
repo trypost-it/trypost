@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Media\Type as MediaType;
+use Database\Factories\MediaFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Media extends Model
 {
-    /** @use HasFactory<\Database\Factories\MediaFactory> */
+    /** @use HasFactory<MediaFactory> */
     use HasFactory, HasUuids;
 
     protected $table = 'medias';

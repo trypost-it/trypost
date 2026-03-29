@@ -4,11 +4,12 @@ namespace Database\Factories;
 
 use App\Enums\SocialAccount\Platform;
 use App\Enums\SocialAccount\Status;
+use App\Models\SocialAccount;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\SocialAccount>
+ * @extends Factory<SocialAccount>
  */
 class SocialAccountFactory extends Factory
 {

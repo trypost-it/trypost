@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\SocialAccount\Platform;
 use App\Enums\SocialAccount\Status;
 use App\Models\SocialAccount;
 use App\Models\User;

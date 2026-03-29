@@ -49,7 +49,7 @@ if (! function_exists('uploadFromUrl')) {
             Storage::put($filename, $response->body(), 'public');
 
             return $filename;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning('uploadFromUrl: Exception', [
                 'url' => $url,
                 'error' => $e->getMessage(),

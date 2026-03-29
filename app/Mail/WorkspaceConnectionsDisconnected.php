@@ -61,7 +61,7 @@ class WorkspaceConnectionsDisconnected extends Mailable implements ShouldQueue
                 'buttonText' => __('mail.workspace_connections_disconnected.button', [], $locale),
                 'workspace' => $this->workspace,
                 'disconnectedAccounts' => $this->disconnectedAccounts,
-                'url' => route('accounts'),
+                'url' => route('app.accounts'),
             ],
         );
     }

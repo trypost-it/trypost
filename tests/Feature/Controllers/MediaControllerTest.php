@@ -3,6 +3,7 @@
 use App\Enums\User\Setup;
 use App\Models\Media;
 use App\Models\PostPlatform;
+use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Http\UploadedFile;
@@ -27,7 +28,7 @@ beforeEach(function () {
 test('user can upload media to workspace', function () {
     $file = UploadedFile::fake()->image('logo.jpg', 100, 100);
 
-    $response = $this->actingAs($this->user)->postJson(route('medias.store'), [
+    $response = $this->actingAs($this->user)->postJson(route('app.medias.store'), [
         'media' => $file,
         'model' => 'workspace',
         'model_id' => $this->workspace->id,
@@ -43,7 +44,7 @@ test('user can delete media', function () {
     $file = UploadedFile::fake()->image('logo.jpg', 100, 100);
     $media = $this->workspace->addMedia($file, 'logo');
 
-    $response = $this->actingAs($this->user)->deleteJson(route('medias.destroy', [
+    $response = $this->actingAs($this->user)->deleteJson(route('app.medias.destroy', [
         'modelId' => $this->workspace->id,
         'media' => $media->id,
     ]));
@@ -58,7 +59,7 @@ test('user cannot delete media from different model', function () {
 
     $otherWorkspace = Workspace::factory()->create();
 
-    $response = $this->actingAs($this->user)->deleteJson(route('medias.destroy', [
+    $response = $this->actingAs($this->user)->deleteJson(route('app.medias.destroy', [
         'modelId' => $otherWorkspace->id,
         'media' => $media->id,
     ]));
@@ -71,12 +72,12 @@ test('user can duplicate media to another model', function () {
     $media = $this->workspace->addMedia($file, 'default');
 
     $postPlatform = PostPlatform::factory()->create([
-        'social_account_id' => \App\Models\SocialAccount::factory()->linkedin()->create([
+        'social_account_id' => SocialAccount::factory()->linkedin()->create([
             'workspace_id' => $this->workspace->id,
         ])->id,
     ]);
 
-    $response = $this->actingAs($this->user)->postJson(route('medias.duplicate', ['media' => $media->id]), [
+    $response = $this->actingAs($this->user)->postJson(route('app.medias.duplicate', ['media' => $media->id]), [
         'targets' => [
             [
                 'model' => 'postPlatform',
@@ -93,7 +94,7 @@ test('user can duplicate media to another model', function () {
 test('media store fails with invalid model type', function () {
     $file = UploadedFile::fake()->image('logo.jpg', 100, 100);
 
-    $response = $this->actingAs($this->user)->postJson(route('medias.store'), [
+    $response = $this->actingAs($this->user)->postJson(route('app.medias.store'), [
         'media' => $file,
         'model' => 'invalid',
         'model_id' => $this->workspace->id,

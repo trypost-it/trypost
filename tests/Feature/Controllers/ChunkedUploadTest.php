@@ -27,7 +27,7 @@ test('chunked upload completes with single chunk', function () {
 
     $response = $this->actingAs($this->user)->call(
         'POST',
-        route('medias.store-chunked'),
+        route('app.medias.store-chunked'),
         [],
         [],
         [],
@@ -56,7 +56,7 @@ test('chunked upload reports progress on intermediate chunks', function () {
 
     $response = $this->actingAs($this->user)->call(
         'POST',
-        route('medias.store-chunked'),
+        route('app.medias.store-chunked'),
         [],
         [],
         [],
@@ -88,7 +88,7 @@ test('chunked upload completes with multiple chunks', function () {
     // First chunk
     $this->actingAs($this->user)->call(
         'POST',
-        route('medias.store-chunked'),
+        route('app.medias.store-chunked'),
         [],
         [],
         [],
@@ -107,7 +107,7 @@ test('chunked upload completes with multiple chunks', function () {
     // Second chunk (last)
     $response = $this->actingAs($this->user)->call(
         'POST',
-        route('medias.store-chunked'),
+        route('app.medias.store-chunked'),
         [],
         [],
         [],
@@ -131,7 +131,7 @@ test('chunked upload completes with multiple chunks', function () {
 test('chunked upload fails without content range header', function () {
     $response = $this->actingAs($this->user)->call(
         'POST',
-        route('medias.store-chunked'),
+        route('app.medias.store-chunked'),
         [],
         [],
         [],
@@ -152,7 +152,7 @@ test('chunked upload fails without content range header', function () {
 test('chunked upload fails with invalid model type', function () {
     $response = $this->actingAs($this->user)->call(
         'POST',
-        route('medias.store-chunked'),
+        route('app.medias.store-chunked'),
         [],
         [],
         [],
@@ -174,7 +174,7 @@ test('chunked upload fails with invalid model type', function () {
 test('chunked upload fails without model header', function () {
     $response = $this->actingAs($this->user)->call(
         'POST',
-        route('medias.store-chunked'),
+        route('app.medias.store-chunked'),
         [],
         [],
         [],
@@ -194,7 +194,7 @@ test('chunked upload fails without model header', function () {
 test('chunked upload fails without file name header', function () {
     $response = $this->actingAs($this->user)->call(
         'POST',
-        route('medias.store-chunked'),
+        route('app.medias.store-chunked'),
         [],
         [],
         [],
@@ -219,7 +219,7 @@ test('chunked upload cleans up temp file after completion', function () {
 
     $this->actingAs($this->user)->call(
         'POST',
-        route('medias.store-chunked'),
+        route('app.medias.store-chunked'),
         [],
         [],
         [],

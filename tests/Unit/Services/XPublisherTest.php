@@ -105,7 +105,7 @@ test('x publisher throws exception on api error', function () {
     $publisher = new XPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class);
+        ->toThrow(Exception::class);
 });
 
 test('x publisher returns unknown id when no id in response', function () {
@@ -177,7 +177,7 @@ test('x publisher handles 403 error as generic error', function () {
     $publisher = new XPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'X API error');
+        ->toThrow(Exception::class, 'X API error');
 });
 
 test('x publisher handles empty error response', function () {
@@ -188,5 +188,5 @@ test('x publisher handles empty error response', function () {
     $publisher = new XPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class);
+        ->toThrow(Exception::class);
 });

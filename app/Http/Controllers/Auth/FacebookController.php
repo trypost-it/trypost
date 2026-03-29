@@ -34,7 +34,7 @@ class FacebookController extends SocialController
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);
@@ -159,7 +159,7 @@ class FacebookController extends SocialController
                 ],
             ]);
 
-            return redirect()->route('social.facebook.select-page');
+            return redirect()->route('app.social.facebook.select-page');
         } catch (\Exception $e) {
             Log::error('Facebook OAuth Error', [
                 'error' => $e->getMessage(),
@@ -179,7 +179,7 @@ class FacebookController extends SocialController
             session()->flash('flash.banner', __('accounts.flash.session_expired'));
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('accounts');
+            return redirect()->route('app.accounts');
         }
 
         $workspace = Workspace::find($workspaceId);
@@ -188,7 +188,7 @@ class FacebookController extends SocialController
             session()->flash('flash.banner', __('accounts.flash.workspace_not_found'));
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('accounts');
+            return redirect()->route('app.accounts');
         }
 
         return Inertia::render('accounts/FacebookPageSelect', [

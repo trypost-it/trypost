@@ -86,7 +86,7 @@ test('youtube publisher refreshes token when expired', function () {
 
     try {
         $this->publisher->publish($this->postPlatform);
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         // Expected to fail on upload, but token should be refreshed
     }
 
@@ -159,5 +159,5 @@ test('youtube publisher throws exception with null content', function () {
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'YouTube Shorts require a title');
+        ->toThrow(Exception::class, 'YouTube Shorts require a title');
 });

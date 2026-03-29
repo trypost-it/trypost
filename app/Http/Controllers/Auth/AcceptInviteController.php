@@ -48,7 +48,7 @@ class AcceptInviteController extends Controller
             session()->flash('flash.banner', __('settings.members.flash.wrong_email'));
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('calendar');
+            return redirect()->route('app.calendar');
         }
 
         // Check if already a member
@@ -58,7 +58,7 @@ class AcceptInviteController extends Controller
             session()->flash('flash.banner', __('settings.members.flash.already_member'));
             session()->flash('flash.bannerStyle', 'info');
 
-            return redirect()->route('calendar');
+            return redirect()->route('app.calendar');
         }
 
         // Accept the invite
@@ -69,7 +69,7 @@ class AcceptInviteController extends Controller
         session()->flash('flash.banner', __('settings.members.flash.invite_accepted'));
         session()->flash('flash.bannerStyle', 'success');
 
-        return redirect()->route('calendar');
+        return redirect()->route('app.calendar');
     }
 
     /**
@@ -84,7 +84,7 @@ class AcceptInviteController extends Controller
             session()->flash('flash.banner', __('settings.members.flash.wrong_email'));
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('calendar');
+            return redirect()->route('app.calendar');
         }
 
         $invite->delete();
@@ -92,6 +92,6 @@ class AcceptInviteController extends Controller
         session()->flash('flash.banner', __('settings.members.flash.invite_declined'));
         session()->flash('flash.bannerStyle', 'info');
 
-        return redirect()->route('calendar');
+        return redirect()->route('app.calendar');
     }
 }

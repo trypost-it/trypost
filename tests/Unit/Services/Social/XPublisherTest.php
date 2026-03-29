@@ -160,14 +160,14 @@ test('x publisher throws exception with empty content and no media', function ()
     $this->postPlatform->update(['content' => '']);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'X posts require either text or media');
+        ->toThrow(Exception::class, 'X posts require either text or media');
 });
 
 test('x publisher throws exception with null content and no media', function () {
     $this->postPlatform->update(['content' => null]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'X posts require either text or media');
+        ->toThrow(Exception::class, 'X posts require either text or media');
 });
 
 test('x publisher throws exception when no refresh token available', function () {

@@ -12,7 +12,7 @@ class EnsureUserSetupIsComplete
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -46,10 +46,10 @@ class EnsureUserSetupIsComplete
 
         // Redirect to appropriate step
         return match ($user->setup) {
-            Setup::Role => redirect()->route('onboarding.step1'),
-            Setup::Connections => redirect()->route('onboarding.step2'),
-            Setup::Subscription => redirect()->route('onboarding.step2'),
-            default => redirect()->route('onboarding.step1'),
+            Setup::Role => redirect()->route('app.onboarding.step1'),
+            Setup::Connections => redirect()->route('app.onboarding.step2'),
+            Setup::Subscription => redirect()->route('app.onboarding.step2'),
+            default => redirect()->route('app.onboarding.step1'),
         };
     }
 }

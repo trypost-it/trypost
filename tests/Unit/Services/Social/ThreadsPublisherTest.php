@@ -297,7 +297,7 @@ test('threads publisher throws exception for text post with null content', funct
     $this->postPlatform->update(['content' => null]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'Threads text posts require content');
+        ->toThrow(Exception::class, 'Threads text posts require content');
 });
 
 test('threads publisher can publish image with null content', function () {

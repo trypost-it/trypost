@@ -40,7 +40,7 @@ beforeEach(function () {
 
 test('instagram publisher throws exception without media', function () {
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'Instagram requires at least one image or video');
+        ->toThrow(Exception::class, 'Instagram requires at least one image or video');
 });
 
 test('instagram publisher can publish single image', function () {

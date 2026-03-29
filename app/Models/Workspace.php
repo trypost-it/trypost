@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\HasMedia;
+use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Workspace extends Model
 {
-    /** @use HasFactory<\Database\Factories\WorkspaceFactory> */
+    /** @use HasFactory<WorkspaceFactory> */
     use HasFactory, HasMedia, HasUuids;
 
     protected $fillable = [
@@ -76,6 +77,11 @@ class Workspace extends Model
     public function labels(): HasMany
     {
         return $this->hasMany(WorkspaceLabel::class);
+    }
+
+    public function apiTokens(): HasMany
+    {
+        return $this->hasMany(ApiToken::class);
     }
 
     public function hasMember(User $user): bool

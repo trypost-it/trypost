@@ -15,7 +15,7 @@ beforeEach(function () {
 });
 
 test('mastodon connect page can be rendered', function () {
-    $response = $this->actingAs($this->user)->get(route('social.mastodon.connect'));
+    $response = $this->actingAs($this->user)->get(route('app.social.mastodon.connect'));
 
     $response->assertOk();
 });
@@ -27,13 +27,13 @@ test('user can initiate mastodon oauth flow', function () {
             'client_secret' => 'test-client-secret',
             'id' => '12345',
             'name' => config('app.name'),
-            'redirect_uri' => route('social.mastodon.callback'),
+            'redirect_uri' => route('app.social.mastodon.callback'),
         ], 200),
     ]);
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')
-        ->post(route('social.mastodon.authorize'), [
+        ->post(route('app.social.mastodon.authorize'), [
             'instance' => 'https://mastodon.social',
         ]);
 
@@ -49,7 +49,7 @@ test('user cannot connect to invalid mastodon instance', function () {
         'https://invalid-instance.com/api/v1/apps' => Http::response([], 404),
     ]);
 
-    $response = $this->actingAs($this->user)->post(route('social.mastodon.authorize'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.mastodon.authorize'), [
         'instance' => 'https://invalid-instance.com',
     ]);
 
@@ -83,7 +83,7 @@ test('mastodon oauth callback creates account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.mastodon.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.mastodon.callback', [
         'code' => 'test-auth-code',
         'state' => 'test-state',
     ]));
@@ -110,7 +110,7 @@ test('mastodon callback fails with invalid state', function () {
         'social_connect_workspace' => $this->workspace->id,
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.mastodon.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.mastodon.callback', [
         'code' => 'test-auth-code',
         'state' => 'wrong-state',
     ]));
@@ -127,7 +127,7 @@ test('mastodon callback fails with invalid state', function () {
 test('mastodon callback fails with expired session', function () {
     // No session data - simulating expired session
 
-    $response = $this->actingAs($this->user)->get(route('social.mastodon.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.mastodon.callback', [
         'code' => 'test-auth-code',
         'state' => 'test-state',
     ]));
@@ -164,7 +164,7 @@ test('user cannot connect mastodon if already connected', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.mastodon.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.mastodon.callback', [
         'code' => 'test-auth-code',
         'state' => 'test-state',
     ]));
@@ -201,7 +201,7 @@ test('user can reconnect disconnected mastodon account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.mastodon.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.mastodon.callback', [
         'code' => 'test-auth-code',
         'state' => 'test-state',
     ]));
@@ -215,7 +215,7 @@ test('user can reconnect disconnected mastodon account', function () {
 });
 
 test('mastodon connection validates instance url', function () {
-    $response = $this->actingAs($this->user)->post(route('social.mastodon.authorize'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.mastodon.authorize'), [
         'instance' => 'not-a-valid-url',
     ]);
 
@@ -234,7 +234,7 @@ test('mastodon works with custom instances', function () {
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')
-        ->post(route('social.mastodon.authorize'), [
+        ->post(route('app.social.mastodon.authorize'), [
             'instance' => 'https://techhub.social',
         ]);
 

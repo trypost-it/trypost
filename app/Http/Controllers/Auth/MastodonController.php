@@ -30,7 +30,7 @@ class MastodonController extends SocialController
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);
@@ -54,7 +54,7 @@ class MastodonController extends SocialController
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);
@@ -65,7 +65,7 @@ class MastodonController extends SocialController
             // Register app on the instance
             $appResponse = Http::post("{$instance}/api/v1/apps", [
                 'client_name' => config('app.name'),
-                'redirect_uris' => route('social.mastodon.callback'),
+                'redirect_uris' => route('app.social.mastodon.callback'),
                 'scopes' => self::SCOPES,
                 'website' => config('app.url'),
             ]);
@@ -96,7 +96,7 @@ class MastodonController extends SocialController
             $params = http_build_query([
                 'client_id' => $app['client_id'],
                 'response_type' => 'code',
-                'redirect_uri' => route('social.mastodon.callback'),
+                'redirect_uri' => route('app.social.mastodon.callback'),
                 'scope' => self::SCOPES,
                 'state' => $state,
             ]);
@@ -149,7 +149,7 @@ class MastodonController extends SocialController
                 'grant_type' => 'authorization_code',
                 'client_id' => $clientId,
                 'client_secret' => $clientSecret,
-                'redirect_uri' => route('social.mastodon.callback'),
+                'redirect_uri' => route('app.social.mastodon.callback'),
                 'code' => $request->code,
             ]);
 

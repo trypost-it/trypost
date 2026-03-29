@@ -28,7 +28,7 @@ test('facebook connect redirects to oauth provider', function () {
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')
-        ->get(route('social.facebook.connect'));
+        ->get(route('app.social.facebook.connect'));
 
     $response->assertStatus(409); // Inertia::location returns 409 with X-Inertia header
 
@@ -64,7 +64,7 @@ test('facebook oauth callback creates account with single page', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.facebook.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.facebook.callback'));
 
     $response->assertOk();
     $response->assertViewIs('auth.social-callback');
@@ -116,9 +116,9 @@ test('facebook callback redirects to page selection when multiple pages', functi
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.facebook.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.facebook.callback'));
 
-    $response->assertRedirect(route('social.facebook.select-page'));
+    $response->assertRedirect(route('app.social.facebook.select-page'));
     expect(session('facebook_oauth'))->not->toBeNull();
 });
 
@@ -143,7 +143,7 @@ test('facebook callback fails when no pages found', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.facebook.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.facebook.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -153,7 +153,7 @@ test('facebook callback fails when no pages found', function () {
 test('facebook callback fails with expired session', function () {
     // No session data - simulating expired session
 
-    $response = $this->actingAs($this->user)->get(route('social.facebook.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.facebook.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -193,7 +193,7 @@ test('user cannot connect facebook if already connected', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.facebook.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.facebook.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -236,7 +236,7 @@ test('user can reconnect disconnected facebook account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.facebook.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.facebook.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', true);
@@ -252,13 +252,13 @@ test('facebook callback handles oauth errors gracefully', function () {
     ]);
 
     $mock = Mockery::mock();
-    $mock->shouldReceive('user')->andThrow(new \Exception('OAuth error'));
+    $mock->shouldReceive('user')->andThrow(new Exception('OAuth error'));
 
     Socialite::shouldReceive('driver')
         ->with('facebook')
         ->andReturn($mock);
 
-    $response = $this->actingAs($this->user)->get(route('social.facebook.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.facebook.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -290,7 +290,7 @@ test('facebook page selection creates account', function () {
         ],
     ]);
 
-    $response = $this->actingAs($this->user)->post(route('social.facebook.select'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.facebook.select'), [
         'page_id' => 'page_123',
     ]);
 
@@ -308,7 +308,7 @@ test('facebook page selection creates account', function () {
 test('facebook page selection fails with expired session', function () {
     // No session data
 
-    $response = $this->actingAs($this->user)->post(route('social.facebook.select'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.facebook.select'), [
         'page_id' => 'page_123',
     ]);
 
@@ -334,7 +334,7 @@ test('facebook page selection fails with invalid page id', function () {
         ],
     ]);
 
-    $response = $this->actingAs($this->user)->post(route('social.facebook.select'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.facebook.select'), [
         'page_id' => 'invalid_page_id',
     ]);
 

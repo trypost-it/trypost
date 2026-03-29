@@ -17,7 +17,7 @@ beforeEach(function () {
 test('threads connect redirects to oauth', function () {
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')
-        ->get(route('social.threads.connect'));
+        ->get(route('app.social.threads.connect'));
 
     $response->assertStatus(409); // Inertia::location returns 409 with X-Inertia header
 
@@ -50,7 +50,7 @@ test('threads oauth callback creates account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'test-auth-code',
         'state' => $state,
     ]));
@@ -74,7 +74,7 @@ test('threads callback fails with invalid state', function () {
         'threads_oauth_state' => 'correct-state',
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'test-auth-code',
         'state' => 'wrong-state',
     ]));
@@ -92,7 +92,7 @@ test('threads callback fails with invalid state', function () {
 test('threads callback fails with expired session', function () {
     // No session data - simulating expired session
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'test-auth-code',
         'state' => 'test-state',
     ]));
@@ -131,7 +131,7 @@ test('user cannot connect threads if already connected', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'test-auth-code',
         'state' => $state,
     ]));
@@ -171,7 +171,7 @@ test('user can reconnect disconnected threads account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'test-auth-code',
         'state' => $state,
     ]));
@@ -199,7 +199,7 @@ test('threads callback handles token exchange failure', function () {
         ], 400),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'expired-auth-code',
         'state' => $state,
     ]));

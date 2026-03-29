@@ -15,7 +15,7 @@ beforeEach(function () {
 });
 
 test('bluesky connect page can be rendered', function () {
-    $response = $this->actingAs($this->user)->get(route('social.bluesky.connect'));
+    $response = $this->actingAs($this->user)->get(route('app.social.bluesky.connect'));
 
     $response->assertOk();
 });
@@ -36,7 +36,7 @@ test('user can connect bluesky account with valid credentials', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->post(route('social.bluesky.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.bluesky.store'), [
         'identifier' => 'testuser.bsky.social',
         'password' => 'xxxx-xxxx-xxxx-xxxx',
     ]);
@@ -62,7 +62,7 @@ test('user cannot connect bluesky with invalid credentials', function () {
         ], 401),
     ]);
 
-    $response = $this->actingAs($this->user)->post(route('social.bluesky.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.bluesky.store'), [
         'identifier' => 'testuser.bsky.social',
         'password' => 'wrong-password',
     ]);
@@ -96,7 +96,7 @@ test('user cannot connect bluesky if already connected', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->post(route('social.bluesky.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.bluesky.store'), [
         'identifier' => 'newuser.bsky.social',
         'password' => 'xxxx-xxxx-xxxx-xxxx',
     ]);
@@ -127,7 +127,7 @@ test('user can reconnect disconnected bluesky account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->post(route('social.bluesky.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.bluesky.store'), [
         'identifier' => 'testuser.bsky.social',
         'password' => 'xxxx-xxxx-xxxx-xxxx',
     ]);
@@ -141,7 +141,7 @@ test('user can reconnect disconnected bluesky account', function () {
 });
 
 test('bluesky connection validates required fields', function () {
-    $response = $this->actingAs($this->user)->post(route('social.bluesky.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.bluesky.store'), [
         'identifier' => '',
         'password' => '',
     ]);

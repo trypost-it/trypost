@@ -40,7 +40,7 @@ class AuthenticatedSessionController extends Controller
             return redirect($redirect);
         }
 
-        return redirect()->intended(route('calendar'));
+        return redirect()->intended(route('app.calendar'));
     }
 
     /**

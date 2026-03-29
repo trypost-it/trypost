@@ -4,6 +4,7 @@ use App\Models\Media;
 use App\Models\PostPlatform;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,7 +15,7 @@ beforeEach(function () {
 test('model can get media relationship', function () {
     $workspace = Workspace::factory()->create();
 
-    expect($workspace->media())->toBeInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphMany::class);
+    expect($workspace->media())->toBeInstanceOf(MorphMany::class);
 });
 
 test('model can add media from uploaded file', function () {

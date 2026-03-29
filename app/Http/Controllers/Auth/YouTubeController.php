@@ -7,8 +7,10 @@ use App\Enums\SocialAccount\Status;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
+use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -31,7 +33,7 @@ class YouTubeController extends SocialController
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);
@@ -150,7 +152,7 @@ class YouTubeController extends SocialController
                 ],
             ]);
 
-            return redirect()->route('social.youtube.select-channel');
+            return redirect()->route('app.social.youtube.select-channel');
         } catch (\Exception $e) {
             Log::error('YouTube OAuth Error', [
                 'error' => $e->getMessage(),
@@ -170,7 +172,7 @@ class YouTubeController extends SocialController
             session()->flash('flash.banner', __('accounts.flash.session_expired'));
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('accounts');
+            return redirect()->route('app.accounts');
         }
 
         $workspace = Workspace::find($workspaceId);
@@ -179,7 +181,7 @@ class YouTubeController extends SocialController
             session()->flash('flash.banner', __('accounts.flash.workspace_not_found'));
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('accounts');
+            return redirect()->route('app.accounts');
         }
 
         // Fetch YouTube channels
@@ -291,7 +293,7 @@ class YouTubeController extends SocialController
 
     private function redirectToGoogle(): Response
     {
-        return \Inertia\Inertia::location(
+        return Inertia::location(
             Socialite::driver($this->driver)
                 ->scopes($this->scopes)
                 ->with([
@@ -307,7 +309,7 @@ class YouTubeController extends SocialController
     private function fetchChannels(string $accessToken): array
     {
         try {
-            $response = \Illuminate\Support\Facades\Http::withToken($accessToken)
+            $response = Http::withToken($accessToken)
                 ->get('https://www.googleapis.com/youtube/v3/channels', [
                     'part' => 'snippet,contentDetails,statistics',
                     'mine' => 'true',

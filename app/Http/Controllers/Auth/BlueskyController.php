@@ -23,7 +23,7 @@ class BlueskyController extends SocialController
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);
@@ -45,7 +45,7 @@ class BlueskyController extends SocialController
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);

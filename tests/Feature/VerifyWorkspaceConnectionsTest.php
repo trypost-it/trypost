@@ -94,10 +94,10 @@ test('job only includes failed accounts in email', function () {
 
     $verifier = mock(ConnectionVerifier::class);
     $verifier->shouldReceive('verify')
-        ->with(\Mockery::on(fn ($acc) => $acc->id === $validAccount->id))
+        ->with(Mockery::on(fn ($acc) => $acc->id === $validAccount->id))
         ->andReturn(true);
     $verifier->shouldReceive('verify')
-        ->with(\Mockery::on(fn ($acc) => $acc->id === $invalidAccount->id))
+        ->with(Mockery::on(fn ($acc) => $acc->id === $invalidAccount->id))
         ->andThrow(new TokenExpiredException('Token expired'));
 
     app()->instance(ConnectionVerifier::class, $verifier);

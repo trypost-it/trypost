@@ -29,7 +29,7 @@ beforeEach(function () {
 
 // Store tests
 test('store media requires authentication', function () {
-    $response = $this->post(route('medias.store'), [
+    $response = $this->post(route('app.medias.store'), [
         'model' => 'postPlatform',
         'model_id' => $this->postPlatform->id,
         'media' => UploadedFile::fake()->image('test.jpg'),
@@ -39,7 +39,7 @@ test('store media requires authentication', function () {
 });
 
 test('store media uploads file', function () {
-    $response = $this->actingAs($this->user)->post(route('medias.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.medias.store'), [
         'model' => 'postPlatform',
         'model_id' => $this->postPlatform->id,
         'media' => UploadedFile::fake()->image('test.jpg'),
@@ -50,7 +50,7 @@ test('store media uploads file', function () {
 });
 
 test('store media validates required fields', function () {
-    $response = $this->actingAs($this->user)->post(route('medias.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.medias.store'), [
         'model' => '',
         'model_id' => '',
     ]);
@@ -65,7 +65,7 @@ test('destroy media requires authentication', function () {
         'mediable_type' => 'postPlatform',
     ]);
 
-    $response = $this->delete(route('medias.destroy', [$this->postPlatform->id, $media]));
+    $response = $this->delete(route('app.medias.destroy', [$this->postPlatform->id, $media]));
 
     $response->assertRedirect(route('login'));
 });
@@ -76,7 +76,7 @@ test('destroy media deletes the media', function () {
         'mediable_type' => 'postPlatform',
     ]);
 
-    $response = $this->actingAs($this->user)->delete(route('medias.destroy', [$this->postPlatform->id, $media]));
+    $response = $this->actingAs($this->user)->delete(route('app.medias.destroy', [$this->postPlatform->id, $media]));
 
     $response->assertOk();
     $response->assertJson(['success' => true]);
@@ -94,7 +94,7 @@ test('destroy media returns 403 for mismatched model', function () {
         'mediable_type' => 'postPlatform',
     ]);
 
-    $response = $this->actingAs($this->user)->delete(route('medias.destroy', [$this->postPlatform->id, $media]));
+    $response = $this->actingAs($this->user)->delete(route('app.medias.destroy', [$this->postPlatform->id, $media]));
 
     $response->assertForbidden();
 });
@@ -106,7 +106,7 @@ test('duplicate media requires authentication', function () {
         'mediable_type' => 'postPlatform',
     ]);
 
-    $response = $this->post(route('medias.duplicate', $media), [
+    $response = $this->post(route('app.medias.duplicate', $media), [
         'targets' => [],
     ]);
 
@@ -124,7 +124,7 @@ test('duplicate media creates copies', function () {
         'social_account_id' => $this->socialAccount->id,
     ]);
 
-    $response = $this->actingAs($this->user)->post(route('medias.duplicate', $media), [
+    $response = $this->actingAs($this->user)->post(route('app.medias.duplicate', $media), [
         'targets' => [
             [
                 'model' => 'postPlatform',

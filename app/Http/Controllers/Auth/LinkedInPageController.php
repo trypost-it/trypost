@@ -39,7 +39,7 @@ class LinkedInPageController extends SocialController
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);
@@ -116,7 +116,7 @@ class LinkedInPageController extends SocialController
                 ],
             ]);
 
-            return redirect()->route('social.linkedin-page.select-page');
+            return redirect()->route('app.social.linkedin-page.select-page');
         } catch (\Exception $e) {
             Log::error('LinkedIn Page OAuth Error', [
                 'error' => $e->getMessage(),
@@ -134,7 +134,7 @@ class LinkedInPageController extends SocialController
             session()->flash('flash.banner', __('accounts.flash.session_expired'));
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('accounts');
+            return redirect()->route('app.accounts');
         }
 
         $workspace = Workspace::find($pendingData['workspace_id']);
@@ -143,7 +143,7 @@ class LinkedInPageController extends SocialController
             session()->flash('flash.banner', __('accounts.flash.workspace_not_found'));
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('accounts');
+            return redirect()->route('app.accounts');
         }
 
         return Inertia::render('accounts/LinkedInPageSelect', [

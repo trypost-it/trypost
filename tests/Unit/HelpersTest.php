@@ -84,7 +84,7 @@ test('uploadFromUrl uses custom directory', function () {
 
 test('uploadFromUrl handles exceptions gracefully', function () {
     Http::fake(function () {
-        throw new \Exception('Network error');
+        throw new Exception('Network error');
     });
 
     $result = uploadFromUrl('https://example.com/image.jpg');

@@ -33,7 +33,7 @@ class WorkspaceInvite extends Mailable implements ShouldQueue
                 'title' => "You've been invited to join {$this->invite->workspace->name}",
                 'previewText' => "You've been invited to join {$this->invite->workspace->name}",
                 'invite' => $this->invite,
-                'url' => route('invites.show', $this->invite->id),
+                'url' => route('app.invites.show', $this->invite->id),
             ],
         );
     }

@@ -70,7 +70,7 @@ test('publish to social platform marks platform as failed on error', function ()
     Event::fake();
 
     $publisher = Mockery::mock(LinkedInPublisher::class);
-    $publisher->shouldReceive('publish')->andThrow(new \Exception('API Error'));
+    $publisher->shouldReceive('publish')->andThrow(new Exception('API Error'));
 
     $this->app->instance(LinkedInPublisher::class, $publisher);
 
@@ -147,7 +147,7 @@ test('publish to social platform marks post as failed when all platforms fail', 
     Event::fake();
 
     $publisher = Mockery::mock(LinkedInPublisher::class);
-    $publisher->shouldReceive('publish')->andThrow(new \Exception('API Error'));
+    $publisher->shouldReceive('publish')->andThrow(new Exception('API Error'));
 
     $this->app->instance(LinkedInPublisher::class, $publisher);
 

@@ -43,7 +43,7 @@ class AccountDisconnected extends Mailable implements ShouldQueue
                 'platformName' => $platformName,
                 'accountName' => $accountName,
                 'workspaceName' => $workspaceName,
-                'url' => route('accounts'),
+                'url' => route('app.accounts'),
             ],
         );
     }

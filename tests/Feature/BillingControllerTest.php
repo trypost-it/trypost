@@ -12,13 +12,13 @@ beforeEach(function () {
 
 // Subscribe tests
 test('subscribe requires authentication', function () {
-    $response = $this->get(route('subscribe'));
+    $response = $this->get(route('app.subscribe'));
 
     $response->assertRedirect(route('login'));
 });
 
 test('subscribe shows subscription page', function () {
-    $response = $this->actingAs($this->user)->get(route('subscribe'));
+    $response = $this->actingAs($this->user)->get(route('app.subscribe'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -29,13 +29,13 @@ test('subscribe shows subscription page', function () {
 
 // Index tests
 test('billing index requires authentication', function () {
-    $response = $this->get(route('billing.index'));
+    $response = $this->get(route('app.billing.index'));
 
     $response->assertRedirect(route('login'));
 });
 
 test('billing index shows billing dashboard', function () {
-    $response = $this->actingAs($this->user)->get(route('billing.index'));
+    $response = $this->actingAs($this->user)->get(route('app.billing.index'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -47,13 +47,13 @@ test('billing index shows billing dashboard', function () {
 
 // Processing tests
 test('billing processing requires authentication', function () {
-    $response = $this->get(route('billing.processing'));
+    $response = $this->get(route('app.billing.processing'));
 
     $response->assertRedirect(route('login'));
 });
 
 test('billing processing shows processing page', function () {
-    $response = $this->actingAs($this->user)->get(route('billing.processing'));
+    $response = $this->actingAs($this->user)->get(route('app.billing.processing'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -64,7 +64,7 @@ test('billing processing shows processing page', function () {
 });
 
 test('billing processing accepts status parameter', function () {
-    $response = $this->actingAs($this->user)->get(route('billing.processing', ['status' => 'success']));
+    $response = $this->actingAs($this->user)->get(route('app.billing.processing', ['status' => 'success']));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -73,7 +73,7 @@ test('billing processing accepts status parameter', function () {
 });
 
 test('billing processing validates status parameter', function () {
-    $response = $this->actingAs($this->user)->get(route('billing.processing', ['status' => 'invalid']));
+    $response = $this->actingAs($this->user)->get(route('app.billing.processing', ['status' => 'invalid']));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -83,14 +83,14 @@ test('billing processing validates status parameter', function () {
 
 // Checkout tests
 test('checkout requires authentication', function () {
-    $response = $this->post(route('billing.checkout'));
+    $response = $this->post(route('app.billing.checkout'));
 
     $response->assertRedirect(route('login'));
 });
 
 // Portal tests
 test('portal requires authentication', function () {
-    $response = $this->get(route('billing.portal'));
+    $response = $this->get(route('app.billing.portal'));
 
     $response->assertRedirect(route('login'));
 });

@@ -20,12 +20,15 @@ use App\Socialite\LinkedInPageExtendSocialite;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Cashier\Cashier;
@@ -56,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureMorphMap();
+        $this->configureRateLimiting();
         $this->configureSocialite();
         $this->configureStripeWebhooks();
 
@@ -79,6 +83,17 @@ class AppServiceProvider extends ServiceProvider
             'workspaceInvite' => WorkspaceInvite::class,
             'workspaceLabel' => WorkspaceLabel::class,
         ]);
+    }
+
+    protected function configureRateLimiting(): void
+    {
+        RateLimiter::for('api', function (Request $request) {
+            if ($this->app->environment('local')) {
+                return Limit::none();
+            }
+
+            return Limit::perMinute(60)->by($request->workspace?->id ?: $request->ip());
+        });
     }
 
     protected function configureStripeWebhooks(): void

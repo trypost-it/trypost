@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::group(
     [
         'domain' => 'api.'.parse_url(config('app.url'), PHP_URL_HOST),
-        'middleware' => ['api.auth'],
+        'middleware' => ['api.auth', 'throttle:api'],
     ],
     function () {
         // Posts

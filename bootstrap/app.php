@@ -8,6 +8,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -37,7 +40,24 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->preventRequestForgery(except: [
             'stripe/*',
         ]);
+
+        $middleware->prependToPriorityList(
+            ThrottleRequests::class,
+            AuthenticateApiToken::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->renderable(function (TooManyRequestsHttpException $e, Request $request) {
+            if ($request->expectsJson()) {
+                $retryAfter = $e->getHeaders()['Retry-After'] ?? null;
+                $message = $retryAfter
+                    ? "Rate limit exceeded. Please retry after {$retryAfter} seconds."
+                    : 'Rate limit exceeded. Please try again later.';
+
+                return response()->json([
+                    'name' => 'rate_limit_exceeded',
+                    'message' => $message,
+                ], 429)->withHeaders($e->getHeaders());
+            }
+        });
     })->create();

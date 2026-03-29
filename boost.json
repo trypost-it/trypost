@@ -2,9 +2,18 @@
     "agents": [
         "claude_code"
     ],
-    "editors": [
-        "claude_code"
-    ],
-    "guidelines": [],
-    "herd_mcp": true
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch_mcp": true,
+    "sail": true,
+    "skills": [
+        "cashier-stripe-development",
+        "laravel-best-practices",
+        "configuring-horizon",
+        "socialite-development",
+        "wayfinder-development",
+        "pest-testing",
+        "inertia-vue-development",
+        "tailwindcss-development"
+    ]
 }

@@ -36,7 +36,7 @@
         "vue-tsc": "^2.2.4"
     },
     "dependencies": {
-        "@inertiajs/vue3": "^2.3.7",
+        "@inertiajs/vue3": "^3.0.0",
         "@tabler/icons-vue": "^3.36.1",
         "@tailwindcss/typography": "^0.5.19",
         "@vueuse/core": "^12.8.2",

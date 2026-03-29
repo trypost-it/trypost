@@ -1,7 +1,7 @@
 {
     "mcpServers": {
         "laravel-boost": {
-            "command": "php",
+            "command": "vendor/bin/sail",
             "args": [
                 "artisan",
                 "boost:mcp"
@@ -15,6 +15,10 @@
             "env": {
                 "SITE_PATH": "/Users/paulocastellano/Code/trypost"
             }
+        },
+        "nightwatch": {
+            "type": "http",
+            "url": "https://nightwatch.laravel.com/mcp"
         }
     }
 }

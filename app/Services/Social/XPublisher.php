@@ -37,9 +37,11 @@ class XPublisher
 
         $this->accessToken = $account->access_token;
 
-        $data = [
-            'text' => $postPlatform->content,
-        ];
+        $data = [];
+
+        if (! empty($postPlatform->content)) {
+            $data['text'] = $postPlatform->content;
+        }
 
         $mediaIds = [];
         $media = $postPlatform->media;
@@ -67,6 +69,10 @@ class XPublisher
             $data['media'] = [
                 'media_ids' => $mediaIds,
             ];
+        }
+
+        if (empty($data['text']) && empty($mediaIds)) {
+            throw new \Exception('X posts require either text or media. Please add content to your post.');
         }
 
         Log::info('Posting tweet', ['data' => $data]);

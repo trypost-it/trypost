@@ -292,3 +292,76 @@ test('threads publisher handles media processing error', function () {
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(Exception::class, 'Threads media processing failed');
 });
+
+test('threads publisher throws exception for text post with null content', function () {
+    $this->postPlatform->update(['content' => null]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(\Exception::class, 'Threads text posts require content');
+});
+
+test('threads publisher can publish image with null content', function () {
+    $this->postPlatform->update(['content' => null]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/test-image.jpg',
+        'original_filename' => 'test.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 12345,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        'https://graph.threads.net/v1.0/123456789/threads' => Http::response([
+            'id' => 'container-123',
+        ], 200),
+        'https://graph.threads.net/v1.0/container-123*' => Http::response([
+            'status' => 'FINISHED',
+        ], 200),
+        'https://graph.threads.net/v1.0/123456789/threads_publish' => Http::response([
+            'id' => 'media-123',
+        ], 200),
+        'https://graph.threads.net/v1.0/media-123*' => Http::response([
+            'permalink' => 'https://threads.net/@testuser/post/123',
+        ], 200),
+    ]);
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('media-123');
+});
+
+test('threads publisher can publish video with null content', function () {
+    $this->postPlatform->update(['content' => null]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/test-video.mp4',
+        'original_filename' => 'test.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 1234567,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        'https://graph.threads.net/v1.0/123456789/threads' => Http::response([
+            'id' => 'container-123',
+        ], 200),
+        'https://graph.threads.net/v1.0/container-123*' => Http::response([
+            'status' => 'FINISHED',
+        ], 200),
+        'https://graph.threads.net/v1.0/123456789/threads_publish' => Http::response([
+            'id' => 'video-123',
+        ], 200),
+        'https://graph.threads.net/v1.0/video-123*' => Http::response([
+            'permalink' => 'https://threads.net/@testuser/post/456',
+        ], 200),
+    ]);
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('video-123');
+});

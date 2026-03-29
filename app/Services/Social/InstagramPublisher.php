@@ -56,7 +56,7 @@ class InstagramPublisher
         };
     }
 
-    private function publishSingleImage(string $instagramId, string $accessToken, string $content, $media): array
+    private function publishSingleImage(string $instagramId, string $accessToken, ?string $content, $media): array
     {
         Log::info('Instagram publishing single image', ['instagram_id' => $instagramId, 'image_url' => $media->url]);
 
@@ -93,7 +93,7 @@ class InstagramPublisher
         return $this->publishContainer($instagramId, $accessToken, $containerId);
     }
 
-    private function publishReel(string $instagramId, string $accessToken, string $content, $media): array
+    private function publishReel(string $instagramId, string $accessToken, ?string $content, $media): array
     {
         Log::info('Instagram publishing reel', ['instagram_id' => $instagramId]);
 
@@ -167,7 +167,7 @@ class InstagramPublisher
         return $this->publishContainer($instagramId, $accessToken, $containerId);
     }
 
-    private function publishCarousel(string $instagramId, string $accessToken, string $content, $mediaCollection): array
+    private function publishCarousel(string $instagramId, string $accessToken, ?string $content, $mediaCollection): array
     {
         Log::info('Instagram publishing carousel', [
             'instagram_id' => $instagramId,

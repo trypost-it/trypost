@@ -85,7 +85,7 @@ class TikTokPublisher
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/video/init/", [
                 'post_info' => [
-                    'title' => $postPlatform->content,
+                    'title' => $postPlatform->content ?? '',
                     'privacy_level' => 'SELF_ONLY',
                     'disable_duet' => false,
                     'disable_comment' => false,
@@ -145,7 +145,7 @@ class TikTokPublisher
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/content/init/", [
                 'post_info' => [
-                    'title' => $postPlatform->content,
+                    'title' => $postPlatform->content ?? '',
                     'privacy_level' => 'SELF_ONLY',
                     'disable_comment' => false,
                 ],

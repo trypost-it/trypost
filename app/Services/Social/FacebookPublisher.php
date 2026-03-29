@@ -48,10 +48,14 @@ class FacebookPublisher
         };
     }
 
-    private function publishPost(string $pageId, string $accessToken, string $content, $media): array
+    private function publishPost(string $pageId, string $accessToken, ?string $content, $media): array
     {
         // Text only post
         if ($media->isEmpty()) {
+            if (empty($content)) {
+                throw new \Exception('Facebook text posts require content. Please add text to your post.');
+            }
+
             return $this->publishTextPost($pageId, $accessToken, $content);
         }
 
@@ -101,7 +105,7 @@ class FacebookPublisher
         ];
     }
 
-    private function publishSingleImagePost(string $pageId, string $accessToken, string $content, $media): array
+    private function publishSingleImagePost(string $pageId, string $accessToken, ?string $content, $media): array
     {
         Log::info('Facebook publishing single image post', ['page_id' => $pageId]);
 
@@ -128,7 +132,7 @@ class FacebookPublisher
         ];
     }
 
-    private function publishMultiImagePost(string $pageId, string $accessToken, string $content, $mediaCollection): array
+    private function publishMultiImagePost(string $pageId, string $accessToken, ?string $content, $mediaCollection): array
     {
         Log::info('Facebook publishing multi-image post', [
             'page_id' => $pageId,
@@ -194,7 +198,7 @@ class FacebookPublisher
         ];
     }
 
-    private function publishVideoPost(string $pageId, string $accessToken, string $content, $media): array
+    private function publishVideoPost(string $pageId, string $accessToken, ?string $content, $media): array
     {
         Log::info('Facebook publishing video post', ['page_id' => $pageId]);
 
@@ -222,7 +226,7 @@ class FacebookPublisher
         ];
     }
 
-    private function publishReel(string $pageId, string $accessToken, string $content, $media): array
+    private function publishReel(string $pageId, string $accessToken, ?string $content, $media): array
     {
         Log::info('Facebook publishing reel', ['page_id' => $pageId]);
 

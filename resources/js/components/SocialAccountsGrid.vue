@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 export interface SocialAccount {
     id: string;
     platform: string;
+    platform_user_id: string;
     username: string;
     display_name: string;
     avatar_url: string;
@@ -108,7 +109,12 @@ const getPlatformLogo = (platform: string): string => {
     return logos[platform] || '/images/accounts/linkedin.png';
 };
 
-const getProfileUrl = (platform: string, username: string | null): string | null => {
+const getProfileUrl = (platform: string, username: string | null, platformUserId: string | null = null): string | null => {
+    if (platform === 'facebook') {
+        const identifier = username || platformUserId;
+        return identifier ? `https://facebook.com/${identifier}` : null;
+    }
+
     if (!username) return null;
 
     const urls: Record<string, string> = {
@@ -117,7 +123,6 @@ const getProfileUrl = (platform: string, username: string | null): string | null
         'x': `https://x.com/${username}`,
         'tiktok': `https://tiktok.com/@${username}`,
         'instagram': `https://instagram.com/${username}`,
-        'facebook': `https://facebook.com/${username}`,
         'youtube': `https://youtube.com/@${username}`,
         'threads': `https://threads.net/@${username}`,
         'bluesky': `https://bsky.app/profile/${username}`,
@@ -208,10 +213,10 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                             </Tooltip>
                         </TooltipProvider>
                         <TooltipProvider
-                            v-if="showViewProfile && getProfileUrl(platform.value, platform.account.username)">
+                            v-if="showViewProfile && getProfileUrl(platform.value, platform.account.username, platform.account.platform_user_id)">
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <a :href="getProfileUrl(platform.value, platform.account.username)!" target="_blank"
+                                    <a :href="getProfileUrl(platform.value, platform.account.username, platform.account.platform_user_id)!" target="_blank"
                                         class="p-2 text-muted-foreground hover:text-foreground transition-colors">
                                         <IconExternalLink class="h-4 w-4" />
                                     </a>

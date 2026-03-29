@@ -4,9 +4,9 @@ import { IconBrandDiscord, IconCalendar, IconSelector, IconFileText, IconHash, I
 import { loadLanguageAsync, trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
-import { store as storePost } from '@/actions/App/Http/Controllers/PostController';
-import { index as postsIndex } from '@/actions/App/Http/Controllers/PostController';
-import { updateLanguage } from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import { store as storePost } from '@/actions/App/Http/Controllers/App/PostController';
+import { index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
+import { updateLanguage } from '@/actions/App/Http/Controllers/App/Settings/ProfileController';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,12 +40,13 @@ import {
 import { useAppearance } from '@/composables/useAppearance';
 import { useInitials } from '@/composables/useInitials';
 import dayjs from '@/dayjs';
-import { accounts, calendar, logout } from '@/routes';
-import { index as hashtags } from '@/routes/hashtags';
-import { index as labels } from '@/routes/labels';
-import { edit as editProfile } from '@/routes/profile';
-import { settings as workspaceSettings } from '@/routes/workspace';
-import { create as createWorkspaceRoute, switchMethod } from '@/routes/workspaces';
+import { logout } from '@/routes';
+import { accounts, calendar } from '@/routes/app';
+import { index as hashtags } from '@/routes/app/hashtags';
+import { index as labels } from '@/routes/app/labels';
+import { edit as editProfile } from '@/routes/app/profile';
+import { settings as workspaceSettings } from '@/routes/app/workspace';
+import { create as createWorkspaceRoute, switchMethod } from '@/routes/app/workspaces';
 import type { NavItem } from '@/types';
 
 interface Workspace {

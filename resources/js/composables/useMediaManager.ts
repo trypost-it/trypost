@@ -7,7 +7,7 @@ import {
     destroy as destroyMedia,
     duplicate as duplicateMedia,
     reorder as reorderMedia,
-} from '@/actions/App/Http/Controllers/MediaController';
+} from '@/actions/App/Http/Controllers/App/MediaController';
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
 import { uploadChunked, shouldUseChunkedUpload } from '@/utils/chunkedUpload';
 

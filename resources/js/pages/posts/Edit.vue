@@ -67,7 +67,7 @@ import { useMediaManager, type MediaItem } from '@/composables/useMediaManager';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { destroy as destroyPost, index as postsIndex, update as updatePost } from '@/routes/posts';
+import { destroy as destroyPost, index as postsIndex, update as updatePost } from '@/routes/app/posts';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {

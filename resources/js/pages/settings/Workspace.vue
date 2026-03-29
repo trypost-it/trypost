@@ -12,8 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { settings } from '@/routes/workspace';
-import { update } from '@/routes/workspace/settings';
+import { settings } from '@/routes/app/workspace';
+import { update } from '@/routes/app/workspace/settings';
 import { type BreadcrumbItem } from '@/types';
 
 interface Workspace {

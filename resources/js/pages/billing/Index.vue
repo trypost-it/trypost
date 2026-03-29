@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { portal } from '@/routes/billing';
+import { portal } from '@/routes/app/billing';
 import { type BreadcrumbItemType } from '@/types';
 
 interface Subscription {

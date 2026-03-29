@@ -2,7 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 
-import { storeStep2 } from '@/actions/App/Http/Controllers/OnboardingController';
+import { storeStep2 } from '@/actions/App/Http/Controllers/App/OnboardingController';
 import SocialAccountsGrid, { type Platform } from '@/components/SocialAccountsGrid.vue';
 import { Button } from '@/components/ui/button';
 import OnboardingLayout from '@/layouts/OnboardingLayout.vue';

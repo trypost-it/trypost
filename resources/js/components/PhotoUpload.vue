@@ -17,7 +17,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { store as storeMedia, destroy as destroyMedia } from '@/routes/medias';
+import { store as storeMedia, destroy as destroyMedia } from '@/routes/app/medias';
 
 interface Photo {
     url: string;

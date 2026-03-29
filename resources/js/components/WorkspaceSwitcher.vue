@@ -12,7 +12,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { create as createWorkspaceRoute, switchMethod } from '@/routes/workspaces';
+import { create as createWorkspaceRoute, switchMethod } from '@/routes/app/workspaces';
 
 interface Workspace {
     id: string;

@@ -10,7 +10,7 @@ import EditDialog from '@/components/labels/EditDialog.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as labelsIndex, destroy as labelsDestroy } from '@/routes/labels';
+import { index as labelsIndex, destroy as labelsDestroy } from '@/routes/app/labels';
 import { type BreadcrumbItemType } from '@/types';
 
 interface Workspace {

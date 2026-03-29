@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import PopupLayout from '@/layouts/PopupLayout.vue';
-import { store as storeBluesky } from '@/routes/social/bluesky';
+import { store as storeBluesky } from '@/routes/app/social/bluesky';
 
 interface Props {
     errors?: Record<string, string>;

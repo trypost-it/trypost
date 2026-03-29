@@ -10,8 +10,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import date from '@/date';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { calendar } from '@/routes';
-import { store as storePost, edit as editPost } from '@/routes/posts';
+import { calendar } from '@/routes/app';
+import { store as storePost, edit as editPost } from '@/routes/app/posts';
 import { type BreadcrumbItemType } from '@/types';
 
 interface PostPlatform {

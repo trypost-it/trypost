@@ -15,7 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { update as hashtagsUpdate } from '@/routes/hashtags';
+import { update as hashtagsUpdate } from '@/routes/app/hashtags';
 
 interface Hashtag {
     id: string;

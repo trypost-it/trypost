@@ -2,7 +2,7 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import { IconBuilding, IconRocket, IconSparkles, IconBuildingStore, IconUser } from '@tabler/icons-vue';
 
-import { storeStep1 } from '@/actions/App/Http/Controllers/OnboardingController';
+import { storeStep1 } from '@/actions/App/Http/Controllers/App/OnboardingController';
 import { Button } from '@/components/ui/button';
 import OnboardingLayout from '@/layouts/OnboardingLayout.vue';
 

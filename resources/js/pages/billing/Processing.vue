@@ -5,8 +5,8 @@ import { IconLoader2, IconCircleCheck, IconCircleX } from '@tabler/icons-vue';
 import { ref, onMounted } from 'vue';
 
 import { Button } from '@/components/ui/button';
-import { subscribe } from '@/routes';
-import { index as workspacesIndex } from '@/routes/workspaces';
+import { subscribe } from '@/routes/app';
+import { index as workspacesIndex } from '@/routes/app/workspaces';
 
 interface Props {
     userId: number;

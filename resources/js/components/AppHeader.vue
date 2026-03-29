@@ -29,7 +29,7 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue';
 import { useActiveUrl } from '@/composables/useActiveUrl';
 import { getInitials } from '@/composables/useInitials';
-import { calendar } from '@/routes';
+import { calendar } from '@/routes/app';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 interface Props {

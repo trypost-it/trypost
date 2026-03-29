@@ -5,9 +5,9 @@ import { IconPlus, IconCalendar, IconUsers, IconSettings } from '@tabler/icons-v
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { accounts, calendar } from '@/routes';
-import { settings } from '@/routes/workspace';
-import { create as createWorkspace, index as workspacesIndex, switchMethod } from '@/routes/workspaces';
+import { accounts, calendar } from '@/routes/app';
+import { settings } from '@/routes/app/workspace';
+import { create as createWorkspace, index as workspacesIndex, switchMethod } from '@/routes/app/workspaces';
 import { type BreadcrumbItemType } from '@/types';
 
 interface Workspace {

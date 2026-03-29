@@ -6,11 +6,11 @@ import { computed } from 'vue';
 import Heading from '@/components/Heading.vue';
 import { useActiveUrl } from '@/composables/useActiveUrl';
 import { toUrl } from '@/lib/utils';
-import { members } from '@/routes';
-import { index as billing } from '@/routes/billing';
-import { edit as editProfile } from '@/routes/profile';
-import { edit as editPassword } from '@/routes/user-password';
-import { settings as workspaceSettings } from '@/routes/workspace';
+import { members } from '@/routes/app';
+import { index as billing } from '@/routes/app/billing';
+import { edit as editProfile } from '@/routes/app/profile';
+import { edit as editPassword } from '@/routes/app/user-password';
+import { settings as workspaceSettings } from '@/routes/app/workspace';
 import { type NavItem, type SharedData } from '@/types';
 
 const page = usePage<SharedData>();

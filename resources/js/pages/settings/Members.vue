@@ -13,9 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { members as membersRoute } from '@/routes';
-import { destroy as destroyInvite, store as storeInvite } from '@/routes/invites';
-import { remove as removeMember } from '@/routes/members';
+import { members as membersRoute } from '@/routes/app';
+import { destroy as destroyInvite, store as storeInvite } from '@/routes/app/invites';
+import { remove as removeMember } from '@/routes/app/members';
 import { type BreadcrumbItem } from '@/types';
 
 interface Workspace {

@@ -4,7 +4,7 @@ import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText,
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
-import { index as postsIndex, store as storePost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
+import { index as postsIndex, store as storePost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/App/PostController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

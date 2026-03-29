@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { store as labelsStore } from '@/routes/labels';
+import { store as labelsStore } from '@/routes/app/labels';
 
 const open = defineModel<boolean>('open', { default: false });
 

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import PopupLayout from '@/layouts/PopupLayout.vue';
-import { authorize as authorizeMastodon } from '@/routes/social/mastodon';
+import { authorize as authorizeMastodon } from '@/routes/app/social/mastodon';
 
 interface Props {
     errors?: Record<string, string>;

@@ -4,7 +4,7 @@ import { IconSparkles, IconCalendar, IconUsers, IconPhoto, IconVideo, IconClock,
 import { ref } from 'vue';
 
 import { Button } from '@/components/ui/button';
-import { checkout } from '@/routes/billing';
+import { checkout } from '@/routes/app/billing';
 
 interface Props {
     trialDays: number;

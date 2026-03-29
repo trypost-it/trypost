@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { update as labelsUpdate } from '@/routes/labels';
+import { update as labelsUpdate } from '@/routes/app/labels';
 
 interface LabelType {
     id: string;

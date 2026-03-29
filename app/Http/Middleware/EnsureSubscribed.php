@@ -31,6 +31,17 @@ class EnsureSubscribed
             return $next($request);
         }
 
+        // Allow access if user belongs to a workspace owned by a subscribed user
+        $currentWorkspace = $user->currentWorkspace;
+
+        if ($currentWorkspace && $currentWorkspace->owner && $currentWorkspace->owner->id !== $user->id) {
+            $owner = $currentWorkspace->owner;
+
+            if ($owner->subscribed('default') || $owner->onTrial('default')) {
+                return $next($request);
+            }
+        }
+
         // Redirect to subscription page
         return redirect()->route('subscribe');
     }

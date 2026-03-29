@@ -122,3 +122,68 @@ test('user with cancelled subscription is redirected to subscribe page', functio
         ->get(route('calendar'))
         ->assertRedirect(route('subscribe'));
 });
+
+test('invited member can access workspace when owner has active subscription', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $owner = User::factory()->create(['setup' => Setup::Completed]);
+    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => 'owner']);
+
+    $owner->subscriptions()->create([
+        'type' => 'default',
+        'stripe_id' => 'sub_owner_123',
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
+
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $workspace->members()->attach($member->id, ['role' => 'member']);
+    $member->update(['current_workspace_id' => $workspace->id]);
+
+    $this->actingAs($member)
+        ->get(route('calendar'))
+        ->assertOk();
+});
+
+test('invited member is redirected to subscribe when owner has no subscription', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $owner = User::factory()->create(['setup' => Setup::Completed]);
+    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => 'owner']);
+
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $workspace->members()->attach($member->id, ['role' => 'member']);
+    $member->update(['current_workspace_id' => $workspace->id]);
+
+    $this->actingAs($member)
+        ->get(route('calendar'))
+        ->assertRedirect(route('subscribe'));
+});
+
+test('invited member on own workspace without subscription is redirected to subscribe', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $owner = User::factory()->create(['setup' => Setup::Completed]);
+    $ownerWorkspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $ownerWorkspace->members()->attach($owner->id, ['role' => 'owner']);
+
+    $owner->subscriptions()->create([
+        'type' => 'default',
+        'stripe_id' => 'sub_owner_123',
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
+
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $ownerWorkspace->members()->attach($member->id, ['role' => 'member']);
+
+    $memberWorkspace = Workspace::factory()->create(['user_id' => $member->id]);
+    $memberWorkspace->members()->attach($member->id, ['role' => 'owner']);
+    $member->update(['current_workspace_id' => $memberWorkspace->id]);
+
+    $this->actingAs($member)
+        ->get(route('calendar'))
+        ->assertRedirect(route('subscribe'));
+});

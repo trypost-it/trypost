@@ -7,6 +7,7 @@ import Heading from '@/components/Heading.vue';
 import { useActiveUrl } from '@/composables/useActiveUrl';
 import { toUrl } from '@/lib/utils';
 import { members } from '@/routes/app';
+import { index as apiKeys } from '@/routes/app/api-keys';
 import { index as billing } from '@/routes/app/billing';
 import { edit as editProfile } from '@/routes/app/profile';
 import { edit as editPassword } from '@/routes/app/user-password';
@@ -38,6 +39,10 @@ const navItems = computed<NavItem[]>(() => {
             {
                 title: trans('settings.nav.members'),
                 href: members(),
+            },
+            {
+                title: 'API Keys',
+                href: apiKeys(),
             },
         );
 

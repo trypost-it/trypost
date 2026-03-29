@@ -22,7 +22,6 @@ class FacebookController extends SocialController
 
     protected array $scopes = [
         'public_profile',
-        'email',
         'pages_show_list',
         'pages_read_engagement',
         'pages_manage_posts',
@@ -59,7 +58,7 @@ class FacebookController extends SocialController
 
         return Inertia::location(
             Socialite::driver($this->driver)
-                ->scopes($this->scopes)
+                ->setScopes($this->scopes)
                 ->redirect()
                 ->getTargetUrl()
         );

@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Mcp\Servers;
+
+use App\Mcp\Tools\ApiKey\CreateApiKeyTool;
+use App\Mcp\Tools\ApiKey\DeleteApiKeyTool;
+use App\Mcp\Tools\ApiKey\ListApiKeysTool;
+use App\Mcp\Tools\Hashtag\CreateHashtagTool;
+use App\Mcp\Tools\Hashtag\DeleteHashtagTool;
+use App\Mcp\Tools\Hashtag\ListHashtagsTool;
+use App\Mcp\Tools\Hashtag\UpdateHashtagTool;
+use App\Mcp\Tools\Label\CreateLabelTool;
+use App\Mcp\Tools\Label\DeleteLabelTool;
+use App\Mcp\Tools\Label\ListLabelsTool;
+use App\Mcp\Tools\Label\UpdateLabelTool;
+use App\Mcp\Tools\Post\CreatePostTool;
+use App\Mcp\Tools\Post\DeletePostTool;
+use App\Mcp\Tools\Post\GetPostTool;
+use App\Mcp\Tools\Post\ListPostsTool;
+use App\Mcp\Tools\Workspace\GetWorkspaceTool;
+use Laravel\Mcp\Server;
+use Laravel\Mcp\Server\Attributes\Instructions;
+use Laravel\Mcp\Server\Attributes\Name;
+use Laravel\Mcp\Server\Attributes\Version;
+
+#[Name('TryPost')]
+#[Version('1.0.0')]
+#[Instructions('TryPost is a social media scheduling platform. Use this server to manage posts, hashtag groups, labels, workspaces, and API keys.')]
+class TryPostServer extends Server
+{
+    public int $defaultPaginationLength = 100;
+
+    protected array $tools = [
+        // Posts
+        ListPostsTool::class,
+        GetPostTool::class,
+        CreatePostTool::class,
+        DeletePostTool::class,
+
+        // Hashtags
+        ListHashtagsTool::class,
+        CreateHashtagTool::class,
+        UpdateHashtagTool::class,
+        DeleteHashtagTool::class,
+
+        // Labels
+        ListLabelsTool::class,
+        CreateLabelTool::class,
+        UpdateLabelTool::class,
+        DeleteLabelTool::class,
+
+        // Workspace
+        GetWorkspaceTool::class,
+
+        // API Keys
+        ListApiKeysTool::class,
+        CreateApiKeyTool::class,
+        DeleteApiKeyTool::class,
+    ];
+
+    protected array $resources = [];
+
+    protected array $prompts = [];
+}

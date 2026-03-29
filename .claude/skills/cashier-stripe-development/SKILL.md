@@ -33,9 +33,9 @@ For deeper guidance on specific topics, read the relevant reference file before 
 ### Installation
 
 ```bash
-php artisan vendor:publish --tag="cashier-migrations"
-php artisan migrate
-php artisan vendor:publish --tag="cashier-config"
+vendor/bin/sail artisan vendor:publish --tag="cashier-migrations"
+vendor/bin/sail artisan migrate
+vendor/bin/sail artisan vendor:publish --tag="cashier-config"
 ```
 
 ### Environment Variables

@@ -16,7 +16,7 @@ Use `search-docs` for detailed Pest 4 patterns and documentation.
 
 ### Creating Tests
 
-All tests must be written using Pest. Use `php artisan make:test --pest {name}`.
+All tests must be written using Pest. Use `vendor/bin/sail artisan make:test --pest {name}`.
 
 ### Test Organization
 
@@ -35,9 +35,9 @@ it('is true', function () {
 
 ### Running Tests
 
-- Run minimal tests with filter before finalizing: `php artisan test --compact --filter=testName`.
-- Run all tests: `php artisan test --compact`.
-- Run file: `php artisan test --compact tests/Feature/ExampleTest.php`.
+- Run minimal tests with filter before finalizing: `vendor/bin/sail artisan test --compact --filter=testName`.
+- Run all tests: `vendor/bin/sail artisan test --compact`.
+- Run file: `vendor/bin/sail artisan test --compact tests/Feature/ExampleTest.php`.
 
 ## Assertions
 

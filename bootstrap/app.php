@@ -4,6 +4,7 @@ use App\Http\Middleware\Api\AuthenticateApiToken;
 use App\Http\Middleware\EnsureSubscribed;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\Mcp\AuthenticateMcpToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -35,6 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'subscribed' => EnsureSubscribed::class,
             'api.auth' => AuthenticateApiToken::class,
+            'mcp.auth' => AuthenticateMcpToken::class,
         ]);
 
         $middleware->preventRequestForgery(except: [

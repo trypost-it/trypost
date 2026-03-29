@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\User\Setup;
 use App\Http\Controllers\Controller;
+use App\Rules\Timezone;
 use App\Models\Language;
 use App\Models\User;
 use App\Models\Workspace;
@@ -40,7 +41,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', Rules\Password::defaults()],
-            'timezone' => ['nullable', 'string', 'timezone'],
+            'timezone' => ['nullable', 'string', new Timezone],
         ]);
 
         // Check if registering via invite link (redirect contains /invites/)

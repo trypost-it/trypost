@@ -116,9 +116,7 @@ export function useMediaManager(options: UseMediaManagerOptions) {
                         model: 'postPlatform',
                         modelId: postPlatformId,
                         collection: 'default',
-                        onProgress: (progress) => {
-                            console.log(`Upload progress: ${progress}%`);
-                        },
+                        onProgress: (_progress) => {},
                     });
                 } else {
                     // Regular upload for small files

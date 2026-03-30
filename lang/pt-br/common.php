@@ -9,4 +9,21 @@ return [
         'to_confirm' => 'para confirmar.',
         'copy_to_clipboard' => 'Copiar para a área de transferência',
     ],
+
+    'photo_upload' => [
+        'upload' => 'Enviar',
+        'uploading' => 'Enviando...',
+        'remove' => 'Remover foto',
+        'hint' => 'Recomendado: imagem quadrada, máximo 2 MB.',
+    ],
+
+    'timezone' => [
+        'select' => 'Selecionar fuso horário',
+        'search' => 'Buscar fuso horário...',
+        'empty' => 'Fuso horário não encontrado',
+    ],
+
+    'date_picker' => [
+        'select' => 'Selecionar data',
+    ],
 ];

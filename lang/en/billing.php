@@ -42,6 +42,17 @@ return [
         'paid' => 'Paid',
     ],
 
+    'processing' => [
+        'page_title' => 'Processing...',
+        'title' => 'Processing your subscription',
+        'description' => 'Please wait while we set up your account. This will only take a moment.',
+        'success_title' => 'You\'re all set!',
+        'success_description' => 'Your subscription is active. Redirecting you to your workspaces...',
+        'cancelled_title' => 'Checkout cancelled',
+        'cancelled_description' => 'Your checkout was cancelled. No charges were made.',
+        'retry' => 'Try again',
+    ],
+
     'status' => [
         'active' => 'Active',
         'canceled' => 'Canceled',

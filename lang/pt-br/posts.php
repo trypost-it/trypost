@@ -54,7 +54,7 @@ return [
         'view_title' => 'Visualizar Post',
         'manage_platforms' => 'Gerenciar plataformas',
         'sync' => 'Sincronizar',
-        'labels' => 'Etiquetas',
+        'labels' => 'Etiqueta',
         'hashtags' => 'Hashtags',
         'schedule' => 'Agendar',
         'publish' => 'Publicar',

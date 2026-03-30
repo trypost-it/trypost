@@ -43,7 +43,7 @@ const props = defineProps({
     },
     placeholder: {
         type: String,
-        default: 'Select date',
+        default: '',
     },
 });
 
@@ -175,9 +175,9 @@ const displayText = computed(() => {
     <Popover v-model:open="popoverOpen">
         <PopoverTrigger as-child :disabled="disabled">
             <Button :id="name" type="button" variant="outline" class="w-full justify-between text-left font-normal"
-                :class="{ 'text-muted-foreground': !displayText }" :disabled="disabled">
-                <span>{{ displayText || placeholder }}</span>
-                <IconCalendar class="h-4 w-4" />
+                :class="[{ 'text-muted-foreground': !displayText }, $attrs.class]" :disabled="disabled">
+                <span>{{ displayText || placeholder || $t('common.date_picker.select') }}</span>
+                <IconCalendar class="h-4 w-4 shrink-0" />
             </Button>
         </PopoverTrigger>
         <PopoverContent class="w-auto p-0" :align="align">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { IconTrash } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 import { Avatar } from '@/components/ui/avatar';
@@ -116,7 +117,7 @@ const handleDelete = () => {
                     :disabled="uploading"
                     @click="triggerFileInput"
                 >
-                    {{ uploading ? 'Uploading...' : 'Upload' }}
+                    {{ uploading ? trans('common.photo_upload.uploading') : trans('common.photo_upload.upload') }}
                 </Button>
                 <TooltipProvider v-if="hasPhoto && deleteUrl">
                     <Tooltip>
@@ -131,12 +132,12 @@ const handleDelete = () => {
                                 <IconTrash class="size-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Remove photo</TooltipContent>
+                        <TooltipContent>{{ $t('common.photo_upload.remove') }}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
             </div>
             <p class="text-xs text-muted-foreground">
-                Recommended: square image, max 2 MB.
+                {{ $t('common.photo_upload.hint') }}
             </p>
         </div>
     </div>

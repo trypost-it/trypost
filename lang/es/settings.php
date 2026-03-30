@@ -142,4 +142,50 @@ return [
         'logo_updated' => '¡Logo subido correctamente!',
         'logo_deleted' => '¡Logo eliminado correctamente!',
     ],
+
+    'api_keys' => [
+        'title' => 'Claves API',
+        'page_title' => 'Claves API',
+        'heading' => 'Claves API',
+        'description' => 'Administra claves API para acceso programático a tu workspace.',
+        'create' => 'Crear clave API',
+        'copy' => 'Copiar',
+        'new_token_message' => 'Tu nueva clave API ha sido creada. Cópiala ahora — no podrás verla de nuevo.',
+        'table' => [
+            'name' => 'Nombre',
+            'key' => 'Clave',
+            'status' => 'Estado',
+            'expires' => 'Expira',
+            'last_used' => 'Último uso',
+            'never' => 'Nunca',
+        ],
+        'actions' => [
+            'copy_id' => 'Copiar ID de clave API',
+            'copy_id_success' => 'ID de clave API copiado',
+            'delete' => 'Eliminar',
+        ],
+        'empty' => [
+            'title' => 'No hay claves API',
+            'description' => 'Crea una clave API para acceder a tu workspace programáticamente.',
+        ],
+        'delete_modal' => [
+            'title' => 'Eliminar clave API',
+            'description' => '¿Estás seguro de que deseas eliminar esta clave API? Las aplicaciones que la usen perderán acceso inmediatamente.',
+            'action' => 'Eliminar clave API',
+        ],
+        'create_dialog' => [
+            'title' => 'Crear clave API',
+            'description' => 'Crea una nueva clave API para acceso programático a tu workspace.',
+            'name' => 'Nombre',
+            'name_placeholder' => 'ej. Clave API de Producción',
+            'expires' => 'Fecha de expiración (opcional)',
+            'expires_placeholder' => 'Sin expiración',
+            'submit' => 'Crear',
+            'cancel' => 'Cancelar',
+        ],
+        'flash' => [
+            'created' => '¡Clave API creada correctamente!',
+            'deleted' => '¡Clave API eliminada correctamente!',
+        ],
+    ],
 ];

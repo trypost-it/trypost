@@ -67,7 +67,7 @@ import { useMediaManager, type MediaItem } from '@/composables/useMediaManager';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { destroy as destroyPost, index as postsIndex, update as updatePost } from '@/routes/app/posts';
+import { destroy as destroyPost, edit as editPost, index as postsIndex, update as updatePost } from '@/routes/app/posts';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -155,6 +155,7 @@ const props = defineProps<Props>();
 
 const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
     { title: trans('posts.title'), href: postsIndex.url() },
+    { title: isReadOnly.value ? trans('posts.edit.view_title') : trans('posts.edit.title'), href: editPost.url(post.value.id) },
 ]);
 
 // Reactive state for real-time updates
@@ -653,7 +654,7 @@ const deletePost = () => {
     if (isReadOnly.value) return;
     deleteModal.value?.open({
         url: destroyPost.url(post.value.id),
-        redirect: 'posts.index',
+        confirmText: 'DELETE',
     });
 };
 
@@ -686,12 +687,33 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
     <Head :title="isReadOnly ? $t('posts.edit.view_title') : $t('posts.edit.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs" :fullWidth="true">
+        <template v-if="!isReadOnly" #header-right>
+            <div class="flex items-center gap-3">
+                <Button type="button" variant="ghost" size="icon" @click="deletePost"
+                    :disabled="isSaving || isSubmitting" class="text-muted-foreground hover:text-destructive">
+                    <IconTrash class="h-4 w-4" />
+                </Button>
+
+                <span class="h-4 w-px bg-border" />
+
+                <Button type="button" variant="secondary" size="sm" class="shrink-0"
+                    :disabled="!canSubmit || isSubmitting || isSaving" @click="submit('scheduled')">
+                    {{ $t('posts.edit.schedule') }}
+                </Button>
+
+                <Button type="button" size="sm" class="shrink-0" :disabled="!canSubmit || isSubmitting || isSaving"
+                    @click="submit('publishing')">
+                    {{ $t('posts.edit.publish') }}
+                </Button>
+            </div>
+        </template>
+
         <div class="flex flex-col h-screen">
             <!-- Top Bar with Tabs and Actions -->
-            <div class="relative flex items-center justify-between border-b px-4 py-2 bg-background">
+            <div class="relative flex items-center justify-between gap-4 border-b px-4 py-2 bg-background">
 
                 <!-- Platform Tabs -->
-                <div class="flex items-center gap-2">
+                <div class="flex min-w-0 items-center gap-2">
                     <!-- Status Badge (when read-only) -->
                     <Badge v-if="isReadOnly" :class="getStatusConfig(post.status).color" class="mr-2">
                         <component :is="getStatusConfig(post.status).icon" class="mr-1 h-3 w-3"
@@ -765,20 +787,19 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
                         @click="submit('publishing')">
                         {{ $t('posts.edit.publish') }}
                     </Button>
-                    <Button type="button" variant="outline" size="icon-sm" @click="showMobileActionsSheet = true">
+                    <Button type="button" variant="outline" size="icon" @click="showMobileActionsSheet = true">
                         <IconSettings class="h-4 w-4" />
                     </Button>
                 </div>
 
-                <!-- Desktop Schedule & Actions (only in edit mode) -->
-                <div v-if="!isReadOnly" class="hidden lg:flex items-center gap-3">
+                <!-- Desktop: Labels, Hashtags, DatePicker (only in edit mode) -->
+                <div v-if="!isReadOnly" class="hidden lg:flex shrink-0 items-center gap-2">
                     <!-- Labels Selector -->
-                    <Popover v-if="labels.length > 0">
+                    <Popover>
                         <PopoverTrigger asChild>
-                            <Button type="button" variant="outline" size="sm" class="gap-2">
+                            <Button type="button" variant="outline">
                                 <IconTag class="h-4 w-4" />
-                                <span v-if="selectedLabels.length === 0">{{ $t('posts.edit.labels') }}</span>
-                                <span v-else>{{ selectedLabels.length }}</span>
+                                {{ $t('posts.edit.labels') }}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent class="w-56 p-2" align="end">
@@ -796,35 +817,16 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
                     </Popover>
 
                     <!-- Hashtags Selector -->
-                    <Button v-if="hashtags.length > 0" type="button" variant="outline" size="icon-sm"
+                    <Button type="button" variant="outline" size="icon"
                         @click="hashtagsModal?.open()">
                         <IconHash class="h-4 w-4" />
                     </Button>
 
                     <!-- DateTime Picker -->
-                    <div class="flex items-center gap-2">
-                        <DatePicker name="scheduled_datetime" v-model="scheduledDateTime" :show-time="true" />
-                        <span class="text-xs text-muted-foreground">
-                            {{ timezoneAbbr }}
-                        </span>
-                    </div>
-
-                    <span class="text-muted-foreground">|</span>
-
-                    <Button type="button" variant="outline" size="icon-sm" @click="deletePost"
-                        :disabled="isSaving || isSubmitting" class="text-muted-foreground hover:text-destructive">
-                        <IconTrash class="h-4 w-4" />
-                    </Button>
-
-                    <Button type="button" variant="secondary" size="sm"
-                        :disabled="!canSubmit || isSubmitting || isSaving" @click="submit('scheduled')">
-                        {{ $t('posts.edit.schedule') }}
-                    </Button>
-
-                    <Button type="button" size="sm" :disabled="!canSubmit || isSubmitting || isSaving"
-                        @click="submit('publishing')">
-                        {{ $t('posts.edit.publish') }}
-                    </Button>
+                    <DatePicker name="scheduled_datetime" v-model="scheduledDateTime" :show-time="true" class="w-auto" />
+                    <span class="whitespace-nowrap text-xs text-muted-foreground">
+                        {{ timezoneAbbr }}
+                    </span>
                 </div>
 
                 <!-- Read-only info (responsive) -->

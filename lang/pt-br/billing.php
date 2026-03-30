@@ -42,6 +42,17 @@ return [
         'paid' => 'Pago',
     ],
 
+    'processing' => [
+        'page_title' => 'Processando...',
+        'title' => 'Processando sua assinatura',
+        'description' => 'Aguarde enquanto configuramos sua conta. Isso levará apenas um momento.',
+        'success_title' => 'Tudo pronto!',
+        'success_description' => 'Sua assinatura está ativa. Redirecionando para seus workspaces...',
+        'cancelled_title' => 'Pagamento cancelado',
+        'cancelled_description' => 'Seu pagamento foi cancelado. Nenhuma cobrança foi realizada.',
+        'retry' => 'Tentar novamente',
+    ],
+
     'status' => [
         'active' => 'Ativo',
         'canceled' => 'Cancelado',

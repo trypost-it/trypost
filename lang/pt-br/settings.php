@@ -142,4 +142,50 @@ return [
         'logo_updated' => 'Logo enviado com sucesso!',
         'logo_deleted' => 'Logo removido com sucesso!',
     ],
+
+    'api_keys' => [
+        'title' => 'Chaves API',
+        'page_title' => 'Chaves API',
+        'heading' => 'Chaves API',
+        'description' => 'Gerencie chaves API para acesso programático ao seu workspace.',
+        'create' => 'Criar chave API',
+        'copy' => 'Copiar',
+        'new_token_message' => 'Sua nova chave API foi criada. Copie agora — você não poderá vê-la novamente.',
+        'table' => [
+            'name' => 'Nome',
+            'key' => 'Chave',
+            'status' => 'Status',
+            'expires' => 'Expira',
+            'last_used' => 'Último uso',
+            'never' => 'Nunca',
+        ],
+        'actions' => [
+            'copy_id' => 'Copiar ID da chave API',
+            'copy_id_success' => 'ID da chave API copiado',
+            'delete' => 'Excluir',
+        ],
+        'empty' => [
+            'title' => 'Nenhuma chave API',
+            'description' => 'Crie uma chave API para acessar seu workspace programaticamente.',
+        ],
+        'delete_modal' => [
+            'title' => 'Excluir chave API',
+            'description' => 'Tem certeza que deseja excluir esta chave API? Aplicações que a usam perderão acesso imediatamente.',
+            'action' => 'Excluir chave API',
+        ],
+        'create_dialog' => [
+            'title' => 'Criar chave API',
+            'description' => 'Crie uma nova chave API para acesso programático ao seu workspace.',
+            'name' => 'Nome',
+            'name_placeholder' => 'ex. Chave API de Produção',
+            'expires' => 'Data de expiração (opcional)',
+            'expires_placeholder' => 'Sem expiração',
+            'submit' => 'Criar',
+            'cancel' => 'Cancelar',
+        ],
+        'flash' => [
+            'created' => 'Chave de API criada com sucesso!',
+            'deleted' => 'Chave de API excluída com sucesso!',
+        ],
+    ],
 ];

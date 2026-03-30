@@ -1,68 +1,41 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Form, Head } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 
+import WorkspaceController from '@/actions/App/Http/Controllers/App/WorkspaceController';
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItemType } from '@/types';
-
-const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Create Workspace', href: '/workspaces/create' },
-];
-
-const form = useForm({
-    name: '',
-});
-
-const submit = () => {
-    form.post('/workspaces');
-};
+import AuthLayout from '@/layouts/AuthLayout.vue';
 </script>
 
 <template>
-    <Head title="Criar Workspace" />
+    <Head :title="$t('workspaces.create.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-6">
-            <div>
-                <h1 class="text-2xl font-bold tracking-tight">Criar Workspace</h1>
-                <p class="text-muted-foreground">
-                    Crie um novo workspace para organizar suas redes sociais
-                </p>
+    <AuthLayout
+        :title="$t('workspaces.create.title')"
+        :description="$t('workspaces.create.description')"
+    >
+        <Form
+            v-bind="WorkspaceController.store.form()"
+            class="flex flex-col gap-6"
+            v-slot="{ errors, processing }"
+        >
+            <div class="grid gap-2">
+                <Label for="name">{{ $t('workspaces.create.name') }}</Label>
+                <Input
+                    id="name"
+                    name="name"
+                    autofocus
+                    :placeholder="trans('workspaces.create.name_placeholder')"
+                />
+                <InputError :message="errors.name" />
             </div>
 
-            <Card class="max-w-lg">
-                <CardHeader>
-                    <CardTitle>Informações do Workspace</CardTitle>
-                    <CardDescription>
-                        Dê um nome para identificar seu workspace
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form @submit.prevent="submit" class="space-y-4">
-                        <div class="space-y-2">
-                            <Label for="name">Nome</Label>
-                            <Input
-                                id="name"
-                                v-model="form.name"
-                                placeholder="Meu Workspace"
-                                :class="{ 'border-destructive': form.errors.name }"
-                            />
-                            <p v-if="form.errors.name" class="text-sm text-destructive">
-                                {{ form.errors.name }}
-                            </p>
-                        </div>
-
-                        <div class="flex gap-2">
-                            <Button type="submit" :disabled="form.processing">
-                                {{ form.processing ? 'Criando...' : 'Criar Workspace' }}
-                            </Button>
-                        </div>
-                    </form>
-                </CardContent>
-            </Card>
-        </div>
-    </AppLayout>
+            <Button type="submit" class="w-full" :disabled="processing">
+                {{ $t('workspaces.create.submit') }}
+            </Button>
+        </Form>
+    </AuthLayout>
 </template>

@@ -83,11 +83,11 @@ const submit = () => {
 </script>
 
 <template>
-    <Head title="Connect your accounts" />
+    <Head :title="$t('onboarding.connect.page_title')" />
 
     <AuthLayout
-        title="Connect your accounts"
-        description="Connect at least one social network to get started"
+        :title="$t('onboarding.connect.title')"
+        :description="$t('onboarding.connect.description')"
     >
         <div v-if="hasWorkspace" class="space-y-4">
             <div class="space-y-1.5">
@@ -129,16 +129,16 @@ const submit = () => {
                 :disabled="isSubmitting"
                 @click="submit"
             >
-                Continue
+                {{ $t('onboarding.connect.submit') }}
             </Button>
         </div>
 
         <div v-else class="flex flex-col items-center gap-4 py-8">
             <p class="text-muted-foreground">
-                Something went wrong. Please try again.
+                {{ $t('onboarding.connect.error') }}
             </p>
             <Button variant="outline" @click="router.visit('/onboarding/role')">
-                Go Back
+                {{ $t('onboarding.connect.go_back') }}
             </Button>
         </div>
     </AuthLayout>

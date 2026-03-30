@@ -82,7 +82,7 @@ const handleLogout = () => {
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <IconUser class="size-4" />
-                Account
+                {{ $t('sidebar.account') }}
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>
@@ -102,21 +102,21 @@ const handleLogout = () => {
                     v-else
                     class="size-4 text-muted-foreground"
                 />
-                Theme: <span class="capitalize">{{ appearance }}</span>
+                {{ $t('sidebar.theme', { name: appearance === 'light' ? $t('sidebar.theme_light') : appearance === 'dark' ? $t('sidebar.theme_dark') : $t('sidebar.theme_system') }) }}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
                 <DropdownMenuSubContent>
                     <DropdownMenuItem @click="updateAppearance('light')">
                         <IconBrightnessUp class="size-4" />
-                        Light
+                        {{ $t('sidebar.theme_light') }}
                     </DropdownMenuItem>
                     <DropdownMenuItem @click="updateAppearance('dark')">
                         <IconMoon class="size-4" />
-                        Dark
+                        {{ $t('sidebar.theme_dark') }}
                     </DropdownMenuItem>
                     <DropdownMenuItem @click="updateAppearance('system')">
                         <IconDeviceDesktop class="size-4" />
-                        System
+                        {{ $t('sidebar.theme_system') }}
                     </DropdownMenuItem>
                 </DropdownMenuSubContent>
             </DropdownMenuPortal>
@@ -127,7 +127,7 @@ const handleLogout = () => {
         <DropdownMenuSub v-if="languages && languages.length > 1">
             <DropdownMenuSubTrigger class="gap-2">
                 <IconLanguage class="size-4 text-muted-foreground" />
-                Language: <span>{{ currentLanguage?.name ?? 'English' }}</span>
+                {{ $t('sidebar.language', { name: currentLanguage?.name ?? 'English' }) }}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
                 <DropdownMenuSubContent>
@@ -153,7 +153,7 @@ const handleLogout = () => {
             data-test="logout-button"
         >
             <IconLogout class="size-4" />
-            Log out
+            {{ $t('sidebar.log_out') }}
         </Link>
     </DropdownMenuItem>
 </template>

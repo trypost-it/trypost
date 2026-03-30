@@ -9,4 +9,21 @@ return [
         'to_confirm' => 'para confirmar.',
         'copy_to_clipboard' => 'Copiar al portapapeles',
     ],
+
+    'photo_upload' => [
+        'upload' => 'Subir',
+        'uploading' => 'Subiendo...',
+        'remove' => 'Eliminar foto',
+        'hint' => 'Recomendado: imagen cuadrada, máximo 2 MB.',
+    ],
+
+    'timezone' => [
+        'select' => 'Seleccionar zona horaria',
+        'search' => 'Buscar zona horaria...',
+        'empty' => 'No se encontró zona horaria',
+    ],
+
+    'date_picker' => [
+        'select' => 'Seleccionar fecha',
+    ],
 ];

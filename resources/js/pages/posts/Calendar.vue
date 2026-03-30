@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import date from '@/date';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
 import { calendar } from '@/routes/app';
 import { store as storePost, edit as editPost } from '@/routes/app/posts';
 import { type BreadcrumbItemType } from '@/types';
@@ -71,6 +72,7 @@ const effectiveView = computed(() => {
 });
 
 const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
+    { title: trans('posts.title'), href: postsIndex.url() },
     { title: trans('calendar.title'), href: calendar.url() },
 ]);
 

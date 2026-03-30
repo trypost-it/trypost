@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import { IconBuilding, IconRocket, IconSparkles, IconBuildingStore, IconUser } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 
 import { storeStep1 } from '@/actions/App/Http/Controllers/App/OnboardingController';
 import { Button } from '@/components/ui/button';
@@ -40,11 +41,11 @@ const isSelected = (value: string) => form.persona === value;
 </script>
 
 <template>
-    <Head title="Welcome - Tell us about yourself" />
+    <Head :title="$t('onboarding.role.page_title')" />
 
     <OnboardingLayout
-        title="Tell us about yourself"
-        description="Help us personalize your experience"
+        :title="$t('onboarding.role.title')"
+        :description="$t('onboarding.role.description')"
         :step="1"
     >
         <div class="grid grid-cols-2 gap-4">
@@ -81,7 +82,7 @@ const isSelected = (value: string) => form.persona === value;
             :disabled="!form.persona || form.processing"
             @click="submit"
         >
-            Continue
+            {{ $t('onboarding.role.submit') }}
         </Button>
     </OnboardingLayout>
 </template>

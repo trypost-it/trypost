@@ -6,6 +6,7 @@ return [
     'create_workspace' => 'Crear workspace',
     'create_post' => 'Crear post',
     'profile' => 'Perfil',
+    'account' => 'Cuenta',
     'log_out' => 'Cerrar sesión',
 
     'workspace' => 'Workspace: :name',

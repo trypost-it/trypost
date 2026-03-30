@@ -96,12 +96,14 @@ const breadcrumbs = computed<BreadcrumbItemType[]>(() => {
         { title: trans('posts.title'), href: postsIndex.url() },
     ];
 
-    if (props.currentStatus) {
-        items.push({
-            title: trans(`posts.status.${props.currentStatus}`),
-            href: postsIndex.url(props.currentStatus),
-        });
-    }
+    items.push({
+        title: props.currentStatus
+            ? trans(`posts.status.${props.currentStatus}`)
+            : trans('posts.all_posts'),
+        href: props.currentStatus
+            ? postsIndex.url(props.currentStatus)
+            : postsIndex.url(),
+    });
 
     return items;
 });

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import { trans } from 'laravel-vue-i18n';
 
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -30,9 +31,12 @@ const switchToWorkspace = (workspace: Workspace) => {
 </script>
 
 <template>
-    <Head title="Workspaces" />
+    <Head :title="$t('workspaces.title')" />
 
-    <AuthLayout title="Your workspaces" description="Select a workspace to continue">
+    <AuthLayout
+        :title="$t('workspaces.select_title')"
+        :description="$t('workspaces.select_description')"
+    >
         <div class="space-y-3">
             <div
                 v-for="workspace in workspaces"
@@ -50,18 +54,18 @@ const switchToWorkspace = (workspace: Workspace) => {
                 <div class="min-w-0 flex-1">
                     <p class="truncate font-medium">{{ workspace.name }}</p>
                     <p class="text-xs text-muted-foreground">
-                        {{ workspace.social_accounts_count }} connections · {{ workspace.posts_count }} posts
+                        {{ trans('workspaces.connections', { count: workspace.social_accounts_count }) }} · {{ trans('workspaces.posts', { count: workspace.posts_count }) }}
                     </p>
                 </div>
                 <Badge v-if="workspace.id === currentWorkspaceId" variant="secondary" class="shrink-0">
-                    Current
+                    {{ $t('workspaces.current') }}
                 </Badge>
             </div>
         </div>
 
         <Link :href="createWorkspace.url()">
             <Button variant="outline" class="w-full">
-                Create workspace
+                {{ $t('workspaces.create.submit') }}
             </Button>
         </Link>
     </AuthLayout>

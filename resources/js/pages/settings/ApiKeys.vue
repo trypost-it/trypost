@@ -53,7 +53,7 @@ const page = usePage();
 const newToken = computed(() => (page.props.flash as Record<string, unknown>)?.plainToken as string | undefined);
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { title: 'API Keys', href: apiKeysIndex.url() },
+    { title: trans('settings.api_keys.title'), href: apiKeysIndex.url() },
 ]);
 
 const createDialogOpen = ref(false);
@@ -62,19 +62,19 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbItems">
-        <Head title="API Keys" />
+        <Head :title="$t('settings.api_keys.page_title')" />
 
-        <h1 class="sr-only">API Keys</h1>
+        <h1 class="sr-only">{{ $t('settings.api_keys.heading') }}</h1>
 
         <SettingsLayout>
             <div class="flex flex-col space-y-6">
                 <div class="flex items-center justify-between">
                     <HeadingSmall
-                        title="API Keys"
-                        description="Manage API keys for programmatic access to your workspace."
+                        :title="$t('settings.api_keys.heading')"
+                        :description="$t('settings.api_keys.description')"
                     />
                     <Button @click="createDialogOpen = true">
-                        Create API Key
+                        {{ $t('settings.api_keys.create') }}
                     </Button>
                 </div>
 
@@ -84,14 +84,14 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
                     class="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950"
                 >
                     <p class="mb-2 text-sm font-medium text-green-800 dark:text-green-200">
-                        Your new API key has been created. Copy it now — you won't be able to see it again.
+                        {{ $t('settings.api_keys.new_token_message') }}
                     </p>
                     <div class="flex items-center gap-2">
                         <code class="flex-1 rounded bg-white px-3 py-2 font-mono text-sm dark:bg-black">
                             {{ newToken }}
                         </code>
-                        <Button variant="outline" size="sm" @click="copyToClipboard(newToken!, 'API key copied to clipboard')">
-                            Copy
+                        <Button variant="outline" size="sm" @click="copyToClipboard(newToken!, trans('settings.api_keys.new_token_message'))">
+                            {{ $t('settings.api_keys.copy') }}
                         </Button>
                     </div>
                 </div>
@@ -100,11 +100,11 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Key</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Expires</TableHead>
-                                <TableHead>Last Used</TableHead>
+                                <TableHead>{{ $t('settings.api_keys.table.name') }}</TableHead>
+                                <TableHead>{{ $t('settings.api_keys.table.key') }}</TableHead>
+                                <TableHead>{{ $t('settings.api_keys.table.status') }}</TableHead>
+                                <TableHead>{{ $t('settings.api_keys.table.expires') }}</TableHead>
+                                <TableHead>{{ $t('settings.api_keys.table.last_used') }}</TableHead>
                                 <TableHead class="w-10" />
                             </TableRow>
                         </TableHeader>
@@ -124,10 +124,10 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
                                     </Badge>
                                 </TableCell>
                                 <TableCell class="text-muted-foreground">
-                                    {{ token.expires_at ? date.formatDate(token.expires_at) : 'Never' }}
+                                    {{ token.expires_at ? date.formatDate(token.expires_at) : $t('settings.api_keys.table.never') }}
                                 </TableCell>
                                 <TableCell class="text-muted-foreground">
-                                    {{ token.last_used_at ? date.diffForHumans(token.last_used_at) : 'Never' }}
+                                    {{ token.last_used_at ? date.diffForHumans(token.last_used_at) : $t('settings.api_keys.table.never') }}
                                 </TableCell>
                                 <TableCell>
                                     <DropdownMenu>
@@ -138,10 +138,10 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem
-                                                @click="copyToClipboard(token.id, 'API Key ID copied to clipboard')"
+                                                @click="copyToClipboard(token.id, trans('settings.api_keys.actions.copy_id_success'))"
                                             >
                                                 <IconCopy class="size-4" />
-                                                Copy API Key ID
+                                                {{ $t('settings.api_keys.actions.copy_id') }}
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem
@@ -149,7 +149,7 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
                                                 @click="confirmDeleteModal?.open({ url: ApiKeyController.destroy.url(token), confirmText: token.name })"
                                             >
                                                 <IconTrash class="size-4" />
-                                                Delete
+                                                {{ $t('settings.api_keys.actions.delete') }}
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -162,8 +162,8 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
                 <EmptyState
                     v-else-if="!newToken"
                     :icon="IconKey"
-                    title="No API keys yet"
-                    description="Create an API key to access your workspace programmatically."
+                    :title="$t('settings.api_keys.empty.title')"
+                    :description="$t('settings.api_keys.empty.description')"
                 />
             </div>
         </SettingsLayout>
@@ -173,8 +173,8 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
 
     <ConfirmDeleteModal
         ref="confirmDeleteModal"
-        title="Delete API key"
-        description="Are you sure you want to delete this API key? Any applications using this key will lose access immediately."
-        action="Delete API key"
+        :title="$t('settings.api_keys.delete_modal.title')"
+        :description="$t('settings.api_keys.delete_modal.description')"
+        :action="$t('settings.api_keys.delete_modal.action')"
     />
 </template>

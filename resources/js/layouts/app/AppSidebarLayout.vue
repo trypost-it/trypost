@@ -1,27 +1,45 @@
 <script setup lang="ts">
-import AppContent from '@/components/AppContent.vue';
-import AppShell from '@/components/AppShell.vue';
+import { usePage } from '@inertiajs/vue3';
+
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import Toast from '@/components/Toast.vue';
-import type { BreadcrumbItemType } from '@/types';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import type { BreadcrumbItem } from '@/types';
 
-interface Props {
-    breadcrumbs?: BreadcrumbItemType[];
-}
+const page = usePage();
+const isOpen = page.props.sidebarOpen;
+
+type Props = {
+    breadcrumbs?: BreadcrumbItem[];
+    fullWidth?: boolean;
+};
 
 withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
+    fullWidth: false,
 });
 </script>
 
 <template>
-    <AppShell variant="sidebar">
+    <SidebarProvider :default-open="isOpen">
         <AppSidebar />
-        <AppContent variant="sidebar" class="overflow-x-hidden">
-            <AppSidebarHeader :breadcrumbs="breadcrumbs" />
-            <slot />
-        </AppContent>
-    </AppShell>
+        <SidebarInset class="overflow-x-hidden">
+            <AppSidebarHeader :breadcrumbs="breadcrumbs">
+                <template v-if="$slots['header-right']" #right>
+                    <slot name="header-right" />
+                </template>
+            </AppSidebarHeader>
+            <div
+                :class="
+                    fullWidth
+                        ? 'flex min-h-0 flex-1 flex-col'
+                        : 'mx-auto w-full max-w-7xl'
+                "
+            >
+                <slot />
+            </div>
+        </SidebarInset>
+    </SidebarProvider>
     <Toast />
 </template>

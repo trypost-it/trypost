@@ -1,129 +1,146 @@
 @import 'tailwindcss';
-
 @import 'tw-animate-css';
-
+@import 'vue-sonner/style.css';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
-
 @custom-variant dark (&:is(.dark *));
 
-@layer utilities {
-
-  body,
-  html {
-    --font-sans:
-      'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-      'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-      'Noto Color Emoji';
-  }
-}
-
 :root {
-  --background: #f7f9f3;
-  --foreground: #000000;
+  --background: #fafafa;
+  --foreground: #0a0a0a;
   --card: #ffffff;
-  --card-foreground: #000000;
+  --card-foreground: #0a0a0a;
   --popover: #ffffff;
-  --popover-foreground: #000000;
-  --primary: #4f46e5;
-  --primary-foreground: #ffffff;
-  --secondary: #14b8a6;
-  --secondary-foreground: #ffffff;
-  --muted: #f0f0f0;
-  --muted-foreground: #333333;
-  --accent: #f59e0b;
-  --accent-foreground: #000000;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #000000;
-  --input: #737373;
-  --ring: #a5b4fc;
-  --chart-1: #4f46e5;
-  --chart-2: #14b8a6;
-  --chart-3: #f59e0b;
-  --chart-4: #ec4899;
-  --chart-5: #22c55e;
-  --sidebar: #f7f9f3;
-  --sidebar-foreground: #000000;
-  --sidebar-primary: #4f46e5;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f59e0b;
-  --sidebar-accent-foreground: #000000;
-  --sidebar-border: #000000;
-  --sidebar-ring: #a5b4fc;
-  --font-sans: DM Sans, sans-serif;
-  --font-serif: DM Sans, sans-serif;
-  --font-mono: Space Mono, monospace;
-  --radius: 1rem;
-  --shadow-x: 0px;
-  --shadow-y: 0px;
-  --shadow-blur: 0px;
+  --popover-foreground: #0a0a0a;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #e5e5e5;
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373;
+  --accent: #e5e5e5;
+  --accent-foreground: #171717;
+  --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
+  --success: #16a34a;
+  --error: #dc2626;
+  --warning: #d97706;
+  --info: #2563eb;
+  --border: #e5e5e5;
+  --input: #d4d4d4;
+  --ring: #525252;
+  --chart-1: #1f3fad;
+  --chart-2: #1a4eda;
+  --chart-3: #2563ef;
+  --chart-4: #3a81f6;
+  --chart-5: #91c5ff;
+  --sidebar: #f5f5f5;
+  --sidebar-foreground: #0a0a0a;
+  --sidebar-primary: #1447e6;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #e5e5e5;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #a3a3a3;
+  --font-sans:
+    'Space Grotesk', ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  --radius: 0.725rem;
+  --shadow-x: 0;
+  --shadow-y: 1px;
+  --shadow-blur: 2.5px;
   --shadow-spread: 0px;
-  --shadow-opacity: 0.05;
-  --shadow-color: #1a1a1a;
-  --shadow-2xs: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.03);
-  --shadow-xs: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.03);
-  --shadow-sm: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.05), 0px 1px 2px -1px hsl(0 0% 10.1961% / 0.05);
-  --shadow: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.05), 0px 1px 2px -1px hsl(0 0% 10.1961% / 0.05);
-  --shadow-md: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.05), 0px 2px 4px -1px hsl(0 0% 10.1961% / 0.05);
-  --shadow-lg: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.05), 0px 4px 6px -1px hsl(0 0% 10.1961% / 0.05);
-  --shadow-xl: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.05), 0px 8px 10px -1px hsl(0 0% 10.1961% / 0.05);
-  --shadow-2xl: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.13);
-  --tracking-normal: normal;
+  --shadow-opacity: 0.04;
+  --shadow-color: oklch(0.3065 0.0243 243.82);
+  --shadow-2xs: 0 1px 2.5px 0px hsl(0 0% 0% / 0.02);
+  --shadow-xs: 0 1px 2.5px 0px hsl(0 0% 0% / 0.02);
+  --shadow-sm:
+    0 1px 2.5px 0px hsl(0 0% 0% / 0.04), 0 1px 2px -1px hsl(0 0% 0% / 0.04);
+  --shadow:
+    0 1px 2.5px 0px hsl(0 0% 0% / 0.04), 0 1px 2px -1px hsl(0 0% 0% / 0.04);
+  --shadow-md:
+    0 1px 2.5px 0px hsl(0 0% 0% / 0.04), 0 2px 4px -1px hsl(0 0% 0% / 0.04);
+  --shadow-lg:
+    0 1px 2.5px 0px hsl(0 0% 0% / 0.04), 0 4px 6px -1px hsl(0 0% 0% / 0.04);
+  --shadow-xl:
+    0 1px 2.5px 0px hsl(0 0% 0% / 0.04), 0 8px 10px -1px hsl(0 0% 0% / 0.04);
+  --shadow-2xl: 0 1px 2.5px 0px hsl(0 0% 0% / 0.1);
+  --tracking-normal: 0em;
   --spacing: 0.25rem;
 }
 
 .dark {
-  --background: #000000;
-  --foreground: #ffffff;
-  --card: #1a212b;
-  --card-foreground: #ffffff;
-  --popover: #1a212b;
-  --popover-foreground: #ffffff;
-  --primary: #818cf8;
-  --primary-foreground: #000000;
-  --secondary: #2dd4bf;
-  --secondary-foreground: #000000;
-  --muted: #333333;
-  --muted-foreground: #cccccc;
-  --accent: #fcd34d;
-  --accent-foreground: #000000;
-  --destructive: #f87171;
-  --destructive-foreground: #000000;
-  --border: #545454;
-  --input: #ffffff;
-  --ring: #818cf8;
-  --chart-1: #818cf8;
-  --chart-2: #2dd4bf;
-  --chart-3: #fcd34d;
-  --chart-4: #f472b6;
-  --chart-5: #4ade80;
-  --sidebar: #000000;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #818cf8;
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #fcd34d;
-  --sidebar-accent-foreground: #000000;
-  --sidebar-border: #ffffff;
-  --sidebar-ring: #818cf8;
-  --font-sans: DM Sans, sans-serif;
-  --font-serif: DM Sans, sans-serif;
-  --font-mono: Space Mono, monospace;
-  --radius: 1rem;
-  --shadow-x: 0px;
-  --shadow-y: 0px;
-  --shadow-blur: 0px;
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #171717;
+  --card-foreground: #fafafa;
+  --popover: #262626;
+  --popover-foreground: #fafafa;
+  --primary: #e5e5e5;
+  --primary-foreground: #171717;
+  --secondary: #262626;
+  --secondary-foreground: #fafafa;
+  --muted: #262626;
+  --muted-foreground: #a1a1a1;
+  --accent: #404040;
+  --accent-foreground: #fafafa;
+  --destructive: #ff6467;
+  --destructive-foreground: #fafafa;
+  --success: #16a34a;
+  --error: #dc2626;
+  --warning: #d97706;
+  --info: #2563eb;
+  --border: #333333;
+  --input: #343434;
+  --ring: #737373;
+  --chart-1: #91c5ff;
+  --chart-2: #3a81f6;
+  --chart-3: #2563ef;
+  --chart-4: #1a4eda;
+  --chart-5: #1f3fad;
+  --sidebar: #171717;
+  --sidebar-foreground: #fafafa;
+  --sidebar-primary: #1447e6;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #262626;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-border: #282828;
+  --sidebar-ring: #525252;
+  --font-sans:
+    'Space Grotesk', ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  --radius: 0.725rem;
+  --shadow-x: 0;
+  --shadow-y: 1px;
+  --shadow-blur: 2.5px;
   --shadow-spread: 0px;
-  --shadow-opacity: 0.05;
-  --shadow-color: #1a1a1a;
-  --shadow-2xs: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.03);
-  --shadow-xs: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.03);
-  --shadow-sm: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.05), 0px 1px 2px -1px hsl(0 0% 10.1961% / 0.05);
-  --shadow: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.05), 0px 1px 2px -1px hsl(0 0% 10.1961% / 0.05);
-  --shadow-md: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.05), 0px 2px 4px -1px hsl(0 0% 10.1961% / 0.05);
-  --shadow-lg: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.05), 0px 4px 6px -1px hsl(0 0% 10.1961% / 0.05);
-  --shadow-xl: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.05), 0px 8px 10px -1px hsl(0 0% 10.1961% / 0.05);
-  --shadow-2xl: 0px 0px 0px 0px hsl(0 0% 10.1961% / 0.13);
+  --shadow-opacity: 0.04;
+  --shadow-color: oklch(0 0 0);
+  --shadow-2xs: 0 1px 2.5px 0px hsl(0 0% 0% / 0.02);
+  --shadow-xs: 0 1px 2.5px 0px hsl(0 0% 0% / 0.02);
+  --shadow-sm:
+    0 1px 2.5px 0px hsl(0 0% 0% / 0.04), 0 1px 2px -1px hsl(0 0% 0% / 0.04);
+  --shadow:
+    0 1px 2.5px 0px hsl(0 0% 0% / 0.04), 0 1px 2px -1px hsl(0 0% 0% / 0.04);
+  --shadow-md:
+    0 1px 2.5px 0px hsl(0 0% 0% / 0.04), 0 2px 4px -1px hsl(0 0% 0% / 0.04);
+  --shadow-lg:
+    0 1px 2.5px 0px hsl(0 0% 0% / 0.04), 0 4px 6px -1px hsl(0 0% 0% / 0.04);
+  --shadow-xl:
+    0 1px 2.5px 0px hsl(0 0% 0% / 0.04), 0 8px 10px -1px hsl(0 0% 0% / 0.04);
+  --shadow-2xl: 0 1px 2.5px 0px hsl(0 0% 0% / 0.1);
 }
 
 @theme inline {
@@ -177,17 +194,6 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
-
-  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
-  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
-  --tracking-normal: var(--tracking-normal);
-  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
-  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
-  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
-}
-
-body {
-  letter-spacing: var(--tracking-normal);
 }
 
 @layer base {
@@ -197,5 +203,50 @@ body {
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+.workflow-dots {
+  background-image: radial-gradient(circle,
+      var(--border) 1px,
+      transparent 1px);
+  background-size: 20px 20px;
+  cursor: grab;
+}
+
+.workflow-dots:active {
+  cursor: grabbing;
+}
+
+/* Animated dashed connector lines */
+.workflow-line-v {
+  width: 2px;
+  background: repeating-linear-gradient(to bottom,
+      var(--border) 0,
+      var(--border) 4px,
+      transparent 4px,
+      transparent 8px);
+  animation: march-v 0.5s linear infinite;
+}
+
+.workflow-line-h {
+  height: 2px;
+  background: repeating-linear-gradient(to right,
+      var(--border) 0,
+      var(--border) 4px,
+      transparent 4px,
+      transparent 8px);
+  animation: march-h 0.5s linear infinite;
+}
+
+@keyframes march-v {
+  to {
+    background-position-y: 8px;
+  }
+}
+
+@keyframes march-h {
+  to {
+    background-position-x: 8px;
   }
 }

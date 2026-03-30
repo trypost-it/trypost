@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { IconSelector } from '@tabler/icons-vue';
+import { IconChevronRight } from '@tabler/icons-vue';
 
 import {
     DropdownMenu,
@@ -33,18 +33,12 @@ const { isMobile, state } = useSidebar();
                         data-test="sidebar-menu-button"
                     >
                         <UserInfo :user="user" />
-                        <IconSelector class="ml-auto size-4" />
+                        <IconChevronRight class="ml-auto size-4" />
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                     class="w-(--reka-dropdown-menu-trigger-width) min-w-56 rounded-lg"
-                    :side="
-                        isMobile
-                            ? 'bottom'
-                            : state === 'collapsed'
-                              ? 'left'
-                              : 'bottom'
-                    "
+                    :side="isMobile ? 'bottom' : 'right'"
                     align="end"
                     :side-offset="4"
                 >

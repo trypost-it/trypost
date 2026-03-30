@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware\Mcp;
 
 use App\Models\ApiToken;
+use App\Models\Workspace;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -45,9 +46,24 @@ class AuthenticateMcpToken
             return response()->json(['message' => 'No workspace owner found.'], Response::HTTP_UNAUTHORIZED);
         }
 
+        if (! config('trypost.self_hosted') && ! $this->hasActiveSubscription($workspace)) {
+            return response()->json(['message' => 'Active subscription required.'], Response::HTTP_PAYMENT_REQUIRED);
+        }
+
         $user->current_workspace_id = $workspace->id;
         Auth::login($user);
 
         return $next($request);
+    }
+
+    private function hasActiveSubscription(Workspace $workspace): bool
+    {
+        $owner = $workspace->owner;
+
+        if (! $owner) {
+            return false;
+        }
+
+        return $owner->subscribed('default') || $owner->onTrial('default');
     }
 }

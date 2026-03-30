@@ -117,3 +117,81 @@ test('updates last_used_at on successful auth', function () {
     expect($result['token']->last_used_at)->not->toBeNull();
     expect($result['token']->last_used_at->toDateTimeString())->toBe(now()->toDateTimeString());
 });
+
+test('returns 402 when workspace owner has no subscription', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $result = createApiToken();
+
+    $response = $this->withHeaders([
+        'Authorization' => 'Bearer '.$result['plain_token'],
+    ])->getJson(
+        route('api.workspace.show'),
+        ['HTTP_HOST' => 'api.trypost.test']
+    );
+
+    $response->assertStatus(402);
+    $response->assertJson(['message' => 'Active subscription required.']);
+});
+
+test('allows access when workspace owner has active subscription', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $result = createApiToken();
+    $owner = $result['workspace']->owner;
+
+    $owner->subscriptions()->create([
+        'type' => 'default',
+        'stripe_id' => 'sub_test_123',
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
+
+    $response = $this->withHeaders([
+        'Authorization' => 'Bearer '.$result['plain_token'],
+    ])->getJson(
+        route('api.workspace.show'),
+        ['HTTP_HOST' => 'api.trypost.test']
+    );
+
+    $response->assertOk();
+});
+
+test('allows access when workspace owner is on trial', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $result = createApiToken();
+    $owner = $result['workspace']->owner;
+
+    $owner->subscriptions()->create([
+        'type' => 'default',
+        'stripe_id' => 'sub_trial_123',
+        'stripe_status' => 'trialing',
+        'stripe_price' => 'price_123',
+        'trial_ends_at' => now()->addDays(7),
+    ]);
+
+    $response = $this->withHeaders([
+        'Authorization' => 'Bearer '.$result['plain_token'],
+    ])->getJson(
+        route('api.workspace.show'),
+        ['HTTP_HOST' => 'api.trypost.test']
+    );
+
+    $response->assertOk();
+});
+
+test('skips subscription check in self-hosted mode', function () {
+    config(['trypost.self_hosted' => true]);
+
+    $result = createApiToken();
+
+    $response = $this->withHeaders([
+        'Authorization' => 'Bearer '.$result['plain_token'],
+    ])->getJson(
+        route('api.workspace.show'),
+        ['HTTP_HOST' => 'api.trypost.test']
+    );
+
+    $response->assertOk();
+});

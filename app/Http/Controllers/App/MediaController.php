@@ -92,8 +92,20 @@ class MediaController extends Controller
             'media.*.order' => 'required|integer|min:0',
         ]);
 
+        $workspace = $request->user()->currentWorkspace;
+        $mediaIds = collect($request->input('media'))->pluck('id');
+
+        // Verify all media belongs to the current workspace
+        $ownedCount = Media::whereIn('id', $mediaIds)
+            ->whereHasMorph('mediable', [PostPlatform::class], fn ($query) => $query->whereHas('post', fn ($q) => $q->where('workspace_id', $workspace->id))
+            )->count();
+
+        if ($ownedCount !== $mediaIds->count()) {
+            abort(403);
+        }
+
         foreach ($request->input('media') as $item) {
-            Media::where('id', $item['id'])->update(['order' => $item['order']]);
+            Media::where('id', data_get($item, 'id'))->update(['order' => data_get($item, 'order')]);
         }
 
         return response()->json(['success' => true]);

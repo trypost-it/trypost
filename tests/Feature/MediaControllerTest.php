@@ -140,3 +140,51 @@ test('duplicate media creates copies', function () {
 
     expect(Media::where('mediable_id', $otherPostPlatform->id)->count())->toBe(1);
 });
+
+// Reorder tests
+test('reorder media updates order', function () {
+    $media1 = $this->postPlatform->addMedia(UploadedFile::fake()->image('img1.jpg'), 'media');
+    $media2 = $this->postPlatform->addMedia(UploadedFile::fake()->image('img2.jpg'), 'media');
+
+    $response = $this->actingAs($this->user)->postJson(route('app.medias.reorder'), [
+        'media' => [
+            ['id' => $media1->id, 'order' => 1],
+            ['id' => $media2->id, 'order' => 0],
+        ],
+    ]);
+
+    $response->assertOk();
+
+    expect($media1->refresh()->order)->toBe(1);
+    expect($media2->refresh()->order)->toBe(0);
+});
+
+test('reorder media rejects media from other workspace', function () {
+    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+    $otherWorkspace = Workspace::factory()->create(['user_id' => $otherUser->id]);
+    $otherUser->update(['current_workspace_id' => $otherWorkspace->id]);
+
+    $otherPost = Post::factory()->create([
+        'workspace_id' => $otherWorkspace->id,
+        'user_id' => $otherUser->id,
+    ]);
+
+    $otherAccount = SocialAccount::factory()->create([
+        'workspace_id' => $otherWorkspace->id,
+    ]);
+
+    $otherPlatform = PostPlatform::factory()->create([
+        'post_id' => $otherPost->id,
+        'social_account_id' => $otherAccount->id,
+    ]);
+
+    $otherMedia = $otherPlatform->addMedia(UploadedFile::fake()->image('img.jpg'), 'media');
+
+    $response = $this->actingAs($this->user)->postJson(route('app.medias.reorder'), [
+        'media' => [
+            ['id' => $otherMedia->id, 'order' => 0],
+        ],
+    ]);
+
+    $response->assertForbidden();
+});

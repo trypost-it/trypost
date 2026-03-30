@@ -7,10 +7,15 @@ namespace App\Jobs;
 use App\Models\Post;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 
 class PublishPost implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    public int $backoff = 30;
 
     public function __construct(public Post $post) {}
 
@@ -21,5 +26,13 @@ class PublishPost implements ShouldQueue
         foreach ($this->post->postPlatforms()->where('enabled', true)->get() as $postPlatform) {
             PublishToSocialPlatform::dispatch($postPlatform);
         }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('PublishPost job failed', [
+            'post_id' => $this->post->id,
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

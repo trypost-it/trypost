@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\PostPlatform\Status;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Models\Traits\HasMedia;
 use Database\Factories\PostPlatformFactory;
@@ -39,6 +40,7 @@ class PostPlatform extends Model
             'enabled' => 'boolean',
             'platform' => SocialPlatform::class,
             'content_type' => ContentType::class,
+            'status' => Status::class,
             'published_at' => 'datetime',
             'meta' => 'array',
         ];
@@ -56,13 +58,13 @@ class PostPlatform extends Model
 
     public function markAsPublishing(): void
     {
-        $this->update(['status' => 'publishing']);
+        $this->update(['status' => Status::Publishing]);
     }
 
     public function markAsPublished(string $platformPostId, ?string $platformUrl = null): void
     {
         $this->update([
-            'status' => 'published',
+            'status' => Status::Published,
             'platform_post_id' => $platformPostId,
             'platform_url' => $platformUrl,
             'published_at' => now(),
@@ -72,7 +74,7 @@ class PostPlatform extends Model
     public function markAsFailed(string $errorMessage): void
     {
         $this->update([
-            'status' => 'failed',
+            'status' => Status::Failed,
             'error_message' => $errorMessage,
         ]);
     }

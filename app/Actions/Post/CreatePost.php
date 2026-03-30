@@ -6,6 +6,7 @@ namespace App\Actions\Post;
 
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\PostPlatform\Status as PostPlatformStatus;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Workspace;
@@ -35,7 +36,7 @@ class CreatePost
                 'platform' => $account->platform->value,
                 'content' => '',
                 'content_type' => ContentType::defaultFor($account->platform),
-                'status' => 'pending',
+                'status' => PostPlatformStatus::Pending,
                 'enabled' => true,
             ]);
         }

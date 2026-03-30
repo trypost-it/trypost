@@ -50,9 +50,9 @@ class UpdatePost
                 $updateData['content_type'] = data_get($platformData, 'content_type');
             }
 
-            if (isset($platformData['meta'])) {
+            if (data_get($platformData, 'meta') !== null) {
                 $postPlatform = $post->postPlatforms()->where('id', data_get($platformData, 'id'))->first();
-                $updateData['meta'] = array_merge($postPlatform->meta ?? [], $platformData['meta']);
+                $updateData['meta'] = array_merge($postPlatform->meta ?? [], data_get($platformData, 'meta'));
             }
 
             $post->postPlatforms()

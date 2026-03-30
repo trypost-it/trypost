@@ -56,7 +56,7 @@ Route::group(
         });
 
         // Social Connect routes
-        Route::middleware(['auth', 'verified'])->group(function () {
+        Route::middleware(['auth', 'verified', 'throttle:6,1'])->group(function () {
             Route::get('connect/linkedin', [LinkedInController::class, 'connect'])->name('app.social.linkedin.connect');
             Route::get('accounts/linkedin/callback', [LinkedInController::class, 'callback'])->name('app.social.linkedin.callback');
 

@@ -12,6 +12,7 @@ use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceLabel;
+use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
@@ -233,6 +234,7 @@ test('update post cannot update published posts', function () {
 });
 
 test('publish now updates scheduled_at to current time', function () {
+    Mail::fake();
     $this->freezeTime();
 
     $post = Post::factory()->create([

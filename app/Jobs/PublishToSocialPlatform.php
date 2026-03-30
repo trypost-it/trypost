@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\PostPlatform\Status as PostPlatformStatus;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Events\PostPlatformStatusUpdated;
 use App\Exceptions\TokenExpiredException;
+use App\Mail\PostPublishFailed;
+use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Services\Social\BlueskyPublisher;
 use App\Services\Social\FacebookPublisher;
@@ -22,6 +25,7 @@ use App\Services\Social\YouTubePublisher;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class PublishToSocialPlatform implements ShouldQueue
 {
@@ -106,8 +110,8 @@ class PublishToSocialPlatform implements ShouldQueue
         $enabledPlatforms = $post->postPlatforms->where('enabled', true);
 
         $total = $enabledPlatforms->count();
-        $publishedCount = $enabledPlatforms->where('status', 'published')->count();
-        $failedCount = $enabledPlatforms->where('status', 'failed')->count();
+        $publishedCount = $enabledPlatforms->where('status', PostPlatformStatus::Published)->count();
+        $failedCount = $enabledPlatforms->where('status', PostPlatformStatus::Failed)->count();
         $finishedCount = $publishedCount + $failedCount;
 
         // Only update post status when all platforms have finished
@@ -119,8 +123,19 @@ class PublishToSocialPlatform implements ShouldQueue
             $post->markAsPublished();
         } elseif ($publishedCount > 0) {
             $post->markAsPartiallyPublished();
+            $this->notifyOwner($post);
         } else {
             $post->markAsFailed();
+            $this->notifyOwner($post);
+        }
+    }
+
+    private function notifyOwner(Post $post): void
+    {
+        $owner = $post->workspace->owner;
+
+        if ($owner) {
+            Mail::to($owner)->send(new PostPublishFailed($post));
         }
     }
 }

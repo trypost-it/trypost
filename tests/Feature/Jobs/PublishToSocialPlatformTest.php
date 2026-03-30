@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Post\Status as PostStatus;
+use App\Enums\PostPlatform\Status as PlatformStatus;
 use App\Enums\SocialAccount\Status as AccountStatus;
 use App\Events\PostPlatformStatusUpdated;
 use App\Exceptions\TokenExpiredException;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
+    Mail::fake();
     $this->user = User::factory()->create();
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->socialAccount = SocialAccount::factory()->linkedin()->create([
@@ -63,7 +65,7 @@ test('publish to social platform marks platform as published on success', functi
     (new PublishToSocialPlatform($this->postPlatform))->handle();
 
     $this->postPlatform->refresh();
-    expect($this->postPlatform->status)->toBe('published');
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Published);
     expect($this->postPlatform->platform_post_id)->toBe('post-123');
     expect($this->postPlatform->platform_url)->toBe('https://linkedin.com/post/123');
 });
@@ -79,7 +81,7 @@ test('publish to social platform marks platform as failed on error', function ()
     (new PublishToSocialPlatform($this->postPlatform))->handle();
 
     $this->postPlatform->refresh();
-    expect($this->postPlatform->status)->toBe('failed');
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
     expect($this->postPlatform->error_message)->toBe('API Error');
 });
 
@@ -97,7 +99,7 @@ test('publish to social platform disconnects account on token expired', function
     $this->postPlatform->refresh();
     $this->socialAccount->refresh();
 
-    expect($this->postPlatform->status)->toBe('failed');
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
     expect($this->socialAccount->status)->toBe(AccountStatus::Disconnected);
 });
 
@@ -175,7 +177,7 @@ test('publish to social platform skips publishing when account is disconnected',
     (new PublishToSocialPlatform($this->postPlatform))->handle();
 
     $this->postPlatform->refresh();
-    expect($this->postPlatform->status)->toBe('failed');
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
     expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_disconnected'));
 });
 
@@ -194,6 +196,6 @@ test('publish to social platform skips publishing when account token is expired'
     (new PublishToSocialPlatform($this->postPlatform))->handle();
 
     $this->postPlatform->refresh();
-    expect($this->postPlatform->status)->toBe('failed');
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
     expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_disconnected'));
 });

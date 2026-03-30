@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 test('profile page is displayed', function () {
     $user = User::factory()->create();
@@ -175,4 +177,56 @@ test('deleting account updates members current_workspace_id to another workspace
 
     // Verify member's current_workspace_id is updated to the other workspace
     expect($member->fresh()->current_workspace_id)->toBe($otherWorkspace->id);
+});
+
+test('user can upload profile photo', function () {
+    Storage::fake();
+
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('app.profile.upload-photo'), [
+            'photo' => UploadedFile::fake()->image('avatar.jpg', 200, 200),
+        ]);
+
+    $response->assertRedirect();
+
+    $user->refresh();
+    expect($user->has_photo)->toBeTrue();
+    expect($user->photo_url)->not->toBeNull();
+});
+
+test('user cannot upload non-image file as photo', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('app.profile.upload-photo'), [
+            'photo' => UploadedFile::fake()->create('document.pdf', 100),
+        ]);
+
+    $response->assertSessionHasErrors('photo');
+});
+
+test('user can delete profile photo', function () {
+    Storage::fake();
+
+    $user = User::factory()->create();
+
+    // Upload first
+    $this->actingAs($user)->post(route('app.profile.upload-photo'), [
+        'photo' => UploadedFile::fake()->image('avatar.jpg', 200, 200),
+    ]);
+
+    $user->refresh();
+    expect($user->has_photo)->toBeTrue();
+
+    // Delete
+    $response = $this->actingAs($user)->delete(route('app.profile.delete-photo'));
+
+    $response->assertRedirect();
+
+    $user->refresh();
+    expect($user->has_photo)->toBeFalse();
 });

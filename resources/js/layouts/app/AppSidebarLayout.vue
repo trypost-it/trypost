@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 
+import AppHeader from '@/components/AppHeader.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
-import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import Toast from '@/components/Toast.vue';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import type { BreadcrumbItem } from '@/types';
@@ -24,20 +24,28 @@ withDefaults(defineProps<Props>(), {
 <template>
     <SidebarProvider :default-open="isOpen">
         <AppSidebar />
-        <SidebarInset class="overflow-x-hidden">
-            <AppSidebarHeader :breadcrumbs="breadcrumbs">
+        <SidebarInset class="flex h-screen flex-col overflow-hidden">
+            <AppHeader :breadcrumbs="breadcrumbs">
                 <template v-if="$slots['header-right']" #right>
                     <slot name="header-right" />
                 </template>
-            </AppSidebarHeader>
+            </AppHeader>
             <div
                 :class="
                     fullWidth
-                        ? 'flex min-h-0 flex-1 flex-col'
-                        : 'mx-auto w-full max-w-7xl'
+                        ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
+                        : 'flex-1 overflow-y-auto'
                 "
             >
-                <slot />
+                <div
+                    :class="
+                        fullWidth
+                            ? 'flex min-h-0 flex-1 flex-col'
+                            : 'mx-auto w-full max-w-7xl'
+                    "
+                >
+                    <slot />
+                </div>
             </div>
         </SidebarInset>
     </SidebarProvider>

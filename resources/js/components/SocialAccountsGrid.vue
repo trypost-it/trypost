@@ -202,10 +202,9 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                         <TooltipProvider v-if="showReconnect && isDisconnected(platform.account)">
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <button @click="openOAuthPopup(platform.value)"
-                                        class="p-2 text-amber-600 hover:text-amber-700 transition-colors">
-                                        <IconRefresh class="h-4 w-4" />
-                                    </button>
+                                    <Button variant="ghost" size="icon" class="size-8 text-amber-600 hover:text-amber-700" @click="openOAuthPopup(platform.value)">
+                                        <IconRefresh class="size-4" />
+                                    </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>{{ trans('accounts.reconnect_account') }}</p>
@@ -216,10 +215,11 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                             v-if="showViewProfile && getProfileUrl(platform.value, platform.account.username, platform.account.platform_user_id)">
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <a :href="getProfileUrl(platform.value, platform.account.username, platform.account.platform_user_id)!" target="_blank"
-                                        class="p-2 text-muted-foreground hover:text-foreground transition-colors">
-                                        <IconExternalLink class="h-4 w-4" />
-                                    </a>
+                                    <Button variant="ghost" size="icon" class="size-8" as-child>
+                                        <a :href="getProfileUrl(platform.value, platform.account.username, platform.account.platform_user_id)!" target="_blank">
+                                            <IconExternalLink class="size-4" />
+                                        </a>
+                                    </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>{{ trans('accounts.view_profile') }}</p>
@@ -229,10 +229,9 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                         <TooltipProvider v-if="showDisconnect">
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <button @click="emit('disconnect', platform.account.id)"
-                                        class="p-2 text-muted-foreground hover:text-red-600 transition-colors">
-                                        <IconTrash class="h-4 w-4" />
-                                    </button>
+                                    <Button variant="ghost" size="icon" class="size-8" @click="emit('disconnect', platform.account.id)">
+                                        <IconTrash class="size-4" />
+                                    </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>{{ trans('accounts.disconnect') }}</p>

@@ -118,16 +118,14 @@ onMounted(() => {
 
 <template>
     <SidebarMenuButton :tooltip="$t('sidebar.notifications')" @click="openDialog">
-        <div class="relative">
-            <IconBell />
-            <span
-                v-if="unreadCount > 0"
-                class="absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground"
-            >
-                {{ unreadCount > 9 ? '9+' : unreadCount }}
-            </span>
-        </div>
+        <IconBell />
         <span>{{ $t('sidebar.notifications') }}</span>
+        <span
+            v-if="unreadCount > 0"
+            class="ml-auto flex size-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground"
+        >
+            {{ unreadCount > 9 ? '9+' : unreadCount }}
+        </span>
     </SidebarMenuButton>
 
     <Dialog v-model:open="dialogOpen">

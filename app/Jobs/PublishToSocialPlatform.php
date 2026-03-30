@@ -10,6 +10,7 @@ use App\Enums\PostPlatform\Status as PostPlatformStatus;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Events\PostPlatformStatusUpdated;
 use App\Exceptions\TokenExpiredException;
+use App\Mail\PostPublished;
 use App\Mail\PostPublishFailed;
 use App\Models\Post;
 use App\Models\PostPlatform;
@@ -122,16 +123,45 @@ class PublishToSocialPlatform implements ShouldQueue
 
         if ($publishedCount === $total) {
             $post->markAsPublished();
+            $this->notifySuccess($post);
         } elseif ($publishedCount > 0) {
             $post->markAsPartiallyPublished();
-            $this->notifyOwner($post);
+            $this->notifyFailure($post);
         } else {
             $post->markAsFailed();
-            $this->notifyOwner($post);
+            $this->notifyFailure($post);
         }
     }
 
-    private function notifyOwner(Post $post): void
+    private function notifySuccess(Post $post): void
+    {
+        $owner = $post->workspace->owner;
+
+        if (! $owner) {
+            return;
+        }
+
+        $publishedPlatforms = $post->postPlatforms()
+            ->with('socialAccount')
+            ->where('enabled', true)
+            ->get()
+            ->filter(fn ($pp) => $pp->status === PostPlatformStatus::Published)
+            ->map(fn ($pp) => $pp->platform->label().' (@'.data_get($pp, 'socialAccount.username', '').')')
+            ->implode(', ');
+
+        SendNotification::dispatch(
+            user: $owner,
+            workspaceId: $post->workspace_id,
+            type: Type::PostPublished,
+            channel: Channel::Both,
+            title: 'Post published successfully',
+            body: $publishedPlatforms,
+            data: ['post_id' => $post->id],
+            mailable: new PostPublished($post),
+        );
+    }
+
+    private function notifyFailure(Post $post): void
     {
         $owner = $post->workspace->owner;
 

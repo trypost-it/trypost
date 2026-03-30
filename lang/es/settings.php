@@ -77,6 +77,8 @@ return [
 
         'cancel' => 'Cancelar',
         'remove' => 'Eliminar',
+        'make_admin' => 'Hacer administrador',
+        'make_member' => 'Hacer miembro',
 
         'invite' => [
             'title' => 'Invitar miembro',
@@ -122,6 +124,7 @@ return [
             'invite_sent' => '¡Invitación enviada correctamente!',
             'invite_deleted' => 'Invitación eliminada.',
             'member_removed' => '¡Miembro eliminado correctamente!',
+            'role_updated' => 'Rol del miembro actualizado.',
             'wrong_email' => 'Esta invitación es para otro correo electrónico.',
             'already_member' => 'Ya eres miembro de este workspace.',
             'invite_accepted' => '¡Bienvenido! Ahora eres miembro del workspace.',

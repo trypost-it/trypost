@@ -1,11 +1,57 @@
-import { InertiaLinkProps } from '@inertiajs/vue3';
+import type { InertiaLinkProps } from '@inertiajs/vue3';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { toast } from 'vue-sonner';
 
-export function cn(...inputs: ClassValue[]) {
+export const cn = (...inputs: ClassValue[]) => {
     return twMerge(clsx(inputs));
-}
+};
 
-export function toUrl(href: NonNullable<InertiaLinkProps['href']>) {
+export const toUrl = (href: NonNullable<InertiaLinkProps['href']>) => {
     return typeof href === 'string' ? href : href?.url;
-}
+};
+
+export const formatNumber = (value: number): string => {
+    return value.toLocaleString('en-US');
+};
+
+export const formatNumberCompact = (value: number): string => {
+    return new Intl.NumberFormat('en-US', {
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 1,
+    }).format(value);
+};
+
+export const formatMoney = (cents: number): string => {
+    const dollars = cents / 100;
+    return dollars.toLocaleString('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
+};
+
+export const formatMoneyCompact = (cents: number): string => {
+    const dollars = cents / 100;
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        notation: 'compact',
+        compactDisplay: 'short',
+        maximumFractionDigits: 1,
+    }).format(dollars);
+};
+
+export const copyToClipboard = async (
+    text: string,
+    message = 'Copied to clipboard',
+) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        toast.success(message);
+    } catch {
+        toast.error('Failed to copy to clipboard');
+    }
+};

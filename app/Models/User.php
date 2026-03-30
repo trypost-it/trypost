@@ -33,7 +33,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'setup',
         'persona',
         'current_workspace_id',
-        'locale',
         'email_verified_at',
     ];
 
@@ -78,14 +77,6 @@ class User extends Authenticatable implements MustVerifyEmail
             'setup' => Setup::class,
             'persona' => Persona::class,
         ];
-    }
-
-    /**
-     * Get the user's locale code (e.g. 'en', 'es', 'pt-br').
-     */
-    public function getLocaleCode(): string
-    {
-        return $this->locale ?? 'en';
     }
 
     /**

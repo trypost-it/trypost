@@ -12,6 +12,7 @@ use App\Http\Requests\App\Invite\StoreWorkspaceInviteRequest;
 use App\Models\WorkspaceInvite;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -129,6 +130,34 @@ class WorkspaceInviteController extends Controller
         RemoveMember::execute($workspace, $userId);
 
         session()->flash('flash.banner', __('settings.members.flash.member_removed'));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
+    public function updateRole(Request $request, string $userId): RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('app.workspaces.create');
+        }
+
+        $this->authorize('manageTeam', $workspace);
+
+        if ($workspace->user_id === $userId) {
+            return back()->withErrors(['role' => 'Cannot change the workspace owner role.']);
+        }
+
+        $validated = $request->validate([
+            'role' => ['required', Rule::enum(WorkspaceRole::class)],
+        ]);
+
+        $workspace->members()->updateExistingPivot($userId, [
+            'role' => data_get($validated, 'role'),
+        ]);
+
+        session()->flash('flash.banner', __('settings.members.flash.role_updated'));
         session()->flash('flash.bannerStyle', 'success');
 
         return back();

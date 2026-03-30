@@ -20,10 +20,14 @@ const toPathname = (url: string): string => {
 export function useActiveUrl() {
     function urlIsActive(
         urlToCheck: NonNullable<InertiaLinkProps['href']>,
-        options?: { prefix?: boolean },
+        options?: { prefix?: boolean; exact?: boolean },
     ) {
         const current = currentUrlReactive.value;
         const pathname = toPathname(toUrl(urlToCheck));
+
+        if (options?.exact) {
+            return current === pathname;
+        }
 
         if (options?.prefix) {
             return current.startsWith(pathname);

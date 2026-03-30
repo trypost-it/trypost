@@ -33,7 +33,6 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'current_workspace_id' => null,
-            'locale' => 'en',
             'stripe_id' => null,
             'pm_type' => null,
             'pm_last_four' => null,

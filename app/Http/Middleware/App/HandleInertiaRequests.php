@@ -7,7 +7,6 @@ namespace App\Http\Middleware\App;
 use App\Http\Resources\App\HandleInertiaRequests\AuthUserResource;
 use App\Http\Resources\App\HandleInertiaRequests\AuthWorkspaceResource;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -25,10 +24,6 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
-
-        if ($user?->locale) {
-            App::setLocale($user->locale);
-        }
 
         $currentWorkspace = $user?->currentWorkspace?->load('media');
 

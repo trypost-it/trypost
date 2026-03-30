@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Head, Link, InfiniteScroll } from '@inertiajs/vue3';
-import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconPlus, IconEye, IconTrash } from '@tabler/icons-vue';
+import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconEye, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
 import { index as postsIndex, store as storePost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/App/PostController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -90,9 +91,20 @@ const pageDescription = computed(() => {
     return trans('posts.manage_posts');
 });
 
-const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
-    { title: trans('posts.title'), href: postsIndex.url() },
-]);
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => {
+    const items: BreadcrumbItemType[] = [
+        { title: trans('posts.title'), href: postsIndex.url() },
+    ];
+
+    if (props.currentStatus) {
+        items.push({
+            title: trans(`posts.status.${props.currentStatus}`),
+            href: postsIndex.url(props.currentStatus),
+        });
+    }
+
+    return items;
+});
 
 const getPlatformLogo = (platform: string): string => {
     const logos: Record<string, string> = {
@@ -180,23 +192,12 @@ const handleDelete = (post: Post) => {
                 </div>
             </div>
 
-            <div v-if="posts.data.length === 0">
-                <Card>
-                    <CardContent class="flex flex-col items-center justify-center py-12">
-                        <IconFileText class="h-12 w-12 text-muted-foreground" />
-                        <h3 class="mt-4 text-lg font-semibold">{{ $t('posts.no_posts') }}</h3>
-                        <p class="mt-2 text-sm text-muted-foreground">
-                            {{ $t('posts.start_creating') }}
-                        </p>
-                        <Link :href="storePost.url()" method="post" class="mt-4">
-                            <Button>
-                                <IconPlus class="h-4 w-4" />
-                                {{ $t('posts.new_post') }}
-                            </Button>
-                        </Link>
-                    </CardContent>
-                </Card>
-            </div>
+            <EmptyState
+                v-if="posts.data.length === 0"
+                :icon="IconFileText"
+                :title="$t('posts.no_posts')"
+                :description="$t('posts.start_creating')"
+            />
 
             <div v-else>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

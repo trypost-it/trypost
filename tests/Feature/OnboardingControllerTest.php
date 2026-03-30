@@ -15,13 +15,13 @@ beforeEach(function () {
 
 // Step 1 tests
 test('step1 requires authentication', function () {
-    $response = $this->get(route('app.onboarding.step1'));
+    $response = $this->get(route('app.onboarding.role'));
 
     $response->assertRedirect(route('login'));
 });
 
 test('step1 shows persona selection', function () {
-    $response = $this->actingAs($this->user)->get(route('app.onboarding.step1'));
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.role'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -32,7 +32,7 @@ test('step1 shows persona selection', function () {
 
 // Store Step 1 tests
 test('store step1 requires authentication', function () {
-    $response = $this->post(route('app.onboarding.step1.store'), [
+    $response = $this->post(route('app.onboarding.role.store'), [
         'persona' => Persona::Founder->value,
     ]);
 
@@ -40,11 +40,11 @@ test('store step1 requires authentication', function () {
 });
 
 test('store step1 saves persona and redirects to step2', function () {
-    $response = $this->actingAs($this->user)->post(route('app.onboarding.step1.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.role.store'), [
         'persona' => Persona::Founder->value,
     ]);
 
-    $response->assertRedirect(route('app.onboarding.step2'));
+    $response->assertRedirect(route('app.onboarding.connect'));
 
     $this->user->refresh();
     expect($this->user->persona)->toBe(Persona::Founder);
@@ -52,7 +52,7 @@ test('store step1 saves persona and redirects to step2', function () {
 });
 
 test('store step1 validates persona is required', function () {
-    $response = $this->actingAs($this->user)->post(route('app.onboarding.step1.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.role.store'), [
         'persona' => '',
     ]);
 
@@ -60,7 +60,7 @@ test('store step1 validates persona is required', function () {
 });
 
 test('store step1 validates persona is valid enum', function () {
-    $response = $this->actingAs($this->user)->post(route('app.onboarding.step1.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.role.store'), [
         'persona' => 'invalid',
     ]);
 
@@ -69,7 +69,7 @@ test('store step1 validates persona is valid enum', function () {
 
 // Step 2 tests
 test('step2 requires authentication', function () {
-    $response = $this->get(route('app.onboarding.step2'));
+    $response = $this->get(route('app.onboarding.connect'));
 
     $response->assertRedirect(route('login'));
 });
@@ -77,7 +77,7 @@ test('step2 requires authentication', function () {
 test('step2 shows social accounts connection', function () {
     $this->user->update(['setup' => Setup::Connections]);
 
-    $response = $this->actingAs($this->user)->get(route('app.onboarding.step2'));
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.connect'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -97,7 +97,7 @@ test('step2 shows connected accounts for workspace', function () {
         'platform' => Platform::LinkedIn,
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('app.onboarding.step2'));
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.connect'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -107,7 +107,7 @@ test('step2 shows connected accounts for workspace', function () {
 
 // Store Step 2 tests
 test('store step2 requires authentication', function () {
-    $response = $this->post(route('app.onboarding.step2.store'));
+    $response = $this->post(route('app.onboarding.connect.store'));
 
     $response->assertRedirect(route('login'));
 });
@@ -116,7 +116,7 @@ test('store step2 completes setup in self-hosted mode', function () {
     config(['trypost.self_hosted' => true]);
     $this->user->update(['setup' => Setup::Connections]);
 
-    $response = $this->actingAs($this->user)->post(route('app.onboarding.step2.store'));
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.connect.store'));
 
     $response->assertRedirect(route('app.calendar'));
 
@@ -140,4 +140,69 @@ test('complete marks setup as completed', function () {
 
     $this->user->refresh();
     expect($this->user->setup)->toBe(Setup::Completed);
+});
+
+// Step enforcement tests
+test('step1 redirects to connect when user already completed role step', function () {
+    $this->user->update(['setup' => Setup::Connections]);
+
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.role'));
+
+    $response->assertRedirect(route('app.onboarding.connect'));
+});
+
+test('step1 redirects to subscribe when user is on subscription step', function () {
+    $this->user->update(['setup' => Setup::Subscription]);
+
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.role'));
+
+    $response->assertRedirect(route('app.subscribe'));
+});
+
+test('step1 redirects to calendar when setup is completed', function () {
+    $this->user->update(['setup' => Setup::Completed]);
+
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.role'));
+
+    $response->assertRedirect(route('app.calendar'));
+});
+
+test('step2 redirects to role when user has not completed role step', function () {
+    $this->user->update(['setup' => Setup::Role]);
+
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.connect'));
+
+    $response->assertRedirect(route('app.onboarding.role'));
+});
+
+test('step2 redirects to subscribe when user is on subscription step', function () {
+    $this->user->update(['setup' => Setup::Subscription]);
+
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.connect'));
+
+    $response->assertRedirect(route('app.subscribe'));
+});
+
+test('step2 redirects to calendar when setup is completed', function () {
+    $this->user->update(['setup' => Setup::Completed]);
+
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.connect'));
+
+    $response->assertRedirect(route('app.calendar'));
+});
+
+test('user on role step can access role page', function () {
+    $this->user->update(['setup' => Setup::Role]);
+
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.role'));
+
+    $response->assertOk();
+});
+
+test('user on connections step can access connect page', function () {
+    $this->user->update(['setup' => Setup::Connections]);
+
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.connect'));
+
+    $response->assertOk();
 });

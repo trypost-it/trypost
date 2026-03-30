@@ -4,6 +4,7 @@ use App\Http\Middleware\Api\AuthenticateApiToken;
 use App\Http\Middleware\App\EnsureSubscribed;
 use App\Http\Middleware\App\HandleAppearance;
 use App\Http\Middleware\App\HandleInertiaRequests;
+use App\Http\Middleware\App\SetLocale;
 use App\Http\Middleware\Mcp\AuthenticateMcpToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -25,9 +26,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'locale']);
 
         $middleware->web(append: [
+            SetLocale::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

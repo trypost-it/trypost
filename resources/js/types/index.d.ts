@@ -16,6 +16,8 @@ export interface NavItem {
     href: NonNullable<InertiaLinkProps['href']>;
     icon?: Component;
     isActive?: boolean;
+    activePattern?: string;
+    exact?: boolean;
 }
 
 export interface SharedData {
@@ -36,7 +38,6 @@ export interface User {
     email: string;
     has_photo: boolean;
     photo_url: string | null;
-    locale: string;
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;

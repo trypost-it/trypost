@@ -4,6 +4,23 @@ return [
     'title' => 'Subscription',
     'description' => 'Manage your subscription and payment method',
 
+    'subscribe' => [
+        'page_title' => 'Start your free trial',
+        'title' => 'Start your free trial',
+        'description' => ':days days free. No credit card required to start.',
+        'start_trial' => 'Start :days-day free trial',
+        'cancel_anytime' => 'Cancel anytime. No questions asked.',
+        'switch_workspace' => 'Switch workspace',
+        'features' => [
+            'calendar' => 'Visual drag-and-drop calendar',
+            'scheduling' => 'Unlimited post scheduling',
+            'media' => 'Images, carousels & stories',
+            'video' => 'Video publishing across platforms',
+            'team' => 'Team collaboration & workspaces',
+            'hashtags' => 'Hashtag groups & labels',
+        ],
+    ],
+
     'trial' => [
         'title' => 'Trial period active',
         'description' => 'Your trial ends on :date. After that, your subscription will be charged automatically.',

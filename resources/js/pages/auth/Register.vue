@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
+import { IconEye, IconEyeOff } from '@tabler/icons-vue';
+import { ref } from 'vue';
 
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -7,6 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
@@ -16,6 +24,8 @@ defineProps<{
     redirect?: string | null;
 }>();
 
+const showPassword = ref(false);
+
 // Get user's timezone from browser
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 </script>
@@ -24,6 +34,7 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     <AuthBase
         :title="$t('auth.register.title')"
         :description="$t('auth.register.description')"
+        :show-legal="true"
     >
         <Head :title="$t('auth.register.page_title')" />
 
@@ -68,15 +79,36 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
                 <div class="grid gap-2">
                     <Label for="password">{{ $t('auth.register.password') }}</Label>
-                    <Input
-                        id="password"
-                        type="password"
-                        required
-                        :tabindex="3"
-                        autocomplete="new-password"
-                        name="password"
-                        :placeholder="$t('auth.register.password')"
-                    />
+                    <div class="relative">
+                        <Input
+                            id="password"
+                            :type="showPassword ? 'text' : 'password'"
+                            :tabindex="3"
+                            autocomplete="new-password"
+                            name="password"
+                            :placeholder="$t('auth.register.password')"
+                        />
+                        <div class="absolute inset-y-0 end-0 flex items-center pe-3">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <button
+                                            type="button"
+                                            :tabindex="-1"
+                                            class="cursor-pointer text-muted-foreground hover:text-foreground"
+                                            @click="showPassword = !showPassword"
+                                        >
+                                            <IconEyeOff v-if="showPassword" class="size-4" />
+                                            <IconEye v-else class="size-4" />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{{ showPassword ? $t('auth.register.hide_password') : $t('auth.register.show_password') }}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
                     <InputError :message="errors.password" />
                 </div>
 

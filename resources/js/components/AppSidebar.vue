@@ -2,7 +2,6 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     IconAffiliate,
-    IconBook,
     IconBrandDiscord,
     IconCalendar,
     IconChevronRight,
@@ -10,7 +9,6 @@ import {
     IconFileCheck,
     IconFileText,
     IconHash,
-    IconKey,
     IconLifebuoy,
     IconMessageCircle,
     IconPencil,
@@ -46,7 +44,6 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { accounts, calendar } from '@/routes/app';
-import { index as apiKeysIndex } from '@/routes/app/api-keys';
 import { index as hashtags } from '@/routes/app/hashtags';
 import { index as labels } from '@/routes/app/labels';
 import { edit as editProfile } from '@/routes/app/profile';
@@ -77,6 +74,7 @@ const postsNavItems = computed<NavItem[]>(() => [
         title: trans('sidebar.posts.all'),
         href: postsIndex.url(),
         icon: IconFileText,
+        exact: true,
     },
     {
         title: trans('sidebar.posts.scheduled'),
@@ -114,11 +112,6 @@ const configNavItems = computed(() => {
             href: labels.url(),
             icon: IconTag,
         },
-        {
-            title: 'API Keys',
-            href: apiKeysIndex.url(),
-            icon: IconKey,
-        },
     ];
 
     if (canManageWorkspace.value) {
@@ -147,16 +140,11 @@ const switchWorkspace = (workspaceId: string) => {
                 <SidebarMenuItem>
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
-                            <SidebarMenuButton
-                                size="lg"
-                                class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                            >
-                                <Avatar
-                                    :src="currentWorkspace?.logo_url"
-                                    :name="currentWorkspace?.name ?? '?'"
+                            <SidebarMenuButton size="lg"
+                                class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                                <Avatar :src="currentWorkspace?.logo_url" :name="currentWorkspace?.name ?? '?'"
                                     class="h-8 w-8 shrink-0 rounded-lg"
-                                    fallback-class="bg-sidebar-accent text-sidebar-accent-foreground"
-                                />
+                                    fallback-class="bg-sidebar-accent text-sidebar-accent-foreground" />
                                 <div class="grid flex-1 text-left text-sm leading-tight">
                                     <span class="truncate font-semibold">
                                         {{ currentWorkspace?.name ?? $t('sidebar.select_workspace') }}
@@ -165,29 +153,17 @@ const switchWorkspace = (workspaceId: string) => {
                                 <IconChevronRight class="ml-auto size-4" />
                             </SidebarMenuButton>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            class="w-[--reka-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                            align="start"
-                            side="right"
-                            :side-offset="4"
-                        >
+                        <DropdownMenuContent class="w-[--reka-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                            align="start" side="right" :side-offset="4">
                             <DropdownMenuLabel class="text-xs text-muted-foreground">
                                 {{ $t('sidebar.workspaces') }}
                             </DropdownMenuLabel>
                             <div class="space-y-0.5">
-                                <DropdownMenuItem
-                                    v-for="workspace in workspaces"
-                                    :key="workspace.id"
-                                    class="gap-2"
+                                <DropdownMenuItem v-for="workspace in workspaces" :key="workspace.id" class="gap-2"
                                     :class="workspace.id === currentWorkspace?.id ? 'bg-accent' : ''"
-                                    @click="switchWorkspace(workspace.id)"
-                                >
-                                    <Avatar
-                                        :src="workspace.logo_url"
-                                        :name="workspace.name"
-                                        class="h-5 w-5 shrink-0 rounded-md"
-                                        fallback-class="text-[10px]"
-                                    />
+                                    @click="switchWorkspace(workspace.id)">
+                                    <Avatar :src="workspace.logo_url" :name="workspace.name"
+                                        class="h-5 w-5 shrink-0 rounded-md" fallback-class="text-[10px]" />
                                     {{ workspace.name }}
                                 </DropdownMenuItem>
                             </div>
@@ -231,7 +207,8 @@ const switchWorkspace = (workspaceId: string) => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton as-child tooltip="Feedback">
-                        <a href="https://github.com/trypost-it/trypost/discussions" target="_blank" rel="noopener noreferrer">
+                        <a href="https://github.com/trypost-it/trypost/discussions" target="_blank"
+                            rel="noopener noreferrer">
                             <IconMessageCircle />
                             <span>{{ $t('sidebar.support.share_feedback') }}</span>
                         </a>
@@ -239,7 +216,7 @@ const switchWorkspace = (workspaceId: string) => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton as-child tooltip="Docs">
-                        <a href="https://docs.trypost.it" target="_blank" rel="noopener noreferrer">
+                        <a href="https://trypost.it/docs" target="_blank" rel="noopener noreferrer">
                             <IconLifebuoy />
                             <span>{{ $t('sidebar.support.docs') }}</span>
                         </a>

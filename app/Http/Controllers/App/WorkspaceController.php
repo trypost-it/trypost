@@ -21,6 +21,7 @@ class WorkspaceController extends Controller
         $user = $request->user();
 
         $workspaces = $user->workspaces()
+            ->with('media')
             ->withCount(['socialAccounts', 'posts'])
             ->latest()
             ->get();

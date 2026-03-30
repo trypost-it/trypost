@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
-import { IconClock, IconDots, IconTrash } from '@tabler/icons-vue';
+import { Form, Head, router } from '@inertiajs/vue3';
+import { IconClock, IconDots, IconShield, IconTrash, IconUser } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
@@ -8,19 +8,11 @@ import WorkspaceController from '@/actions/App/Http/Controllers/App/WorkspaceCon
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
+import InviteMemberDialog from '@/components/members/InviteMemberDialog.vue';
 import PhotoUpload from '@/components/PhotoUpload.vue';
 import TimezoneCombobox from '@/components/TimezoneCombobox.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -29,13 +21,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
     Table,
@@ -47,8 +32,8 @@ import {
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { store as storeInvite, destroy as destroyInvite } from '@/routes/app/invites';
-import { remove as removeMemberRoute } from '@/routes/app/members';
+import { destroy as destroyInvite } from '@/routes/app/invites';
+import { remove as removeMemberRoute, updateRole } from '@/routes/app/members';
 import { settings, uploadLogo, deleteLogo } from '@/routes/app/workspace';
 import { type BreadcrumbItem } from '@/types';
 
@@ -90,10 +75,13 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
 
 const timezone = ref(props.workspace.timezone);
 const inviteDialogOpen = ref(false);
-const inviteRole = ref('member');
 
 const removeMemberModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const cancelInvitationModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
+
+const changeRole = (member: Member, role: string) => {
+    router.put(updateRole.url(member.id), { role });
+};
 </script>
 
 <template>
@@ -165,66 +153,9 @@ const cancelInvitationModal = ref<InstanceType<typeof ConfirmDeleteModal> | null
                         :description="$t('settings.workspace.members_description')"
                     />
 
-                    <Dialog v-model:open="inviteDialogOpen">
-                        <DialogTrigger as-child>
-                            <Button variant="secondary">
-                                {{ $t('settings.members.invite.submit') }}
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>{{ $t('settings.members.invite.title') }}</DialogTitle>
-                                <DialogDescription>
-                                    {{ $t('settings.members.invite.description') }}
-                                </DialogDescription>
-                            </DialogHeader>
-                            <Form
-                                v-bind="storeInvite.form()"
-                                class="space-y-4"
-                                v-slot="{ errors, processing }"
-                                @success="inviteDialogOpen = false; inviteRole = 'member'"
-                            >
-                                <div class="grid gap-2">
-                                    <Label for="invite-email">{{ $t('settings.members.invite.email') }}</Label>
-                                    <Input
-                                        id="invite-email"
-                                        name="email"
-                                        type="email"
-                                        :placeholder="trans('settings.members.invite.email_placeholder')"
-                                    />
-                                    <InputError :message="errors.email" />
-                                </div>
-
-                                <div class="grid gap-2">
-                                    <Label for="invite-role">{{ $t('settings.members.invite.role') }}</Label>
-                                    <Select v-model="inviteRole" name="role">
-                                        <SelectTrigger class="w-full">
-                                            <SelectValue :placeholder="trans('settings.members.invite.role_placeholder')" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="member">{{ $t('settings.members.roles.member') }}</SelectItem>
-                                            <SelectItem value="admin">{{ $t('settings.members.roles.admin') }}</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <input type="hidden" name="role" :value="inviteRole" />
-                                    <InputError :message="errors.role" />
-                                </div>
-
-                                <DialogFooter>
-                                    <Button type="submit" :disabled="processing">
-                                        {{ $t('settings.members.invite.submit') }}
-                                    </Button>
-                                    <Button
-                                        variant="secondary"
-                                        type="button"
-                                        @click="inviteDialogOpen = false"
-                                    >
-                                        {{ $t('settings.members.cancel') }}
-                                    </Button>
-                                </DialogFooter>
-                            </Form>
-                        </DialogContent>
-                    </Dialog>
+                    <Button variant="secondary" @click="inviteDialogOpen = true">
+                        {{ $t('settings.members.invite.submit') }}
+                    </Button>
                 </div>
 
                 <div class="rounded-md border">
@@ -259,9 +190,24 @@ const cancelInvitationModal = ref<InstanceType<typeof ConfirmDeleteModal> | null
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem
-                                                class="text-destructive"
+                                                v-if="member.role === 'member'"
+                                                @click="changeRole(member, 'admin')"
+                                            >
+                                                <IconShield class="size-3.5" />
+                                                {{ $t('settings.members.make_admin') }}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                v-if="member.role === 'admin'"
+                                                @click="changeRole(member, 'member')"
+                                            >
+                                                <IconUser class="size-3.5" />
+                                                {{ $t('settings.members.make_member') }}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                variant="destructive"
                                                 @click="removeMemberModal?.open({ url: removeMemberRoute.url(member.id) })"
                                             >
+                                                <IconTrash class="size-3.5" />
                                                 {{ $t('settings.members.remove') }}
                                             </DropdownMenuItem>
                                         </DropdownMenuContent>
@@ -302,6 +248,8 @@ const cancelInvitationModal = ref<InstanceType<typeof ConfirmDeleteModal> | null
                     </Table>
                 </div>
             </div>
+
+            <InviteMemberDialog v-model:open="inviteDialogOpen" />
 
             <ConfirmDeleteModal
                 ref="removeMemberModal"

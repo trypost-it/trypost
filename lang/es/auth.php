@@ -10,6 +10,35 @@ return [
         'welcome_trial' => '¡Bienvenido a TryPost! Tu prueba ha comenzado.',
     ],
 
+    'legal' => 'Al continuar, aceptas nuestros <a href="https://trypost.it/terms" target="_blank">Términos de Servicio</a> y <a href="https://trypost.it/privacy" target="_blank">Política de Privacidad</a>.',
+
+    'slides' => [
+        'calendar' => [
+            'title' => 'Calendario Visual',
+            'description' => 'Planifica y programa tu contenido con un calendario intuitivo de arrastrar y soltar en todas tus cuentas sociales.',
+        ],
+        'scheduling' => [
+            'title' => 'Programación Inteligente',
+            'description' => 'Programa posts en LinkedIn, X, Instagram, TikTok, YouTube y más — todo desde un solo lugar.',
+        ],
+        'media' => [
+            'title' => 'Contenido Multimedia',
+            'description' => 'Publica imágenes, carruseles, historias y reels. Cada plataforma recibe el formato correcto automáticamente.',
+        ],
+        'video' => [
+            'title' => 'Publicación de Video',
+            'description' => 'Sube videos una vez y publícalos en TikTok, YouTube Shorts, Instagram Reels y Facebook Reels.',
+        ],
+        'team' => [
+            'title' => 'Workspaces en Equipo',
+            'description' => 'Invita a tu equipo, asigna roles y gestiona múltiples marcas en workspaces separados.',
+        ],
+        'hashtags' => [
+            'title' => 'Grupos de Hashtags',
+            'description' => 'Guarda colecciones de hashtags y agrégalos a tus posts con un clic. Organiza con etiquetas y filtros.',
+        ],
+    ],
+
     'login' => [
         'title' => 'Inicia sesión en tu cuenta',
         'description' => 'Introduce tu correo y contraseña para iniciar sesión',
@@ -31,6 +60,8 @@ return [
         'name_placeholder' => 'Nombre completo',
         'email' => 'Correo electrónico',
         'password' => 'Contraseña',
+        'show_password' => 'Mostrar contraseña',
+        'hide_password' => 'Ocultar contraseña',
         'submit' => 'Crear cuenta',
         'has_account' => '¿Ya tienes una cuenta?',
         'log_in' => 'Iniciar sesión',

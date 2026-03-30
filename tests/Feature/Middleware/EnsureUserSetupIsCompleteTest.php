@@ -29,7 +29,7 @@ test('user on role step is redirected to onboarding step 1', function () {
 
     $this->actingAs($user)
         ->get(route('app.calendar'))
-        ->assertRedirect(route('app.onboarding.step1'));
+        ->assertRedirect(route('app.onboarding.role'));
 });
 
 test('user on connections step is redirected to onboarding step 2', function () {
@@ -42,7 +42,7 @@ test('user on connections step is redirected to onboarding step 2', function () 
 
     $this->actingAs($user)
         ->get(route('app.calendar'))
-        ->assertRedirect(route('app.onboarding.step2'));
+        ->assertRedirect(route('app.onboarding.connect'));
 });
 
 test('user on subscription step is redirected to onboarding step 2', function () {
@@ -55,14 +55,14 @@ test('user on subscription step is redirected to onboarding step 2', function ()
 
     $this->actingAs($user)
         ->get(route('app.calendar'))
-        ->assertRedirect(route('app.onboarding.step2'));
+        ->assertRedirect(route('app.onboarding.connect'));
 });
 
 test('user on role step can access onboarding step 1', function () {
     $user = User::factory()->create(['setup' => Setup::Role]);
 
     $this->actingAs($user)
-        ->get(route('app.onboarding.step1'))
+        ->get(route('app.onboarding.role'))
         ->assertOk();
 });
 
@@ -70,7 +70,7 @@ test('user on connections step can access onboarding step 2', function () {
     $user = User::factory()->create(['setup' => Setup::Connections]);
 
     $this->actingAs($user)
-        ->get(route('app.onboarding.step2'))
+        ->get(route('app.onboarding.connect'))
         ->assertOk();
 });
 

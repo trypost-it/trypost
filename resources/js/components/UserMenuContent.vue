@@ -42,7 +42,7 @@ defineProps<Props>();
 
 const page = usePage();
 const languages = computed<Language[]>(() => page.props.languages as Language[]);
-const currentLanguage = computed(() => languages.value?.find((l: Language) => l.code === page.props.auth.user?.locale));
+const currentLanguage = computed(() => languages.value?.find((l: Language) => l.code === page.props.locale));
 
 const { appearance, updateAppearance } = useAppearance();
 

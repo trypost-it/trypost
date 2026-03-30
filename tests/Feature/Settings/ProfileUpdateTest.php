@@ -54,7 +54,7 @@ test('email verification status is unchanged when the email address is unchanged
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
-test('user can update their locale', function () {
+test('user can update their locale via cookie', function () {
     $user = User::factory()->create();
 
     $response = $this
@@ -68,7 +68,7 @@ test('user can update their locale', function () {
         ->assertSessionHasNoErrors()
         ->assertRedirect(route('app.posts.index'));
 
-    expect($user->refresh()->locale)->toBe('es');
+    $response->assertCookieNotExpired('locale');
 });
 
 test('user cannot update locale with invalid code', function () {

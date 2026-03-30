@@ -1,27 +1,36 @@
 <script setup lang="ts">
-import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { IconKey, IconCopy, IconTrash, IconPlus } from '@tabler/icons-vue';
-import { computed, ref, watch } from 'vue';
+import { Head, usePage } from '@inertiajs/vue3';
+import { IconCopy, IconDots, IconKey, IconTrash } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
+import { computed, ref } from 'vue';
 
+import ApiKeyController from '@/actions/App/Http/Controllers/App/ApiKeyController';
+import CreateApiKeyDialog from '@/components/api-keys/CreateApiKeyDialog.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
-import DatePicker from '@/components/DatePicker.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import date from '@/date';
+import { copyToClipboard } from '@/lib/utils';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { index as apiKeysIndex, store as storeApiKey, destroy as destroyApiKey } from '@/routes/app/api-keys';
+import { index as apiKeysIndex } from '@/routes/app/api-keys';
 import { type BreadcrumbItem } from '@/types';
 
 interface ApiToken {
@@ -34,72 +43,21 @@ interface ApiToken {
     created_at: string;
 }
 
-interface Workspace {
-    id: string;
-    name: string;
-}
-
 interface Props {
-    workspace: Workspace;
     apiTokens: ApiToken[];
 }
 
 defineProps<Props>();
 
 const page = usePage();
+const newToken = computed(() => (page.props.flash as Record<string, unknown>)?.plainToken as string | undefined);
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     { title: 'API Keys', href: apiKeysIndex.url() },
 ]);
 
-const isCreateDialogOpen = ref(false);
-const isTokenDialogOpen = ref(false);
-const plainToken = ref<string | null>(null);
-const copied = ref(false);
-const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
-
-const form = useForm({
-    name: '',
-    expires_at: '',
-});
-
-watch(() => page.props.flash, (flash: Record<string, unknown> | undefined) => {
-    if (flash?.plainToken) {
-        plainToken.value = flash.plainToken as string;
-        isCreateDialogOpen.value = false;
-        isTokenDialogOpen.value = true;
-    }
-}, { deep: true });
-
-const submitCreate = () => {
-    form.post(storeApiKey.url(), {
-        preserveScroll: true,
-        onSuccess: () => {
-            form.reset();
-        },
-    });
-};
-
-const copyToken = async () => {
-    if (!plainToken.value) return;
-    await navigator.clipboard.writeText(plainToken.value);
-    copied.value = true;
-    setTimeout(() => {
-        copied.value = false;
-    }, 2000);
-};
-
-const handleDelete = (tokenId: string) => {
-    deleteModal.value?.open({
-        url: destroyApiKey.url(tokenId),
-    });
-};
-
-const closeTokenDialog = () => {
-    isTokenDialogOpen.value = false;
-    plainToken.value = null;
-    copied.value = false;
-};
+const createDialogOpen = ref(false);
+const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 </script>
 
 <template>
@@ -115,154 +73,108 @@ const closeTokenDialog = () => {
                         title="API Keys"
                         description="Manage API keys for programmatic access to your workspace."
                     />
-                    <Button @click="isCreateDialogOpen = true">
-                        <IconPlus class="mr-2 h-4 w-4" />
+                    <Button @click="createDialogOpen = true">
                         Create API Key
                     </Button>
                 </div>
 
-                <div v-if="apiTokens.length === 0" class="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
-                    <div class="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
-                        <IconKey class="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <h3 class="text-lg font-semibold mb-2">No API keys yet</h3>
-                    <p class="text-muted-foreground mb-4 max-w-sm text-center">
-                        Create an API key to access your workspace programmatically.
+                <!-- New token alert -->
+                <div
+                    v-if="newToken"
+                    class="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950"
+                >
+                    <p class="mb-2 text-sm font-medium text-green-800 dark:text-green-200">
+                        Your new API key has been created. Copy it now — you won't be able to see it again.
                     </p>
-                    <Button @click="isCreateDialogOpen = true">
-                        <IconPlus class="mr-2 h-4 w-4" />
-                        Create your first API key
-                    </Button>
-                </div>
-
-                <div v-else class="space-y-3">
-                    <div
-                        v-for="token in apiTokens"
-                        :key="token.id"
-                        class="flex items-center justify-between rounded-lg border p-4"
-                    >
-                        <div class="flex items-center gap-4 min-w-0">
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
-                                <IconKey class="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-2">
-                                    <p class="font-medium truncate">{{ token.name }}</p>
-                                    <Badge
-                                        :variant="token.status === 'active' ? 'default' : 'destructive'"
-                                        class="shrink-0"
-                                    >
-                                        {{ token.status }}
-                                    </Badge>
-                                </div>
-                                <p class="text-sm text-muted-foreground font-mono">
-                                    {{ token.key_hint }}
-                                </p>
-                                <div class="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                                    <span>Created {{ date.diffForHumans(token.created_at) }}</span>
-                                    <span v-if="token.last_used_at">
-                                        Last used {{ date.diffForHumans(token.last_used_at) }}
-                                    </span>
-                                    <span v-else>Never used</span>
-                                    <span v-if="token.expires_at">
-                                        Expires {{ date.diffForHumans(token.expires_at) }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            class="shrink-0"
-                            @click="handleDelete(token.id)"
-                        >
-                            <IconTrash class="h-4 w-4 text-red-500" />
+                    <div class="flex items-center gap-2">
+                        <code class="flex-1 rounded bg-white px-3 py-2 font-mono text-sm dark:bg-black">
+                            {{ newToken }}
+                        </code>
+                        <Button variant="outline" size="sm" @click="copyToClipboard(newToken!, 'API key copied to clipboard')">
+                            Copy
                         </Button>
                     </div>
                 </div>
+
+                <div v-if="apiTokens.length > 0" class="rounded-md border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Key</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Expires</TableHead>
+                                <TableHead>Last Used</TableHead>
+                                <TableHead class="w-10" />
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow v-for="token in apiTokens" :key="token.id">
+                                <TableCell class="font-medium">
+                                    {{ token.name }}
+                                </TableCell>
+                                <TableCell>
+                                    <code class="text-xs text-muted-foreground">
+                                        {{ token.key_hint }}
+                                    </code>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge :variant="token.status === 'active' ? 'default' : 'secondary'">
+                                        {{ token.status }}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell class="text-muted-foreground">
+                                    {{ token.expires_at ? date.formatDate(token.expires_at) : 'Never' }}
+                                </TableCell>
+                                <TableCell class="text-muted-foreground">
+                                    {{ token.last_used_at ? date.diffForHumans(token.last_used_at) : 'Never' }}
+                                </TableCell>
+                                <TableCell>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger as-child>
+                                            <Button variant="ghost" size="icon" class="h-8 w-8">
+                                                <IconDots class="size-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                @click="copyToClipboard(token.id, 'API Key ID copied to clipboard')"
+                                            >
+                                                <IconCopy class="size-4" />
+                                                Copy API Key ID
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                variant="destructive"
+                                                @click="confirmDeleteModal?.open({ url: ApiKeyController.destroy.url(token), confirmText: token.name })"
+                                            >
+                                                <IconTrash class="size-4" />
+                                                Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </div>
+
+                <EmptyState
+                    v-else-if="!newToken"
+                    :icon="IconKey"
+                    title="No API keys yet"
+                    description="Create an API key to access your workspace programmatically."
+                />
             </div>
         </SettingsLayout>
     </AppLayout>
 
-    <Dialog :open="isCreateDialogOpen" @update:open="isCreateDialogOpen = $event">
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Create API Key</DialogTitle>
-                <DialogDescription>
-                    Create a new API key for programmatic access to your workspace.
-                </DialogDescription>
-            </DialogHeader>
-            <form @submit.prevent="submitCreate" class="space-y-4">
-                <div class="space-y-2">
-                    <Label for="token-name">Name</Label>
-                    <Input
-                        id="token-name"
-                        v-model="form.name"
-                        placeholder="e.g. Production API Key"
-                        :class="{ 'border-red-500': form.errors.name }"
-                    />
-                    <p v-if="form.errors.name" class="text-sm text-red-500">
-                        {{ form.errors.name }}
-                    </p>
-                </div>
-                <div class="space-y-2">
-                    <Label>Expiration date (optional)</Label>
-                    <DatePicker
-                        name="token-expires"
-                        v-model="form.expires_at"
-                        :show-time="false"
-                        placeholder="No expiration"
-                    />
-                    <p v-if="form.errors.expires_at" class="text-sm text-red-500">
-                        {{ form.errors.expires_at }}
-                    </p>
-                </div>
-                <DialogFooter>
-                    <Button type="button" variant="outline" @click="isCreateDialogOpen = false">
-                        Cancel
-                    </Button>
-                    <Button type="submit" :disabled="form.processing">
-                        Create
-                    </Button>
-                </DialogFooter>
-            </form>
-        </DialogContent>
-    </Dialog>
-
-    <Dialog :open="isTokenDialogOpen" @update:open="closeTokenDialog">
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>API Key Created</DialogTitle>
-                <DialogDescription>
-                    Copy your API key now. You will not be able to see it again.
-                </DialogDescription>
-            </DialogHeader>
-            <div class="space-y-4">
-                <div class="flex items-center gap-2">
-                    <Input
-                        :model-value="plainToken ?? ''"
-                        readonly
-                        class="font-mono text-sm"
-                    />
-                    <Button variant="outline" size="icon" class="shrink-0" @click="copyToken">
-                        <IconCopy class="h-4 w-4" />
-                    </Button>
-                </div>
-                <p v-if="copied" class="text-sm text-green-600">Copied to clipboard!</p>
-            </div>
-            <DialogFooter>
-                <Button @click="closeTokenDialog">
-                    Done
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
+    <CreateApiKeyDialog v-model:open="createDialogOpen" />
 
     <ConfirmDeleteModal
-        ref="deleteModal"
-        title="Delete API Key"
+        ref="confirmDeleteModal"
+        title="Delete API key"
         description="Are you sure you want to delete this API key? Any applications using this key will lose access immediately."
-        action="Delete"
-        cancel="Cancel"
+        action="Delete API key"
     />
 </template>

@@ -52,7 +52,6 @@ class RegisteredUserController extends Controller
                 'email' => $request->email,
                 'password' => $request->password,
                 'setup' => $isInviteRegistration ? Setup::Completed : Setup::Role,
-                'locale' => config('languages.default'),
                 'email_verified_at' => $isInviteRegistration ? now() : null,
             ]);
 
@@ -81,6 +80,6 @@ class RegisteredUserController extends Controller
             return redirect($redirect);
         }
 
-        return redirect()->route('app.onboarding.step1');
+        return redirect()->route('app.onboarding.role');
     }
 }

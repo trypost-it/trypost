@@ -4,6 +4,23 @@ return [
     'title' => 'Suscripción',
     'description' => 'Administra tu suscripción y método de pago',
 
+    'subscribe' => [
+        'page_title' => 'Comienza tu prueba gratuita',
+        'title' => 'Comienza tu prueba gratuita',
+        'description' => ':days días gratis. Sin tarjeta de crédito para empezar.',
+        'start_trial' => 'Comenzar prueba de :days días',
+        'cancel_anytime' => 'Cancela en cualquier momento. Sin preguntas.',
+        'switch_workspace' => 'Cambiar workspace',
+        'features' => [
+            'calendar' => 'Calendario visual con arrastrar y soltar',
+            'scheduling' => 'Programación ilimitada de posts',
+            'media' => 'Imágenes, carruseles e historias',
+            'video' => 'Publicación de videos en todas las plataformas',
+            'team' => 'Colaboración en equipo y workspaces',
+            'hashtags' => 'Grupos de hashtags y etiquetas',
+        ],
+    ],
+
     'trial' => [
         'title' => 'Periodo de prueba activo',
         'description' => 'Tu prueba termina el :date. Después, tu suscripción se cobrará automáticamente.',

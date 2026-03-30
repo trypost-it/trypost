@@ -47,10 +47,11 @@ Route::group(
 
         // Onboarding routes
         Route::middleware(['auth', 'verified'])->prefix('onboarding')->group(function () {
-            Route::get('step1', [OnboardingController::class, 'step1'])->name('app.onboarding.step1');
-            Route::post('step1', [OnboardingController::class, 'storeStep1'])->name('app.onboarding.step1.store');
-            Route::get('step2', [OnboardingController::class, 'step2'])->name('app.onboarding.step2');
-            Route::post('step2', [OnboardingController::class, 'storeStep2'])->name('app.onboarding.step2.store');
+            Route::get('/', fn () => redirect()->route('app.onboarding.role'));
+            Route::get('role', [OnboardingController::class, 'step1'])->name('app.onboarding.role');
+            Route::post('role', [OnboardingController::class, 'storeStep1'])->name('app.onboarding.role.store');
+            Route::get('connect', [OnboardingController::class, 'step2'])->name('app.onboarding.connect');
+            Route::post('connect', [OnboardingController::class, 'storeStep2'])->name('app.onboarding.connect.store');
             Route::get('complete', [OnboardingController::class, 'complete'])->name('app.onboarding.complete');
         });
 
@@ -140,6 +141,7 @@ Route::group(
             Route::post('settings/members/invites', [WorkspaceInviteController::class, 'store'])->name('app.invites.store');
             Route::delete('settings/members/invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('app.invites.destroy');
             Route::delete('settings/members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('app.members.remove');
+            Route::put('settings/members/{user}/role', [WorkspaceInviteController::class, 'updateRole'])->name('app.members.update-role');
 
             // Hashtags
             Route::get('hashtags', [WorkspaceHashtagController::class, 'index'])->name('app.hashtags.index');

@@ -22,6 +22,35 @@ return [
         'welcome_trial' => 'Bem-vindo ao TryPost! Seu período de teste começou.',
     ],
 
+    'legal' => 'Ao continuar, você concorda com nossos <a href="https://trypost.it/terms" target="_blank">Termos de Serviço</a> e <a href="https://trypost.it/privacy" target="_blank">Política de Privacidade</a>.',
+
+    'slides' => [
+        'calendar' => [
+            'title' => 'Calendário Visual',
+            'description' => 'Planeje e agende seu conteúdo com um calendário intuitivo de arrastar e soltar em todas as suas contas sociais.',
+        ],
+        'scheduling' => [
+            'title' => 'Agendamento Inteligente',
+            'description' => 'Agende posts no LinkedIn, X, Instagram, TikTok, YouTube e mais — tudo em um só lugar.',
+        ],
+        'media' => [
+            'title' => 'Mídia Rica',
+            'description' => 'Publique imagens, carrosséis, stories e reels. Cada plataforma recebe o formato correto automaticamente.',
+        ],
+        'video' => [
+            'title' => 'Publicação de Vídeo',
+            'description' => 'Envie vídeos uma vez e publique no TikTok, YouTube Shorts, Instagram Reels e Facebook Reels.',
+        ],
+        'team' => [
+            'title' => 'Workspaces em Equipe',
+            'description' => 'Convide sua equipe, atribua funções e gerencie múltiplas marcas em workspaces separados.',
+        ],
+        'hashtags' => [
+            'title' => 'Grupos de Hashtags',
+            'description' => 'Salve coleções de hashtags e adicione aos posts com um clique. Organize com etiquetas e filtros.',
+        ],
+    ],
+
     'login' => [
         'title' => 'Entrar na sua conta',
         'description' => 'Digite seu email e senha abaixo para entrar',
@@ -43,6 +72,8 @@ return [
         'name_placeholder' => 'Nome completo',
         'email' => 'Endereço de email',
         'password' => 'Senha',
+        'show_password' => 'Mostrar senha',
+        'hide_password' => 'Esconder senha',
         'submit' => 'Criar conta',
         'has_account' => 'Já tem uma conta?',
         'log_in' => 'Entrar',

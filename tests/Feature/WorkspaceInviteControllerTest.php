@@ -157,3 +157,73 @@ test('remove member fails for owner', function () {
 
     $response->assertSessionHasErrors('member');
 });
+
+// Update role tests
+test('update role requires authentication', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
+
+    $response = $this->put(route('app.members.update-role', $member), [
+        'role' => WorkspaceRole::Admin->value,
+    ]);
+
+    $response->assertRedirect(route('login'));
+});
+
+test('update role changes member to admin', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
+
+    $response = $this->actingAs($this->user)->put(route('app.members.update-role', $member), [
+        'role' => WorkspaceRole::Admin->value,
+    ]);
+
+    $response->assertRedirect();
+    expect($this->workspace->members()->where('user_id', $member->id)->first()->pivot->role)->toBe(WorkspaceRole::Admin->value);
+});
+
+test('update role changes admin to member', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Admin->value]);
+
+    $response = $this->actingAs($this->user)->put(route('app.members.update-role', $member), [
+        'role' => WorkspaceRole::Member->value,
+    ]);
+
+    $response->assertRedirect();
+    expect($this->workspace->members()->where('user_id', $member->id)->first()->pivot->role)->toBe(WorkspaceRole::Member->value);
+});
+
+test('update role fails for workspace owner', function () {
+    $response = $this->actingAs($this->user)->put(route('app.members.update-role', $this->user), [
+        'role' => WorkspaceRole::Member->value,
+    ]);
+
+    $response->assertSessionHasErrors('role');
+});
+
+test('update role fails with invalid role', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
+
+    $response = $this->actingAs($this->user)->put(route('app.members.update-role', $member), [
+        'role' => 'invalid',
+    ]);
+
+    $response->assertSessionHasErrors('role');
+});
+
+test('update role requires authorization', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
+
+    $nonAdmin = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($nonAdmin->id, ['role' => WorkspaceRole::Member->value]);
+    $nonAdmin->update(['current_workspace_id' => $this->workspace->id]);
+
+    $response = $this->actingAs($nonAdmin)->put(route('app.members.update-role', $member), [
+        'role' => WorkspaceRole::Admin->value,
+    ]);
+
+    $response->assertForbidden();
+});

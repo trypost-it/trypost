@@ -7,6 +7,7 @@ namespace App\Http\Controllers\App;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\User\Persona;
 use App\Enums\User\Setup;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -16,8 +17,13 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class OnboardingController extends Controller
 {
-    public function step1(): Response
+    public function step1(Request $request): Response|RedirectResponse
     {
+        $redirect = $this->enforceStep($request->user(), Setup::Role);
+        if ($redirect) {
+            return $redirect;
+        }
+
         return Inertia::render('onboarding/Step1', [
             'personas' => Persona::toSelectArray(),
         ]);
@@ -34,11 +40,16 @@ class OnboardingController extends Controller
             'setup' => Setup::Connections,
         ]);
 
-        return redirect()->route('app.onboarding.step2');
+        return redirect()->route('app.onboarding.connect');
     }
 
-    public function step2(Request $request): Response
+    public function step2(Request $request): Response|RedirectResponse
     {
+        $redirect = $this->enforceStep($request->user(), Setup::Connections);
+        if ($redirect) {
+            return $redirect;
+        }
+
         $user = $request->user();
         $workspace = $user->currentWorkspace;
 
@@ -88,7 +99,7 @@ class OnboardingController extends Controller
 
         $checkoutSession = $subscription->checkout([
             'success_url' => route('app.onboarding.complete').'?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('app.onboarding.step2'),
+            'cancel_url' => route('app.onboarding.connect'),
         ]);
 
         return Inertia::location($checkoutSession->url);
@@ -106,5 +117,23 @@ class OnboardingController extends Controller
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('app.calendar');
+    }
+
+    private function enforceStep(User $user, Setup $expectedStep): ?RedirectResponse
+    {
+        if ($user->setup === $expectedStep) {
+            return null;
+        }
+
+        if ($user->setup === Setup::Completed) {
+            return redirect()->route('app.calendar');
+        }
+
+        return match ($user->setup) {
+            Setup::Role => redirect()->route('app.onboarding.role'),
+            Setup::Connections => redirect()->route('app.onboarding.connect'),
+            Setup::Subscription => redirect()->route('app.subscribe'),
+            default => redirect()->route('app.onboarding.role'),
+        };
     }
 }

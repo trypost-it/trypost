@@ -1,100 +1,131 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
-import { IconSparkles, IconCalendar, IconUsers, IconPhoto, IconVideo, IconClock, IconChartBar } from '@tabler/icons-vue';
-import { ref } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { IconCheck } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
+import { computed, ref } from 'vue';
 
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { checkout } from '@/routes/app/billing';
+import { index as workspacesIndex } from '@/routes/app/workspaces';
 
 interface Props {
     trialDays: number;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const processing = ref(false);
+const displayDays = computed(() => props.trialDays - 1);
 
-function subscribe() {
+const subscribe = () => {
     processing.value = true;
     router.post(checkout.url());
-}
+};
 
 const platforms = [
-    { name: 'LinkedIn Profile', icon: '/images/accounts/linkedin.png' },
-    { name: 'LinkedIn Page', icon: '/images/accounts/linkedin.png' },
-    { name: 'X (Twitter)', icon: '/images/accounts/x.png' },
-    { name: 'TikTok', icon: '/images/accounts/tiktok.png' },
-    { name: 'YouTube', icon: '/images/accounts/youtube.png' },
+    { name: 'LinkedIn', icon: '/images/accounts/linkedin.png' },
+    { name: 'X', icon: '/images/accounts/x.png' },
     { name: 'Instagram', icon: '/images/accounts/instagram.png' },
     { name: 'Facebook', icon: '/images/accounts/facebook.png' },
+    { name: 'TikTok', icon: '/images/accounts/tiktok.png' },
+    { name: 'YouTube', icon: '/images/accounts/youtube.png' },
     { name: 'Threads', icon: '/images/accounts/threads.png' },
+    { name: 'Pinterest', icon: '/images/accounts/pinterest.png' },
+    { name: 'Bluesky', icon: '/images/accounts/bluesky.png' },
+    { name: 'Mastodon', icon: '/images/accounts/mastodon.png' },
 ];
 
-const features = [
-    { icon: IconCalendar, title: 'Visual Calendar', description: 'Plan and schedule your content with an intuitive drag-and-drop calendar' },
-    { icon: IconClock, title: 'Unlimited Scheduling', description: 'Schedule as many posts as you want, whenever you want' },
-    { icon: IconPhoto, title: 'Images & Carousels', description: 'Share single images or create engaging carousel posts' },
-    { icon: IconVideo, title: 'Video Publishing', description: 'Upload and publish videos across all your social accounts' },
-    { icon: IconUsers, title: 'Team Collaboration', description: 'Invite your team members and work together seamlessly' },
-    { icon: IconChartBar, title: 'Analytics', description: 'Track your post performance and engagement metrics' },
+const featureKeys = [
+    'calendar',
+    'scheduling',
+    'media',
+    'video',
+    'team',
+    'hashtags',
 ];
 </script>
 
 <template>
-    <Head title="Start your free trial" />
+    <Head :title="$t('billing.subscribe.page_title')" />
 
-    <div class="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
-        <div class="container mx-auto px-4 py-12 max-w-4xl">
-            <!-- Header -->
-            <div class="text-center mb-12">
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 mb-6">
-                    <IconSparkles class="w-10 h-10 text-primary" />
-                </div>
-                <h1 class="text-4xl font-bold tracking-tight mb-3">Welcome to TryPost!</h1>
-                <p class="text-xl text-muted-foreground">
-                    Start your free {{ trialDays }}-day trial and take control of your social media
-                </p>
+    <div class="flex min-h-screen items-center justify-center bg-background px-4">
+        <div class="w-full max-w-md">
+            <!-- Logo -->
+            <div class="mb-8 text-center">
+                <img
+                    src="/images/trypost/logo-light.png"
+                    alt="TryPost"
+                    class="mx-auto h-8 w-auto dark:hidden"
+                />
+                <img
+                    src="/images/trypost/logo-dark.png"
+                    alt="TryPost"
+                    class="mx-auto hidden h-8 w-auto dark:block"
+                />
             </div>
 
-            <!-- Platforms -->
-            <div class="mb-12">
-                <h2 class="text-center text-sm font-medium text-muted-foreground uppercase tracking-wider mb-6">
-                    Connect all your accounts
-                </h2>
-                <div class="flex flex-wrap justify-center gap-3">
-                    <div
+            <!-- Card -->
+            <div class="rounded-xl border bg-card p-8">
+                <div class="mb-6 text-center">
+                    <h1 class="text-2xl font-semibold tracking-tight">
+                        {{ $t('billing.subscribe.title') }}
+                    </h1>
+                    <p class="mt-2 text-sm text-muted-foreground">
+                        {{ trans('billing.subscribe.description', { days: displayDays }) }}
+                    </p>
+                </div>
+
+                <!-- Platforms -->
+                <div class="mb-6 flex flex-wrap justify-center gap-2">
+                    <img
                         v-for="platform in platforms"
                         :key="platform.name"
-                        class="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-card border shadow-sm hover:shadow-md transition-shadow"
+                        :src="platform.icon"
+                        :alt="platform.name"
+                        :title="platform.name"
+                        class="size-10 rounded-full border bg-background p-0.5"
+                    />
+                </div>
+
+                <Separator class="mb-6" />
+
+                <!-- Features -->
+                <ul class="mb-6 space-y-3">
+                    <li
+                        v-for="key in featureKeys"
+                        :key="key"
+                        class="flex items-center gap-3 text-sm"
                     >
-                        <img :src="platform.icon" :alt="platform.name" class="w-5 h-5 rounded-full object-cover" />
-                        <span class="text-sm font-medium">{{ platform.name }}</span>
-                    </div>
-                </div>
-            </div>
+                        <div class="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                            <IconCheck class="size-3 text-primary" />
+                        </div>
+                        {{ $t(`billing.subscribe.features.${key}`) }}
+                    </li>
+                </ul>
 
-            <!-- Features Grid -->
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <div
-                    v-for="feature in features"
-                    :key="feature.title"
-                    class="p-5 rounded-xl bg-card border hover:border-primary/50 hover:shadow-lg transition-all"
+                <!-- CTA -->
+                <Button
+                    class="w-full"
+                    size="lg"
+                    :disabled="processing"
+                    @click="subscribe"
                 >
-                    <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                        <component :is="feature.icon" class="w-5 h-5 text-primary" />
-                    </div>
-                    <h3 class="font-semibold mb-1">{{ feature.title }}</h3>
-                    <p class="text-sm text-muted-foreground">{{ feature.description }}</p>
-                </div>
-            </div>
-
-            <!-- CTA -->
-            <div class="text-center">
-                <Button @click="subscribe" :disabled="processing" size="lg" class="px-8">
-                    Start my free trial
+                    {{ trans('billing.subscribe.start_trial', { days: displayDays }) }}
                 </Button>
             </div>
 
+            <div class="mt-4 space-y-1 text-center">
+                <p class="text-xs text-muted-foreground">
+                    {{ $t('billing.subscribe.cancel_anytime') }}
+                </p>
+                <Link
+                    :href="workspacesIndex.url()"
+                    class="inline-block text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
+                >
+                    {{ $t('billing.subscribe.switch_workspace') }}
+                </Link>
+            </div>
         </div>
     </div>
 </template>

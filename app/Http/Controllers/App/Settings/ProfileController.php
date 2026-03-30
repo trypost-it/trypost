@@ -77,14 +77,12 @@ class ProfileController extends Controller
             'locale' => ['required', 'string', 'in:'.implode(',', array_keys(config('languages.available')))],
         ]);
 
-        $request->user()->update([
-            'locale' => $request->locale,
-        ]);
-
         session()->flash('flash.banner', __('settings.flash.language_updated'));
         session()->flash('flash.bannerStyle', 'success');
 
-        return back();
+        return back()->withCookie(
+            cookie()->forever('locale', $request->locale, '/', config('session.domain'))
+        );
     }
 
     public function destroy(ProfileDeleteRequest $request): RedirectResponse

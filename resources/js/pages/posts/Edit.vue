@@ -155,7 +155,6 @@ const props = defineProps<Props>();
 
 const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
     { title: trans('posts.title'), href: postsIndex.url() },
-    { title: trans('posts.edit.title'), href: '#' },
 ]);
 
 // Reactive state for real-time updates

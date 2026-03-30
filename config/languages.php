@@ -18,7 +18,7 @@ return [
     'available' => [
         'en' => 'English',
         'es' => 'Español',
-        'pt-br' => 'Português',
+        'pt-BR' => 'Português',
     ],
 
     /*

@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://docs.trypost.it">📚 Documentation</a> •
+  <a href="https://trypost.it/docs">📚 Documentation</a> •
   <a href="https://github.com/orgs/trypost-it/projects/1">🗺️ Roadmap</a> •
   <a href="https://github.com/trypost-it/trypost/discussions">💬 Community</a>
 </p>
@@ -30,23 +30,23 @@
 
 Tired of paying expensive monthly fees for social media scheduling tools? Want full control over your data? TryPost is the solution.
 
-| | |
-|---|---|
-| 🔓 **100% Open Source** | Inspect the code, contribute, make it yours |
-| 🏠 **Self-Hosted** | Your data stays on your servers |
-| ♾️ **No Limits** | Schedule unlimited posts, connect unlimited accounts |
-| 🔒 **Privacy First** | No tracking, no analytics, no data selling |
+|                         |                                                      |
+| ----------------------- | ---------------------------------------------------- |
+| 🔓 **100% Open Source** | Inspect the code, contribute, make it yours          |
+| 🏠 **Self-Hosted**      | Your data stays on your servers                      |
+| ♾️ **No Limits**        | Schedule unlimited posts, connect unlimited accounts |
+| 🔒 **Privacy First**    | No tracking, no analytics, no data selling           |
 
 ## ✨ Features
 
-| | |
-|---|---|
-| 📅 **Visual Calendar** | Drag and drop posts across your content calendar |
-| ✍️ **Post Composer** | Create and preview posts for multiple platforms at once |
-| 🖼️ **Media Library** | Upload images and videos with automatic optimization |
-| 👥 **Team Collaboration** | Invite team members with role-based permissions |
-| 🏢 **Workspaces** | Manage multiple brands or clients separately |
-| 👀 **Multi-Platform Preview** | See exactly how your post will look on each platform |
+|                               |                                                         |
+| ----------------------------- | ------------------------------------------------------- |
+| 📅 **Visual Calendar**        | Drag and drop posts across your content calendar        |
+| ✍️ **Post Composer**          | Create and preview posts for multiple platforms at once |
+| 🖼️ **Media Library**          | Upload images and videos with automatic optimization    |
+| 👥 **Team Collaboration**     | Invite team members with role-based permissions         |
+| 🏢 **Workspaces**             | Manage multiple brands or clients separately            |
+| 👀 **Multi-Platform Preview** | See exactly how your post will look on each platform    |
 
 ## 🌐 Supported Platforms
 
@@ -71,12 +71,12 @@ Tired of paying expensive monthly fees for social media scheduling tools? Want f
 
 Get TryPost running in minutes:
 
-| | |
-|---|---|
-| 📖 [Installation Guide](https://docs.trypost.it/getting-started/installation) | Step-by-step setup |
-| 🐳 [Docker Setup](https://docs.trypost.it/self-hosting/docker) | Run with Laravel Sail |
-| ⚙️ [Configuration](https://docs.trypost.it/getting-started/configuration) | Environment setup |
-| 🔗 [Platform Setup](https://docs.trypost.it/platforms/) | Connect your social accounts |
+|                                                                               |                              |
+| ----------------------------------------------------------------------------- | ---------------------------- |
+| 📖 [Installation Guide](https://trypost.it/docs/getting-started/installation) | Step-by-step setup           |
+| 🐳 [Docker Setup](https://trypost.it/docs/self-hosting/docker)                | Run with Laravel Sail        |
+| ⚙️ [Configuration](https://trypost.it/docs/getting-started/configuration)     | Environment setup            |
+| 🔗 [Platform Setup](https://trypost.it/docs/platforms/)                       | Connect your social accounts |
 
 ## 🤝 Contributing
 

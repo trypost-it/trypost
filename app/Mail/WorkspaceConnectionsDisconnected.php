@@ -25,7 +25,7 @@ class WorkspaceConnectionsDisconnected extends Mailable implements ShouldQueue
         public Workspace $workspace,
         public Collection $disconnectedAccounts
     ) {
-        $this->locale = $this->workspace->owner?->locale ?? 'en';
+        $this->locale = config('app.locale');
     }
 
     public function envelope(): Envelope

@@ -179,7 +179,7 @@ class SocialController extends Controller
 
     protected function getRedirectRoute(): string
     {
-        return session('social_connect_onboarding', false) ? 'onboarding.step2' : 'accounts';
+        return session('social_connect_onboarding', false) ? 'onboarding.connect' : 'accounts';
     }
 
     /**

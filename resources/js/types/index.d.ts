@@ -18,6 +18,7 @@ export interface NavItem {
     isActive?: boolean;
     activePattern?: string;
     exact?: boolean;
+    excludeActive?: string[];
 }
 
 export interface SharedData {

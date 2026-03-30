@@ -2,7 +2,6 @@
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     IconAffiliate,
-    IconBrandDiscord,
     IconCalendar,
     IconChevronRight,
     IconClock,
@@ -75,7 +74,7 @@ const postsNavItems = computed<NavItem[]>(() => [
         title: trans('sidebar.posts.all'),
         href: postsIndex.url(),
         icon: IconFileText,
-        exact: true,
+        excludeActive: [postsIndex.url('scheduled'), postsIndex.url('published'), postsIndex.url('draft')],
     },
     {
         title: trans('sidebar.posts.scheduled'),
@@ -198,17 +197,6 @@ const switchWorkspace = (workspaceId: string) => {
 
         <SidebarFooter>
             <SidebarMenu>
-                <SidebarMenuItem v-if="currentWorkspace">
-                    <NotificationBell />
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton as-child tooltip="Discord">
-                        <a href="https://trypost.it/discord" target="_blank" rel="noopener noreferrer">
-                            <IconBrandDiscord />
-                            <span>Discord</span>
-                        </a>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton as-child tooltip="Feedback">
                         <a href="https://github.com/trypost-it/trypost/discussions" target="_blank"
@@ -227,7 +215,12 @@ const switchWorkspace = (workspaceId: string) => {
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>
-            <NavUser />
+            <div class="flex items-center gap-1">
+                <div class="flex-1">
+                    <NavUser />
+                </div>
+                <NotificationBell v-if="currentWorkspace" />
+            </div>
         </SidebarFooter>
     </Sidebar>
 </template>

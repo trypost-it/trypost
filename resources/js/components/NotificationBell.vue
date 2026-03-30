@@ -12,9 +12,6 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import {
-    SidebarMenuButton,
-} from '@/components/ui/sidebar';
-import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
@@ -117,16 +114,15 @@ onMounted(() => {
 </script>
 
 <template>
-    <SidebarMenuButton :tooltip="$t('sidebar.notifications')" @click="openDialog">
-        <IconBell />
-        <span>{{ $t('sidebar.notifications') }}</span>
+    <Button variant="ghost" size="icon" class="relative size-8 shrink-0" :title="$t('sidebar.notifications')" @click="openDialog">
+        <IconBell class="size-4" />
         <span
             v-if="unreadCount > 0"
-            class="ml-auto flex size-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground"
+            class="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground"
         >
             {{ unreadCount > 9 ? '9+' : unreadCount }}
         </span>
-    </SidebarMenuButton>
+    </Button>
 
     <Dialog v-model:open="dialogOpen">
         <DialogContent class="sm:max-w-lg">

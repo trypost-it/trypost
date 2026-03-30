@@ -50,6 +50,6 @@ return [
         'discord' => 'Discord',
         'share_feedback' => 'Share feedback',
         'last_updates' => 'Last Updates',
-        'docs' => 'Docs',
+        'docs' => 'Documentation',
     ],
 ];

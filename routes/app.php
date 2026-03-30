@@ -136,7 +136,7 @@ Route::group(
             Route::delete('medias/{modelId}/{media}', [MediaController::class, 'destroy'])->name('app.medias.destroy');
 
             // Members
-            Route::get('settings/members', [WorkspaceInviteController::class, 'index'])->name('app.members');
+            Route::get('settings/members', fn () => redirect()->route('app.workspace.settings'))->name('app.members');
             Route::post('settings/members/invites', [WorkspaceInviteController::class, 'store'])->name('app.invites.store');
             Route::delete('settings/members/invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('app.invites.destroy');
             Route::delete('settings/members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('app.members.remove');

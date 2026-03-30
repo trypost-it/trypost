@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\SocialAccount\Status;
 use App\Exceptions\TokenExpiredException;
 use App\Jobs\VerifyWorkspaceConnections;

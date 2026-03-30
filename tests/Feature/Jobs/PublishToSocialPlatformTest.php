@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\SocialAccount\Status as AccountStatus;
 use App\Events\PostPlatformStatusUpdated;
@@ -86,7 +88,7 @@ test('publish to social platform disconnects account on token expired', function
     Mail::fake();
 
     $publisher = Mockery::mock(LinkedInPublisher::class);
-    $publisher->shouldReceive('publish')->andThrow(new TokenExpiredException('Token expired', 401));
+    $publisher->shouldReceive('publish')->andThrow(new TokenExpiredException('Token expired', '401'));
 
     $this->app->instance(LinkedInPublisher::class, $publisher);
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\ApiToken;
 use App\Models\Workspace;
 use App\Models\WorkspaceHashtag;

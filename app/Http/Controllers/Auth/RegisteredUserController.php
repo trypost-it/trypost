@@ -6,7 +6,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\User\Setup;
 use App\Http\Controllers\Controller;
-use App\Models\Language;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Rules\Timezone;
@@ -48,14 +47,12 @@ class RegisteredUserController extends Controller
         $isInviteRegistration = str_contains($request->input('redirect', ''), '/invites/');
 
         $user = DB::transaction(function () use ($request, $isInviteRegistration) {
-            $defaultLanguage = Language::where('code', 'en')->first();
-
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => $request->password,
                 'setup' => $isInviteRegistration ? Setup::Completed : Setup::Role,
-                'language_id' => $defaultLanguage?->id,
+                'locale' => config('languages.default'),
                 'email_verified_at' => $isInviteRegistration ? now() : null,
             ]);
 

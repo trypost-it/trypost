@@ -21,7 +21,7 @@ class AuthUserResource
             'photo_url' => $user->photo_url,
             'email_verified_at' => $user->email_verified_at?->toIso8601String(),
             'current_workspace_id' => $user->current_workspace_id,
-            'language_id' => $user->language_id,
+            'locale' => $user->locale,
             'created_at' => $user->created_at->toIso8601String(),
             'updated_at' => $user->updated_at->toIso8601String(),
         ];

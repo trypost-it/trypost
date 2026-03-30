@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\Media;
 use App\Models\PostPlatform;
 use App\Models\User;
@@ -203,22 +205,20 @@ test('add media from path detects image dimensions', function () {
     unlink($tempFile);
 });
 
-test('user avatar attribute returns fallback when no media', function () {
+test('user has_photo returns false when no media', function () {
     $user = User::factory()->create(['name' => 'Test User']);
 
-    $avatar = $user->avatar;
-
-    expect($avatar['url'])->toContain('dicebear');
-    expect($avatar['media_id'])->toBeNull();
+    expect($user->has_photo)->toBeFalse();
+    expect($user->photo_url)->toBeNull();
 });
 
-test('user avatar attribute returns media url when exists', function () {
+test('user has_photo returns true when avatar exists', function () {
     $user = User::factory()->create(['name' => 'Test User']);
     $file = UploadedFile::fake()->image('avatar.jpg', 100, 100);
-    $media = $user->addMedia($file, 'avatar');
+    $user->addMedia($file, 'avatar');
 
     $user->refresh();
-    $avatar = $user->avatar;
 
-    expect($avatar['media_id'])->toBe($media->id);
+    expect($user->has_photo)->toBeTrue();
+    expect($user->photo_url)->not->toBeNull();
 });

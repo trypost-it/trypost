@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Social;
 
 use App\Exceptions\TokenExpiredException;
@@ -21,7 +23,7 @@ class MastodonPublisher
 
         // Upload media first (max 4)
         foreach ($medias->take(4) as $media) {
-            $mediaId = $this->uploadMedia($account, $instance, $media->url, $media->filename);
+            $mediaId = $this->uploadMedia($account, $instance, $media->url, $media->original_filename);
             if ($mediaId) {
                 $mediaIds[] = $mediaId;
             }

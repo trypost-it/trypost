@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\SocialAccount\Status;
 use App\Models\SocialAccount;
 use App\Models\User;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Mail\WorkspaceInvite;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvite as WorkspaceInviteModel;

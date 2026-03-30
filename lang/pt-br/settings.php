@@ -14,6 +14,8 @@ return [
 
     'profile' => [
         'title' => 'Configurações do perfil',
+        'photo_heading' => 'Foto do perfil',
+        'photo_description' => 'Envie uma foto de perfil',
         'heading' => 'Informações do perfil',
         'description' => 'Atualize seu nome e endereço de e-mail',
         'avatar' => 'Avatar',
@@ -56,20 +58,25 @@ return [
 
     'workspace' => [
         'title' => 'Configurações do workspace',
-        'heading' => 'Configurações do workspace',
-        'description' => 'Atualize o nome, logo e fuso horário do workspace',
-        'logo' => 'Logo',
+        'logo_heading' => 'Logo do workspace',
+        'logo_description' => 'Envie um logo para o workspace',
+        'heading' => 'Nome do workspace',
+        'description' => 'Atualize o nome e fuso horário do workspace',
+        'members_heading' => 'Membros',
+        'members_description' => 'Gerencie membros e convites do workspace',
         'name' => 'Nome',
         'name_placeholder' => 'Meu Workspace',
         'timezone' => 'Fuso horário',
         'save' => 'Salvar',
-        'saved' => 'Salvo.',
     ],
 
     'members' => [
         'title' => 'Membros',
         'heading' => 'Membros da equipe',
         'description' => 'Gerencie membros e convites deste workspace',
+
+        'cancel' => 'Cancelar',
+        'remove' => 'Remover',
 
         'invite' => [
             'title' => 'Convidar Membro',
@@ -79,7 +86,6 @@ return [
             'role' => 'Função',
             'role_placeholder' => 'Selecione uma função',
             'submit' => 'Enviar Convite',
-            'cancel_confirm' => 'Tem certeza que deseja cancelar este convite?',
         ],
 
         'pending' => [
@@ -92,7 +98,18 @@ return [
             'title' => 'Membros',
             'description' => 'Pessoas com acesso a este workspace',
             'empty' => 'Nenhum membro além do proprietário',
-            'remove_confirm' => 'Tem certeza que deseja remover este membro?',
+        ],
+
+        'remove_modal' => [
+            'title' => 'Remover membro',
+            'description' => 'Tem certeza que deseja remover este membro do workspace? Ele perderá acesso a todos os recursos do workspace.',
+            'action' => 'Remover membro',
+        ],
+
+        'cancel_invite_modal' => [
+            'title' => 'Cancelar convite',
+            'description' => 'Tem certeza que deseja cancelar este convite?',
+            'action' => 'Cancelar convite',
         ],
 
         'roles' => [
@@ -119,5 +136,7 @@ return [
         'workspace_updated' => 'Configurações atualizadas com sucesso!',
         'photo_updated' => 'Foto atualizada com sucesso!',
         'photo_deleted' => 'Foto removida com sucesso!',
+        'logo_updated' => 'Logo enviado com sucesso!',
+        'logo_deleted' => 'Logo removido com sucesso!',
     ],
 ];

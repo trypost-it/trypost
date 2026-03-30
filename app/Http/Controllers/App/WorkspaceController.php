@@ -86,8 +86,25 @@ class WorkspaceController extends Controller
             ->mapWithKeys(fn ($tz) => [$tz => $tz])
             ->toArray();
 
+        $members = $workspace->members()
+            ->get()
+            ->map(fn ($member) => [
+                'id' => $member->id,
+                'name' => $member->name,
+                'email' => $member->email,
+                'role' => $member->pivot->role,
+                'is_owner' => $member->id === $workspace->user_id,
+            ]);
+
+        $invitations = $workspace->invites()
+            ->select('id', 'email', 'role')
+            ->latest()
+            ->get();
+
         return Inertia::render('settings/Workspace', [
             'workspace' => $workspace,
+            'members' => $members,
+            'invitations' => $invitations,
             'timezones' => $timezones,
         ]);
     }

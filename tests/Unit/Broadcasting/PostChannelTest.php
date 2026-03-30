@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Broadcasting\PostChannel;
 use App\Models\Post;
 use App\Models\User;

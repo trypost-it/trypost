@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\User\Persona;
@@ -10,7 +12,6 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
@@ -32,7 +33,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'setup',
         'persona',
         'current_workspace_id',
-        'language_id',
+        'locale',
         'email_verified_at',
     ];
 
@@ -80,11 +81,11 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get the user's language.
+     * Get the user's locale code (e.g. 'en', 'es', 'pt-br').
      */
-    public function language(): BelongsTo
+    public function getLocaleCode(): string
     {
-        return $this->belongsTo(Language::class);
+        return $this->locale ?? 'en';
     }
 
     /**

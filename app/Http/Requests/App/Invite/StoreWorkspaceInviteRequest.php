@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\App\Invite;
 
 use App\Enums\UserWorkspace\Role as WorkspaceRole;

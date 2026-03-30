@@ -14,6 +14,8 @@ return [
 
     'profile' => [
         'title' => 'Profile settings',
+        'photo_heading' => 'Profile photo',
+        'photo_description' => 'Upload a profile photo',
         'heading' => 'Profile information',
         'description' => 'Update your name and email address',
         'avatar' => 'Avatar',
@@ -56,20 +58,25 @@ return [
 
     'workspace' => [
         'title' => 'Workspace settings',
-        'heading' => 'Workspace settings',
-        'description' => 'Update your workspace name, logo, and timezone',
-        'logo' => 'Logo',
+        'logo_heading' => 'Workspace logo',
+        'logo_description' => 'Upload a logo for your workspace',
+        'heading' => 'Workspace name',
+        'description' => 'Update your workspace name and timezone',
+        'members_heading' => 'Members',
+        'members_description' => 'Manage workspace members and invitations',
         'name' => 'Name',
         'name_placeholder' => 'My Workspace',
         'timezone' => 'Timezone',
         'save' => 'Save',
-        'saved' => 'Saved.',
     ],
 
     'members' => [
         'title' => 'Members',
         'heading' => 'Team members',
         'description' => 'Manage members and invites for this workspace',
+
+        'cancel' => 'Cancel',
+        'remove' => 'Remove',
 
         'invite' => [
             'title' => 'Invite Member',
@@ -79,7 +86,6 @@ return [
             'role' => 'Role',
             'role_placeholder' => 'Select a role',
             'submit' => 'Send Invite',
-            'cancel_confirm' => 'Are you sure you want to cancel this invite?',
         ],
 
         'pending' => [
@@ -92,7 +98,18 @@ return [
             'title' => 'Members',
             'description' => 'People with access to this workspace',
             'empty' => 'No members besides the owner',
-            'remove_confirm' => 'Are you sure you want to remove this member?',
+        ],
+
+        'remove_modal' => [
+            'title' => 'Remove member',
+            'description' => 'Are you sure you want to remove this member from the workspace? They will lose access to all workspace resources.',
+            'action' => 'Remove member',
+        ],
+
+        'cancel_invite_modal' => [
+            'title' => 'Cancel invitation',
+            'description' => 'Are you sure you want to cancel this invitation?',
+            'action' => 'Cancel invitation',
         ],
 
         'roles' => [
@@ -119,5 +136,7 @@ return [
         'workspace_updated' => 'Settings updated successfully!',
         'photo_updated' => 'Photo updated successfully!',
         'photo_deleted' => 'Photo removed successfully!',
+        'logo_updated' => 'Logo uploaded successfully!',
+        'logo_deleted' => 'Logo removed successfully!',
     ],
 ];

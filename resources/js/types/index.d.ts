@@ -34,11 +34,13 @@ export interface User {
     id: number;
     name: string;
     email: string;
-    avatar?: string;
+    has_photo: boolean;
+    photo_url: string | null;
+    locale: string;
     email_verified_at: string | null;
     created_at: string;
     updated_at: string;
-    [key: string]: unknown; // This allows for additional properties...
+    [key: string]: unknown;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;

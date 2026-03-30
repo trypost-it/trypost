@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Mail;
 
 use App\Models\SocialAccount;
@@ -23,7 +25,7 @@ class WorkspaceConnectionsDisconnected extends Mailable implements ShouldQueue
         public Workspace $workspace,
         public Collection $disconnectedAccounts
     ) {
-        $this->locale = $this->workspace->owner?->language?->code ?? 'en';
+        $this->locale = $this->workspace->owner?->locale ?? 'en';
     }
 
     public function envelope(): Envelope

@@ -74,14 +74,12 @@ class ProfileController extends Controller
     public function updateLanguage(Request $request): RedirectResponse
     {
         $request->validate([
-            'language_id' => ['required', 'exists:languages,id'],
+            'locale' => ['required', 'string', 'in:'.implode(',', array_keys(config('languages.available')))],
         ]);
 
         $request->user()->update([
-            'language_id' => $request->language_id,
+            'locale' => $request->locale,
         ]);
-
-        $request->user()->refresh();
 
         session()->flash('flash.banner', __('settings.flash.language_updated'));
         session()->flash('flash.bannerStyle', 'success');

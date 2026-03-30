@@ -6,10 +6,8 @@ namespace App\Http\Middleware\App;
 
 use App\Http\Resources\App\HandleInertiaRequests\AuthUserResource;
 use App\Http\Resources\App\HandleInertiaRequests\AuthWorkspaceResource;
-use App\Models\Language;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -28,11 +26,11 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
-        if ($user?->language) {
-            App::setLocale($user->language->code);
+        if ($user?->locale) {
+            App::setLocale($user->locale);
         }
 
-        $currentWorkspace = $user?->currentWorkspace;
+        $currentWorkspace = $user?->currentWorkspace?->load('media');
 
         return [
             ...parent::share($request),
@@ -41,7 +39,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? AuthUserResource::make($user) : null,
                 'currentWorkspace' => $currentWorkspace ? AuthWorkspaceResource::make($currentWorkspace, $user) : null,
                 'workspaces' => $user
-                    ? $user->workspaces()->get()->map(fn ($ws) => AuthWorkspaceResource::summary($ws))
+                    ? $user->workspaces()->with('media')->get()->map(fn ($ws) => AuthWorkspaceResource::summary($ws))
                     : [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
@@ -49,7 +47,10 @@ class HandleInertiaRequests extends Middleware
             'applicationUrl' => config('app.url'),
             'env' => config('app.env'),
             'locale' => app()->getLocale(),
-            'languages' => fn () => Cache::remember('languages:public', 3600, fn () => Language::query()->orderBy('name')->get()->toArray()),
+            'languages' => collect(config('languages.available'))->map(fn ($name, $code) => [
+                'code' => $code,
+                'name' => $name,
+            ])->values()->all(),
             'selfHosted' => config('trypost.self_hosted'),
         ];
     }

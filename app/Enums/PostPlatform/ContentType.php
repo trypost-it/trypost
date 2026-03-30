@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums\PostPlatform;
 
 use App\Enums\SocialAccount\Platform as SocialPlatform;

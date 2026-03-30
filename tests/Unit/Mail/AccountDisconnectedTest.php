@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\SocialAccount\Platform;
 use App\Mail\AccountDisconnected;
 use App\Models\SocialAccount;

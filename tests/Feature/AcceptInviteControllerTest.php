@@ -1,14 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
-use App\Models\Language;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvite;
 
 beforeEach(function () {
-    Language::factory()->create(['code' => 'en']);
     $this->owner = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->owner->id]);
 });

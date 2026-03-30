@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use App\Listeners\StripeEventListener;
-use App\Models\Language;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\PostPlatform;
@@ -74,7 +75,6 @@ class AppServiceProvider extends ServiceProvider
     protected function configureMorphMap(): void
     {
         Relation::enforceMorphMap([
-            'language' => Language::class,
             'media' => Media::class,
             'post' => Post::class,
             'postPlatform' => PostPlatform::class,

@@ -30,9 +30,8 @@ import { updateLanguage } from '@/actions/App/Http/Controllers/App/Settings/Prof
 import type { User } from '@/types';
 
 interface Language {
-    id: string;
-    name: string;
     code: string;
+    name: string;
 }
 
 type Props = {
@@ -43,24 +42,22 @@ defineProps<Props>();
 
 const page = usePage();
 const languages = computed<Language[]>(() => page.props.languages as Language[]);
-const currentLanguage = computed(() => languages.value?.find((l: Language) => l.id === page.props.auth.user?.language_id));
+const currentLanguage = computed(() => languages.value?.find((l: Language) => l.code === page.props.auth.user?.locale));
 
 const { appearance, updateAppearance } = useAppearance();
 
-const switchLanguage = (languageId: string) => {
-    const language = languages.value.find((l: Language) => l.id === languageId);
-    const languageCode = language?.code || 'en';
-    const previousLanguageCode = currentLanguage.value?.code || 'en';
+const switchLanguage = (code: string) => {
+    const previousCode = currentLanguage.value?.code || 'en';
 
-    loadLanguageAsync(languageCode);
-    dayjs.locale(languageCode.toLowerCase());
+    loadLanguageAsync(code);
+    dayjs.locale(code.toLowerCase());
 
-    router.patch(updateLanguage.url(), { language_id: languageId }, {
+    router.patch(updateLanguage.url(), { locale: code }, {
         preserveScroll: true,
         preserveState: false,
         onError: () => {
-            loadLanguageAsync(previousLanguageCode);
-            dayjs.locale(previousLanguageCode.toLowerCase());
+            loadLanguageAsync(previousCode);
+            dayjs.locale(previousCode.toLowerCase());
         },
     });
 };
@@ -136,9 +133,9 @@ const handleLogout = () => {
                 <DropdownMenuSubContent>
                     <DropdownMenuItem
                         v-for="language in languages"
-                        :key="language.id"
-                        :class="language.id === currentLanguage?.id ? 'bg-accent' : ''"
-                        @click="switchLanguage(language.id)"
+                        :key="language.code"
+                        :class="language.code === currentLanguage?.code ? 'bg-accent' : ''"
+                        @click="switchLanguage(language.code)"
                     >
                         {{ language.name }}
                     </DropdownMenuItem>

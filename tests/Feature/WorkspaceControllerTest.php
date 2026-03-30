@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\User\Setup;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Http\UploadedFile;
 
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
@@ -162,7 +165,7 @@ test('workspace settings requires authentication', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('workspace settings shows settings page', function () {
+test('workspace settings shows settings page with members and invitations', function () {
     $response = $this->actingAs($this->user)->get(route('app.workspace.settings'));
 
     $response->assertOk();
@@ -170,6 +173,8 @@ test('workspace settings shows settings page', function () {
         ->component('settings/Workspace', false)
         ->has('workspace')
         ->has('timezones')
+        ->has('members')
+        ->has('invitations')
     );
 });
 
@@ -220,6 +225,85 @@ test('update workspace settings validates timezone', function () {
     ]);
 
     $response->assertSessionHasErrors('timezone');
+});
+
+// Logo upload tests
+test('upload workspace logo requires authentication', function () {
+    $response = $this->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->image('logo.jpg'),
+    ]);
+
+    $response->assertRedirect(route('login'));
+});
+
+test('upload workspace logo succeeds with valid image', function () {
+    $response = $this->actingAs($this->user)->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->image('logo.jpg', 200, 200),
+    ]);
+
+    $response->assertRedirect();
+
+    $this->workspace->refresh();
+    expect($this->workspace->has_logo)->toBeTrue();
+    expect($this->workspace->logo_url)->not->toBeNull();
+});
+
+test('upload workspace logo validates file is an image', function () {
+    $response = $this->actingAs($this->user)->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->create('document.pdf', 100),
+    ]);
+
+    $response->assertSessionHasErrors('photo');
+});
+
+test('upload workspace logo validates max size', function () {
+    $response = $this->actingAs($this->user)->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->image('logo.jpg')->size(3000),
+    ]);
+
+    $response->assertSessionHasErrors('photo');
+});
+
+test('upload workspace logo requires authorization', function () {
+    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+
+    $response = $this->actingAs($otherUser)->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->image('logo.jpg'),
+    ]);
+
+    $response->assertForbidden();
+});
+
+test('delete workspace logo requires authentication', function () {
+    $response = $this->delete(route('app.workspace.delete-logo'));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('delete workspace logo succeeds', function () {
+    // Upload first
+    $this->actingAs($this->user)->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->image('logo.jpg', 200, 200),
+    ]);
+
+    $this->workspace->refresh();
+    expect($this->workspace->has_logo)->toBeTrue();
+
+    // Delete
+    $response = $this->actingAs($this->user)->delete(route('app.workspace.delete-logo'));
+
+    $response->assertRedirect();
+
+    $this->workspace->refresh();
+    expect($this->workspace->has_logo)->toBeFalse();
+});
+
+test('delete workspace logo requires authorization', function () {
+    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+
+    $response = $this->actingAs($otherUser)->delete(route('app.workspace.delete-logo'));
+
+    $response->assertForbidden();
 });
 
 // Destroy tests

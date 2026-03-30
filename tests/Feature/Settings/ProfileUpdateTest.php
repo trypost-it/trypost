@@ -1,7 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\UserWorkspace\Role;
-use App\Models\Language;
 use App\Models\User;
 use App\Models\Workspace;
 
@@ -53,34 +54,33 @@ test('email verification status is unchanged when the email address is unchanged
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
-test('user can update their language', function () {
+test('user can update their locale', function () {
     $user = User::factory()->create();
-    $newLanguage = Language::factory()->create();
 
     $response = $this
         ->actingAs($user)
         ->from(route('app.posts.index'))
         ->patch(route('app.profile.language'), [
-            'language_id' => $newLanguage->id,
+            'locale' => 'es',
         ]);
 
     $response
         ->assertSessionHasNoErrors()
         ->assertRedirect(route('app.posts.index'));
 
-    expect($user->refresh()->language_id)->toBe($newLanguage->id);
+    expect($user->refresh()->locale)->toBe('es');
 });
 
-test('user cannot update language with invalid language id', function () {
+test('user cannot update locale with invalid code', function () {
     $user = User::factory()->create();
 
     $response = $this
         ->actingAs($user)
         ->patch(route('app.profile.language'), [
-            'language_id' => '00000000-0000-0000-0000-000000000000',
+            'locale' => 'invalid',
         ]);
 
-    $response->assertSessionHasErrors('language_id');
+    $response->assertSessionHasErrors('locale');
 });
 
 test('user can delete their account', function () {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use App\Mail\WorkspaceInvite as WorkspaceInviteMail;
@@ -22,30 +24,27 @@ test('members index requires authentication', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('members index shows members and invites', function () {
+test('members index redirects to workspace settings', function () {
+    $response = $this->actingAs($this->user)->get(route('app.members'));
+
+    $response->assertRedirect(route('app.workspace.settings'));
+});
+
+test('workspace settings shows members and invites', function () {
     $invite = WorkspaceInvite::factory()->create([
         'workspace_id' => $this->workspace->id,
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('app.members'));
+    $response = $this->actingAs($this->user)->get(route('app.workspace.settings'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('settings/Members', false)
+        ->component('settings/Workspace', false)
         ->has('workspace')
-        ->has('invites')
         ->has('members')
-        ->has('owner')
-        ->has('roles')
+        ->has('invitations')
+        ->has('timezones')
     );
-});
-
-test('members index redirects if no workspace', function () {
-    $this->user->update(['current_workspace_id' => null]);
-
-    $response = $this->actingAs($this->user)->get(route('app.members'));
-
-    $response->assertRedirect(route('app.workspaces.create'));
 });
 
 // Store invite tests

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useInitials } from '@/composables/useInitials';
+import { Avatar } from '@/components/ui/avatar';
 import type { User } from '@/types';
 
 type Props = {
@@ -13,19 +12,17 @@ type Props = {
 withDefaults(defineProps<Props>(), {
     showEmail: false,
 });
-
-const { getInitials } = useInitials();
 </script>
 
 <template>
-    <Avatar :class="['h-8 w-8 rounded-lg', avatarClass]">
-        <AvatarImage v-if="user.avatar" :src="user.avatar" :alt="user.name" />
-        <AvatarFallback
-            :class="fallbackClass ?? 'bg-sidebar-accent text-sidebar-accent-foreground'"
-        >
-            {{ getInitials(user.name) }}
-        </AvatarFallback>
-    </Avatar>
+    <Avatar
+        :src="user.photo_url"
+        :name="user.name"
+        :class="['h-8 w-8 rounded-lg', avatarClass]"
+        :fallback-class="
+            fallbackClass ?? 'bg-sidebar-accent text-sidebar-accent-foreground'
+        "
+    />
 
     <div class="grid flex-1 text-left text-sm leading-tight">
         <span class="truncate font-medium">{{ user.name }}</span>

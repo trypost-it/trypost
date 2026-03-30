@@ -63,27 +63,16 @@ const { urlIsActive } = useActiveUrl();
 <template>
     <div class="px-4 py-6">
         <div class="flex flex-col items-center gap-6">
-            <Heading
-                :title="$t('settings.title')"
-                :description="$t('settings.description')"
-                class="w-full max-w-2xl"
-            />
+            <Heading :title="$t('settings.title')" :description="$t('settings.description')" class="w-full max-w-2xl" />
 
             <nav
-                class="inline-flex h-9 w-full max-w-2xl items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground"
-                aria-label="Settings"
-            >
-                <Link
-                    v-for="item in navItems"
-                    :key="toUrl(item.href)"
-                    :href="item.href"
-                    :class="[
-                        'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                        urlIsActive(item.href)
-                            ? 'bg-background text-foreground shadow'
-                            : 'hover:bg-background/50 hover:text-foreground',
-                    ]"
-                >
+                class="inline-flex h-9 w-fit items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+                <Link v-for="item in navItems" :key="toUrl(item.href)" :href="item.href"
+                    class="inline-flex items-center justify-center rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                    :class="urlIsActive(item.href)
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'hover:bg-background/50 hover:text-foreground'
+                        ">
                     {{ item.title }}
                 </Link>
             </nav>

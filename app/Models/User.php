@@ -48,19 +48,19 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    protected $appends = ['avatar'];
+    protected $appends = [
+        'has_photo',
+        'photo_url',
+    ];
 
-    /**
-     * @return array{url: string, media_id: string|null}
-     */
-    public function getAvatarAttribute(): array
+    public function getHasPhotoAttribute(): bool
     {
-        $media = $this->getFirstMedia('avatar');
+        return $this->getFirstMedia('avatar') !== null;
+    }
 
-        return [
-            'url' => $media?->url ?? $this->getFallbackAvatarUrl($this->name),
-            'media_id' => $media?->id,
-        ];
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->getFirstMediaUrl('avatar');
     }
 
     /**

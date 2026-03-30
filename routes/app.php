@@ -111,6 +111,8 @@ Route::group(
             // Workspace settings
             Route::get('settings/workspace', [WorkspaceController::class, 'settings'])->name('app.workspace.settings');
             Route::put('settings/workspace', [WorkspaceController::class, 'updateSettings'])->name('app.workspace.settings.update');
+            Route::post('settings/workspace/logo', [WorkspaceController::class, 'uploadLogo'])->name('app.workspace.upload-logo');
+            Route::delete('settings/workspace/logo', [WorkspaceController::class, 'deleteLogo'])->name('app.workspace.delete-logo');
 
             // Social Accounts
             Route::get('accounts', [SocialController::class, 'index'])->name('app.accounts');
@@ -165,6 +167,8 @@ Route::group(
         Route::middleware(['auth'])->group(function () {
             Route::get('settings/profile', [ProfileController::class, 'edit'])->name('app.profile.edit');
             Route::patch('settings/profile', [ProfileController::class, 'update'])->name('app.profile.update');
+            Route::post('settings/profile/photo', [ProfileController::class, 'uploadPhoto'])->name('app.profile.upload-photo');
+            Route::delete('settings/profile/photo', [ProfileController::class, 'deletePhoto'])->name('app.profile.delete-photo');
             Route::patch('settings/language', [ProfileController::class, 'updateLanguage'])->name('app.profile.language');
         });
 

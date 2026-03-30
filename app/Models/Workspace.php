@@ -22,19 +22,16 @@ class Workspace extends Model
         'timezone',
     ];
 
-    protected $appends = ['logo'];
+    protected $appends = ['has_logo', 'logo_url'];
 
-    /**
-     * @return array{url: string, media_id: string|null}
-     */
-    public function getLogoAttribute(): array
+    public function getHasLogoAttribute(): bool
     {
-        $media = $this->getFirstMedia('logo');
+        return $this->getFirstMedia('logo') !== null;
+    }
 
-        return [
-            'url' => $media?->url ?? $this->getFallbackAvatarUrl($this->name),
-            'media_id' => $media?->id,
-        ];
+    public function getLogoUrlAttribute(): ?string
+    {
+        return $this->getFirstMediaUrl('logo') ?: null;
     }
 
     public function owner(): BelongsTo

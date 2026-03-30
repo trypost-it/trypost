@@ -42,6 +42,35 @@ class ProfileController extends Controller
         return to_route('app.profile.edit');
     }
 
+    public function uploadPhoto(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'photo' => ['required', 'image', 'max:2048'],
+        ]);
+
+        $user = $request->user();
+        $user->clearMediaCollection('avatar');
+        $user->addMedia($request->file('photo'), 'avatar');
+        $user->unsetRelation('media');
+
+        session()->flash('flash.banner', __('settings.flash.photo_updated'));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
+    public function deletePhoto(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $user->clearMediaCollection('avatar');
+        $user->unsetRelation('media');
+
+        session()->flash('flash.banner', __('settings.flash.photo_deleted'));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
     public function updateLanguage(Request $request): RedirectResponse
     {
         $request->validate([

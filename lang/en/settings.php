@@ -117,5 +117,7 @@ return [
         'language_updated' => 'Language updated successfully!',
         'password_updated' => 'Password updated successfully!',
         'workspace_updated' => 'Settings updated successfully!',
+        'photo_updated' => 'Photo updated successfully!',
+        'photo_deleted' => 'Photo removed successfully!',
     ],
 ];

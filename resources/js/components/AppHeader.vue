@@ -5,7 +5,7 @@ import { IconCalendar, IconMenu2, IconSettings, IconShare, IconUsers } from '@ta
 import { computed } from 'vue';
 
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -28,7 +28,6 @@ import {
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import WorkspaceSwitcher from '@/components/WorkspaceSwitcher.vue';
 import { useActiveUrl } from '@/composables/useActiveUrl';
-import { getInitials } from '@/composables/useInitials';
 import { calendar } from '@/routes/app';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
@@ -149,14 +148,12 @@ const mainNavItems: NavItem[] = [
                         <DropdownMenuTrigger :as-child="true">
                             <Button variant="ghost" size="icon"
                                 class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary">
-                                <Avatar class="size-8 overflow-hidden rounded-full">
-                                    <AvatarImage v-if="auth.user.avatar?.url" :src="auth.user.avatar?.url"
-                                        :alt="auth.user.name" />
-                                    <AvatarFallback
-                                        class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white">
-                                        {{ getInitials(auth.user?.name) }}
-                                    </AvatarFallback>
-                                </Avatar>
+                                <Avatar
+                                    :src="auth.user.photo_url"
+                                    :name="auth.user.name"
+                                    class="size-8 overflow-hidden rounded-full"
+                                    fallback-class="bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white"
+                                />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" class="w-56">

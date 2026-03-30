@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { settings } from '@/routes/app/workspace';
+import { settings, uploadLogo, deleteLogo } from '@/routes/app/workspace';
 import { update } from '@/routes/app/workspace/settings';
 import { type BreadcrumbItem } from '@/types';
 
@@ -20,10 +20,8 @@ interface Workspace {
     id: string;
     name: string;
     timezone: string;
-    logo: {
-        url: string;
-        media_id: string | null;
-    };
+    has_logo: boolean;
+    logo_url: string | null;
 }
 
 interface Props {
@@ -66,12 +64,11 @@ const submit = () => {
                 <div class="grid gap-2">
                     <Label>{{ $t('settings.workspace.logo') }}</Label>
                     <PhotoUpload
-                        :model-id="workspace.id"
-                        model-type="App\Models\Workspace"
-                        :photo="workspace.logo"
-                        collection="logo"
-                        :reload-only="['workspace']"
-                        rounded="full"
+                        :photo-url="workspace.logo_url"
+                        :has-photo="workspace.has_logo"
+                        :name="workspace.name"
+                        :upload-url="uploadLogo().url"
+                        :delete-url="deleteLogo().url"
                     />
                 </div>
 

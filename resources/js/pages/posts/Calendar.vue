@@ -261,7 +261,7 @@ const formatTime = (scheduledAt: string): string => {
 
     <Head :title="$t('calendar.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout :breadcrumbs="breadcrumbs" :fullWidth="true">
         <div class="flex flex-col h-full">
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b gap-2">

@@ -174,7 +174,7 @@ const displayText = computed(() => {
 <template>
     <Popover v-model:open="popoverOpen">
         <PopoverTrigger as-child :disabled="disabled">
-            <Button :id="name" type="button" variant="outline" class="justify-between text-left font-normal"
+            <Button :id="name" type="button" variant="outline" class="w-full justify-between text-left font-normal"
                 :class="{ 'text-muted-foreground': !displayText }" :disabled="disabled">
                 <span>{{ displayText || placeholder }}</span>
                 <IconCalendar class="h-4 w-4" />

@@ -92,6 +92,41 @@ class WorkspaceController extends Controller
         ]);
     }
 
+    public function uploadLogo(Request $request): RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        $this->authorize('update', $workspace);
+
+        $request->validate([
+            'photo' => ['required', 'image', 'max:2048'],
+        ]);
+
+        $workspace->clearMediaCollection('logo');
+        $workspace->addMedia($request->file('photo'), 'logo');
+        $workspace->unsetRelation('media');
+
+        session()->flash('flash.banner', __('settings.flash.logo_updated'));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
+    public function deleteLogo(Request $request): RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        $this->authorize('update', $workspace);
+
+        $workspace->clearMediaCollection('logo');
+        $workspace->unsetRelation('media');
+
+        session()->flash('flash.banner', __('settings.flash.logo_deleted'));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
     public function updateSettings(UpdateWorkspaceRequest $request): RedirectResponse
     {
         $user = $request->user();

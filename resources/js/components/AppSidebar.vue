@@ -25,7 +25,7 @@ import { store as storePost } from '@/actions/App/Http/Controllers/App/PostContr
 import { index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -45,7 +45,6 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { useInitials } from '@/composables/useInitials';
 import { accounts, calendar } from '@/routes/app';
 import { index as apiKeysIndex } from '@/routes/app/api-keys';
 import { index as hashtags } from '@/routes/app/hashtags';
@@ -58,6 +57,7 @@ import type { NavItem } from '@/types';
 interface Workspace {
     id: string;
     name: string;
+    logo_url: string | null;
 }
 
 const page = usePage();
@@ -65,7 +65,6 @@ const auth = computed(() => page.props.auth);
 const currentWorkspace = computed<Workspace | null>(() => page.props.auth.currentWorkspace as Workspace | null);
 const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Workspace[]);
 
-const { getInitials } = useInitials();
 const { state: sidebarState } = useSidebar();
 
 const postsNavItems = computed<NavItem[]>(() => [
@@ -152,11 +151,12 @@ const switchWorkspace = (workspaceId: string) => {
                                 size="lg"
                                 class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                             >
-                                <Avatar class="h-8 w-8 shrink-0 rounded-lg">
-                                    <AvatarFallback class="rounded-lg bg-sidebar-accent text-sidebar-accent-foreground">
-                                        {{ getInitials(currentWorkspace?.name ?? '?') }}
-                                    </AvatarFallback>
-                                </Avatar>
+                                <Avatar
+                                    :src="currentWorkspace?.logo_url"
+                                    :name="currentWorkspace?.name ?? '?'"
+                                    class="h-8 w-8 shrink-0 rounded-lg"
+                                    fallback-class="bg-sidebar-accent text-sidebar-accent-foreground"
+                                />
                                 <div class="grid flex-1 text-left text-sm leading-tight">
                                     <span class="truncate font-semibold">
                                         {{ currentWorkspace?.name ?? $t('sidebar.select_workspace') }}
@@ -182,11 +182,12 @@ const switchWorkspace = (workspaceId: string) => {
                                     :class="workspace.id === currentWorkspace?.id ? 'bg-accent' : ''"
                                     @click="switchWorkspace(workspace.id)"
                                 >
-                                    <Avatar class="h-5 w-5 shrink-0 rounded-md">
-                                        <AvatarFallback class="rounded-md text-[10px]">
-                                            {{ getInitials(workspace.name) }}
-                                        </AvatarFallback>
-                                    </Avatar>
+                                    <Avatar
+                                        :src="workspace.logo_url"
+                                        :name="workspace.name"
+                                        class="h-5 w-5 shrink-0 rounded-md"
+                                        fallback-class="text-[10px]"
+                                    />
                                     {{ workspace.name }}
                                 </DropdownMenuItem>
                             </div>

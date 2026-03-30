@@ -1,63 +1,48 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { IconTrash, IconUpload, IconUser } from '@tabler/icons-vue';
-import axios from 'axios';
-import { ref, watch } from 'vue';
+import { IconTrash } from '@tabler/icons-vue';
+import { ref } from 'vue';
 
+import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { store as storeMedia, destroy as destroyMedia } from '@/routes/app/medias';
 
-interface Photo {
-    url: string;
-    media_id: string | null;
-}
-
-interface Props {
-    modelId: string;
-    modelType: string;
-    photo: Photo;
-    collection?: string;
-    reloadOnly?: string[];
+type Props = {
+    photoUrl: string | null;
+    hasPhoto: boolean;
+    name: string;
+    uploadUrl: string;
+    deleteUrl?: string;
     size?: 'sm' | 'md' | 'lg';
     rounded?: 'full' | 'lg';
-}
+    canUpload?: boolean;
+};
 
 const props = withDefaults(defineProps<Props>(), {
-    collection: 'logo',
-    reloadOnly: () => [],
     size: 'md',
     rounded: 'lg',
+    deleteUrl: undefined,
+    canUpload: true,
 });
 
-const photoPreview = ref<string | null>(props.photo.url);
+const fileInput = ref<HTMLInputElement | null>(null);
 const uploading = ref(false);
-const fileInputRef = ref<HTMLInputElement | null>(null);
-const dialogOpen = ref(false);
-const lightboxOpen = ref(false);
-
-watch(
-    () => props.photo.url,
-    (newUrl) => {
-        photoPreview.value = newUrl;
-    },
-);
 
 const sizeClasses = {
-    sm: 'h-16 w-16',
-    md: 'h-20 w-20',
-    lg: 'h-24 w-24',
+    sm: 'size-16',
+    md: 'size-20',
+    lg: 'size-24',
+};
+
+const textSizeClasses = {
+    sm: 'text-lg',
+    md: 'text-xl',
+    lg: 'text-2xl',
 };
 
 const roundedClasses = {
@@ -65,7 +50,11 @@ const roundedClasses = {
     lg: 'rounded-lg',
 };
 
-const handlePhotoChange = async (event: Event) => {
+const triggerFileInput = () => {
+    fileInput.value?.click();
+};
+
+const handleFileChange = (event: Event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
 
@@ -75,186 +64,80 @@ const handlePhotoChange = async (event: Event) => {
 
     uploading.value = true;
 
-    try {
-        const formData = new FormData();
-        formData.append('media', file);
-        formData.append('collection', props.collection);
-        formData.append('model', props.modelType);
-        formData.append('model_id', props.modelId);
-
-        await axios.post(storeMedia.url(), formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-        });
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            photoPreview.value = e.target?.result as string;
-        };
-        reader.readAsDataURL(file);
-
-        if (props.reloadOnly.length > 0) {
-            router.reload({ only: props.reloadOnly, preserveScroll: true });
-        } else {
-            router.reload({ preserveScroll: true });
-        }
-
-        closeDialog();
-    } catch (error) {
-        console.error('Error uploading photo:', error);
-    } finally {
-        uploading.value = false;
-        if (fileInputRef.value) {
-            fileInputRef.value.value = '';
-        }
-    }
+    router.post(
+        props.uploadUrl,
+        { photo: file },
+        {
+            forceFormData: true,
+            onFinish: () => {
+                uploading.value = false;
+                if (fileInput.value) {
+                    fileInput.value.value = '';
+                }
+            },
+        },
+    );
 };
 
-const removePhoto = async () => {
-    if (!props.photo.media_id) {
+const handleDelete = () => {
+    if (!props.deleteUrl) {
         return;
     }
 
-    try {
-        await axios.delete(
-            destroyMedia.url({ modelId: props.modelId, media: props.photo.media_id! }),
-        );
-
-        if (props.reloadOnly.length > 0) {
-            router.reload({ only: props.reloadOnly, preserveScroll: true });
-        } else {
-            router.reload({ preserveScroll: true });
-        }
-    } catch (error) {
-        console.error('Error removing photo:', error);
-    }
-};
-
-const triggerFileInput = () => {
-    fileInputRef.value?.click();
-};
-
-const openDialog = () => {
-    dialogOpen.value = true;
-};
-
-const closeDialog = () => {
-    dialogOpen.value = false;
+    router.delete(props.deleteUrl);
 };
 </script>
 
 <template>
     <div class="flex items-center gap-4">
-        <div class="relative">
-            <img
-                v-if="photoPreview"
-                :src="photoPreview"
-                alt="Preview"
-                :class="[
-                    'cursor-pointer border-2 border-muted object-cover transition-opacity hover:opacity-80',
-                    sizeClasses[size],
-                    roundedClasses[rounded],
-                ]"
-                @click="lightboxOpen = true"
-            />
-            <div
-                v-else
-                :class="[
-                    'flex items-center justify-center bg-muted',
-                    sizeClasses[size],
-                    roundedClasses[rounded],
-                ]"
-            >
-                <IconUser class="h-8 w-8 text-muted-foreground" />
-            </div>
-        </div>
+        <Avatar
+            :src="photoUrl"
+            :name="name"
+            :class="[sizeClasses[size], roundedClasses[rounded]]"
+            :fallback-class="[
+                'bg-sidebar-accent text-sidebar-accent-foreground',
+                textSizeClasses[size],
+            ]"
+        />
 
-        <TooltipProvider>
+        <div v-if="canUpload" class="flex flex-col gap-2">
             <div class="flex items-center gap-2">
                 <input
-                    ref="fileInputRef"
+                    ref="fileInput"
                     type="file"
                     accept="image/*"
                     class="hidden"
-                    @change="handlePhotoChange"
+                    @change="handleFileChange"
                 />
-
-                <Tooltip>
-                    <TooltipTrigger as-child>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            class="px-2"
-                            :disabled="uploading"
-                            @click="openDialog"
-                        >
-                            <IconUpload class="h-4 w-4" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>
-                            {{
-                                uploading
-                                    ? 'Uploading...'
-                                    : photo.media_id
-                                        ? 'Change photo'
-                                        : 'Add photo'
-                            }}
-                        </p>
-                    </TooltipContent>
-                </Tooltip>
-
-                <Tooltip v-if="photo.media_id">
-                    <TooltipTrigger as-child>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            class="px-2"
-                            @click="removePhoto"
-                        >
-                            <IconTrash class="h-4 w-4" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Remove photo</p>
-                    </TooltipContent>
-                </Tooltip>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    :disabled="uploading"
+                    @click="triggerFileInput"
+                >
+                    {{ uploading ? 'Uploading...' : 'Upload' }}
+                </Button>
+                <TooltipProvider v-if="hasPhoto && deleteUrl">
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                class="size-8"
+                                @click="handleDelete"
+                            >
+                                <IconTrash class="size-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove photo</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
-        </TooltipProvider>
-
-        <Dialog :open="dialogOpen" @update:open="(open) => !open && closeDialog()">
-            <DialogContent class="sm:max-w-md">
-                <DialogTitle>Upload Photo</DialogTitle>
-                <DialogDescription class="sr-only">
-                    Select an image file to upload
-                </DialogDescription>
-
-                <div class="flex flex-col items-center gap-4 py-8">
-                    <div class="rounded-full bg-muted p-6">
-                        <IconUpload class="h-12 w-12 text-muted-foreground" />
-                    </div>
-                    <p class="text-center text-sm text-muted-foreground">
-                        Select an image from your computer
-                    </p>
-                    <Button type="button" :disabled="uploading" @click="triggerFileInput">
-                        {{ uploading ? 'Uploading...' : 'Choose file' }}
-                    </Button>
-                </div>
-            </DialogContent>
-        </Dialog>
-
-        <Dialog v-model:open="lightboxOpen">
-            <DialogContent class="max-w-[95vw] overflow-hidden bg-black p-0 sm:max-w-3xl">
-                <DialogTitle class="sr-only">View Photo</DialogTitle>
-                <DialogDescription class="sr-only">Photo in full size</DialogDescription>
-                <img
-                    v-if="photoPreview"
-                    :src="photoPreview"
-                    alt="Preview"
-                    class="h-auto max-h-[90vh] w-full object-contain"
-                />
-            </DialogContent>
-        </Dialog>
+            <p class="text-xs text-muted-foreground">
+                Recommended: square image, max 2 MB.
+            </p>
+        </div>
     </div>
 </template>

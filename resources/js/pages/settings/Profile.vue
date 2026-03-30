@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { edit } from '@/routes/app/profile';
+import { edit, uploadPhoto, deletePhoto } from '@/routes/app/profile';
 import { send } from '@/routes/verification';
 import { type BreadcrumbItem } from '@/types';
 
@@ -25,7 +25,7 @@ interface Props {
 defineProps<Props>();
 
 const page = usePage();
-const user = page.props.auth.user;
+const user = computed(() => page.props.auth.user);
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
     {
@@ -52,12 +52,11 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
                     <div class="grid gap-2">
                         <Label>{{ $t('settings.profile.avatar') }}</Label>
                         <PhotoUpload
-                            :model-id="user.id"
-                            model-type="App\Models\User"
-                            :photo="user.avatar"
-                            collection="avatar"
-                            :reload-only="['auth']"
-                            rounded="full"
+                            :photo-url="user.photo_url"
+                            :has-photo="user.has_photo"
+                            :name="user.name"
+                            :upload-url="uploadPhoto().url"
+                            :delete-url="deletePhoto().url"
                         />
                     </div>
 

@@ -9,18 +9,30 @@ const currentUrlReactive = computed(
     () => new URL(page.url, window?.location.origin).pathname,
 );
 
+const toPathname = (url: string): string => {
+    try {
+        return new URL(url, window.location.origin).pathname;
+    } catch {
+        return url;
+    }
+};
+
 export function useActiveUrl() {
     function urlIsActive(
         urlToCheck: NonNullable<InertiaLinkProps['href']>,
         options?: { prefix?: boolean },
     ) {
-        const targetUrl = toUrl(urlToCheck);
+        const current = currentUrlReactive.value;
+        const pathname = toPathname(toUrl(urlToCheck));
 
         if (options?.prefix) {
-            return currentUrlReactive.value.startsWith(targetUrl);
+            return current.startsWith(pathname);
         }
 
-        return targetUrl === currentUrlReactive.value;
+        return (
+            current === pathname ||
+            (pathname !== '/' && current.startsWith(pathname + '/'))
+        );
     }
 
     return {

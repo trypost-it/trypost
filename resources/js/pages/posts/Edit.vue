@@ -686,7 +686,7 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
 
     <Head :title="isReadOnly ? $t('posts.edit.view_title') : $t('posts.edit.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout :breadcrumbs="breadcrumbs" :fullWidth="true">
         <div class="flex flex-col h-screen">
             <!-- Top Bar with Tabs and Actions -->
             <div class="relative flex items-center justify-between border-b px-4 py-2 bg-background">
@@ -1126,8 +1126,7 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
                 <div>
                     <Button type="button" variant="outline"
                         class="w-full justify-start gap-2 text-destructive hover:text-destructive"
-                        :disabled="isSaving || isSubmitting"
-                        @click="deletePost(); showMobileActionsSheet = false">
+                        :disabled="isSaving || isSubmitting" @click="deletePost(); showMobileActionsSheet = false">
                         <IconTrash class="h-4 w-4" />
                         {{ $t('posts.edit.delete') }}
                     </Button>

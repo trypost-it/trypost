@@ -117,5 +117,7 @@ return [
         'language_updated' => 'Idioma atualizado com sucesso!',
         'password_updated' => 'Senha atualizada com sucesso!',
         'workspace_updated' => 'Configurações atualizadas com sucesso!',
+        'photo_updated' => 'Foto atualizada com sucesso!',
+        'photo_deleted' => 'Foto removida com sucesso!',
     ],
 ];

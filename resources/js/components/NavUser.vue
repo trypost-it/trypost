@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { IconChevronRight } from '@tabler/icons-vue';
+import { computed } from 'vue';
 
 import {
     DropdownMenu,
@@ -18,7 +19,7 @@ import UserInfo from '@/components/UserInfo.vue';
 import UserMenuContent from './UserMenuContent.vue';
 
 const page = usePage();
-const user = page.props.auth.user;
+const user = computed(() => page.props.auth.user);
 const { isMobile, state } = useSidebar();
 </script>
 

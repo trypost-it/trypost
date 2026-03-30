@@ -4,6 +4,7 @@ import { IconKey, IconCopy, IconTrash, IconPlus } from '@tabler/icons-vue';
 import { computed, ref, watch } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
+import DatePicker from '@/components/DatePicker.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -205,12 +206,12 @@ const closeTokenDialog = () => {
                     </p>
                 </div>
                 <div class="space-y-2">
-                    <Label for="token-expires">Expiration date (optional)</Label>
-                    <Input
-                        id="token-expires"
+                    <Label>Expiration date (optional)</Label>
+                    <DatePicker
+                        name="token-expires"
                         v-model="form.expires_at"
-                        type="date"
-                        :class="{ 'border-red-500': form.errors.expires_at }"
+                        :show-time="false"
+                        placeholder="No expiration"
                     />
                     <p v-if="form.errors.expires_at" class="text-sm text-red-500">
                         {{ form.errors.expires_at }}

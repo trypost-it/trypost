@@ -16,7 +16,7 @@ import { type NavItem, type SharedData } from '@/types';
 
 const page = usePage<SharedData>();
 const auth = computed(() => page.props.auth);
-const canManageWorkspace = computed(() => auth.value.role !== 'member');
+const canManageWorkspace = computed(() => auth.value.currentWorkspace?.role !== 'member');
 
 const navItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [

@@ -20,8 +20,8 @@ interface Workspace {
 }
 
 const page = usePage();
-const currentWorkspace = computed<Workspace | null>(() => page.props.currentWorkspace as Workspace | null);
-const workspaces = computed<Workspace[]>(() => page.props.workspaces as Workspace[]);
+const currentWorkspace = computed<Workspace | null>(() => page.props.auth.currentWorkspace as Workspace | null);
+const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Workspace[]);
 
 function switchWorkspace(workspace: Workspace) {
     router.post(switchMethod.url(workspace.id), {}, {

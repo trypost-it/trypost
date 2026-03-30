@@ -66,8 +66,8 @@ interface Language {
 
 const page = usePage();
 const auth = computed(() => page.props.auth);
-const currentWorkspace = computed<Workspace | null>(() => page.props.currentWorkspace as Workspace | null);
-const workspaces = computed<Workspace[]>(() => page.props.workspaces as Workspace[]);
+const currentWorkspace = computed<Workspace | null>(() => page.props.auth.currentWorkspace as Workspace | null);
+const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Workspace[]);
 const languages = computed<Language[]>(() => page.props.languages as Language[]);
 const currentLanguage = computed(() => languages.value.find(l => l.id === auth.value.user.language_id));
 
@@ -109,7 +109,7 @@ const postsNavItems = computed<NavItem[]>(() => [
     },
 ]);
 
-const canManageWorkspace = computed(() => auth.value.role !== 'member');
+const canManageWorkspace = computed(() => auth.value.currentWorkspace?.role !== 'member');
 
 const configNavItems = computed(() => {
     const items: NavItem[] = [

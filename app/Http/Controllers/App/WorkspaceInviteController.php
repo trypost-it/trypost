@@ -8,7 +8,7 @@ use App\Actions\Invite\CreateInvite;
 use App\Actions\Invite\DeleteInvite;
 use App\Actions\Invite\RemoveMember;
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
-use App\Http\Requests\StoreWorkspaceInviteRequest;
+use App\Http\Requests\App\Invite\StoreWorkspaceInviteRequest;
 use App\Models\WorkspaceInvite;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

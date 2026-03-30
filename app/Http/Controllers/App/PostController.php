@@ -8,7 +8,7 @@ use App\Actions\Post\CreatePost;
 use App\Actions\Post\DeletePost;
 use App\Actions\Post\UpdatePost;
 use App\Enums\SocialAccount\Platform;
-use App\Http\Requests\UpdatePostRequest;
+use App\Http\Requests\App\Post\UpdatePostRequest;
 use App\Models\Post;
 use App\Services\Social\PinterestPublisher;
 use Carbon\Carbon;

@@ -1,9 +1,9 @@
 <?php
 
 use App\Http\Middleware\Api\AuthenticateApiToken;
-use App\Http\Middleware\EnsureSubscribed;
-use App\Http\Middleware\HandleAppearance;
-use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\App\EnsureSubscribed;
+use App\Http\Middleware\App\HandleAppearance;
+use App\Http\Middleware\App\HandleInertiaRequests;
 use App\Http\Middleware\Mcp\AuthenticateMcpToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;

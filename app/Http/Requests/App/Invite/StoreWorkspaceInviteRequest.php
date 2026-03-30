@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\App\Invite;
 
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use Illuminate\Contracts\Validation\ValidationRule;

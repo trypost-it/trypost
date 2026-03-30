@@ -6,8 +6,8 @@ namespace App\Http\Controllers\App;
 
 use App\Actions\Workspace\CreateWorkspace;
 use App\Actions\Workspace\DeleteWorkspace;
-use App\Http\Requests\StoreWorkspaceRequest;
-use App\Http\Requests\UpdateWorkspaceRequest;
+use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
+use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

@@ -25,7 +25,7 @@ use App\Http\Controllers\Auth\ThreadsController;
 use App\Http\Controllers\Auth\TikTokController;
 use App\Http\Controllers\Auth\XController;
 use App\Http\Controllers\Auth\YouTubeController;
-use App\Http\Middleware\EnsureUserSetupIsComplete;
+use App\Http\Middleware\App\EnsureUserSetupIsComplete;
 use Illuminate\Support\Facades\Route;
 
 Route::group(

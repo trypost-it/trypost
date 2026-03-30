@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
-use App\Http\Requests\StoreChunkedMediaRequest;
-use App\Http\Requests\StoreMediaRequest;
+use App\Http\Requests\App\Media\StoreChunkedMediaRequest;
+use App\Http\Requests\App\Media\StoreMediaRequest;
 use App\Models\Media;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;

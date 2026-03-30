@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\App\Workspace;
 
 use App\Rules\Timezone;
 use Illuminate\Foundation\Http\FormRequest;

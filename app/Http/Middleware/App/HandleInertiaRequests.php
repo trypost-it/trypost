@@ -1,74 +1,56 @@
 <?php
 
-namespace App\Http\Middleware;
+declare(strict_types=1);
 
+namespace App\Http\Middleware\App;
+
+use App\Http\Resources\App\HandleInertiaRequests\AuthUserResource;
+use App\Http\Resources\App\HandleInertiaRequests\AuthWorkspaceResource;
 use App\Models\Language;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
-    /**
-     * The root template that's loaded on the first page visit.
-     *
-     * @see https://inertiajs.com/server-side-setup#root-template
-     *
-     * @var string
-     */
     protected $rootView = 'app';
 
-    /**
-     * Determines the current asset version.
-     *
-     * @see https://inertiajs.com/asset-versioning
-     */
     public function version(Request $request): ?string
     {
         return parent::version($request);
     }
 
     /**
-     * Define the props that are shared by default.
-     *
-     * @see https://inertiajs.com/shared-data
-     *
      * @return array<string, mixed>
      */
     public function share(Request $request): array
     {
         $user = $request->user();
 
-        if ($user) {
+        if ($user?->language) {
             App::setLocale($user->language->code);
         }
 
         $currentWorkspace = $user?->currentWorkspace;
-        $currentRole = null;
-
-        if ($user && $currentWorkspace) {
-            $currentRole = $user->workspaces()
-                ->where('workspaces.id', $currentWorkspace->id)
-                ->first()
-                ?->pivot
-                ?->role;
-        }
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $user,
-                'role' => $currentRole,
+                'user' => $user ? AuthUserResource::make($user) : null,
+                'currentWorkspace' => $currentWorkspace ? AuthWorkspaceResource::make($currentWorkspace, $user) : null,
+                'workspaces' => $user
+                    ? $user->workspaces()->get()->map(fn ($ws) => AuthWorkspaceResource::summary($ws))
+                    : [],
             ],
-            'currentWorkspace' => $currentWorkspace,
-            'workspaces' => $user ? $user->workspaces()->select('workspaces.id', 'workspaces.name')->get() : [],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => $request->session()->get('flash', []),
+            'applicationUrl' => config('app.url'),
             'env' => config('app.env'),
             'locale' => app()->getLocale(),
+            'languages' => fn () => Cache::remember('languages:public', 3600, fn () => Language::query()->orderBy('name')->get()->toArray()),
             'selfHosted' => config('trypost.self_hosted'),
-            'languages' => Language::all(),
         ];
     }
 }

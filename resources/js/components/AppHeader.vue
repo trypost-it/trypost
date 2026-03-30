@@ -42,7 +42,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const page = usePage();
 const auth = computed(() => page.props.auth);
-const currentWorkspace = computed(() => page.props.currentWorkspace);
+const currentWorkspace = computed(() => page.props.auth.currentWorkspace);
 const { urlIsActive } = useActiveUrl();
 
 function activeItemStyles(url: NonNullable<InertiaLinkProps['href']>) {

@@ -17,9 +17,8 @@ class SocialAccountResource extends JsonResource
         return [
             'id' => $this->id,
             'platform' => $this->platform,
-            'name' => $this->name,
+            'display_name' => $this->display_name,
             'username' => $this->username,
-            'avatar' => $this->avatar,
         ];
     }
 }

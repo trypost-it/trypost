@@ -53,6 +53,7 @@ const page = usePage();
 const newToken = computed(() => (page.props.flash as Record<string, unknown>)?.plainToken as string | undefined);
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
+    { title: trans('settings.title'), href: apiKeysIndex.url() },
     { title: trans('settings.api_keys.title'), href: apiKeysIndex.url() },
 ]);
 

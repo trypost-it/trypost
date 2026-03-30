@@ -25,7 +25,13 @@ withDefaults(defineProps<Props>(), {
     <SidebarProvider :default-open="isOpen">
         <AppSidebar />
         <SidebarInset class="flex h-screen flex-col overflow-hidden">
-            <AppHeader :breadcrumbs="breadcrumbs">
+            <AppHeader :breadcrumbs="$slots['header-left'] ? [] : breadcrumbs" :show-sidebar-trigger="!$slots['header-left']">
+                <template v-if="$slots['header-left']" #left>
+                    <slot name="header-left" />
+                </template>
+                <template v-if="$slots['header-center']" #center>
+                    <slot name="header-center" />
+                </template>
                 <template v-if="$slots['header-right']" #right>
                     <slot name="header-right" />
                 </template>
@@ -33,7 +39,7 @@ withDefaults(defineProps<Props>(), {
             <div
                 :class="
                     fullWidth
-                        ? 'flex min-h-0 flex-1 flex-col overflow-hidden'
+                        ? 'flex min-h-0 flex-1 flex-col overflow-y-auto'
                         : 'flex-1 overflow-y-auto'
                 "
             >

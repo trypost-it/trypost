@@ -112,6 +112,9 @@ const submit = () => {
                     <Button type="submit" :disabled="form.processing">
                         {{ form.processing ? $t('labels.edit.submitting') : $t('labels.edit.submit') }}
                     </Button>
+                    <Button type="button" variant="secondary" @click="open = false">
+                        {{ $t('common.cancel') }}
+                    </Button>
                 </DialogFooter>
             </form>
         </DialogContent>

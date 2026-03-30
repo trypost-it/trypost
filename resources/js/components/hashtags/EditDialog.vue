@@ -96,6 +96,9 @@ const submit = () => {
                     <Button type="submit" :disabled="form.processing">
                         {{ form.processing ? $t('hashtags.edit.submitting') : $t('hashtags.edit.submit') }}
                     </Button>
+                    <Button type="button" variant="secondary" @click="open = false">
+                        {{ $t('common.cancel') }}
+                    </Button>
                 </DialogFooter>
             </form>
         </DialogContent>

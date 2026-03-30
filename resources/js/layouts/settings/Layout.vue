@@ -8,6 +8,7 @@ import { toUrl } from '@/lib/utils';
 import { index as apiKeys } from '@/routes/app/api-keys';
 import { index as billing } from '@/routes/app/billing';
 import { edit as editProfile } from '@/routes/app/profile';
+import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { edit as editPassword } from '@/routes/app/user-password';
 import { settings as workspaceSettings } from '@/routes/app/workspace';
 import { type NavItem, type SharedData } from '@/types';
@@ -25,6 +26,10 @@ const navItems = computed<NavItem[]>(() => {
         {
             title: trans('settings.nav.password'),
             href: editPassword(),
+        },
+        {
+            title: trans('settings.nav.notifications'),
+            href: notificationPreferences(),
         },
     ];
 

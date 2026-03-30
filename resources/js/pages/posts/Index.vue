@@ -177,22 +177,15 @@ const handleDelete = (post: Post) => {
     <Head :title="pageTitle" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
+        <template #header-right>
+            <Link :href="storePost.url()" method="post">
+                <Button>
+                    {{ $t('posts.new_post') }}
+                </Button>
+            </Link>
+        </template>
+
         <div class="flex flex-col gap-6 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">{{ pageTitle }}</h1>
-                    <p class="text-muted-foreground">
-                        {{ pageDescription }}
-                    </p>
-                </div>
-                <div class="flex gap-2">
-                    <Link :href="storePost.url()" method="post">
-                        <Button>
-                            {{ $t('posts.new_post') }}
-                        </Button>
-                    </Link>
-                </div>
-            </div>
 
             <EmptyState
                 v-if="posts.data.length === 0"

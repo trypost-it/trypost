@@ -9,7 +9,21 @@ return [
         'password' => 'Contraseña',
         'workspace' => 'Workspace',
         'members' => 'Miembros',
+        'notifications' => 'Notificaciones',
         'billing' => 'Facturación',
+    ],
+
+    'notifications' => [
+        'title' => 'Preferencias de notificaciones',
+        'heading' => 'Notificaciones por correo',
+        'description' => 'Elige qué notificaciones por correo deseas recibir',
+        'post_published' => 'Post publicado',
+        'post_published_description' => 'Recibir un correo cuando tu post se publique correctamente',
+        'post_failed' => 'Post fallido',
+        'post_failed_description' => 'Recibir un correo cuando tu post falle al publicar',
+        'account_disconnected' => 'Cuenta desconectada',
+        'account_disconnected_description' => 'Recibir un correo cuando una cuenta social se desconecte',
+        'save' => 'Guardar preferencias',
     ],
 
     'profile' => [
@@ -141,6 +155,7 @@ return [
         'photo_deleted' => '¡Foto eliminada correctamente!',
         'logo_updated' => '¡Logo subido correctamente!',
         'logo_deleted' => '¡Logo eliminado correctamente!',
+        'notifications_updated' => '¡Preferencias de notificaciones actualizadas!',
     ],
 
     'api_keys' => [

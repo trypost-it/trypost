@@ -696,12 +696,12 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
 
                 <span class="h-4 w-px bg-border" />
 
-                <Button type="button" variant="secondary" size="sm" class="shrink-0"
+                <Button type="button" variant="secondary" class="shrink-0"
                     :disabled="!canSubmit || isSubmitting || isSaving" @click="submit('scheduled')">
                     {{ $t('posts.edit.schedule') }}
                 </Button>
 
-                <Button type="button" size="sm" class="shrink-0" :disabled="!canSubmit || isSubmitting || isSaving"
+                <Button type="button" class="shrink-0" :disabled="!canSubmit || isSubmitting || isSaving"
                     @click="submit('publishing')">
                     {{ $t('posts.edit.publish') }}
                 </Button>
@@ -783,7 +783,7 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
 
                 <!-- Mobile Actions Button (edit mode only) -->
                 <div v-if="!isReadOnly" class="lg:hidden flex items-center gap-2">
-                    <Button type="button" size="sm" :disabled="!canSubmit || isSubmitting || isSaving"
+                    <Button type="button" :disabled="!canSubmit || isSubmitting || isSaving"
                         @click="submit('publishing')">
                         {{ $t('posts.edit.publish') }}
                     </Button>

@@ -71,10 +71,6 @@ const effectiveView = computed(() => {
     return isMobile.value ? 'day' : props.view;
 });
 
-const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
-    { title: trans('posts.title'), href: postsIndex.url() },
-    { title: trans('calendar.title'), href: calendar.url() },
-]);
 
 // Generate weekday names based on dayjs locale (respects weekStart config)
 const weekdayNames = computed(() => {
@@ -263,46 +259,45 @@ const formatTime = (scheduledAt: string): string => {
 
     <Head :title="$t('calendar.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs" :fullWidth="true">
-        <div class="flex flex-col h-full">
-            <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b gap-2">
-                <div class="flex items-center gap-2 lg:gap-4">
-                    <div class="flex items-center gap-1">
-                        <Button variant="outline" size="icon" @click="navigate(-1)">
-                            <IconChevronLeft class="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="icon" @click="navigate(1)">
-                            <IconChevronRight class="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <Button variant="outline" size="sm" @click="goToToday">
-                        {{ $t('calendar.today') }}
+    <AppLayout :fullWidth="true">
+        <template #header-left>
+            <Button variant="outline" size="icon" @click="navigate(-1)">
+                <IconChevronLeft class="h-4 w-4" />
+            </Button>
+            <Button variant="outline" @click="goToToday">
+                {{ $t('calendar.today') }}
+            </Button>
+            <Button variant="outline" size="icon" @click="navigate(1)">
+                <IconChevronRight class="h-4 w-4" />
+            </Button>
+            <DatePicker v-if="isMobile" v-model="selectedDate" @update:model-value="goToDate" />
+        </template>
+
+        <template #header-center>
+            <span class="text-sm font-semibold">
+                {{ headerTitle }}
+            </span>
+        </template>
+
+        <template #header-right>
+            <div class="flex items-center gap-2">
+                <Tabs v-if="!isMobile" :default-value="view" @update:model-value="switchView">
+                    <TabsList class="h-10">
+                        <TabsTrigger value="day">{{ $t('calendar.day') }}</TabsTrigger>
+                        <TabsTrigger value="week">{{ $t('calendar.week') }}</TabsTrigger>
+                        <TabsTrigger value="month">{{ $t('calendar.month') }}</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+
+                <Link :href="storePost.url()" method="post">
+                    <Button>
+                        {{ $t('calendar.new_post') }}
                     </Button>
-                    <!-- Date Picker for mobile day view -->
-                    <DatePicker v-if="isMobile" v-model="selectedDate" @update:model-value="goToDate" />
-                    <!-- Title for desktop -->
-                    <h1 class="hidden lg:block text-lg font-semibold">
-                        {{ headerTitle }}
-                    </h1>
-                </div>
-                <div class="flex items-center gap-2 lg:gap-4">
-                    <!-- View Tabs (hidden on mobile) -->
-                    <Tabs v-if="!isMobile" :default-value="view" @update:model-value="switchView">
-                        <TabsList>
-                            <TabsTrigger value="day">{{ $t('calendar.day') }}</TabsTrigger>
-                            <TabsTrigger value="week">{{ $t('calendar.week') }}</TabsTrigger>
-                            <TabsTrigger value="month">{{ $t('calendar.month') }}</TabsTrigger>
-                        </TabsList>
-                    </Tabs>
-                    <Link :href="storePost.url()" method="post">
-                        <Button size="sm" class="lg:size-default">
-                            <IconPlus class="h-4 w-4 lg:hidden" />
-                            <span class="hidden lg:inline">{{ $t('calendar.new_post') }}</span>
-                        </Button>
-                    </Link>
-                </div>
+                </Link>
             </div>
+        </template>
+
+        <div class="flex flex-col h-full">
 
             <!-- Day View (mobile or when view=day) -->
             <div v-if="effectiveView === 'day'" class="flex-1 overflow-y-auto">
@@ -314,13 +309,6 @@ const formatTime = (scheduledAt: string): string => {
                 </div>
 
                 <div class="p-4 space-y-3">
-                    <!-- Add Post Button -->
-                    <Link :href="storePost.url({ query: { date: currentDay.format('YYYY-MM-DD') } })" method="post"
-                        class="flex items-center justify-center gap-2 p-4 rounded-lg border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors">
-                        <IconPlus class="h-5 w-5" />
-                        <span>{{ $t('calendar.new_post') }}</span>
-                    </Link>
-
                     <!-- Posts List -->
                     <div v-if="dayPosts.length > 0" class="space-y-3">
                         <Link v-for="post in dayPosts" :key="post.id" :href="getPostUrl(post)" class="block">
@@ -417,7 +405,7 @@ const formatTime = (scheduledAt: string): string => {
             </div>
 
             <!-- Month View -->
-            <div v-else class="flex-1 flex flex-col overflow-hidden">
+            <div v-else class="flex-1 flex flex-col">
                 <!-- Weekday Headers -->
                 <div class="grid grid-cols-7 divide-x border-b bg-muted/30">
                     <div v-for="day in weekdayNames" :key="day"

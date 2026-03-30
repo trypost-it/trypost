@@ -85,6 +85,9 @@ const handleOpenChange = (value: boolean) => {
                     <Button type="submit" :disabled="form.processing">
                         {{ form.processing ? $t('hashtags.create.submitting') : $t('hashtags.create.submit') }}
                     </Button>
+                    <Button type="button" variant="secondary" @click="open = false">
+                        {{ $t('common.cancel') }}
+                    </Button>
                 </DialogFooter>
             </form>
         </DialogContent>

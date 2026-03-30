@@ -13,6 +13,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
@@ -86,6 +87,27 @@ class User extends Authenticatable implements MustVerifyEmail
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);
+    }
+
+    public function notificationPreference(): HasOne
+    {
+        return $this->hasOne(NotificationPreference::class);
+    }
+
+    public function wantsEmailFor(string $type): bool
+    {
+        $preference = $this->notificationPreference;
+
+        if (! $preference) {
+            return true; // Default: all enabled
+        }
+
+        return match ($type) {
+            'post_published' => $preference->post_published,
+            'post_failed', 'post_partially_published' => $preference->post_failed,
+            'account_disconnected' => $preference->account_disconnected,
+            default => true,
+        };
     }
 
     /**

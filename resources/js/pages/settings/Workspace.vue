@@ -67,10 +67,8 @@ const props = defineProps<{
 }>();
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    {
-        title: trans('settings.workspace.title'),
-        href: settings().url,
-    },
+    { title: trans('settings.title'), href: settings().url },
+    { title: trans('settings.nav.workspace'), href: settings().url },
 ]);
 
 const timezone = ref(props.workspace.timezone);

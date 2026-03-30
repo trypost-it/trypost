@@ -8,6 +8,7 @@ use App\Http\Controllers\App\MediaController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\OnboardingController;
 use App\Http\Controllers\App\PostController;
+use App\Http\Controllers\App\Settings\NotificationPreferenceController;
 use App\Http\Controllers\App\Settings\PasswordController;
 use App\Http\Controllers\App\Settings\ProfileController;
 use App\Http\Controllers\App\WorkspaceController;
@@ -187,6 +188,8 @@ Route::group(
             Route::put('settings/password', [PasswordController::class, 'update'])
                 ->middleware('throttle:6,1')
                 ->name('app.user-password.update');
+            Route::get('settings/notifications', [NotificationPreferenceController::class, 'edit'])->name('app.notifications.preferences');
+            Route::put('settings/notifications', [NotificationPreferenceController::class, 'update'])->name('app.notifications.preferences.update');
         });
     }
 );

@@ -51,8 +51,8 @@ class SendNotification implements ShouldQueue
             ]);
         }
 
-        // Send email
-        if ($this->mailable && $this->channel !== Channel::InApp) {
+        // Send email (respects user preferences)
+        if ($this->mailable && $this->channel !== Channel::InApp && $this->user->wantsEmailFor($this->type->value)) {
             Mail::to($this->user)->send($this->mailable);
         }
     }

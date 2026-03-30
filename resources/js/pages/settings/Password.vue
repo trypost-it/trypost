@@ -15,10 +15,8 @@ import { edit } from '@/routes/app/user-password';
 import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    {
-        title: trans('settings.password.title'),
-        href: edit().url,
-    },
+    { title: trans('settings.title'), href: edit().url },
+    { title: trans('settings.nav.password'), href: edit().url },
 ]);
 </script>
 

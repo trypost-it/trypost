@@ -15,6 +15,12 @@ withDefaults(defineProps<Props>(), {
 
 <template>
     <AppLayout :breadcrumbs="breadcrumbs" :full-width="fullWidth">
+        <template v-if="$slots['header-left']" #header-left>
+            <slot name="header-left" />
+        </template>
+        <template v-if="$slots['header-center']" #header-center>
+            <slot name="header-center" />
+        </template>
         <template v-if="$slots['header-right']" #header-right>
             <slot name="header-right" />
         </template>

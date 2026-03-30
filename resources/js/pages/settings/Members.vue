@@ -52,7 +52,8 @@ interface Props {
 defineProps<Props>();
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.members.title'), href: membersRoute.url() },
+    { title: trans('settings.title'), href: membersRoute.url() },
+    { title: trans('settings.nav.members'), href: membersRoute.url() },
 ]);
 
 const form = useForm({

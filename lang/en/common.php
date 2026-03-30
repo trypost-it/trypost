@@ -26,4 +26,6 @@ return [
     'date_picker' => [
         'select' => 'Select date',
     ],
+
+    'cancel' => 'Cancel',
 ];

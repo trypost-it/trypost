@@ -62,18 +62,13 @@ const getHashtagCount = (hashtags: string): number => {
     <Head :title="$t('hashtags.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
+        <template #header-right>
+            <Button @click="isCreateDialogOpen = true">
+                {{ $t('hashtags.new_group') }}
+            </Button>
+        </template>
+
         <div class="flex flex-col gap-6 p-6">
-            <div v-if="hashtags.length > 0" class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">{{ $t('hashtags.title') }}</h1>
-                    <p class="text-muted-foreground">
-                        {{ $t('hashtags.description') }}
-                    </p>
-                </div>
-                <Button @click="isCreateDialogOpen = true">
-                    {{ $t('hashtags.new_group') }}
-                </Button>
-            </div>
 
             <div v-if="hashtags.length === 0" class="flex flex-col items-center justify-center py-16">
                 <div class="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">

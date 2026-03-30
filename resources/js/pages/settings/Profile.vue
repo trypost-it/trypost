@@ -29,10 +29,8 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    {
-        title: trans('settings.profile.title'),
-        href: edit().url,
-    },
+    { title: trans('settings.title'), href: edit().url },
+    { title: trans('settings.nav.profile'), href: edit().url },
 ]);
 </script>
 

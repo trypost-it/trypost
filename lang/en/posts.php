@@ -35,6 +35,7 @@ return [
     ],
 
     'status' => [
+        'pending' => 'Pending',
         'draft' => 'Draft',
         'scheduled' => 'Scheduled',
         'publishing' => 'Publishing',

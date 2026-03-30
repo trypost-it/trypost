@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'workspaces' => 'Workspaces',
     'select_workspace' => 'Selecionar workspace',
     'create_workspace' => 'Criar workspace',
     'create_post' => 'Novo post',

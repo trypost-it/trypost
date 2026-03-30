@@ -23,6 +23,7 @@ import { store as storePost } from '@/actions/App/Http/Controllers/App/PostContr
 import { index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
+import NotificationBell from '@/components/NotificationBell.vue';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -197,6 +198,9 @@ const switchWorkspace = (workspaceId: string) => {
 
         <SidebarFooter>
             <SidebarMenu>
+                <SidebarMenuItem v-if="currentWorkspace">
+                    <NotificationBell />
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton as-child tooltip="Discord">
                         <a href="https://trypost.it/discord" target="_blank" rel="noopener noreferrer">

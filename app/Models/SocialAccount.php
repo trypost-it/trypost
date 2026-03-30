@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Notification\Channel;
+use App\Enums\Notification\Type;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\SocialAccount\Status;
+use App\Jobs\SendNotification;
 use App\Mail\AccountDisconnected;
 use Database\Factories\SocialAccountFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -15,7 +18,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class SocialAccount extends Model
@@ -105,8 +107,20 @@ class SocialAccount extends Model
                     'disconnected_at' => now(),
                 ]);
 
-                if ($wasConnected) {
-                    Mail::to($this->workspace->owner)->send(new AccountDisconnected($this));
+                if ($wasConnected && $this->workspace->owner) {
+                    $platformName = $this->platform->label();
+                    $accountName = $this->username ?? $this->display_name;
+
+                    SendNotification::dispatch(
+                        user: $this->workspace->owner,
+                        workspaceId: $this->workspace_id,
+                        type: Type::AccountDisconnected,
+                        channel: Channel::Both,
+                        title: "{$platformName} account disconnected",
+                        body: "@{$accountName} needs to be reconnected",
+                        data: ['social_account_id' => $this->id],
+                        mailable: new AccountDisconnected($this),
+                    );
                 }
             } finally {
                 $lock->release();

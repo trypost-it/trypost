@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\App\ApiKeyController;
 use App\Http\Controllers\App\BillingController;
 use App\Http\Controllers\App\MediaController;
+use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\OnboardingController;
 use App\Http\Controllers\App\PostController;
 use App\Http\Controllers\App\Settings\PasswordController;
@@ -163,6 +164,12 @@ Route::group(
             // Billing
             Route::get('settings/billing', [BillingController::class, 'index'])->name('app.billing.index');
             Route::get('settings/billing/portal', [BillingController::class, 'portal'])->name('app.billing.portal');
+
+            // Notifications
+            Route::get('notifications', [NotificationController::class, 'index'])->name('app.notifications.index');
+            Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('app.notifications.read');
+            Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('app.notifications.read-all');
+            Route::post('notifications/archive-all', [NotificationController::class, 'archiveAll'])->name('app.notifications.archive-all');
         });
 
         // Settings (auth required)

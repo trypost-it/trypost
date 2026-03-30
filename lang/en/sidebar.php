@@ -41,6 +41,11 @@ return [
         'settings' => 'Settings',
     ],
 
+    'notifications' => 'Notifications',
+    'mark_all_read' => 'Mark all as read',
+    'archive_all' => 'Archive all',
+    'no_notifications' => 'No notifications',
+
     'support' => [
         'discord' => 'Discord',
         'share_feedback' => 'Share feedback',

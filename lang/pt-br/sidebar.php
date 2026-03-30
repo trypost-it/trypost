@@ -40,6 +40,11 @@ return [
         'settings' => 'Configurações',
     ],
 
+    'notifications' => 'Notificações',
+    'mark_all_read' => 'Marcar tudo como lido',
+    'archive_all' => 'Arquivar tudo',
+    'no_notifications' => 'Sem notificações',
+
     'support' => [
         'discord' => 'Discord',
         'share_feedback' => 'Enviar feedback',

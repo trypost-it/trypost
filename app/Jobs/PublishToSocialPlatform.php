@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Enums\Notification\Channel;
+use App\Enums\Notification\Type;
 use App\Enums\PostPlatform\Status as PostPlatformStatus;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Events\PostPlatformStatusUpdated;
@@ -25,7 +27,6 @@ use App\Services\Social\YouTubePublisher;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 class PublishToSocialPlatform implements ShouldQueue
 {
@@ -134,8 +135,27 @@ class PublishToSocialPlatform implements ShouldQueue
     {
         $owner = $post->workspace->owner;
 
-        if ($owner) {
-            Mail::to($owner)->send(new PostPublishFailed($post));
+        if (! $owner) {
+            return;
         }
+
+        $failedPlatforms = $post->postPlatforms()
+            ->with('socialAccount')
+            ->where('enabled', true)
+            ->get()
+            ->filter(fn ($pp) => $pp->status === PostPlatformStatus::Failed)
+            ->map(fn ($pp) => $pp->platform->label().' (@'.data_get($pp, 'socialAccount.username', '').')')
+            ->implode(', ');
+
+        SendNotification::dispatch(
+            user: $owner,
+            workspaceId: $post->workspace_id,
+            type: Type::PostFailed,
+            channel: Channel::Both,
+            title: 'Post failed to publish',
+            body: "Failed on: {$failedPlatforms}",
+            data: ['post_id' => $post->id],
+            mailable: new PostPublishFailed($post),
+        );
     }
 }

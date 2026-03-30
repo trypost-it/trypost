@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     IconBrightnessUp,
     IconDeviceDesktop,
+    IconLanguage,
     IconLogout,
     IconMoon,
     IconUser,
 } from '@tabler/icons-vue';
+import { loadLanguageAsync } from 'laravel-vue-i18n';
+import { computed } from 'vue';
 
 import {
     DropdownMenuGroup,
@@ -20,21 +23,51 @@ import {
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
 import { useAppearance } from '@/composables/useAppearance';
+import dayjs from '@/dayjs';
 import { logout } from '@/routes';
 import { edit } from '@/routes/app/profile';
+import { updateLanguage } from '@/actions/App/Http/Controllers/App/Settings/ProfileController';
 import type { User } from '@/types';
+
+interface Language {
+    id: string;
+    name: string;
+    code: string;
+}
 
 type Props = {
     user: User;
 };
 
+defineProps<Props>();
+
+const page = usePage();
+const languages = computed<Language[]>(() => page.props.languages as Language[]);
+const currentLanguage = computed(() => languages.value?.find((l: Language) => l.id === page.props.auth.user?.language_id));
+
 const { appearance, updateAppearance } = useAppearance();
+
+const switchLanguage = (languageId: string) => {
+    const language = languages.value.find((l: Language) => l.id === languageId);
+    const languageCode = language?.code || 'en';
+    const previousLanguageCode = currentLanguage.value?.code || 'en';
+
+    loadLanguageAsync(languageCode);
+    dayjs.locale(languageCode.toLowerCase());
+
+    router.patch(updateLanguage.url(), { language_id: languageId }, {
+        preserveScroll: true,
+        preserveState: false,
+        onError: () => {
+            loadLanguageAsync(previousLanguageCode);
+            dayjs.locale(previousLanguageCode.toLowerCase());
+        },
+    });
+};
 
 const handleLogout = () => {
     router.flushAll();
 };
-
-defineProps<Props>();
 </script>
 
 <template>
@@ -87,6 +120,27 @@ defineProps<Props>();
                     <DropdownMenuItem @click="updateAppearance('system')">
                         <IconDeviceDesktop class="size-4" />
                         System
+                    </DropdownMenuItem>
+                </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+        </DropdownMenuSub>
+    </DropdownMenuGroup>
+    <DropdownMenuSeparator />
+    <DropdownMenuGroup>
+        <DropdownMenuSub v-if="languages && languages.length > 1">
+            <DropdownMenuSubTrigger class="gap-2">
+                <IconLanguage class="size-4 text-muted-foreground" />
+                Language: <span>{{ currentLanguage?.name ?? 'English' }}</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                    <DropdownMenuItem
+                        v-for="language in languages"
+                        :key="language.id"
+                        :class="language.id === currentLanguage?.id ? 'bg-accent' : ''"
+                        @click="switchLanguage(language.id)"
+                    >
+                        {{ language.name }}
                     </DropdownMenuItem>
                 </DropdownMenuSubContent>
             </DropdownMenuPortal>

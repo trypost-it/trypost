@@ -37,7 +37,10 @@ class AuthenticatedSessionController extends Controller
 
         // Check for redirect param
         if ($redirect = $request->input('redirect')) {
-            return redirect($redirect);
+            // Only allow internal redirects (paths starting with /)
+            if (str_starts_with($redirect, '/') && ! str_starts_with($redirect, '//')) {
+                return redirect($redirect);
+            }
         }
 
         return redirect()->intended(route('app.calendar'));

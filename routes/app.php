@@ -48,10 +48,10 @@ Route::group(
         // Onboarding routes
         Route::middleware(['auth', 'verified'])->prefix('onboarding')->group(function () {
             Route::get('/', fn () => redirect()->route('app.onboarding.role'));
-            Route::get('role', [OnboardingController::class, 'step1'])->name('app.onboarding.role');
-            Route::post('role', [OnboardingController::class, 'storeStep1'])->name('app.onboarding.role.store');
-            Route::get('connect', [OnboardingController::class, 'step2'])->name('app.onboarding.connect');
-            Route::post('connect', [OnboardingController::class, 'storeStep2'])->name('app.onboarding.connect.store');
+            Route::get('role', [OnboardingController::class, 'role'])->name('app.onboarding.role');
+            Route::post('role', [OnboardingController::class, 'storeRole'])->name('app.onboarding.role.store');
+            Route::get('connect', [OnboardingController::class, 'connect'])->name('app.onboarding.connect');
+            Route::post('connect', [OnboardingController::class, 'storeConnect'])->name('app.onboarding.connect.store');
             Route::get('complete', [OnboardingController::class, 'complete'])->name('app.onboarding.complete');
         });
 

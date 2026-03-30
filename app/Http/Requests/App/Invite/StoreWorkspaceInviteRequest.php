@@ -28,7 +28,7 @@ class StoreWorkspaceInviteRequest extends FormRequest
     {
         return [
             'email' => ['required', 'email', 'max:255'],
-            'role' => ['nullable', Rule::enum(WorkspaceRole::class)],
+            'role' => ['nullable', Rule::in([WorkspaceRole::Admin->value, WorkspaceRole::Member->value])],
         ];
     }
 
@@ -40,9 +40,9 @@ class StoreWorkspaceInviteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'O email é obrigatório.',
-            'email.email' => 'Digite um email válido.',
-            'email.max' => 'O email deve ter no máximo 255 caracteres.',
+            'email.required' => __('validation.required', ['attribute' => 'email']),
+            'email.email' => __('validation.email', ['attribute' => 'email']),
+            'email.max' => __('validation.max.string', ['attribute' => 'email', 'max' => 255]),
         ];
     }
 }

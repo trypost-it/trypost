@@ -11,9 +11,7 @@ class DeleteWorkspace
 {
     public static function execute(User $user, Workspace $workspace): void
     {
-        if ($user->current_workspace_id === $workspace->id) {
-            $user->update(['current_workspace_id' => null]);
-        }
+        User::where('current_workspace_id', $workspace->id)->update(['current_workspace_id' => null]);
 
         $workspace->delete();
 

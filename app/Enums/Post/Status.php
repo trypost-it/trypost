@@ -16,12 +16,12 @@ enum Status: string
     public function label(): string
     {
         return match ($this) {
-            self::Draft => 'Rascunho',
-            self::Scheduled => 'Agendado',
-            self::Publishing => 'Publicando',
-            self::Published => 'Publicado',
-            self::PartiallyPublished => 'Parcialmente Publicado',
-            self::Failed => 'Falhou',
+            self::Draft => __('posts.status.draft'),
+            self::Scheduled => __('posts.status.scheduled'),
+            self::Publishing => __('posts.status.publishing'),
+            self::Published => __('posts.status.published'),
+            self::PartiallyPublished => __('posts.status.partially_published'),
+            self::Failed => __('posts.status.failed'),
         };
     }
 

@@ -7,6 +7,8 @@ namespace App\Http\Controllers\App;
 use App\Http\Requests\App\Media\StoreChunkedMediaRequest;
 use App\Http\Requests\App\Media\StoreMediaRequest;
 use App\Models\Media;
+use App\Models\Post;
+use App\Models\PostPlatform;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +19,7 @@ class MediaController extends Controller
     public function store(StoreMediaRequest $request): JsonResponse
     {
         $model = $this->resolveModel($request->input('model'), $request->input('model_id'));
+        $this->authorizeModelOwnership($model, $request);
         $collection = $request->input('collection', 'default');
 
         $media = $model->addMedia(
@@ -47,6 +50,7 @@ class MediaController extends Controller
         }
 
         $model = $this->resolveModel($request->input('model'), $request->input('model_id'));
+        $this->authorizeModelOwnership($model, $request);
 
         $media = $model->addMediaFromPath(
             $tempFile,
@@ -66,11 +70,14 @@ class MediaController extends Controller
         ]);
     }
 
-    public function destroy(string $modelId, Media $media): JsonResponse
+    public function destroy(string $modelId, Media $media, Request $request): JsonResponse
     {
         if ($media->mediable_id !== $modelId) {
             abort(403);
         }
+
+        $model = $media->mediable;
+        $this->authorizeModelOwnership($model, $request);
 
         $media->delete();
 
@@ -94,11 +101,15 @@ class MediaController extends Controller
 
     public function duplicate(Media $media, Request $request): JsonResponse
     {
+        $sourceModel = $media->mediable;
+        $this->authorizeModelOwnership($sourceModel, $request);
+
         $targets = $request->input('targets', []);
         $duplicates = [];
 
         foreach ($targets as $target) {
             $model = $this->resolveModel($target['model'], $target['model_id']);
+            $this->authorizeModelOwnership($model, $request);
             $collection = $target['collection'] ?? $media->collection;
 
             $duplicate = $model->media()->create([
@@ -125,6 +136,21 @@ class MediaController extends Controller
         }
 
         return response()->json($duplicates);
+    }
+
+    private function authorizeModelOwnership(Model $model, Request $request): void
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        if ($model instanceof PostPlatform) {
+            if ($model->post->workspace_id !== $workspace->id) {
+                abort(403);
+            }
+        } elseif ($model instanceof Post) {
+            if ($model->workspace_id !== $workspace->id) {
+                abort(403);
+            }
+        }
     }
 
     private function resolveModel(string $alias, string $id): Model

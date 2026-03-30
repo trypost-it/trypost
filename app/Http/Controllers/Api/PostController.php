@@ -39,10 +39,19 @@ class PostController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'platforms' => ['required', 'array', 'min:1'],
+            'platforms.*.social_account_id' => ['required', 'uuid'],
+            'platforms.*.content_type' => ['required', 'string'],
+            'platforms.*.content' => ['nullable', 'string'],
+            'scheduled_at' => ['nullable', 'date', 'after:now'],
+            'status' => ['nullable', 'string', 'in:draft,scheduled,publishing'],
+        ]);
+
         $post = CreatePost::execute(
             $request->workspace,
-            $request->workspace->members()->first(),
-            $request->all()
+            $request->workspace->owner,
+            $validated
         );
 
         $post->load(['postPlatforms.socialAccount']);
@@ -58,7 +67,17 @@ class PostController extends Controller
             abort(Response::HTTP_NOT_FOUND);
         }
 
-        $result = UpdatePost::execute($request->workspace, $post, $request->all());
+        $validated = $request->validate([
+            'platforms' => ['sometimes', 'array'],
+            'platforms.*.id' => ['required', 'uuid'],
+            'platforms.*.content' => ['nullable', 'string'],
+            'scheduled_at' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'in:draft,scheduled,publishing'],
+            'label_ids' => ['sometimes', 'array'],
+            'label_ids.*' => ['uuid'],
+        ]);
+
+        $result = UpdatePost::execute($request->workspace, $post, $validated);
 
         if (data_get($result, 'action') === 'already_published') {
             return response()->json(

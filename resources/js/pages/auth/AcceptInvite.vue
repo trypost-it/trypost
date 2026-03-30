@@ -11,6 +11,7 @@ import { type SharedData } from '@/types';
 const props = defineProps<{
     invite: {
         id: string;
+        id: string;
         email: string;
         role: {
             value: string;

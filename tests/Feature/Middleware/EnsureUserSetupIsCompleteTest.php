@@ -45,7 +45,7 @@ test('user on connections step is redirected to onboarding step 2', function () 
         ->assertRedirect(route('app.onboarding.connect'));
 });
 
-test('user on subscription step is redirected to onboarding step 2', function () {
+test('user on subscription step is redirected to subscribe', function () {
     config(['trypost.self_hosted' => true]);
 
     $user = User::factory()->create(['setup' => Setup::Subscription]);
@@ -55,7 +55,7 @@ test('user on subscription step is redirected to onboarding step 2', function ()
 
     $this->actingAs($user)
         ->get(route('app.calendar'))
-        ->assertRedirect(route('app.onboarding.connect'));
+        ->assertRedirect(route('app.subscribe'));
 });
 
 test('user on role step can access onboarding step 1', function () {

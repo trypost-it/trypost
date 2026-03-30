@@ -51,7 +51,7 @@ class AuthenticateMcpToken
         }
 
         $user->current_workspace_id = $workspace->id;
-        Auth::login($user);
+        Auth::setUser($user);
 
         return $next($request);
     }

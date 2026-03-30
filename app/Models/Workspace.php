@@ -63,11 +63,6 @@ class Workspace extends Model
         return $this->hasMany(WorkspaceInvite::class);
     }
 
-    public function pendingInvites(): HasMany
-    {
-        return $this->invites()->pending();
-    }
-
     public function hashtags(): HasMany
     {
         return $this->hasMany(WorkspaceHashtag::class);

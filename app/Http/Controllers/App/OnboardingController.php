@@ -17,19 +17,19 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class OnboardingController extends Controller
 {
-    public function step1(Request $request): Response|RedirectResponse
+    public function role(Request $request): Response|RedirectResponse
     {
         $redirect = $this->enforceStep($request->user(), Setup::Role);
         if ($redirect) {
             return $redirect;
         }
 
-        return Inertia::render('onboarding/Step1', [
+        return Inertia::render('onboarding/Role', [
             'personas' => Persona::toSelectArray(),
         ]);
     }
 
-    public function storeStep1(Request $request): RedirectResponse
+    public function storeRole(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'persona' => ['required', Rule::enum(Persona::class)],
@@ -43,7 +43,7 @@ class OnboardingController extends Controller
         return redirect()->route('app.onboarding.connect');
     }
 
-    public function step2(Request $request): Response|RedirectResponse
+    public function connect(Request $request): Response|RedirectResponse
     {
         $redirect = $this->enforceStep($request->user(), Setup::Connections);
         if ($redirect) {
@@ -67,13 +67,13 @@ class OnboardingController extends Controller
             ])->values();
         }
 
-        return Inertia::render('onboarding/Step2', [
+        return Inertia::render('onboarding/Connect', [
             'platforms' => $platforms,
             'hasWorkspace' => $workspace !== null,
         ]);
     }
 
-    public function storeStep2(Request $request): SymfonyResponse|RedirectResponse
+    public function storeConnect(Request $request): SymfonyResponse|RedirectResponse
     {
         $user = $request->user();
 

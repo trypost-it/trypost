@@ -98,31 +98,4 @@ class BillingController extends Controller
             route('app.billing.index')
         );
     }
-
-    public function addWorkspace(Request $request): RedirectResponse
-    {
-        $user = $request->user();
-
-        if (! $user->subscribed('default')) {
-            return redirect()->route('app.billing.index')
-                ->withErrors(['subscription' => 'You need an active subscription.']);
-        }
-
-        $user->incrementWorkspaceQuantity();
-
-        return back()->with('success', 'Workspace added to subscription.');
-    }
-
-    public function removeWorkspace(Request $request): RedirectResponse
-    {
-        $user = $request->user();
-
-        if (! $user->subscribed('default')) {
-            return back();
-        }
-
-        $user->decrementWorkspaceQuantity();
-
-        return back()->with('success', 'Workspace removed from subscription.');
-    }
 }

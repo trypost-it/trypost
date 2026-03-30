@@ -31,10 +31,10 @@ class EnsureUserSetupIsComplete
 
         // Map setup status to allowed routes
         $allowedRoutes = match ($user->setup) {
-            Setup::Role => ['onboarding.role', 'onboarding.role.store'],
-            Setup::Connections => ['onboarding.connect', 'onboarding.connect.store', 'social.*'],
-            Setup::Subscription => ['onboarding.complete', 'onboarding.connect'],
-            default => ['onboarding.role', 'onboarding.role.store'],
+            Setup::Role => ['app.onboarding.role', 'app.onboarding.role.store'],
+            Setup::Connections => ['app.onboarding.connect', 'app.onboarding.connect.store', 'app.social.*'],
+            Setup::Subscription => ['app.subscribe', 'app.billing.*', 'app.onboarding.complete'],
+            default => ['app.onboarding.role', 'app.onboarding.role.store'],
         };
 
         $currentRoute = $request->route()?->getName();
@@ -50,7 +50,7 @@ class EnsureUserSetupIsComplete
         return match ($user->setup) {
             Setup::Role => redirect()->route('app.onboarding.role'),
             Setup::Connections => redirect()->route('app.onboarding.connect'),
-            Setup::Subscription => redirect()->route('app.onboarding.connect'),
+            Setup::Subscription => redirect()->route('app.subscribe'),
             default => redirect()->route('app.onboarding.role'),
         };
     }

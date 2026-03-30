@@ -70,7 +70,12 @@ it('cannot show post from another workspace', function () {
 it('creates a post', function () {
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
         ->postJson(route('api.posts.store'), [
-            'date' => now()->addDay()->format('Y-m-d'),
+            'platforms' => [
+                [
+                    'social_account_id' => $this->socialAccount->id,
+                    'content_type' => 'linkedin_post',
+                ],
+            ],
         ])
         ->assertCreated()
         ->assertJsonPath('status', PostStatus::Draft->value);

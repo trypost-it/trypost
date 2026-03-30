@@ -25,7 +25,7 @@ test('step1 shows persona selection', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('onboarding/Step1', false)
+        ->component('onboarding/Role', false)
         ->has('personas')
     );
 });
@@ -81,7 +81,7 @@ test('step2 shows social accounts connection', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('onboarding/Step2', false)
+        ->component('onboarding/Connect', false)
         ->has('platforms')
         ->has('hasWorkspace')
     );

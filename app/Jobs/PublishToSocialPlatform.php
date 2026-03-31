@@ -9,6 +9,7 @@ use App\Enums\Notification\Type;
 use App\Enums\PostPlatform\Status as PostPlatformStatus;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Events\PostPlatformStatusUpdated;
+use App\Exceptions\Social\SocialPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Mail\PostPublished;
 use App\Mail\PostPublishFailed;
@@ -82,6 +83,10 @@ class PublishToSocialPlatform implements ShouldQueue
 
             $this->postPlatform->markAsFailed($e->getMessage());
             $this->postPlatform->socialAccount->markAsDisconnected($e->getMessage());
+        } catch (SocialPublishException $e) {
+            Log::error('Social publish failed: '.$e->userMessage);
+
+            $this->postPlatform->markAsFailed($e->userMessage);
         } catch (\Throwable $e) {
             Log::error('Failed to publish to social platform', [
                 'post_platform_id' => $this->postPlatform->id,

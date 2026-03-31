@@ -54,7 +54,7 @@ const switchToWorkspace = (workspace: Workspace) => {
                 <div class="min-w-0 flex-1">
                     <p class="truncate font-medium">{{ workspace.name }}</p>
                     <p class="text-xs text-muted-foreground">
-                        {{ trans('workspaces.connections', { count: workspace.social_accounts_count }) }} · {{ trans('workspaces.posts', { count: workspace.posts_count }) }}
+                        {{ trans('workspaces.connections', { count: String(workspace.social_accounts_count) }) }} · {{ trans('workspaces.posts', { count: String(workspace.posts_count) }) }}
                     </p>
                 </div>
                 <Badge v-if="workspace.id === currentWorkspaceId" variant="secondary" class="shrink-0">

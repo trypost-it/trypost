@@ -78,7 +78,7 @@ watchEffect(() => {
         <Combobox
             :model-value="selectedTimezone"
             @update:model-value="
-                (v: Timezone) => {
+                (v: any) => {
                     selectedTimezone = v;
                     emit('update:modelValue', v?.value || null);
                 }

@@ -10,6 +10,7 @@ import { createApp, h } from 'vue';
 import { initializeTheme } from './composables/useAppearance';
 import dayjs from './dayjs';
 import posthog from './posthog';
+import type { Auth } from './types';
 
 configureEcho({
     broadcaster: 'reverb',
@@ -31,7 +32,7 @@ createInertiaApp({
         // Set dayjs locale based on user's language
         dayjs.locale(locale.toLowerCase());
 
-        const auth = props.initialPage.props.auth as { user?: { id: string; email: string; name: string }; currentWorkspace?: { id: string; name: string } } | undefined;
+        const auth = props.initialPage.props.auth as Auth | undefined;
 
         if (auth?.user) {
             posthog.identify(auth.user.id, {

@@ -82,7 +82,7 @@ const getStatusVariant = (status: string): 'default' | 'secondary' | 'destructiv
                 <IconSparkles class="h-4 w-4 text-primary" />
                 <AlertTitle>{{ $t('billing.trial.title') }}</AlertTitle>
                 <AlertDescription>
-                    {{ $t('billing.trial.description', { date: trialEndsAt }) }}
+                    {{ $t('billing.trial.description', { date: trialEndsAt ?? '' }) }}
                 </AlertDescription>
             </Alert>
 

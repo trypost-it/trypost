@@ -134,7 +134,7 @@ const getHashtagCount = (hashtags: string): number => {
                                 </div>
                             </div>
                             <CardDescription>
-                                {{ $t('hashtags.hashtags_count', { count: getHashtagCount(hashtag.hashtags) }) }}
+                                {{ $t('hashtags.hashtags_count', { count: String(getHashtagCount(hashtag.hashtags)) }) }}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>

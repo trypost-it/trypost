@@ -563,13 +563,13 @@ const contentValidation = computed(() => {
         } else if (hasUnsupportedVideos) {
             results[pp.id] = { valid: false, message: trans('posts.edit.validation.videos_not_supported'), charCount, maxLength: config.maxContentLength };
         } else if (hasTooManyImages) {
-            results[pp.id] = { valid: false, message: trans('posts.edit.validation.max_images', { count: config.maxImages }), charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.max_images', { count: String(config.maxImages) }), charCount, maxLength: config.maxContentLength };
         } else if (!config.supportsTextOnly && !hasMedia) {
             results[pp.id] = { valid: false, message: trans('posts.edit.validation.requires_media'), charCount, maxLength: config.maxContentLength };
         } else if (!hasContent && !hasMedia) {
             results[pp.id] = { valid: false, message: trans('posts.edit.no_content'), charCount, maxLength: config.maxContentLength };
         } else if (!withinLimit) {
-            results[pp.id] = { valid: false, message: trans('posts.edit.validation.exceeded', { count: charCount - config.maxContentLength }), charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.exceeded', { count: String(charCount - config.maxContentLength) }), charCount, maxLength: config.maxContentLength };
         } else {
             results[pp.id] = { valid: true, message: `${charCount}/${config.maxContentLength}`, charCount, maxLength: config.maxContentLength };
         }
@@ -594,7 +594,7 @@ const mediaValidation = computed(() => {
         }
 
         if (imageCount > config.maxImages && config.maxImages > 0) {
-            errors.push(trans('posts.edit.validation.supports_up_to_images', { platform: getPlatformLabel(pp.platform), count: config.maxImages }));
+            errors.push(trans('posts.edit.validation.supports_up_to_images', { platform: getPlatformLabel(pp.platform), count: String(config.maxImages) }));
         }
 
         if (!config.allowedMediaTypes.includes('video') && videoCount > 0) {

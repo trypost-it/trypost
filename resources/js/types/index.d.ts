@@ -1,9 +1,27 @@
 import { InertiaLinkProps } from '@inertiajs/vue3';
 import type { Component } from 'vue';
 
+export interface Workspace {
+    id: string;
+    name: string;
+    logo_url: string | null;
+    timezone: string;
+    role?: 'owner' | 'admin' | 'member' | null;
+    [key: string]: unknown;
+}
+
 export interface Auth {
     user: User;
     role: 'owner' | 'admin' | 'member' | null;
+    currentWorkspace: Workspace | null;
+    workspaces: Workspace[];
+}
+
+export interface FlashData {
+    banner?: string;
+    bannerStyle?: 'success' | 'danger' | 'info' | 'warning';
+    plainToken?: string;
+    [key: string]: unknown;
 }
 
 export interface BreadcrumbItem {
@@ -24,6 +42,7 @@ export interface NavItem {
 export interface SharedData {
     name: string;
     auth: Auth;
+    flash: FlashData;
     sidebarOpen: boolean;
     selfHosted: boolean;
     [key: string]: unknown;
@@ -34,7 +53,7 @@ export type AppPageProps<
 > = T & SharedData;
 
 export interface User {
-    id: number;
+    id: string;
     name: string;
     email: string;
     has_photo: boolean;

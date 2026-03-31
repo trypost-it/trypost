@@ -83,9 +83,9 @@ const remove = () => {
     const method = props.method as 'delete' | 'get' | 'post' | 'put' | 'patch';
 
     if (method === 'delete' || method === 'get') {
-        router[method](url.value, options);
+        router[method](url.value, options as any);
     } else {
-        router[method](url.value, {}, options);
+        router[method](url.value, {}, options as any);
     }
 };
 

@@ -72,7 +72,7 @@ const featureKeys = [
                         {{ $t('billing.subscribe.title') }}
                     </h1>
                     <p class="mt-2 text-sm text-muted-foreground">
-                        {{ trans('billing.subscribe.description', { days: displayDays }) }}
+                        {{ trans('billing.subscribe.description', { days: String(displayDays) }) }}
                     </p>
                 </div>
 
@@ -111,7 +111,7 @@ const featureKeys = [
                     :disabled="processing"
                     @click="subscribe"
                 >
-                    {{ trans('billing.subscribe.start_trial', { days: displayDays }) }}
+                    {{ trans('billing.subscribe.start_trial', { days: String(displayDays) }) }}
                 </Button>
             </div>
 

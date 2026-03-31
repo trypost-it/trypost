@@ -22,7 +22,7 @@ import dayjs from '@/dayjs';
 const props = defineProps({
     name: {
         type: String,
-        required: true,
+        default: '',
     },
     modelValue: {
         type: String,
@@ -47,7 +47,9 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+    'update:modelValue': [value: string | null];
+}>();
 
 // Parse input value into date
 const parseInput = (value: string) => {
@@ -180,7 +182,7 @@ const displayText = computed(() => {
             </Button>
         </PopoverTrigger>
         <PopoverContent class="w-auto p-0" :align="align">
-            <Calendar v-model="internalDate" :placeholder="internalDate" layout="month-and-year" locale="en"
+            <Calendar v-model="internalDate as any" :placeholder="(internalDate as any)" layout="month-and-year" locale="en"
                 calendar-label="Date picker" initial-focus />
             <!-- Time Picker -->
             <div v-if="showTime" class="border-t p-3">

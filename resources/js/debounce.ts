@@ -2,7 +2,7 @@ export default function debounce(
     callback: (...args: any[]) => void,
     wait = 1000,
 ) {
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const debouncedFn = (...args: any[]) => {
         if (timeoutId) {

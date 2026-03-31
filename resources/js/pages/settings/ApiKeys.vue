@@ -125,7 +125,7 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
                                     </Badge>
                                 </TableCell>
                                 <TableCell class="text-muted-foreground">
-                                    {{ token.expires_at ? date.formatDate(token.expires_at) : $t('settings.api_keys.table.never') }}
+                                    {{ token.expires_at ? date.formatDateTime(token.expires_at) : $t('settings.api_keys.table.never') }}
                                 </TableCell>
                                 <TableCell class="text-muted-foreground">
                                     {{ token.last_used_at ? date.diffForHumans(token.last_used_at) : $t('settings.api_keys.table.never') }}

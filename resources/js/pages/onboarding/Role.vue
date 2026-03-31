@@ -3,7 +3,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { IconBuilding, IconRocket, IconSparkles, IconBuildingStore, IconUser } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 
-import { storeStep1 } from '@/actions/App/Http/Controllers/App/OnboardingController';
+import { storeRole } from '@/actions/App/Http/Controllers/App/OnboardingController';
 import { Button } from '@/components/ui/button';
 import OnboardingLayout from '@/layouts/OnboardingLayout.vue';
 
@@ -34,7 +34,7 @@ const icons: Record<string, typeof IconRocket> = {
 };
 
 const submit = () => {
-    form.post(storeStep1.url());
+    form.post(storeRole.url());
 };
 
 const isSelected = (value: string) => form.persona === value;

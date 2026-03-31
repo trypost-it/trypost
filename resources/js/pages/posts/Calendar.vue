@@ -203,7 +203,7 @@ const goToDate = (dateStr: string) => {
     });
 };
 
-const switchView = (view: string) => {
+const switchView = (view: string | number) => {
     router.get(calendar.url({ query: { view } }), {}, {
         preserveState: true,
     });
@@ -270,7 +270,7 @@ const formatTime = (scheduledAt: string): string => {
             <Button variant="outline" size="icon" @click="navigate(1)">
                 <IconChevronRight class="h-4 w-4" />
             </Button>
-            <DatePicker v-if="isMobile" v-model="selectedDate" @update:model-value="goToDate" />
+            <DatePicker v-if="isMobile" v-model="selectedDate" @update:model-value="(v: any) => goToDate(v)" />
         </template>
 
         <template #header-center>
@@ -460,7 +460,7 @@ const formatTime = (scheduledAt: string): string => {
                                 </Link>
                                 <div v-if="getPostsForDay(day).length > 3"
                                     class="text-xs text-muted-foreground px-2 py-0.5">
-                                    {{ $t('calendar.more', { count: getPostsForDay(day).length - 3 }) }}
+                                    {{ $t('calendar.more', { count: String(getPostsForDay(day).length - 3) }) }}
                                 </div>
                             </div>
                         </div>

@@ -4,8 +4,9 @@ import { computed, onMounted, watch } from 'vue';
 import { toast } from 'vue-sonner';
 import { Toaster } from '@/components/ui/sonner';
 
-const style = computed(() => usePage().props.flash?.bannerStyle || 'success');
-const message = computed(() => usePage().props.flash?.banner || '');
+const page = usePage();
+const style = computed(() => (page.props.flash as Record<string, string>)?.bannerStyle || 'success');
+const message = computed(() => (page.props.flash as Record<string, string>)?.banner || '');
 
 const showToast = (msg: string) => {
     switch (style.value) {

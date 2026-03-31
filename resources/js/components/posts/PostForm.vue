@@ -403,7 +403,7 @@ const handleDropOnItem = (e: DragEvent, targetId: string) => {
                     {{ validationMessage }}
                 </span>
             </div>
-            <Textarea :model-value="content" @update:model-value="emit('update:content', $event)"
+            <Textarea :model-value="content" @update:model-value="emit('update:content', $event as string)"
                 :placeholder="$t('posts.form.write_caption')" class="min-h-[120px] resize-none" :disabled="props.disabled" />
         </div>
     </div>

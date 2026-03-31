@@ -1,0 +1,137 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Exceptions\Social\ErrorCategory;
+use App\Exceptions\Social\XPublishException;
+use App\Exceptions\TokenExpiredException;
+use Illuminate\Support\Facades\Http;
+
+test('HTTP 401 throws TokenExpiredException', function () {
+    $response = Http::response([
+        'type' => 'https://api.x.com/2/problems/not-authorized-for-resource',
+        'title' => 'Unauthorized',
+        'detail' => 'Could not authenticate you.',
+    ], 401);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.x.com/test');
+
+    XPublishException::fromApiResponse($fakeResponse);
+})->throws(TokenExpiredException::class);
+
+test('type unsupported-authentication throws TokenExpiredException', function () {
+    $response = Http::response([
+        'type' => 'https://api.x.com/2/problems/unsupported-authentication',
+        'title' => 'Unsupported Authentication',
+        'detail' => 'Authentication method not supported.',
+    ], 403);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.x.com/test');
+
+    XPublishException::fromApiResponse($fakeResponse);
+})->throws(TokenExpiredException::class);
+
+test('type usage-capped maps to RateLimit category', function () {
+    $response = Http::response([
+        'type' => 'https://api.x.com/2/problems/usage-capped',
+        'title' => 'Usage Capped',
+        'detail' => 'You have exceeded your monthly usage cap.',
+    ], 403);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.x.com/test');
+
+    $exception = XPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception)
+        ->toBeInstanceOf(XPublishException::class)
+        ->and($exception->category)->toBe(ErrorCategory::RateLimit)
+        ->and($exception->userMessage)->toBe('Usage limit exceeded. Please try again later.');
+});
+
+test('type client-forbidden maps to Permission category', function () {
+    $response = Http::response([
+        'type' => 'https://api.x.com/2/problems/client-forbidden',
+        'title' => 'Client Forbidden',
+        'detail' => 'This app is not enrolled.',
+    ], 403);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.x.com/test');
+
+    $exception = XPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->category)->toBe(ErrorCategory::Permission)
+        ->and($exception->userMessage)->toBe('App not enrolled or lacks required access.');
+});
+
+test('HTTP 500 maps to ServerError category', function () {
+    $response = Http::response([
+        'title' => 'Internal Server Error',
+        'detail' => 'Something went wrong on our end.',
+    ], 500);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.x.com/test');
+
+    $exception = XPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->category)->toBe(ErrorCategory::ServerError)
+        ->and($exception->userMessage)->toBe('X server error. Please try again later.');
+});
+
+test('unknown type maps to Unknown category with detail as message', function () {
+    $response = Http::response([
+        'type' => 'https://api.x.com/2/problems/some-unknown-problem',
+        'title' => 'Some Unknown Problem',
+        'detail' => 'An unknown issue occurred.',
+    ], 400);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.x.com/test');
+
+    $exception = XPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->category)->toBe(ErrorCategory::Unknown)
+        ->and($exception->userMessage)->toBe('An unknown issue occurred.');
+});
+
+test('body containing "invalid URL" maps to ContentPolicy category', function () {
+    $response = Http::response([
+        'type' => 'https://api.x.com/2/problems/invalid-request',
+        'title' => 'Invalid Request',
+        'detail' => 'The post contains an invalid URL in the content.',
+    ], 400);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.x.com/test');
+
+    $exception = XPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->category)->toBe(ErrorCategory::ContentPolicy)
+        ->and($exception->userMessage)->toBe('Post contains an invalid URL.');
+});
+
+test('body containing "video longer than 2 minutes" maps to MediaFormat category', function () {
+    $response = Http::response([
+        'type' => 'https://api.x.com/2/problems/invalid-request',
+        'title' => 'Invalid Request',
+        'detail' => 'The video longer than 2 minutes cannot be uploaded.',
+    ], 400);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.x.com/test');
+
+    $exception = XPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->category)->toBe(ErrorCategory::MediaFormat)
+        ->and($exception->userMessage)->toBe('Video exceeds the 2-minute limit.');
+});
+
+test('platform returns x', function () {
+    $response = Http::response([
+        'type' => 'https://api.x.com/2/problems/some-unknown-problem',
+        'title' => 'Error',
+        'detail' => 'Some detail.',
+    ], 400);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.x.com/test');
+
+    $exception = XPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->platform())->toBe('x');
+});

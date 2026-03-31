@@ -56,8 +56,6 @@ return [
 
     'url' => env('APP_URL', 'https://trypost.it'),
 
-    'email_asset_url' => env('EMAIL_ASSET_URL', 'https://app.trypost.it'),
-
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

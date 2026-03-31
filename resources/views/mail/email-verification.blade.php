@@ -59,7 +59,7 @@
           <td style="width: 552px; max-width: 100%">
             <div class="sm-my-8" style="margin-top: 48px; margin-bottom: 48px; text-align: center">
               <a href="https://trypost.it" target="_blank">
-                <img src="{{ email_asset('/images/emails/logo-header.png') }}" width="160" alt="Trypost" style="max-width: 100%; vertical-align: middle">
+                <img src="{{ asset('/images/emails/logo-header.png') }}" width="160" alt="Trypost" style="max-width: 100%; vertical-align: middle">
               </a>
             </div>
             <table style="width: 100%" cellpadding="0" cellspacing="0" role="none">

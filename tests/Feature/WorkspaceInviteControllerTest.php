@@ -228,3 +228,26 @@ test('update role requires authorization', function () {
 
     $response->assertForbidden();
 });
+
+test('store invite validates email is required', function () {
+    $response = $this->actingAs($this->user)->post(route('app.invites.store'), []);
+
+    $response->assertSessionHasErrors('email');
+});
+
+test('store invite validates email format', function () {
+    $response = $this->actingAs($this->user)->post(route('app.invites.store'), [
+        'email' => 'not-an-email',
+    ]);
+
+    $response->assertSessionHasErrors('email');
+});
+
+test('store invite validates role must be valid', function () {
+    $response = $this->actingAs($this->user)->post(route('app.invites.store'), [
+        'email' => 'test@example.com',
+        'role' => 'owner',
+    ]);
+
+    $response->assertSessionHasErrors('role');
+});

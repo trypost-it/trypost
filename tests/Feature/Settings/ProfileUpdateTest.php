@@ -230,3 +230,23 @@ test('user can delete profile photo', function () {
     $user->refresh();
     expect($user->has_photo)->toBeFalse();
 });
+
+test('user cannot upload photo exceeding max size', function () {
+    $user = User::factory()->create();
+
+    $response = $this
+        ->actingAs($user)
+        ->post(route('app.profile.upload-photo'), [
+            'photo' => UploadedFile::fake()->image('large.jpg')->size(6000),
+        ]);
+
+    $response->assertSessionHasErrors('photo');
+});
+
+test('delete account requires authentication', function () {
+    $response = $this->delete(route('app.profile.destroy'), [
+        'password' => 'password',
+    ]);
+
+    $response->assertRedirect(route('login'));
+});

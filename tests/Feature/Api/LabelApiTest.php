@@ -170,3 +170,59 @@ test('cannot access labels from another workspace', function () {
 
     $response->assertNotFound();
 });
+
+test('cannot update label from another workspace', function () {
+    $result = createLabelApiToken();
+    $otherWorkspace = Workspace::factory()->create();
+    $label = WorkspaceLabel::factory()->create(['workspace_id' => $otherWorkspace->id]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->putJson(route('api.labels.update', $label), [
+            'name' => 'Hacked',
+            'color' => '#000000',
+        ])
+        ->assertNotFound();
+});
+
+test('update label validation errors', function () {
+    $result = createLabelApiToken();
+    $label = WorkspaceLabel::factory()->create(['workspace_id' => data_get($result, 'workspace')->id]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->putJson(route('api.labels.update', $label), [])
+        ->assertUnprocessable();
+});
+
+test('update label validates color format', function () {
+    $result = createLabelApiToken();
+    $label = WorkspaceLabel::factory()->create(['workspace_id' => data_get($result, 'workspace')->id]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->putJson(route('api.labels.update', $label), [
+            'name' => 'Test',
+            'color' => 'invalid',
+        ])
+        ->assertUnprocessable();
+});
+
+test('list labels returns correct structure', function () {
+    $result = createLabelApiToken();
+    WorkspaceLabel::factory()->create(['workspace_id' => data_get($result, 'workspace')->id]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->getJson(route('api.labels.index'))
+        ->assertOk()
+        ->assertJsonStructure([
+            '*' => ['id', 'name', 'color', 'created_at', 'updated_at'],
+        ]);
+});
+
+test('cannot delete label from another workspace', function () {
+    $result = createLabelApiToken();
+    $otherWorkspace = Workspace::factory()->create();
+    $label = WorkspaceLabel::factory()->create(['workspace_id' => $otherWorkspace->id]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->deleteJson(route('api.labels.destroy', $label))
+        ->assertNotFound();
+});

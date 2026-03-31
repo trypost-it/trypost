@@ -16,7 +16,7 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Update a hashtag group name or hashtags.')]
 class UpdateHashtagTool extends Tool
 {
-    public function handle(Request $request): ResponseFactory
+    public function handle(Request $request): Response|ResponseFactory
     {
         $validated = $request->validate([
             'hashtag_id' => ['required', 'string'],
@@ -25,7 +25,11 @@ class UpdateHashtagTool extends Tool
         ]);
 
         $hashtag = WorkspaceHashtag::where('workspace_id', $request->user()->current_workspace_id)
-            ->findOrFail(data_get($validated, 'hashtag_id'));
+            ->find(data_get($validated, 'hashtag_id'));
+
+        if (! $hashtag) {
+            return Response::error('Hashtag not found.');
+        }
 
         $hashtag = UpdateHashtag::execute($hashtag, $validated);
 

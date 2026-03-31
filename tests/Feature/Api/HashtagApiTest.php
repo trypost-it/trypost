@@ -149,3 +149,47 @@ test('cannot access hashtags from another workspace', function () {
 
     $response->assertNotFound();
 });
+
+test('cannot update hashtag from another workspace', function () {
+    $result = createHashtagApiToken();
+    $otherWorkspace = Workspace::factory()->create();
+    $hashtag = WorkspaceHashtag::factory()->create(['workspace_id' => $otherWorkspace->id]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->putJson(route('api.hashtags.update', $hashtag), [
+            'name' => 'Hacked',
+            'hashtags' => '#hacked',
+        ])
+        ->assertNotFound();
+});
+
+test('update hashtag validation errors', function () {
+    $result = createHashtagApiToken();
+    $hashtag = WorkspaceHashtag::factory()->create(['workspace_id' => data_get($result, 'workspace')->id]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->putJson(route('api.hashtags.update', $hashtag), [])
+        ->assertUnprocessable();
+});
+
+test('list hashtags returns correct structure', function () {
+    $result = createHashtagApiToken();
+    WorkspaceHashtag::factory()->create(['workspace_id' => data_get($result, 'workspace')->id]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->getJson(route('api.hashtags.index'))
+        ->assertOk()
+        ->assertJsonStructure([
+            '*' => ['id', 'name', 'hashtags', 'created_at', 'updated_at'],
+        ]);
+});
+
+test('cannot delete hashtag from another workspace', function () {
+    $result = createHashtagApiToken();
+    $otherWorkspace = Workspace::factory()->create();
+    $hashtag = WorkspaceHashtag::factory()->create(['workspace_id' => $otherWorkspace->id]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->deleteJson(route('api.hashtags.destroy', $hashtag))
+        ->assertNotFound();
+});

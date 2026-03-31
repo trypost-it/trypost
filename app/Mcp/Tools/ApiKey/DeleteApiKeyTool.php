@@ -16,10 +16,14 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Delete an API key by ID.')]
 class DeleteApiKeyTool extends Tool
 {
-    public function handle(Request $request): ResponseFactory
+    public function handle(Request $request): Response|ResponseFactory
     {
         $apiToken = ApiToken::where('workspace_id', $request->user()->current_workspace_id)
-            ->findOrFail(data_get($request->validated(), 'api_key_id'));
+            ->find(data_get($request->validate(['api_key_id' => ['required', 'string']]), 'api_key_id'));
+
+        if (! $apiToken) {
+            return Response::error('API key not found.');
+        }
 
         DeleteApiKey::execute($apiToken);
 

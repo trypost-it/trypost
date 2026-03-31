@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Actions\SocialAccount\ToggleSocialAccount;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\SocialAccount\Status;
 use App\Http\Controllers\Controller;
@@ -95,7 +96,7 @@ class SocialController extends Controller
             abort(403);
         }
 
-        $account->update(['is_active' => ! $account->is_active]);
+        ToggleSocialAccount::execute($account);
 
         $status = $account->is_active ? 'activated' : 'deactivated';
         session()->flash('flash.banner', __("accounts.flash.{$status}"));

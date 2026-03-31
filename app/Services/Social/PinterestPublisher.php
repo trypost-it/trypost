@@ -50,7 +50,7 @@ class PinterestPublisher
             throw new \Exception('Pinterest requires at least one image');
         }
 
-        $boardId = $postPlatform->meta['board_id'] ?? $account->meta['default_board_id'] ?? null;
+        $boardId = data_get($postPlatform->meta, 'board_id') ?? data_get($account->meta, 'default_board_id') ?? null;
 
         if (! $boardId) {
             throw new \Exception('Pinterest board_id is required');
@@ -74,16 +74,16 @@ class PinterestPublisher
             $payload['description'] = $postPlatform->content;
         }
 
-        if (! empty($postPlatform->meta['title'])) {
-            $payload['title'] = substr($postPlatform->meta['title'], 0, 100);
+        if (! empty(data_get($postPlatform->meta, 'title'))) {
+            $payload['title'] = substr(data_get($postPlatform->meta, 'title'), 0, 100);
         }
 
-        if (! empty($postPlatform->meta['link'])) {
-            $payload['link'] = $postPlatform->meta['link'];
+        if (! empty(data_get($postPlatform->meta, 'link'))) {
+            $payload['link'] = data_get($postPlatform->meta, 'link');
         }
 
-        if (! empty($postPlatform->meta['alt_text'])) {
-            $payload['alt_text'] = substr($postPlatform->meta['alt_text'], 0, 500);
+        if (! empty(data_get($postPlatform->meta, 'alt_text'))) {
+            $payload['alt_text'] = substr(data_get($postPlatform->meta, 'alt_text'), 0, 500);
         }
 
         $response = Http::withToken($account->access_token)
@@ -116,7 +116,7 @@ class PinterestPublisher
             throw new \Exception('Pinterest requires a video');
         }
 
-        $boardId = $postPlatform->meta['board_id'] ?? $account->meta['default_board_id'] ?? null;
+        $boardId = data_get($postPlatform->meta, 'board_id') ?? data_get($account->meta, 'default_board_id') ?? null;
 
         if (! $boardId) {
             throw new \Exception('Pinterest board_id is required');
@@ -201,16 +201,16 @@ class PinterestPublisher
             $payload['description'] = $postPlatform->content;
         }
 
-        if (! empty($postPlatform->meta['title'])) {
-            $payload['title'] = substr($postPlatform->meta['title'], 0, 100);
+        if (! empty(data_get($postPlatform->meta, 'title'))) {
+            $payload['title'] = substr(data_get($postPlatform->meta, 'title'), 0, 100);
         }
 
-        if (! empty($postPlatform->meta['link'])) {
-            $payload['link'] = $postPlatform->meta['link'];
+        if (! empty(data_get($postPlatform->meta, 'link'))) {
+            $payload['link'] = data_get($postPlatform->meta, 'link');
         }
 
-        if (! empty($postPlatform->meta['cover_image_url'])) {
-            $payload['media_source']['cover_image_url'] = $postPlatform->meta['cover_image_url'];
+        if (! empty(data_get($postPlatform->meta, 'cover_image_url'))) {
+            $payload['media_source']['cover_image_url'] = data_get($postPlatform->meta, 'cover_image_url');
         }
 
         $response = Http::withToken($account->access_token)
@@ -243,7 +243,7 @@ class PinterestPublisher
             throw new \Exception('Pinterest carousel requires 2-5 images');
         }
 
-        $boardId = $postPlatform->meta['board_id'] ?? $account->meta['default_board_id'] ?? null;
+        $boardId = data_get($postPlatform->meta, 'board_id') ?? data_get($account->meta, 'default_board_id') ?? null;
 
         if (! $boardId) {
             throw new \Exception('Pinterest board_id is required');
@@ -271,12 +271,12 @@ class PinterestPublisher
             $payload['description'] = $postPlatform->content;
         }
 
-        if (! empty($postPlatform->meta['title'])) {
-            $payload['title'] = substr($postPlatform->meta['title'], 0, 100);
+        if (! empty(data_get($postPlatform->meta, 'title'))) {
+            $payload['title'] = substr(data_get($postPlatform->meta, 'title'), 0, 100);
         }
 
-        if (! empty($postPlatform->meta['link'])) {
-            $payload['link'] = $postPlatform->meta['link'];
+        if (! empty(data_get($postPlatform->meta, 'link'))) {
+            $payload['link'] = data_get($postPlatform->meta, 'link');
         }
 
         $response = Http::withToken($account->access_token)

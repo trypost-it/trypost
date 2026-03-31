@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\HashtagController;
 use App\Http\Controllers\Api\LabelController;
 use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\SocialAccountController;
 use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +37,10 @@ Route::group(
         Route::post('/labels', [LabelController::class, 'store'])->name('api.labels.store');
         Route::put('/labels/{label}', [LabelController::class, 'update'])->name('api.labels.update');
         Route::delete('/labels/{label}', [LabelController::class, 'destroy'])->name('api.labels.destroy');
+
+        // Social Accounts
+        Route::get('/social-accounts', [SocialAccountController::class, 'index'])->name('api.social-accounts.index');
+        Route::put('/social-accounts/{account}/toggle', [SocialAccountController::class, 'toggle'])->name('api.social-accounts.toggle');
 
         // API Keys
         Route::get('/api-keys', [ApiKeyController::class, 'index'])->name('api.api-keys.index');

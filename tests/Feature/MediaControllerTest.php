@@ -188,3 +188,20 @@ test('reorder media rejects media from other workspace', function () {
 
     $response->assertForbidden();
 });
+
+test('reorder media validates required fields', function () {
+    $response = $this->actingAs($this->user)->postJson(route('app.medias.reorder'), []);
+
+    $response->assertUnprocessable();
+    $response->assertJsonValidationErrors(['media']);
+});
+
+test('reorder media validates media items have id and order', function () {
+    $response = $this->actingAs($this->user)->postJson(route('app.medias.reorder'), [
+        'media' => [
+            ['invalid' => 'data'],
+        ],
+    ]);
+
+    $response->assertUnprocessable();
+});

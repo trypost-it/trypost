@@ -193,3 +193,22 @@ test('member can create label', function () {
     $response->assertRedirect();
     expect($this->workspace->labels()->count())->toBe(1);
 });
+
+test('update label validates required fields', function () {
+    $label = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $response = $this->actingAs($this->user)->put(route('app.labels.update', $label), []);
+
+    $response->assertSessionHasErrors(['name', 'color']);
+});
+
+test('update label validates color format', function () {
+    $label = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $response = $this->actingAs($this->user)->put(route('app.labels.update', $label), [
+        'name' => 'Test',
+        'color' => 'invalid',
+    ]);
+
+    $response->assertSessionHasErrors('color');
+});

@@ -16,7 +16,7 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Update a label name or color.')]
 class UpdateLabelTool extends Tool
 {
-    public function handle(Request $request): ResponseFactory
+    public function handle(Request $request): Response|ResponseFactory
     {
         $validated = $request->validate([
             'label_id' => ['required', 'string'],
@@ -25,7 +25,11 @@ class UpdateLabelTool extends Tool
         ]);
 
         $label = WorkspaceLabel::where('workspace_id', $request->user()->current_workspace_id)
-            ->findOrFail(data_get($validated, 'label_id'));
+            ->find(data_get($validated, 'label_id'));
+
+        if (! $label) {
+            return Response::error('Label not found.');
+        }
 
         $label = UpdateLabel::execute($label, $validated);
 

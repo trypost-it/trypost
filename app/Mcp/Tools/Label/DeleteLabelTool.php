@@ -16,10 +16,14 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Delete a label by ID.')]
 class DeleteLabelTool extends Tool
 {
-    public function handle(Request $request): ResponseFactory
+    public function handle(Request $request): Response|ResponseFactory
     {
         $label = WorkspaceLabel::where('workspace_id', $request->user()->current_workspace_id)
-            ->findOrFail(data_get($request->validated(), 'label_id'));
+            ->find(data_get($request->validate(['label_id' => ['required', 'string']]), 'label_id'));
+
+        if (! $label) {
+            return Response::error('Label not found.');
+        }
 
         DeleteLabel::execute($label);
 

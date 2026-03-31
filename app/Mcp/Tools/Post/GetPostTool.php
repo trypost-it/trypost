@@ -17,11 +17,15 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[Description('Get a specific post by ID with all its platform content and labels.')]
 class GetPostTool extends Tool
 {
-    public function handle(Request $request): ResponseFactory
+    public function handle(Request $request): Response|ResponseFactory
     {
         $post = Post::where('workspace_id', $request->user()->current_workspace_id)
             ->with(['postPlatforms.socialAccount', 'postPlatforms.media', 'labels'])
-            ->findOrFail(data_get($request->validated(), 'post_id'));
+            ->find(data_get($request->validate(['post_id' => ['required', 'string']]), 'post_id'));
+
+        if (! $post) {
+            return Response::error('Post not found.');
+        }
 
         return Response::structured($post->toArray());
     }

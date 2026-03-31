@@ -18,7 +18,8 @@ class CreatePostTool extends Tool
     public function handle(Request $request): ResponseFactory
     {
         $workspace = $request->user()->currentWorkspace;
-        $post = CreatePost::execute($workspace, $request->user(), $request->validated());
+        $validated = $request->validate(['date' => ['nullable', 'string']]);
+        $post = CreatePost::execute($workspace, $request->user(), $validated);
         $post->load(['postPlatforms.socialAccount']);
 
         return Response::structured($post->toArray());

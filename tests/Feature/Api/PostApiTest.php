@@ -7,6 +7,7 @@ use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
 use App\Models\ApiToken;
 use App\Models\Post;
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -107,4 +108,156 @@ it('cannot delete post from another workspace', function () {
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
         ->deleteJson(route('api.posts.destroy', $post))
         ->assertNotFound();
+});
+
+it('updates a post', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->linkedin()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+        'enabled' => true,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [
+            'platforms' => [
+                [
+                    'id' => $postPlatform->id,
+                    'content' => 'Updated content',
+                ],
+            ],
+        ])
+        ->assertOk();
+});
+
+it('cannot update post from another workspace', function () {
+    $otherWorkspace = Workspace::factory()->create();
+    $post = Post::factory()->create([
+        'workspace_id' => $otherWorkspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [])
+        ->assertNotFound();
+});
+
+it('cannot update published post', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Published,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [])
+        ->assertUnprocessable();
+});
+
+it('validates post update fields', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [
+            'platforms' => [
+                ['content' => 'missing id'],
+            ],
+        ])
+        ->assertUnprocessable();
+});
+
+it('validates post creation requires platforms', function () {
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store'), [])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['platforms']);
+});
+
+it('validates post creation platform fields', function () {
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store'), [
+            'platforms' => [
+                ['content' => 'missing social_account_id and content_type'],
+            ],
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['platforms.0.social_account_id', 'platforms.0.content_type']);
+});
+
+it('validates post update invalid status', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [
+            'status' => 'invalid_status',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['status']);
+});
+
+it('validates post update scheduled_at must be date', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [
+            'scheduled_at' => 'not-a-date',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['scheduled_at']);
+});
+
+it('validates post update label_ids must be uuids', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [
+            'label_ids' => ['not-a-uuid'],
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['label_ids.0']);
+});
+
+it('list posts returns correct structure', function () {
+    Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->getJson(route('api.posts.index'))
+        ->assertOk()
+        ->assertJsonStructure([
+            'data' => [
+                '*' => ['id', 'status', 'synced', 'scheduled_at', 'published_at', 'created_at', 'updated_at'],
+            ],
+        ]);
+});
+
+it('show post returns correct structure', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->getJson(route('api.posts.show', $post))
+        ->assertOk()
+        ->assertJsonStructure(['id', 'status', 'synced', 'scheduled_at', 'published_at']);
 });

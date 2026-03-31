@@ -184,3 +184,11 @@ test('member can create hashtag', function () {
     $response->assertRedirect();
     expect($this->workspace->hashtags()->count())->toBe(1);
 });
+
+test('update hashtag validates required fields', function () {
+    $hashtag = WorkspaceHashtag::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $response = $this->actingAs($this->user)->put(route('app.hashtags.update', $hashtag), []);
+
+    $response->assertSessionHasErrors(['name', 'hashtags']);
+});

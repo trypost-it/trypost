@@ -126,3 +126,13 @@ test('send notification respects email preferences', function () {
     // In-app notification should still be created
     expect(Notification::count())->toBe(1);
 });
+
+test('notification preferences update requires authentication', function () {
+    $response = $this->put(route('app.notifications.preferences.update'), [
+        'post_published' => true,
+        'post_failed' => true,
+        'account_disconnected' => true,
+    ]);
+
+    $response->assertRedirect(route('login'));
+});

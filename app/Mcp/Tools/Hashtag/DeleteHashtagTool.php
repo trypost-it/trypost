@@ -16,10 +16,14 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Delete a hashtag group by ID.')]
 class DeleteHashtagTool extends Tool
 {
-    public function handle(Request $request): ResponseFactory
+    public function handle(Request $request): Response|ResponseFactory
     {
         $hashtag = WorkspaceHashtag::where('workspace_id', $request->user()->current_workspace_id)
-            ->findOrFail(data_get($request->validated(), 'hashtag_id'));
+            ->find(data_get($request->validate(['hashtag_id' => ['required', 'string']]), 'hashtag_id'));
+
+        if (! $hashtag) {
+            return Response::error('Hashtag not found.');
+        }
 
         DeleteHashtag::execute($hashtag);
 

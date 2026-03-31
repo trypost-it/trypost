@@ -16,10 +16,14 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Delete a post by ID.')]
 class DeletePostTool extends Tool
 {
-    public function handle(Request $request): ResponseFactory
+    public function handle(Request $request): Response|ResponseFactory
     {
         $post = Post::where('workspace_id', $request->user()->current_workspace_id)
-            ->findOrFail(data_get($request->validated(), 'post_id'));
+            ->find(data_get($request->validate(['post_id' => ['required', 'string']]), 'post_id'));
+
+        if (! $post) {
+            return Response::error('Post not found.');
+        }
 
         DeletePost::execute($post);
 

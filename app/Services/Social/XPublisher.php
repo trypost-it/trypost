@@ -73,7 +73,7 @@ class XPublisher
             ];
         }
 
-        if (empty($data['text']) && empty($mediaIds)) {
+        if (empty($data['text'] ?? null) && empty($mediaIds)) {
             throw new \Exception('X posts require either text or media. Please add content to your post.');
         }
 

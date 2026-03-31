@@ -57,3 +57,12 @@ test('show workspace requires authentication', function () {
 
     $response->assertUnauthorized();
 });
+
+test('workspace returns correct structure', function () {
+    $result = createWorkspaceApiToken();
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->getJson(route('api.workspace.show'))
+        ->assertOk()
+        ->assertJsonStructure(['id', 'name', 'timezone', 'created_at', 'updated_at']);
+});

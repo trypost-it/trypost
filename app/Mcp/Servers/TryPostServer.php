@@ -19,6 +19,8 @@ use App\Mcp\Tools\Post\CreatePostTool;
 use App\Mcp\Tools\Post\DeletePostTool;
 use App\Mcp\Tools\Post\GetPostTool;
 use App\Mcp\Tools\Post\ListPostsTool;
+use App\Mcp\Tools\SocialAccount\ListSocialAccountsTool;
+use App\Mcp\Tools\SocialAccount\ToggleSocialAccountTool;
 use App\Mcp\Tools\Workspace\GetWorkspaceTool;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
@@ -50,6 +52,10 @@ class TryPostServer extends Server
         CreateLabelTool::class,
         UpdateLabelTool::class,
         DeleteLabelTool::class,
+
+        // Social Accounts
+        ListSocialAccountsTool::class,
+        ToggleSocialAccountTool::class,
 
         // Workspace
         GetWorkspaceTool::class,

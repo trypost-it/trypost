@@ -100,3 +100,7 @@ it('member cannot delete api key', function () {
         ->delete(route('app.api-keys.destroy', $token))
         ->assertForbidden();
 });
+
+it('api keys page requires authentication', function () {
+    $this->get(route('app.api-keys.index'))->assertRedirect(route('login'));
+});

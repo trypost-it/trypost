@@ -191,13 +191,13 @@ class MastodonController extends SocialController
                 return $this->popupCallback(false, 'Mastodon is already connected.', $this->platform->value);
             }
 
-            $avatarPath = isset($profile['avatar']) ? uploadFromUrl($profile['avatar']) : null;
+            $avatarPath = data_get($profile, 'avatar') ? uploadFromUrl(data_get($profile, 'avatar')) : null;
 
             $accountData = [
                 'platform' => $this->platform->value,
-                'platform_user_id' => $profile['id'],
-                'username' => $profile['acct'],
-                'display_name' => $profile['display_name'] ?: $profile['username'],
+                'platform_user_id' => data_get($profile, 'id'),
+                'username' => data_get($profile, 'acct'),
+                'display_name' => data_get($profile, 'display_name') ?: data_get($profile, 'username'),
                 'avatar_url' => $avatarPath,
                 'access_token' => $accessToken,
                 'refresh_token' => null, // Mastodon tokens don't expire

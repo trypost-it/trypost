@@ -131,3 +131,20 @@ test('archive all notifications', function () {
 
     expect($active)->toBe(0);
 });
+
+test('mark as read requires authentication', function () {
+    $notification = Notification::factory()->create([
+        'user_id' => $this->user->id,
+        'workspace_id' => $this->workspace->id,
+    ]);
+
+    $this->putJson(route('app.notifications.read', $notification))->assertUnauthorized();
+});
+
+test('mark all as read requires authentication', function () {
+    $this->postJson(route('app.notifications.read-all'))->assertUnauthorized();
+});
+
+test('archive all requires authentication', function () {
+    $this->postJson(route('app.notifications.archive-all'))->assertUnauthorized();
+});

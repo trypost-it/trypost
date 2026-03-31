@@ -127,3 +127,26 @@ test('cannot delete api key from another workspace', function () {
 
     $response->assertNotFound();
 });
+
+it('validates api key expires_at must be future date', function () {
+    $result = createApiKeyApiToken();
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->postJson(route('api.api-keys.store'), [
+            'name' => 'Test Key',
+            'expires_at' => '2020-01-01',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['expires_at']);
+});
+
+it('validates api key name max length', function () {
+    $result = createApiKeyApiToken();
+
+    $this->withHeaders(['Authorization' => 'Bearer '.data_get($result, 'plain_token')])
+        ->postJson(route('api.api-keys.store'), [
+            'name' => str_repeat('a', 256),
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['name']);
+});

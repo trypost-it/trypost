@@ -161,7 +161,10 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::get('settings/billing', [BillingController::class, 'index'])->name('app.billing.index');
     Route::get('settings/billing/portal', [BillingController::class, 'portal'])->name('app.billing.portal');
 
-    // Notifications
+});
+
+// Notifications (auth only, no subscription required)
+Route::middleware(['auth'])->group(function () {
     Route::get('notifications', [NotificationController::class, 'index'])->name('app.notifications.index');
     Route::put('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('app.notifications.read');
     Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('app.notifications.read-all');

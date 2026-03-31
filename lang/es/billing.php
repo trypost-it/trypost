@@ -7,7 +7,7 @@ return [
     'subscribe' => [
         'page_title' => 'Comienza tu prueba gratuita',
         'title' => 'Comienza tu prueba gratuita',
-        'description' => ':days días gratis. Sin tarjeta de crédito para empezar.',
+        'description' => ':days días gratis para explorar todas las funciones.',
         'start_trial' => 'Comenzar prueba de :days días',
         'cancel_anytime' => 'Cancela en cualquier momento. Sin preguntas.',
         'switch_workspace' => 'Cambiar workspace',
@@ -28,6 +28,7 @@ return [
 
     'subscription' => [
         'title' => 'Tu suscripción',
+        'status' => 'Estado',
         'workspaces' => 'Workspaces',
         'quantity' => 'Cantidad de suscripción',
         'expires' => 'Expira :date',

@@ -15,26 +15,12 @@ enum Persona: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::Founder => 'Founder',
-            self::Creator => 'Creator',
-            self::Agency => 'Agency',
-            self::Enterprise => 'Enterprise',
-            self::SmallBusiness => 'Small Business',
-            self::Personal => 'Personal',
-        };
+        return __("onboarding.personas.{$this->value}.label");
     }
 
     public function description(): string
     {
-        return match ($this) {
-            self::Founder => 'Building a startup or new venture',
-            self::Creator => 'Content creator or influencer',
-            self::Agency => 'Marketing or social media agency',
-            self::Enterprise => 'Large company or corporation',
-            self::SmallBusiness => 'Small to medium business',
-            self::Personal => 'Personal brand or hobby',
-        };
+        return __("onboarding.personas.{$this->value}.description");
     }
 
     public function icon(): string

@@ -10,6 +10,33 @@ return [
         'submit' => 'Continue',
     ],
 
+    'personas' => [
+        'founder' => [
+            'label' => 'Founder',
+            'description' => 'Building a startup or new venture',
+        ],
+        'creator' => [
+            'label' => 'Creator',
+            'description' => 'Content creator or influencer',
+        ],
+        'agency' => [
+            'label' => 'Agency',
+            'description' => 'Marketing or social media agency',
+        ],
+        'enterprise' => [
+            'label' => 'Enterprise',
+            'description' => 'Large company or corporation',
+        ],
+        'small_business' => [
+            'label' => 'Small Business',
+            'description' => 'Small to medium business',
+        ],
+        'personal' => [
+            'label' => 'Personal',
+            'description' => 'Personal brand or hobby',
+        ],
+    ],
+
     'connect' => [
         'page_title' => 'Connect your accounts',
         'title' => 'Connect your accounts',

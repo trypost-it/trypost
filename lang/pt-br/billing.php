@@ -7,7 +7,7 @@ return [
     'subscribe' => [
         'page_title' => 'Comece seu teste gratuito',
         'title' => 'Comece seu teste gratuito',
-        'description' => ':days dias grátis. Sem cartão de crédito para começar.',
+        'description' => ':days dias grátis para explorar todos os recursos.',
         'start_trial' => 'Começar teste de :days dias',
         'cancel_anytime' => 'Cancele a qualquer momento. Sem perguntas.',
         'switch_workspace' => 'Trocar workspace',
@@ -28,6 +28,7 @@ return [
 
     'subscription' => [
         'title' => 'Sua Assinatura',
+        'status' => 'Status',
         'workspaces' => 'Workspaces',
         'quantity' => 'Quantidade da assinatura',
         'expires' => 'Expira em :date',

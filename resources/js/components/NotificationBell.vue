@@ -41,6 +41,9 @@ const fetchNotifications = async () => {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             credentials: 'same-origin',
         });
+
+        if (! response.ok) return;
+
         const data = await response.json();
         notifications.value = data.notifications;
         unreadCount.value = data.unread_count;

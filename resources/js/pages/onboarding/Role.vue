@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { IconBuilding, IconRocket, IconSparkles, IconBuildingStore, IconUser } from '@tabler/icons-vue';
+import { IconBuilding, IconBuildingStore, IconCheck, IconRocket, IconSparkles, IconUser } from '@tabler/icons-vue';
 
 import { storeRole } from '@/actions/App/Http/Controllers/App/OnboardingController';
 import { Button } from '@/components/ui/button';
-import OnboardingLayout from '@/layouts/OnboardingLayout.vue';
+import AuthLayout from '@/layouts/AuthLayout.vue';
 
 interface Persona {
     value: string;
@@ -42,17 +42,16 @@ const isSelected = (value: string) => form.persona === value;
 <template>
     <Head :title="$t('onboarding.role.page_title')" />
 
-    <OnboardingLayout
+    <AuthLayout
         :title="$t('onboarding.role.title')"
         :description="$t('onboarding.role.description')"
-        :step="1"
     >
-        <div class="grid grid-cols-2 gap-4">
+        <div class="flex flex-col gap-2">
             <button
                 v-for="persona in personas"
                 :key="persona.value"
                 type="button"
-                class="group flex flex-col items-center gap-3 rounded-xl border-2 p-6 text-center transition-all hover:border-primary hover:bg-accent"
+                class="flex items-center gap-3 rounded-lg border px-4 py-3 text-left transition-all hover:border-primary hover:bg-accent"
                 :class="{
                     'border-primary bg-primary/5': isSelected(persona.value),
                     'border-border': !isSelected(persona.value),
@@ -60,28 +59,28 @@ const isSelected = (value: string) => form.persona === value;
                 @click="form.persona = persona.value"
             >
                 <div
-                    class="flex h-12 w-12 items-center justify-center rounded-full transition-colors"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors"
                     :class="{
                         'bg-primary text-primary-foreground': isSelected(persona.value),
-                        'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary': !isSelected(persona.value),
+                        'bg-muted text-muted-foreground': !isSelected(persona.value),
                     }"
                 >
-                    <component :is="icons[persona.icon]" class="h-6 w-6" />
+                    <component :is="icons[persona.icon]" class="h-4 w-4" />
                 </div>
-                <div>
-                    <h3 class="font-semibold">{{ persona.label }}</h3>
-                    <p class="text-sm text-muted-foreground">{{ persona.description }}</p>
+                <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium">{{ persona.label }}</p>
+                    <p class="text-xs text-muted-foreground">{{ persona.description }}</p>
                 </div>
+                <IconCheck v-if="isSelected(persona.value)" class="h-4 w-4 shrink-0 text-primary" />
             </button>
         </div>
 
         <Button
-            class="w-full"
-            size="lg"
+            class="mt-2 w-full"
             :disabled="!form.persona || form.processing"
             @click="submit"
         >
             {{ $t('onboarding.role.submit') }}
         </Button>
-    </OnboardingLayout>
+    </AuthLayout>
 </template>

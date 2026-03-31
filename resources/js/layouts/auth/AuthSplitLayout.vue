@@ -90,20 +90,23 @@ const platforms = [
 <template>
     <div class="grid min-h-svh lg:grid-cols-2">
         <div class="flex flex-col gap-4 p-6 md:p-10">
+            <div class="flex items-start">
+                <img
+                    src="/images/trypost/logo-light.png"
+                    alt="TryPost"
+                    class="h-7 dark:hidden"
+                />
+                <img
+                    src="/images/trypost/logo-dark.png"
+                    alt="TryPost"
+                    class="hidden h-7 dark:block"
+                />
+            </div>
+
             <div class="flex flex-1 items-center justify-center">
                 <div class="w-full max-w-md">
                     <div class="flex flex-col gap-6">
                         <div class="flex flex-col items-center gap-2 text-center">
-                            <img
-                                src="/images/trypost/logo-light.png"
-                                alt="TryPost"
-                                class="mb-2 h-10 dark:hidden"
-                            />
-                            <img
-                                src="/images/trypost/logo-dark.png"
-                                alt="TryPost"
-                                class="mb-2 hidden h-10 dark:block"
-                            />
                             <h1 v-if="title" class="text-2xl font-bold">{{ title }}</h1>
                             <p v-if="description" class="text-sm text-balance text-muted-foreground">
                                 {{ description }}

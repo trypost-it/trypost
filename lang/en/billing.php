@@ -7,7 +7,7 @@ return [
     'subscribe' => [
         'page_title' => 'Start your free trial',
         'title' => 'Start your free trial',
-        'description' => ':days days free. No credit card required to start.',
+        'description' => ':days days free to explore all features.',
         'start_trial' => 'Start :days-day free trial',
         'cancel_anytime' => 'Cancel anytime. No questions asked.',
         'switch_workspace' => 'Switch workspace',
@@ -28,6 +28,7 @@ return [
 
     'subscription' => [
         'title' => 'Your Subscription',
+        'status' => 'Status',
         'workspaces' => 'Workspaces',
         'quantity' => 'Subscription quantity',
         'expires' => 'Expires :date',

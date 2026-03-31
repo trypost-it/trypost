@@ -10,6 +10,33 @@ return [
         'submit' => 'Continuar',
     ],
 
+    'personas' => [
+        'founder' => [
+            'label' => 'Fundador',
+            'description' => 'Construyendo una startup o nuevo negocio',
+        ],
+        'creator' => [
+            'label' => 'Creador de Contenido',
+            'description' => 'Creador de contenido o influencer',
+        ],
+        'agency' => [
+            'label' => 'Agencia',
+            'description' => 'Agencia de marketing o redes sociales',
+        ],
+        'enterprise' => [
+            'label' => 'Empresa',
+            'description' => 'Gran empresa o corporación',
+        ],
+        'small_business' => [
+            'label' => 'Pequeño Negocio',
+            'description' => 'Pequeña o mediana empresa',
+        ],
+        'personal' => [
+            'label' => 'Personal',
+            'description' => 'Marca personal o hobby',
+        ],
+    ],
+
     'connect' => [
         'page_title' => 'Conecta tus cuentas',
         'title' => 'Conecta tus cuentas',

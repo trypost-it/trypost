@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
+use App\Enums\User\Setup;
 use App\Events\SubscriptionCreated;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
@@ -17,8 +18,8 @@ class StripeEventListener
     public function handle(WebhookReceived $event): void
     {
         try {
-            $type = $event->payload['type'] ?? null;
-            $stripeCustomerId = $event->payload['data']['object']['customer'] ?? null;
+            $type = data_get($event->payload, 'type');
+            $stripeCustomerId = data_get($event->payload, 'data.object.customer');
 
             if (! $stripeCustomerId) {
                 return;
@@ -46,6 +47,10 @@ class StripeEventListener
 
     protected function handleSubscriptionCreated(User $user, array $payload): void
     {
+        if ($user->setup === Setup::Subscription) {
+            $user->update(['setup' => Setup::Completed]);
+        }
+
         SubscriptionCreated::dispatch($user);
     }
 

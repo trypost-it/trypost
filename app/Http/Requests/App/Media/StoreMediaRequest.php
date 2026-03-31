@@ -26,7 +26,7 @@ class StoreMediaRequest extends FormRequest
             'media' => [
                 'required',
                 'file',
-                'max:512000', // 500MB
+                'max:1048576', // 1GB
                 'mimetypes:image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm,application/pdf',
             ],
             'model' => [
@@ -50,7 +50,7 @@ class StoreMediaRequest extends FormRequest
     {
         return [
             'media.required' => 'The file is required.',
-            'media.max' => 'The file must be at most 500MB.',
+            'media.max' => 'The file must be at most 1GB.',
             'media.mimetypes' => 'File type not supported.',
             'model.required' => 'The model is required.',
             'model.in' => 'Invalid model type.',

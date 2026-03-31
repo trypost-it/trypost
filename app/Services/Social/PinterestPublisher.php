@@ -160,9 +160,14 @@ class PinterestPublisher
             $multipart[] = ['name' => $key, 'contents' => $value];
         }
 
-        // Get video content
-        $videoContent = file_get_contents($media->url);
+        // Download video to temp file (memory-safe)
+        $tempFile = tempnam(sys_get_temp_dir(), 'pin_video_');
+        Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
+
+        $videoContent = fopen($tempFile, 'r');
+
         if ($videoContent === false) {
+            @unlink($tempFile);
             throw new \Exception('Failed to read video file');
         }
 
@@ -173,7 +178,13 @@ class PinterestPublisher
         ];
 
         $uploadResponse = Http::asMultipart()
+            ->timeout(600)
             ->post($uploadUrl, $multipart);
+
+        if (is_resource($videoContent)) {
+            fclose($videoContent);
+        }
+        @unlink($tempFile);
 
         if ($uploadResponse->failed()) {
             Log::error('Pinterest video upload failed', [

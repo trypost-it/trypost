@@ -8,6 +8,8 @@ use App\Actions\Post\CreatePost;
 use App\Actions\Post\DeletePost;
 use App\Actions\Post\UpdatePost;
 use App\Enums\Post\Action as PostAction;
+use App\Http\Requests\Api\Post\StorePostRequest;
+use App\Http\Requests\Api\Post\UpdatePostRequest;
 use App\Http\Resources\Api\PostResource;
 use App\Models\Post;
 use Illuminate\Http\JsonResponse;
@@ -38,21 +40,12 @@ class PostController extends Controller
         return new PostResource($post);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StorePostRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'platforms' => ['required', 'array', 'min:1'],
-            'platforms.*.social_account_id' => ['required', 'uuid'],
-            'platforms.*.content_type' => ['required', 'string'],
-            'platforms.*.content' => ['nullable', 'string'],
-            'scheduled_at' => ['nullable', 'date', 'after:now'],
-            'status' => ['nullable', 'string', 'in:draft,scheduled,publishing'],
-        ]);
-
         $post = CreatePost::execute(
             $request->workspace,
             $request->workspace->owner,
-            $validated
+            $request->validated()
         );
 
         $post->load(['postPlatforms.socialAccount']);
@@ -62,23 +55,13 @@ class PostController extends Controller
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    public function update(Request $request, Post $post): PostResource|JsonResponse
+    public function update(UpdatePostRequest $request, Post $post): PostResource|JsonResponse
     {
         if ($post->workspace_id !== $request->workspace->id) {
             abort(Response::HTTP_NOT_FOUND);
         }
 
-        $validated = $request->validate([
-            'platforms' => ['sometimes', 'array'],
-            'platforms.*.id' => ['required', 'uuid'],
-            'platforms.*.content' => ['nullable', 'string'],
-            'scheduled_at' => ['nullable', 'date'],
-            'status' => ['nullable', 'string', 'in:draft,scheduled,publishing'],
-            'label_ids' => ['sometimes', 'array'],
-            'label_ids.*' => ['uuid'],
-        ]);
-
-        $result = UpdatePost::execute($request->workspace, $post, $validated);
+        $result = UpdatePost::execute($request->workspace, $post, $request->validated());
 
         if (data_get($result, 'action') === PostAction::AlreadyPublished) {
             return response()->json(

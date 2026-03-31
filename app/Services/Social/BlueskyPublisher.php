@@ -31,7 +31,7 @@ class BlueskyPublisher
         if ($medias->count() > 0) {
             $images = [];
             foreach ($medias->take(4) as $media) {
-                if (str_starts_with($media->mime_type, 'image/')) {
+                if ($media->isImage()) {
                     $blob = $this->uploadBlob($account, $service, $media->url, $media->mime_type);
                     if ($blob) {
                         $images[] = [
@@ -110,28 +110,37 @@ class BlueskyPublisher
 
     private function uploadBlob(SocialAccount $account, string $service, string $url, string $mimeType): ?array
     {
-        try {
-            $imageContent = file_get_contents($url);
+        $tempFile = tempnam(sys_get_temp_dir(), 'bsky_blob_');
 
-            if ($imageContent === false) {
-                Log::error('Bluesky failed to read image', ['url' => $url]);
+        try {
+            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($url);
+
+            $fileSize = filesize($tempFile);
+
+            if ($fileSize === false || $fileSize === 0) {
+                Log::error('Bluesky failed to download media', ['url' => $url]);
 
                 return null;
             }
 
             // Bluesky has 1MB limit for images
-            if (strlen($imageContent) > 1000000) {
+            if (str_starts_with($mimeType, 'image/') && $fileSize > 1000000) {
                 Log::warning('Bluesky image exceeds 1MB limit', [
-                    'size' => strlen($imageContent),
+                    'size' => $fileSize,
                     'url' => $url,
                 ]);
-                // TODO: Resize image if needed
             }
+
+            $stream = fopen($tempFile, 'r');
 
             $response = Http::withToken($account->access_token)
                 ->withHeaders(['Content-Type' => $mimeType])
-                ->withBody($imageContent, $mimeType)
+                ->withBody($stream, $mimeType)
                 ->post("{$service}/xrpc/com.atproto.repo.uploadBlob");
+
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
 
             if ($response->failed()) {
                 Log::error('Bluesky blob upload failed', [
@@ -150,6 +159,8 @@ class BlueskyPublisher
             ]);
 
             return null;
+        } finally {
+            @unlink($tempFile);
         }
     }
 

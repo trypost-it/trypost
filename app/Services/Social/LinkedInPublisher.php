@@ -155,7 +155,7 @@ class LinkedInPublisher
         $carouselItems = [];
 
         foreach ($mediaCollection as $media) {
-            if (! str_starts_with($media->mime_type, 'image/')) {
+            if (! $media->isImage()) {
                 continue;
             }
 
@@ -288,8 +288,20 @@ class LinkedInPublisher
 
     private function uploadVideo($mediaItem, string $ownerUrn): ?string
     {
-        $videoContent = file_get_contents($mediaItem->url);
-        $fileSize = strlen($videoContent);
+        $tempFile = tempnam(sys_get_temp_dir(), 'li_video_');
+
+        try {
+            return $this->doUploadVideo($tempFile, $mediaItem, $ownerUrn);
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    private function doUploadVideo(string $tempFile, $mediaItem, string $ownerUrn): ?string
+    {
+        Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+
+        $fileSize = (int) filesize($tempFile);
 
         Log::info('LinkedIn initializing video upload', [
             'owner' => $ownerUrn,
@@ -334,7 +346,11 @@ class LinkedInPublisher
             $firstByte = $instruction['firstByte'];
             $lastByte = $instruction['lastByte'];
 
-            $chunkData = substr($videoContent, $firstByte, $lastByte - $firstByte + 1);
+            $chunkLength = $lastByte - $firstByte + 1;
+            $handle = fopen($tempFile, 'r');
+            fseek($handle, $firstByte);
+            $chunkData = fread($handle, $chunkLength);
+            fclose($handle);
 
             Log::info('LinkedIn uploading video chunk', [
                 'index' => $index,

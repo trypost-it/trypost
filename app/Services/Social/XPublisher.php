@@ -111,28 +111,24 @@ class XPublisher
 
     private function uploadMedia($mediaItem): ?array
     {
-        $mediaContent = file_get_contents($mediaItem->url);
         $mimeType = $mediaItem->mime_type;
-        $fileSize = strlen($mediaContent);
 
-        // Create temp file
+        // Download to temp file (memory-safe)
         $tempFile = tempnam(sys_get_temp_dir(), 'x_media_');
-        file_put_contents($tempFile, $mediaContent);
 
         try {
+            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+
+            $fileSize = filesize($tempFile);
             $mediaCategory = $this->getMediaCategory($mimeType, $fileSize);
 
             $isVideo = str_starts_with($mimeType, 'video/');
             $isGif = $mimeType === 'image/gif';
 
-            // Use chunked upload for:
-            // - Videos (always)
-            // - GIFs (need async processing)
-            // - Files > 5MB (API limit for simple upload)
             $useChunkedUpload = $isVideo || $isGif || $fileSize > 5 * 1024 * 1024;
 
             if ($useChunkedUpload) {
-                return $this->chunkedUpload($mediaContent, $mimeType, $mediaCategory);
+                return $this->chunkedUpload($tempFile, $fileSize, $mimeType, $mediaCategory);
             }
 
             // Simple upload for small images
@@ -162,7 +158,6 @@ class XPublisher
 
             $responseData = $response->json();
 
-            // v2 API returns data.id
             $mediaId = $responseData['data']['id'] ?? $responseData['media_id'] ?? null;
 
             if ($isGif && $mediaId) {
@@ -171,23 +166,19 @@ class XPublisher
 
             return $responseData;
         } finally {
-            if (file_exists($tempFile)) {
-                unlink($tempFile);
-            }
+            @unlink($tempFile);
         }
     }
 
-    private function chunkedUpload(string $mediaContent, string $mimeType, string $mediaCategory): array
+    private function chunkedUpload(string $tempFile, int $totalBytes, string $mimeType, string $mediaCategory): array
     {
-        $totalBytes = strlen($mediaContent);
-
         Log::info('X chunked upload INIT', [
             'total_bytes' => $totalBytes,
             'media_type' => $mimeType,
             'media_category' => $mediaCategory,
         ]);
 
-        // INIT - Use dedicated initialize endpoint
+        // INIT
         $initResponse = Http::withToken($this->accessToken)
             ->timeout(60)
             ->post("{$this->baseUrl}/2/media/upload/initialize", [
@@ -213,18 +204,24 @@ class XPublisher
 
         Log::info('X chunked upload INIT success', ['media_id' => $mediaId]);
 
-        // APPEND - Upload in 1MB chunks (API limit)
-        $chunkSize = 1 * 1024 * 1024;
-        $chunks = str_split($mediaContent, $chunkSize);
+        // APPEND - Read from temp file in 5MB chunks (memory-safe)
+        $chunkSize = 5 * 1024 * 1024;
+        $handle = fopen($tempFile, 'r');
+        $index = 0;
 
-        foreach ($chunks as $index => $chunk) {
+        while (! feof($handle)) {
+            $chunk = fread($handle, $chunkSize);
+
+            if ($chunk === '' || $chunk === false) {
+                break;
+            }
+
             Log::info('X chunked upload APPEND', [
                 'media_id' => $mediaId,
                 'segment' => $index,
                 'chunk_size' => strlen($chunk),
             ]);
 
-            // APPEND uses the new v2 endpoint with media_id in URL
             $appendResponse = Http::withToken($this->accessToken)
                 ->timeout(300)
                 ->attach('media', $chunk, 'chunk'.$index)
@@ -240,7 +237,11 @@ class XPublisher
                 ]);
                 $this->handleApiError($appendResponse, 'Failed to append chunk');
             }
+
+            $index++;
         }
+
+        fclose($handle);
 
         // FINALIZE - Use the new v2 endpoint
         Log::info('X chunked upload FINALIZE', ['media_id' => $mediaId]);

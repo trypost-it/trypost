@@ -163,7 +163,7 @@ class ThreadsController extends SocialController
                     'display_name' => data_get($profile, 'name', data_get($profile, 'username')),
                     'avatar_url' => $avatarPath,
                     'access_token' => $longLivedToken,
-                    'refresh_token' => null,
+                    'refresh_token' => $longLivedToken,
                     'token_expires_at' => $expiresIn ? now()->addSeconds($expiresIn) : null,
                     'scopes' => $this->scopes,
                 ]);

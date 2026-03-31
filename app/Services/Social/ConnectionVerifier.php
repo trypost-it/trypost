@@ -54,7 +54,8 @@ class ConnectionVerifier
             Platform::TikTok => $this->refreshTikTokToken($account),
             Platform::Pinterest => $this->refreshPinterestToken($account),
             Platform::Threads => $this->refreshThreadsToken($account),
-            // Facebook, Instagram use long-lived tokens without refresh mechanism
+            Platform::Instagram => $this->refreshInstagramToken($account),
+            // Facebook uses page tokens that don't expire
             // Mastodon tokens don't expire
             default => null,
         };
@@ -278,9 +279,35 @@ class ConnectionVerifier
         }
 
         $data = $response->json();
+        $newToken = data_get($data, 'access_token');
 
         $account->update([
-            'access_token' => data_get($data, 'access_token'),
+            'access_token' => $newToken,
+            'refresh_token' => $newToken,
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
+        ]);
+
+        $account->refresh();
+    }
+
+    private function refreshInstagramToken(SocialAccount $account): void
+    {
+        $response = Http::get('https://graph.instagram.com/refresh_access_token', [
+            'grant_type' => 'ig_refresh_token',
+            'access_token' => $account->access_token,
+        ]);
+
+        if ($response->failed()) {
+            Log::error('ConnectionVerifier: Instagram token refresh failed', ['body' => $response->body()]);
+            throw new TokenExpiredException('Failed to refresh Instagram token');
+        }
+
+        $data = $response->json();
+        $newToken = data_get($data, 'access_token');
+
+        $account->update([
+            'access_token' => $newToken,
+            'refresh_token' => $newToken,
             'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 

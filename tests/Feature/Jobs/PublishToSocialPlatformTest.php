@@ -258,3 +258,24 @@ test('publish to social platform dispatches failure notification when platform f
     expect($this->post->status)->toBe(PostStatus::Failed);
     Queue::assertPushed(SendNotification::class);
 });
+
+test('publish to social platform skips if already published (idempotency)', function () {
+    Event::fake();
+
+    // Mark as already published
+    $this->postPlatform->update([
+        'status' => PlatformStatus::Published,
+        'platform_post_id' => 'existing-123',
+    ]);
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldNotReceive('publish');
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    // Should not have called publish
+    $this->postPlatform->refresh();
+    expect($this->postPlatform->platform_post_id)->toBe('existing-123');
+});

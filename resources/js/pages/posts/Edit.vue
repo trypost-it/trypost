@@ -344,6 +344,7 @@ const getDefaultContentType = (platform: string): string => {
         'threads': 'threads_post',
         'pinterest': 'pinterest_pin',
         'bluesky': 'bluesky_post',
+        'mastodon': 'mastodon_post',
     };
     return defaults[platform] || '';
 };

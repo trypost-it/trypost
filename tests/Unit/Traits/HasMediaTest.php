@@ -222,3 +222,36 @@ test('user has_photo returns true when avatar exists', function () {
     expect($user->has_photo)->toBeTrue();
     expect($user->photo_url)->not->toBeNull();
 });
+
+test('isVideo detects mp4 files', function () {
+    $media = new Media(['path' => 'medias/test.mp4']);
+    expect($media->isVideo())->toBeTrue();
+    expect($media->isImage())->toBeFalse();
+});
+
+test('isVideo detects mov files', function () {
+    $media = new Media(['path' => 'medias/test.mov']);
+    expect($media->isVideo())->toBeTrue();
+});
+
+test('isImage detects jpg files', function () {
+    $media = new Media(['path' => 'medias/test.jpg']);
+    expect($media->isImage())->toBeTrue();
+    expect($media->isVideo())->toBeFalse();
+});
+
+test('isImage detects png files', function () {
+    $media = new Media(['path' => 'medias/test.png']);
+    expect($media->isImage())->toBeTrue();
+});
+
+test('isVideo returns false for image files', function () {
+    $media = new Media(['path' => 'medias/test.webp']);
+    expect($media->isVideo())->toBeFalse();
+    expect($media->isImage())->toBeTrue();
+});
+
+test('mp4 with quicktime mime still detected as video by path', function () {
+    $media = new Media(['path' => 'medias/test.mp4', 'mime_type' => 'video/quicktime']);
+    expect($media->isVideo())->toBeTrue();
+});

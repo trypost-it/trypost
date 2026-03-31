@@ -57,7 +57,7 @@ class ThreadsPublisher
         }
 
         $firstMedia = $media->first();
-        $isVideo = str_starts_with($firstMedia->mime_type, 'video/');
+        $isVideo = $firstMedia->isVideo();
 
         // Single media
         if ($media->count() === 1) {
@@ -164,7 +164,7 @@ class ThreadsPublisher
         $childContainers = [];
 
         foreach ($mediaCollection as $media) {
-            $isVideo = str_starts_with($media->mime_type, 'video/');
+            $isVideo = $media->isVideo();
 
             $params = [
                 'is_carousel_item' => 'true',
@@ -315,8 +315,11 @@ class ThreadsPublisher
 
         $data = $response->json();
 
+        $newToken = data_get($data, 'access_token');
+
         $account->update([
-            'access_token' => data_get($data, 'access_token'),
+            'access_token' => $newToken,
+            'refresh_token' => $newToken,
             'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 

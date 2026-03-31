@@ -53,8 +53,8 @@ class TikTokPublisher
         }
 
         $firstMedia = $media->first();
-        $isVideo = str_starts_with($firstMedia->mime_type, 'video/');
-        $isImage = str_starts_with($firstMedia->mime_type, 'image/');
+        $isVideo = $firstMedia->isVideo();
+        $isImage = $firstMedia->isImage();
 
         if ($isVideo) {
             return $this->publishVideo($postPlatform, $firstMedia);
@@ -76,6 +76,37 @@ class TikTokPublisher
             ->timeout(120);
     }
 
+    private function queryCreatorInfo(): array
+    {
+        $response = $this->getHttpClient()
+            ->post("{$this->baseUrl}/post/publish/creator_info/query/");
+
+        if ($response->failed()) {
+            Log::warning('TikTok creator_info query failed', ['body' => $response->body()]);
+
+            return ['privacy_level' => 'SELF_ONLY'];
+        }
+
+        $data = data_get($response->json(), 'data', []);
+        $privacyOptions = data_get($data, 'privacy_level_options', ['SELF_ONLY']);
+
+        // Prefer PUBLIC_TO_EVERYONE > MUTUAL_FOLLOW_FRIENDS > FOLLOWER_OF_CREATOR > SELF_ONLY
+        $preferred = ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'FOLLOWER_OF_CREATOR', 'SELF_ONLY'];
+
+        $privacyLevel = 'SELF_ONLY';
+        foreach ($preferred as $level) {
+            if (in_array($level, $privacyOptions)) {
+                $privacyLevel = $level;
+                break;
+            }
+        }
+
+        return [
+            'privacy_level' => $privacyLevel,
+            'max_video_post_duration_sec' => data_get($data, 'max_video_post_duration_sec'),
+        ];
+    }
+
     private function publishVideo(PostPlatform $postPlatform, $media): array
     {
         Log::info('TikTok publishing video', [
@@ -84,11 +115,13 @@ class TikTokPublisher
             'content' => $postPlatform->content,
         ]);
 
+        $creatorInfo = $this->queryCreatorInfo();
+
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/video/init/", [
                 'post_info' => [
                     'title' => $postPlatform->content ?? '',
-                    'privacy_level' => 'SELF_ONLY',
+                    'privacy_level' => data_get($creatorInfo, 'privacy_level'),
                     'disable_duet' => false,
                     'disable_comment' => false,
                     'disable_stitch' => false,
@@ -129,7 +162,7 @@ class TikTokPublisher
     private function publishPhotos(PostPlatform $postPlatform, $mediaCollection): array
     {
         $photoUrls = $mediaCollection
-            ->filter(fn ($m) => str_starts_with($m->mime_type, 'image/'))
+            ->filter(fn ($m) => $m->isImage())
             ->map(fn ($m) => $m->url)
             ->values()
             ->toArray();
@@ -144,11 +177,13 @@ class TikTokPublisher
             'content' => $postPlatform->content,
         ]);
 
+        $creatorInfo = $this->queryCreatorInfo();
+
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/content/init/", [
                 'post_info' => [
                     'title' => $postPlatform->content ?? '',
-                    'privacy_level' => 'SELF_ONLY',
+                    'privacy_level' => data_get($creatorInfo, 'privacy_level'),
                     'disable_comment' => false,
                 ],
                 'source_info' => [

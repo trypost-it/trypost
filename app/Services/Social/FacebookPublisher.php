@@ -62,8 +62,8 @@ class FacebookPublisher
         }
 
         $firstMedia = $media->first();
-        $isVideo = str_starts_with($firstMedia->mime_type, 'video/');
-        $isImage = str_starts_with($firstMedia->mime_type, 'image/');
+        $isVideo = $firstMedia->isVideo();
+        $isImage = $firstMedia->isImage();
 
         if ($isVideo) {
             return $this->publishVideoPost($pageId, $accessToken, $content, $firstMedia);
@@ -145,7 +145,7 @@ class FacebookPublisher
         $attachedMedia = [];
 
         foreach ($mediaCollection as $media) {
-            if (! str_starts_with($media->mime_type, 'image/')) {
+            if (! $media->isImage()) {
                 continue;
             }
 
@@ -292,7 +292,7 @@ class FacebookPublisher
     {
         Log::info('Facebook publishing story', ['page_id' => $pageId]);
 
-        $isVideo = str_starts_with($media->mime_type, 'video/');
+        $isVideo = $media->isVideo();
 
         if ($isVideo) {
             // Video story

@@ -206,6 +206,7 @@ test('update post saves changes', function () {
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
+        'synced' => true,
         'platforms' => [
             [
                 'id' => $postPlatform->id,
@@ -219,6 +220,7 @@ test('update post saves changes', function () {
 
     $postPlatform->refresh();
     expect($postPlatform->content)->toBe('Updated content');
+    expect($postPlatform->content_type)->toBe(ContentType::LinkedInPost);
 });
 
 test('update post cannot update published posts', function () {
@@ -228,8 +230,21 @@ test('update post cannot update published posts', function () {
         'status' => PostStatus::Published,
     ]);
 
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
+        'synced' => true,
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content' => 'Test content',
+                'content_type' => ContentType::LinkedInPost->value,
+            ],
+        ],
     ]);
 
     $response->assertRedirect();
@@ -254,6 +269,7 @@ test('publish now updates scheduled_at to current time', function () {
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'publishing',
+        'synced' => true,
         'platforms' => [
             [
                 'id' => $postPlatform->id,
@@ -381,6 +397,7 @@ test('update post can attach labels', function () {
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
+        'synced' => true,
         'platforms' => [
             [
                 'id' => $postPlatform->id,
@@ -418,6 +435,7 @@ test('update post can detach labels', function () {
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
+        'synced' => true,
         'platforms' => [
             [
                 'id' => $postPlatform->id,
@@ -456,6 +474,7 @@ test('update post can sync multiple labels', function () {
     // Update with different labels
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
+        'synced' => true,
         'platforms' => [
             [
                 'id' => $postPlatform->id,
@@ -487,6 +506,7 @@ test('update post validates label_ids exist', function () {
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
+        'synced' => true,
         'platforms' => [
             [
                 'id' => $postPlatform->id,

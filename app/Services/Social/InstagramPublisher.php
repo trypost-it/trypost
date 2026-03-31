@@ -7,6 +7,7 @@ namespace App\Services\Social;
 use App\Enums\PostPlatform\ContentType;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
+use App\Models\SocialAccount;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -36,6 +37,12 @@ class InstagramPublisher
     public function publish(PostPlatform $postPlatform): array
     {
         $account = $postPlatform->socialAccount;
+
+        if ($account->is_token_expired || $account->is_token_expiring_soon) {
+            $this->refreshToken($account);
+            $account->refresh();
+        }
+
         $instagramId = $account->platform_user_id;
         $accessToken = $account->access_token;
 
@@ -51,11 +58,24 @@ class InstagramPublisher
         return match ($contentType) {
             ContentType::InstagramReel => $this->publishReel($instagramId, $accessToken, $postPlatform->content, $firstMedia),
             ContentType::InstagramStory => $this->publishStory($instagramId, $accessToken, $firstMedia),
-            ContentType::InstagramFeed => $media->count() > 1
-                ? $this->publishCarousel($instagramId, $accessToken, $postPlatform->content, $media)
-                : $this->publishSingleImage($instagramId, $accessToken, $postPlatform->content, $firstMedia),
+            ContentType::InstagramFeed => $this->publishFeed($instagramId, $accessToken, $postPlatform->content, $media),
             default => throw new \Exception("Unsupported Instagram content type: {$contentType?->value}"),
         };
+    }
+
+    private function publishFeed(string $instagramId, string $accessToken, ?string $content, $media): array
+    {
+        if ($media->count() > 1) {
+            return $this->publishCarousel($instagramId, $accessToken, $content, $media);
+        }
+
+        $firstMedia = $media->first();
+
+        if ($firstMedia->isVideo()) {
+            return $this->publishReel($instagramId, $accessToken, $content, $firstMedia);
+        }
+
+        return $this->publishSingleImage($instagramId, $accessToken, $content, $firstMedia);
     }
 
     private function publishSingleImage(string $instagramId, string $accessToken, ?string $content, $media): array
@@ -132,7 +152,7 @@ class InstagramPublisher
     {
         Log::info('Instagram publishing story', ['instagram_id' => $instagramId]);
 
-        $isVideo = str_starts_with($media->mime_type, 'video/');
+        $isVideo = $media->isVideo();
 
         $params = [
             'media_type' => 'STORIES',
@@ -180,7 +200,7 @@ class InstagramPublisher
         $childContainers = [];
 
         foreach ($mediaCollection as $media) {
-            $isVideo = str_starts_with($media->mime_type, 'video/');
+            $isVideo = $media->isVideo();
 
             $params = [
                 'is_carousel_item' => 'true',
@@ -309,6 +329,31 @@ class InstagramPublisher
         }
 
         Log::warning('Instagram media processing timeout, proceeding anyway');
+    }
+
+    private function refreshToken(SocialAccount $account): void
+    {
+        $response = Http::get('https://graph.instagram.com/refresh_access_token', [
+            'grant_type' => 'ig_refresh_token',
+            'access_token' => $account->access_token,
+        ]);
+
+        if ($response->failed()) {
+            Log::error('Instagram token refresh failed', ['body' => $response->body()]);
+
+            throw new TokenExpiredException('Failed to refresh Instagram token: '.$response->body());
+        }
+
+        $data = $response->json();
+        $newToken = data_get($data, 'access_token');
+
+        $account->update([
+            'access_token' => $newToken,
+            'refresh_token' => $newToken,
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
+        ]);
+
+        Log::info('Instagram token refreshed successfully');
     }
 
     private function handleApiError(Response $response, string $context): void

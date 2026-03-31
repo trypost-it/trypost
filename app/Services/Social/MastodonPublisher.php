@@ -71,22 +71,24 @@ class MastodonPublisher
 
     private function uploadMedia(SocialAccount $account, string $instance, string $url, ?string $filename): ?string
     {
+        $tempFile = tempnam(sys_get_temp_dir(), 'masto_media_');
+
         try {
-            $fileContent = file_get_contents($url);
-            if ($fileContent === false) {
-                Log::error('Mastodon failed to read media', ['url' => $url]);
+            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($url);
+
+            if (filesize($tempFile) === 0) {
+                Log::error('Mastodon failed to download media', ['url' => $url]);
 
                 return null;
             }
 
-            // Determine filename from URL if not provided
             $name = $filename ?? basename(parse_url($url, PHP_URL_PATH));
             if (empty($name)) {
                 $name = 'media';
             }
 
             $response = Http::withToken($account->access_token)
-                ->attach('file', $fileContent, $name)
+                ->attach('file', fopen($tempFile, 'r'), $name)
                 ->post("{$instance}/api/v1/media");
 
             if ($response->failed()) {
@@ -110,6 +112,8 @@ class MastodonPublisher
             ]);
 
             return null;
+        } finally {
+            @unlink($tempFile);
         }
     }
 

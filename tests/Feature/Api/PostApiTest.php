@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Post\Status as PostStatus;
+use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
 use App\Models\ApiToken;
@@ -125,10 +126,13 @@ it('updates a post', function () {
 
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
         ->putJson(route('api.posts.update', $post), [
+            'status' => 'draft',
+            'synced' => true,
             'platforms' => [
                 [
                     'id' => $postPlatform->id,
                     'content' => 'Updated content',
+                    'content_type' => ContentType::LinkedInPost->value,
                 ],
             ],
         ])
@@ -137,13 +141,32 @@ it('updates a post', function () {
 
 it('cannot update post from another workspace', function () {
     $otherWorkspace = Workspace::factory()->create();
+    $otherSocialAccount = SocialAccount::factory()->create([
+        'workspace_id' => $otherWorkspace->id,
+        'platform' => Platform::LinkedIn,
+    ]);
     $post = Post::factory()->create([
         'workspace_id' => $otherWorkspace->id,
         'user_id' => $this->user->id,
     ]);
+    $postPlatform = PostPlatform::factory()->linkedin()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $otherSocialAccount->id,
+        'enabled' => true,
+    ]);
 
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
-        ->putJson(route('api.posts.update', $post), [])
+        ->putJson(route('api.posts.update', $post), [
+            'status' => 'draft',
+            'synced' => true,
+            'platforms' => [
+                [
+                    'id' => $postPlatform->id,
+                    'content' => 'Test',
+                    'content_type' => ContentType::LinkedInPost->value,
+                ],
+            ],
+        ])
         ->assertNotFound();
 });
 
@@ -154,8 +177,24 @@ it('cannot update published post', function () {
         'status' => PostStatus::Published,
     ]);
 
+    $postPlatform = PostPlatform::factory()->linkedin()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+        'enabled' => true,
+    ]);
+
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
-        ->putJson(route('api.posts.update', $post), [])
+        ->putJson(route('api.posts.update', $post), [
+            'status' => 'draft',
+            'synced' => true,
+            'platforms' => [
+                [
+                    'id' => $postPlatform->id,
+                    'content' => 'Test',
+                    'content_type' => ContentType::LinkedInPost->value,
+                ],
+            ],
+        ])
         ->assertUnprocessable();
 });
 

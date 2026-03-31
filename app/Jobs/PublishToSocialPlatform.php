@@ -33,14 +33,21 @@ class PublishToSocialPlatform implements ShouldQueue
 {
     use Queueable;
 
-    public int $tries = 3;
+    public int $tries = 1;
 
-    public int $backoff = 60;
+    public int $timeout = 600; // 10 minutes — large video uploads need time
 
     public function __construct(public PostPlatform $postPlatform) {}
 
     public function handle(): void
     {
+        // Idempotency: skip if already published (prevents duplicate posts on retry)
+        $this->postPlatform->refresh();
+
+        if ($this->postPlatform->status === PostPlatformStatus::Published) {
+            return;
+        }
+
         if (! $this->postPlatform->socialAccount->is_active) {
             $this->postPlatform->markAsFailed(__('posts.errors.account_inactive'));
             $this->updatePostStatus();
@@ -167,6 +174,23 @@ class PublishToSocialPlatform implements ShouldQueue
             data: ['post_id' => $post->id],
             mailable: new PostPublished($post),
         );
+    }
+
+    public function failed(?\Throwable $exception): void
+    {
+        Log::error('PublishToSocialPlatform job failed permanently', [
+            'post_platform_id' => $this->postPlatform->id,
+            'platform' => $this->postPlatform->platform->value,
+            'error' => $exception?->getMessage(),
+        ]);
+
+        $this->postPlatform->refresh();
+
+        if ($this->postPlatform->status !== PostPlatformStatus::Published) {
+            $this->postPlatform->markAsFailed($exception?->getMessage() ?? 'Unknown error');
+            $this->updatePostStatus();
+            $this->broadcastStatus();
+        }
     }
 
     private function notifyFailure(Post $post): void

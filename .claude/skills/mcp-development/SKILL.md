@@ -28,13 +28,13 @@ Mcp::web();
 Create MCP tools, resources, prompts, and servers using artisan commands:
 
 ```bash
-vendor/bin/sail artisan make:mcp-tool ToolName        # Create a tool
+php artisan make:mcp-tool ToolName        # Create a tool
 
-vendor/bin/sail artisan make:mcp-resource ResourceName # Create a resource
+php artisan make:mcp-resource ResourceName # Create a resource
 
-vendor/bin/sail artisan make:mcp-prompt PromptName    # Create a prompt
+php artisan make:mcp-prompt PromptName    # Create a prompt
 
-vendor/bin/sail artisan make:mcp-server ServerName    # Create a server
+php artisan make:mcp-server ServerName    # Create a server
 
 ```
 

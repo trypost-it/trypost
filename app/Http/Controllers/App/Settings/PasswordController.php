@@ -27,7 +27,7 @@ class PasswordController extends Controller
         ]);
 
         $request->user()->update([
-            'password' => Hash::make($validated['password']),
+            'password' => Hash::make(data_get($validated, 'password')),
         ]);
 
         session()->flash('flash.banner', __('settings.flash.password_updated'));

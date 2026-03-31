@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
 
@@ -11,7 +12,7 @@ test('user with completed setup can access protected routes', function () {
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
@@ -24,7 +25,7 @@ test('user on role step is redirected to onboarding step 1', function () {
 
     $user = User::factory()->create(['setup' => Setup::Role]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
@@ -37,7 +38,7 @@ test('user on connections step is redirected to onboarding step 2', function () 
 
     $user = User::factory()->create(['setup' => Setup::Connections]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
@@ -50,7 +51,7 @@ test('user on subscription step is redirected to subscribe', function () {
 
     $user = User::factory()->create(['setup' => Setup::Subscription]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)

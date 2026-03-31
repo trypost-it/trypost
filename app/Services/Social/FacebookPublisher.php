@@ -99,7 +99,7 @@ class FacebookPublisher
         }
 
         $data = $response->json();
-        $postId = $data['id'];
+        $postId = data_get($data, 'id');
 
         return [
             'id' => $postId,
@@ -126,7 +126,7 @@ class FacebookPublisher
         }
 
         $data = $response->json();
-        $postId = $data['post_id'] ?? $data['id'];
+        $postId = data_get($data, 'post_id', data_get($data, 'id'));
 
         return [
             'id' => $postId,
@@ -192,7 +192,7 @@ class FacebookPublisher
         }
 
         $data = $response->json();
-        $postId = $data['id'];
+        $postId = data_get($data, 'id');
 
         return [
             'id' => $postId,
@@ -220,7 +220,7 @@ class FacebookPublisher
         }
 
         $data = $response->json();
-        $videoId = $data['id'];
+        $videoId = data_get($data, 'id');
 
         return [
             'id' => $videoId,
@@ -247,7 +247,7 @@ class FacebookPublisher
         }
 
         $data = $response->json();
-        $videoId = $data['video_id'];
+        $videoId = data_get($data, 'video_id');
 
         // Upload the video file
         $uploadResponse = Http::post("{$this->baseUrl}/{$videoId}", [

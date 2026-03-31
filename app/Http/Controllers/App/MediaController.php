@@ -120,9 +120,9 @@ class MediaController extends Controller
         $duplicates = [];
 
         foreach ($targets as $target) {
-            $model = $this->resolveModel($target['model'], $target['model_id']);
+            $model = $this->resolveModel(data_get($target, 'model'), data_get($target, 'model_id'));
             $this->authorizeModelOwnership($model, $request);
-            $collection = $target['collection'] ?? $media->collection;
+            $collection = data_get($target, 'collection', $media->collection);
 
             $duplicate = $model->media()->create([
                 'group_id' => $media->group_id,

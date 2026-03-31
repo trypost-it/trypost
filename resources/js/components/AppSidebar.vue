@@ -197,7 +197,7 @@ const switchWorkspace = (workspaceId: string) => {
         <SidebarFooter>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton as-child tooltip="Feedback">
+                    <SidebarMenuButton as-child :tooltip="trans('sidebar.support.share_feedback')">
                         <a href="https://github.com/trypost-it/trypost/discussions" target="_blank"
                             rel="noopener noreferrer">
                             <IconMessageCircle />
@@ -206,7 +206,7 @@ const switchWorkspace = (workspaceId: string) => {
                     </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                    <SidebarMenuButton as-child tooltip="Docs">
+                    <SidebarMenuButton as-child :tooltip="trans('sidebar.support.docs')">
                         <a href="https://trypost.it/docs" target="_blank" rel="noopener noreferrer">
                             <IconLifebuoy />
                             <span>{{ $t('sidebar.support.docs') }}</span>

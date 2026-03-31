@@ -72,7 +72,7 @@ class InstagramProvider extends AbstractProvider implements ProviderInterface
             RequestOptions::QUERY => [
                 'grant_type' => 'ig_exchange_token',
                 'client_secret' => $this->clientSecret,
-                'access_token' => $data['access_token'],
+                'access_token' => data_get($data, 'access_token'),
             ],
         ]);
 

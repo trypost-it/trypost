@@ -14,10 +14,6 @@ class PostHogService
      */
     public function capture(string $distinctId, string $event, array $properties = []): void
     {
-        if (! config('services.posthog.api_key')) {
-            return;
-        }
-
         $this->dispatch('capture', [
             'distinctId' => $distinctId,
             'event' => $event,
@@ -30,10 +26,6 @@ class PostHogService
      */
     public function identify(string $distinctId, array $properties = []): void
     {
-        if (! config('services.posthog.api_key')) {
-            return;
-        }
-
         $this->dispatch('identify', [
             'distinctId' => $distinctId,
             'properties' => $properties,
@@ -45,10 +37,6 @@ class PostHogService
      */
     public function groupIdentify(string $groupType, string $groupKey, array $properties = []): void
     {
-        if (! config('services.posthog.api_key')) {
-            return;
-        }
-
         $this->dispatch('groupIdentify', [
             'groupType' => $groupType,
             'groupKey' => $groupKey,
@@ -61,6 +49,10 @@ class PostHogService
      */
     private function dispatch(string $method, array $payload): void
     {
+        if (! config('services.posthog.api_key')) {
+            return;
+        }
+
         try {
             SendPostHogEvent::dispatch([
                 ['method' => $method, 'payload' => $payload],

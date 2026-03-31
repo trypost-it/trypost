@@ -22,7 +22,7 @@ class ApiKeyController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
+        $this->authorize('manageTeam', $workspace);
 
         return Inertia::render('settings/ApiKeys', [
             'workspace' => $workspace,
@@ -38,7 +38,7 @@ class ApiKeyController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
+        $this->authorize('manageTeam', $workspace);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -62,7 +62,7 @@ class ApiKeyController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
+        $this->authorize('manageTeam', $workspace);
 
         if ($apiToken->workspace_id !== $workspace->id) {
             abort(404);

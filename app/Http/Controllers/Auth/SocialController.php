@@ -85,6 +85,10 @@ class SocialController extends Controller
     {
         $workspace = $request->user()->currentWorkspace;
 
+        if (! $workspace) {
+            return redirect()->route('app.workspaces.create');
+        }
+
         $this->authorize('manageAccounts', $workspace);
 
         if ($account->workspace_id !== $workspace->id) {

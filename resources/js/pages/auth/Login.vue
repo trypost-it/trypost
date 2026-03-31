@@ -36,7 +36,7 @@ defineProps<{
             <div class="grid gap-6">
                 <div class="grid gap-2">
                     <Label for="email">{{ $t('auth.login.email') }}</Label>
-                    <Input id="email" type="email" name="email" required autofocus :tabindex="1" autocomplete="email"
+                    <Input id="email" type="email" name="email" autofocus :tabindex="1" autocomplete="email"
                         placeholder="email@example.com" :default-value="email ?? ''" />
                     <InputError :message="errors.email" />
                 </div>
@@ -48,7 +48,7 @@ defineProps<{
                             {{ $t('auth.login.forgot_password') }}
                         </TextLink>
                     </div>
-                    <Input id="password" type="password" name="password" required :tabindex="2"
+                    <Input id="password" type="password" name="password" :tabindex="2"
                         autocomplete="current-password" :placeholder="$t('auth.login.password')" />
                     <InputError :message="errors.password" />
                 </div>

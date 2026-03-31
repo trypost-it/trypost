@@ -23,15 +23,15 @@ const page = usePage();
 const currentWorkspace = computed<Workspace | null>(() => page.props.auth.currentWorkspace as Workspace | null);
 const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Workspace[]);
 
-function switchWorkspace(workspace: Workspace) {
+const switchWorkspace = (workspace: Workspace) => {
     router.post(switchMethod.url(workspace.id), {}, {
         preserveScroll: true,
     });
-}
+};
 
-function createWorkspace() {
+const createWorkspace = () => {
     router.visit(createWorkspaceRoute.url());
-}
+};
 </script>
 
 <template>

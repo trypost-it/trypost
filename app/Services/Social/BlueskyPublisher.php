@@ -94,7 +94,7 @@ class BlueskyPublisher
         $data = $response->json();
 
         // Extract post ID from URI (at://did/app.bsky.feed.post/xxx)
-        $uri = $data['uri'];
+        $uri = data_get($data, 'uri');
         $postId = basename($uri);
 
         Log::info('Bluesky post created successfully', [
@@ -266,8 +266,8 @@ class BlueskyPublisher
         if ($response->successful()) {
             $data = $response->json();
             $account->update([
-                'access_token' => $data['accessJwt'],
-                'refresh_token' => $data['refreshJwt'],
+                'access_token' => data_get($data, 'accessJwt'),
+                'refresh_token' => data_get($data, 'refreshJwt'),
                 'token_expires_at' => now()->addHours(2),
             ]);
 
@@ -295,8 +295,8 @@ class BlueskyPublisher
                 if ($response->successful()) {
                     $data = $response->json();
                     $account->update([
-                        'access_token' => $data['accessJwt'],
-                        'refresh_token' => $data['refreshJwt'],
+                        'access_token' => data_get($data, 'accessJwt'),
+                        'refresh_token' => data_get($data, 'refreshJwt'),
                         'token_expires_at' => now()->addHours(2),
                     ]);
 

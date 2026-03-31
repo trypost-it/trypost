@@ -5,9 +5,11 @@ declare(strict_types=1);
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\PostPlatform\Status as PlatformStatus;
 use App\Enums\SocialAccount\Status as AccountStatus;
+use App\Enums\UserWorkspace\Role;
 use App\Events\PostPlatformStatusUpdated;
 use App\Exceptions\TokenExpiredException;
 use App\Jobs\PublishToSocialPlatform;
+use App\Jobs\SendNotification;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -16,6 +18,7 @@ use App\Models\Workspace;
 use App\Services\Social\LinkedInPublisher;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     Mail::fake();
@@ -181,6 +184,23 @@ test('publish to social platform skips publishing when account is disconnected',
     expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_disconnected'));
 });
 
+test('publish to social platform skips publishing when account is inactive', function () {
+    Event::fake();
+
+    $this->socialAccount->update(['is_active' => false]);
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldNotReceive('publish');
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->postPlatform->refresh();
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
+    expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_inactive'));
+});
+
 test('publish to social platform skips publishing when account token is expired', function () {
     Event::fake();
 
@@ -198,4 +218,43 @@ test('publish to social platform skips publishing when account token is expired'
     $this->postPlatform->refresh();
     expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
     expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_disconnected'));
+});
+
+test('publish to social platform dispatches success notification when all platforms published', function () {
+    Event::fake();
+    Queue::fake();
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldReceive('publish')->andReturn([
+        'id' => 'post-123',
+        'url' => 'https://linkedin.com/post/123',
+    ]);
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->post->refresh();
+    expect($this->post->status)->toBe(PostStatus::Published);
+    Queue::assertPushed(SendNotification::class);
+});
+
+test('publish to social platform dispatches failure notification when platform fails', function () {
+    Event::fake();
+    Queue::fake();
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldReceive('publish')->andThrow(new Exception('API error'));
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->post->refresh();
+    expect($this->post->status)->toBe(PostStatus::Failed);
+    Queue::assertPushed(SendNotification::class);
 });

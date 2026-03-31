@@ -95,21 +95,21 @@ class YouTubeController extends SocialController
             // If only one channel, connect directly (most common case)
             if (count($channels) === 1) {
                 $channel = $channels[0];
-                $avatarPath = uploadFromUrl($channel['thumbnail']);
+                $avatarPath = uploadFromUrl(data_get($channel, 'thumbnail'));
 
                 if ($existingAccount) {
                     // Reconnect existing account
                     $existingAccount->update([
-                        'platform_user_id' => $channel['id'],
-                        'username' => ltrim($channel['custom_url'] ?? $channel['id'], '@'),
-                        'display_name' => $channel['title'],
+                        'platform_user_id' => data_get($channel, 'id'),
+                        'username' => ltrim(data_get($channel, 'custom_url', data_get($channel, 'id')), '@'),
+                        'display_name' => data_get($channel, 'title'),
                         'avatar_url' => $avatarPath,
                         'access_token' => $socialUser->token,
                         'refresh_token' => $socialUser->refreshToken,
                         'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
                         'scopes' => $this->scopes,
                         'meta' => [
-                            'channel_id' => $channel['id'],
+                            'channel_id' => data_get($channel, 'id'),
                             'google_user_id' => $socialUser->getId(),
                         ],
                     ]);
@@ -123,9 +123,9 @@ class YouTubeController extends SocialController
                 // Create new account
                 $workspace->socialAccounts()->create([
                     'platform' => $this->platform->value,
-                    'platform_user_id' => $channel['id'],
-                    'username' => ltrim($channel['custom_url'] ?? $channel['id'], '@'),
-                    'display_name' => $channel['title'],
+                    'platform_user_id' => data_get($channel, 'id'),
+                    'username' => ltrim(data_get($channel, 'custom_url', data_get($channel, 'id')), '@'),
+                    'display_name' => data_get($channel, 'title'),
                     'avatar_url' => $avatarPath,
                     'access_token' => $socialUser->token,
                     'refresh_token' => $socialUser->refreshToken,
@@ -133,7 +133,7 @@ class YouTubeController extends SocialController
                     'scopes' => $this->scopes,
                     'status' => Status::Connected,
                     'meta' => [
-                        'channel_id' => $channel['id'],
+                        'channel_id' => data_get($channel, 'id'),
                         'google_user_id' => $socialUser->getId(),
                     ],
                 ]);
@@ -328,13 +328,13 @@ class YouTubeController extends SocialController
 
             $data = $response->json();
 
-            return collect($data['items'] ?? [])->map(fn ($channel) => [
-                'id' => $channel['id'],
-                'title' => $channel['snippet']['title'],
-                'description' => $channel['snippet']['description'] ?? '',
-                'thumbnail' => $channel['snippet']['thumbnails']['default']['url'] ?? null,
-                'custom_url' => $channel['snippet']['customUrl'] ?? null,
-                'subscriber_count' => $channel['statistics']['subscriberCount'] ?? 0,
+            return collect(data_get($data, 'items', []))->map(fn ($channel) => [
+                'id' => data_get($channel, 'id'),
+                'title' => data_get($channel, 'snippet.title'),
+                'description' => data_get($channel, 'snippet.description', ''),
+                'thumbnail' => data_get($channel, 'snippet.thumbnails.default.url'),
+                'custom_url' => data_get($channel, 'snippet.customUrl'),
+                'subscriber_count' => data_get($channel, 'statistics.subscriberCount', 0),
             ])->toArray();
         } catch (\Exception $e) {
             Log::error('YouTube channels fetch error', [

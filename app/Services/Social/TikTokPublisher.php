@@ -111,7 +111,7 @@ class TikTokPublisher
 
         Log::info('TikTok video init response', ['data' => $data]);
 
-        $publishId = $data['data']['publish_id'] ?? null;
+        $publishId = data_get($data, 'data')['publish_id'] ?? null;
 
         if (! $publishId) {
             throw new \Exception('TikTok did not return a publish_id');
@@ -172,7 +172,7 @@ class TikTokPublisher
 
         Log::info('TikTok photo init response', ['data' => $data]);
 
-        $publishId = $data['data']['publish_id'] ?? null;
+        $publishId = data_get($data, 'data')['publish_id'] ?? null;
 
         if (! $publishId) {
             throw new \Exception('TikTok did not return a publish_id');
@@ -207,7 +207,7 @@ class TikTokPublisher
             }
 
             $data = $response->json();
-            $status = $data['data']['status'] ?? 'UNKNOWN';
+            $status = data_get($data, 'data')['status'] ?? 'UNKNOWN';
 
             Log::info('TikTok publish status', [
                 'status' => $status,
@@ -216,11 +216,11 @@ class TikTokPublisher
             ]);
 
             if ($status === 'PUBLISH_COMPLETE') {
-                return $data['data'] ?? [];
+                return data_get($data, 'data', []);
             }
 
             if (in_array($status, ['FAILED', 'PUBLISH_FAILED'])) {
-                $errorCode = $data['data']['fail_reason'] ?? 'Unknown error';
+                $errorCode = data_get($data, 'data')['fail_reason'] ?? 'Unknown error';
                 throw new \Exception("TikTok publish failed: {$errorCode}");
             }
 
@@ -264,9 +264,9 @@ class TikTokPublisher
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         Log::info('TikTok token refreshed successfully');

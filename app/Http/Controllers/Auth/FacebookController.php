@@ -101,21 +101,21 @@ class FacebookController extends SocialController
             // If only one page, connect directly
             if (count($pages) === 1) {
                 $page = $pages[0];
-                $avatarPath = uploadFromUrl($page['picture']);
+                $avatarPath = uploadFromUrl(data_get($page, 'picture'));
 
                 if ($existingAccount) {
                     // Reconnect existing account
                     $existingAccount->update([
-                        'platform_user_id' => $page['id'],
-                        'username' => $page['username'] ?? null,
-                        'display_name' => $page['name'],
+                        'platform_user_id' => data_get($page, 'id'),
+                        'username' => data_get($page, 'username', null),
+                        'display_name' => data_get($page, 'name'),
                         'avatar_url' => $avatarPath,
-                        'access_token' => $page['access_token'],
+                        'access_token' => data_get($page, 'access_token'),
                         'refresh_token' => null,
                         'token_expires_at' => null,
                         'scopes' => $this->scopes,
                         'meta' => [
-                            'page_id' => $page['id'],
+                            'page_id' => data_get($page, 'id'),
                             'user_id' => $socialUser->getId(),
                             'user_token' => $socialUser->token,
                         ],
@@ -130,17 +130,17 @@ class FacebookController extends SocialController
                 // Create new account
                 $workspace->socialAccounts()->create([
                     'platform' => $this->platform->value,
-                    'platform_user_id' => $page['id'],
-                    'username' => $page['username'] ?? null,
-                    'display_name' => $page['name'],
+                    'platform_user_id' => data_get($page, 'id'),
+                    'username' => data_get($page, 'username', null),
+                    'display_name' => data_get($page, 'name'),
                     'avatar_url' => $avatarPath,
-                    'access_token' => $page['access_token'],
+                    'access_token' => data_get($page, 'access_token'),
                     'refresh_token' => null, // Page tokens don't expire if user token is long-lived
                     'token_expires_at' => null,
                     'scopes' => $this->scopes,
                     'status' => Status::Connected,
                     'meta' => [
-                        'page_id' => $page['id'],
+                        'page_id' => data_get($page, 'id'),
                         'user_id' => $socialUser->getId(),
                         'user_token' => $socialUser->token,
                     ],
@@ -195,7 +195,7 @@ class FacebookController extends SocialController
 
         return Inertia::render('accounts/FacebookPageSelect', [
             'workspace' => $workspace,
-            'pages' => $oauthData['pages'],
+            'pages' => data_get($oauthData, 'pages'),
         ]);
     }
 
@@ -219,14 +219,14 @@ class FacebookController extends SocialController
         }
 
         try {
-            $selectedPage = collect($oauthData['pages'])->firstWhere('id', $request->page_id);
+            $selectedPage = collect(data_get($oauthData, 'pages'))->firstWhere('id', $request->page_id);
 
             if (! $selectedPage) {
                 return $this->popupCallback(false, 'Page not found.', $this->platform->value);
             }
 
-            $avatarPath = uploadFromUrl($selectedPage['picture']);
-            $reconnectId = $oauthData['reconnect_id'] ?? null;
+            $avatarPath = uploadFromUrl(data_get($selectedPage, 'picture'));
+            $reconnectId = data_get($oauthData, 'reconnect_id');
 
             if ($reconnectId) {
                 // Reconnect existing account
@@ -234,18 +234,18 @@ class FacebookController extends SocialController
 
                 if ($existingAccount) {
                     $existingAccount->update([
-                        'platform_user_id' => $selectedPage['id'],
-                        'username' => $selectedPage['username'] ?? null,
-                        'display_name' => $selectedPage['name'],
+                        'platform_user_id' => data_get($selectedPage, 'id'),
+                        'username' => data_get($selectedPage, 'username') ?? null,
+                        'display_name' => data_get($selectedPage, 'name'),
                         'avatar_url' => $avatarPath,
-                        'access_token' => $selectedPage['access_token'],
+                        'access_token' => data_get($selectedPage, 'access_token'),
                         'refresh_token' => null,
                         'token_expires_at' => null,
                         'scopes' => $this->scopes,
                         'meta' => [
-                            'page_id' => $selectedPage['id'],
-                            'user_id' => $oauthData['user_id'],
-                            'user_token' => $oauthData['user_token'],
+                            'page_id' => data_get($selectedPage, 'id'),
+                            'user_id' => data_get($oauthData, 'user_id'),
+                            'user_token' => data_get($oauthData, 'user_token'),
                         ],
                     ]);
                     $existingAccount->markAsConnected();
@@ -259,19 +259,19 @@ class FacebookController extends SocialController
             // Create new account
             $workspace->socialAccounts()->create([
                 'platform' => $this->platform->value,
-                'platform_user_id' => $selectedPage['id'],
-                'username' => $selectedPage['username'] ?? null,
-                'display_name' => $selectedPage['name'],
+                'platform_user_id' => data_get($selectedPage, 'id'),
+                'username' => data_get($selectedPage, 'username') ?? null,
+                'display_name' => data_get($selectedPage, 'name'),
                 'avatar_url' => $avatarPath,
-                'access_token' => $selectedPage['access_token'],
+                'access_token' => data_get($selectedPage, 'access_token'),
                 'refresh_token' => null,
                 'token_expires_at' => null,
                 'scopes' => $this->scopes,
                 'status' => Status::Connected,
                 'meta' => [
-                    'page_id' => $selectedPage['id'],
-                    'user_id' => $oauthData['user_id'],
-                    'user_token' => $oauthData['user_token'],
+                    'page_id' => data_get($selectedPage, 'id'),
+                    'user_id' => data_get($oauthData, 'user_id'),
+                    'user_token' => data_get($oauthData, 'user_token'),
                 ],
             ]);
 
@@ -306,12 +306,12 @@ class FacebookController extends SocialController
 
             $data = $response->json();
 
-            return collect($data['data'] ?? [])->map(fn ($page) => [
-                'id' => $page['id'],
-                'name' => $page['name'],
-                'username' => $page['username'] ?? null,
-                'picture' => $page['picture']['data']['url'] ?? null,
-                'access_token' => $page['access_token'],
+            return collect(data_get($data, 'data', []))->map(fn ($page) => [
+                'id' => data_get($page, 'id'),
+                'name' => data_get($page, 'name'),
+                'username' => data_get($page, 'username', null),
+                'picture' => data_get($page, 'picture.data.url'),
+                'access_token' => data_get($page, 'access_token'),
             ])->toArray();
         } catch (\Exception $e) {
             Log::error('Facebook pages fetch error', [

@@ -145,7 +145,7 @@ class YouTubePublisher
 
         Log::info('YouTube upload response', ['data' => $data]);
 
-        $videoId = $data['id'] ?? null;
+        $videoId = data_get($data, 'id', null);
 
         if (! $videoId) {
             throw new \Exception('YouTube did not return a video ID');
@@ -197,9 +197,9 @@ class YouTubePublisher
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         Log::info('YouTube token refreshed successfully');

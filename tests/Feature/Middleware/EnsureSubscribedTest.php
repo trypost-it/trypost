@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
 
@@ -11,7 +12,7 @@ test('self hosted mode bypasses subscription check', function () {
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
@@ -31,7 +32,7 @@ test('user with active subscription can access protected route', function () {
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $user->subscriptions()->create([
@@ -51,7 +52,7 @@ test('user on trial subscription can access protected route', function () {
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     // Create a subscription with trial
@@ -73,7 +74,7 @@ test('user without subscription is redirected to subscribe page', function () {
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
@@ -86,7 +87,7 @@ test('user with expired trial subscription is redirected to subscribe page', fun
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     // Create an expired trial subscription
@@ -109,7 +110,7 @@ test('user with cancelled subscription is redirected to subscribe page', functio
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $user->subscriptions()->create([
@@ -130,7 +131,7 @@ test('invited member can access workspace when owner has active subscription', f
 
     $owner = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => 'owner']);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
 
     $owner->subscriptions()->create([
         'type' => 'default',
@@ -140,7 +141,7 @@ test('invited member can access workspace when owner has active subscription', f
     ]);
 
     $member = User::factory()->create(['setup' => Setup::Completed]);
-    $workspace->members()->attach($member->id, ['role' => 'member']);
+    $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
     $member->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($member)
@@ -153,10 +154,10 @@ test('invited member is redirected to subscribe when owner has no subscription',
 
     $owner = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => 'owner']);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
 
     $member = User::factory()->create(['setup' => Setup::Completed]);
-    $workspace->members()->attach($member->id, ['role' => 'member']);
+    $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
     $member->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($member)
@@ -169,7 +170,7 @@ test('invited member on own workspace without subscription is redirected to subs
 
     $owner = User::factory()->create(['setup' => Setup::Completed]);
     $ownerWorkspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $ownerWorkspace->members()->attach($owner->id, ['role' => 'owner']);
+    $ownerWorkspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
 
     $owner->subscriptions()->create([
         'type' => 'default',
@@ -179,10 +180,10 @@ test('invited member on own workspace without subscription is redirected to subs
     ]);
 
     $member = User::factory()->create(['setup' => Setup::Completed]);
-    $ownerWorkspace->members()->attach($member->id, ['role' => 'member']);
+    $ownerWorkspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
     $memberWorkspace = Workspace::factory()->create(['user_id' => $member->id]);
-    $memberWorkspace->members()->attach($member->id, ['role' => 'owner']);
+    $memberWorkspace->members()->attach($member->id, ['role' => Role::Owner->value]);
     $member->update(['current_workspace_id' => $memberWorkspace->id]);
 
     $this->actingAs($member)

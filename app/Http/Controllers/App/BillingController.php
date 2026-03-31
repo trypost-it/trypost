@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,7 +17,9 @@ class BillingController extends Controller
     {
         $user = $request->user();
 
-        if ($user->subscribed('default')) {
+        $this->authorizeBilling($request);
+
+        if ($user->subscribed(User::SUBSCRIPTION_NAME)) {
             return redirect()->route('app.billing.index');
         }
 
@@ -25,13 +28,15 @@ class BillingController extends Controller
         ]);
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
+        $this->authorizeBilling($request);
+
         $user = $request->user();
-        $subscription = $user->subscription('default');
+        $subscription = $user->subscription(User::SUBSCRIPTION_NAME);
 
         return Inertia::render('billing/Index', [
-            'hasSubscription' => $user->subscribed('default'),
+            'hasSubscription' => $user->subscribed(User::SUBSCRIPTION_NAME),
             'onTrial' => $subscription?->onTrial() ?? false,
             'trialEndsAt' => $subscription?->trial_ends_at?->toFormattedDateString(),
             'subscription' => $subscription?->only([
@@ -58,9 +63,11 @@ class BillingController extends Controller
 
     public function checkout(Request $request): SymfonyResponse
     {
+        $this->authorizeBilling($request);
+
         $user = $request->user();
 
-        $subscription = $user->newSubscription('default', config('cashier.plans.monthly.price_id'))
+        $subscription = $user->newSubscription(User::SUBSCRIPTION_NAME, config('cashier.plans.monthly.price_id'))
             ->allowPromotionCodes()
             ->trialDays(config('cashier.trial_days'))
             ->quantity(1);
@@ -78,7 +85,7 @@ class BillingController extends Controller
         $user = $request->user();
         $status = $request->query('status', 'processing');
 
-        if ($user->subscribed('default')) {
+        if ($user->subscribed(User::SUBSCRIPTION_NAME)) {
             return redirect()->route('app.calendar');
         }
 
@@ -94,8 +101,19 @@ class BillingController extends Controller
 
     public function portal(Request $request): RedirectResponse
     {
+        $this->authorizeBilling($request);
+
         return $request->user()->redirectToBillingPortal(
             route('app.billing.index')
         );
+    }
+
+    private function authorizeBilling(Request $request): void
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        if ($workspace) {
+            $this->authorize('manageBilling', $workspace);
+        }
     }
 }

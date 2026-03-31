@@ -275,7 +275,7 @@ class ThreadsPublisher
             }
 
             $data = $statusResponse->json();
-            $status = $data['status'] ?? 'UNKNOWN';
+            $status = data_get($data, 'status', 'UNKNOWN');
 
             Log::info('Threads media processing status', [
                 'container_id' => $containerId,
@@ -289,7 +289,7 @@ class ThreadsPublisher
             }
 
             if ($status === 'ERROR') {
-                $errorMessage = $data['error_message'] ?? 'Unknown error';
+                $errorMessage = data_get($data, 'error_message', 'Unknown error');
                 throw new \Exception('Threads media processing failed: '.$errorMessage);
             }
 
@@ -316,8 +316,8 @@ class ThreadsPublisher
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         Log::info('Threads token refreshed successfully');

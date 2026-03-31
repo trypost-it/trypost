@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Notification\Channel;
 use App\Enums\Notification\Type;
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Jobs\SendNotification;
 use App\Mail\PostPublished;
 use App\Models\Notification;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Mail;
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => 'owner']);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
@@ -82,16 +83,16 @@ test('wantsEmailFor respects preferences', function () {
         'account_disconnected' => false,
     ]);
 
-    expect($this->user->wantsEmailFor('post_published'))->toBeFalse();
-    expect($this->user->wantsEmailFor('post_failed'))->toBeTrue();
-    expect($this->user->wantsEmailFor('post_partially_published'))->toBeTrue(); // maps to post_failed
-    expect($this->user->wantsEmailFor('account_disconnected'))->toBeFalse();
+    expect($this->user->wantsEmailFor(Type::PostPublished))->toBeFalse();
+    expect($this->user->wantsEmailFor(Type::PostFailed))->toBeTrue();
+    expect($this->user->wantsEmailFor(Type::PostPartiallyPublished))->toBeTrue(); // maps to post_failed
+    expect($this->user->wantsEmailFor(Type::AccountDisconnected))->toBeFalse();
 });
 
 test('wantsEmailFor defaults to true when no preferences exist', function () {
-    expect($this->user->wantsEmailFor('post_published'))->toBeTrue();
-    expect($this->user->wantsEmailFor('post_failed'))->toBeTrue();
-    expect($this->user->wantsEmailFor('account_disconnected'))->toBeTrue();
+    expect($this->user->wantsEmailFor(Type::PostPublished))->toBeTrue();
+    expect($this->user->wantsEmailFor(Type::PostFailed))->toBeTrue();
+    expect($this->user->wantsEmailFor(Type::AccountDisconnected))->toBeTrue();
 });
 
 test('send notification respects email preferences', function () {

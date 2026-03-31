@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\SocialAccount\Platform;
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -11,6 +12,7 @@ use App\Models\Workspace;
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
@@ -70,4 +72,25 @@ test('disconnect returns 403 for other workspace account', function () {
     $response = $this->actingAs($this->user)->delete(route('app.accounts.disconnect', $account));
 
     $response->assertForbidden();
+});
+
+// Member authorization tests
+test('member cannot disconnect social account', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $member->update(['current_workspace_id' => $this->workspace->id]);
+
+    $account = SocialAccount::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $this->actingAs($member)->delete(route('app.accounts.disconnect', $account))->assertForbidden();
+});
+
+test('member cannot toggle social account', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $member->update(['current_workspace_id' => $this->workspace->id]);
+
+    $account = SocialAccount::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $this->actingAs($member)->put(route('app.accounts.toggle', $account))->assertForbidden();
 });

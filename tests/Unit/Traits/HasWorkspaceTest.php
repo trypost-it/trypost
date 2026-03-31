@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
 
@@ -11,8 +12,8 @@ test('user can get workspaces they belong to', function () {
     $workspace2 = Workspace::factory()->create(['user_id' => $user->id]);
 
     // Add user as owner to both workspaces via pivot
-    $workspace1->members()->attach($user->id, ['role' => 'owner']);
-    $workspace2->members()->attach($user->id, ['role' => 'owner']);
+    $workspace1->members()->attach($user->id, ['role' => Role::Owner->value]);
+    $workspace2->members()->attach($user->id, ['role' => Role::Owner->value]);
 
     expect($user->workspaces)->toHaveCount(2);
     expect($user->workspaces->pluck('id')->toArray())->toContain($workspace1->id, $workspace2->id);
@@ -22,7 +23,7 @@ test('user can get workspaces as member', function () {
     $owner = User::factory()->create();
     $member = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($member->id, ['role' => 'member']);
+    $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
     expect($member->workspaces)->toHaveCount(1);
     expect($member->workspaces->first()->id)->toBe($workspace->id);
@@ -50,7 +51,7 @@ test('user can switch workspace', function () {
 test('user belongs to owned workspace', function () {
     $user = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
 
     expect($user->belongsToWorkspace($workspace))->toBeTrue();
 });
@@ -59,7 +60,7 @@ test('user belongs to member workspace', function () {
     $owner = User::factory()->create();
     $member = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($member->id, ['role' => 'member']);
+    $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
     expect($member->belongsToWorkspace($workspace))->toBeTrue();
 });
@@ -77,7 +78,7 @@ test('user can get owned workspaces count', function () {
     $workspaces = Workspace::factory()->count(3)->create(['user_id' => $user->id]);
 
     foreach ($workspaces as $workspace) {
-        $workspace->members()->attach($user->id, ['role' => 'owner']);
+        $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     }
 
     expect($user->ownedWorkspacesCount())->toBe(3);
@@ -96,7 +97,7 @@ test('user without subscription cannot create second workspace in SaaS mode', fu
 
     $user = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
 
     expect($user->canCreateWorkspace())->toBeFalse();
 });
@@ -108,7 +109,7 @@ test('user can create unlimited workspaces in self-hosted mode', function () {
     $workspaces = Workspace::factory()->count(5)->create(['user_id' => $user->id]);
 
     foreach ($workspaces as $workspace) {
-        $workspace->members()->attach($user->id, ['role' => 'owner']);
+        $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     }
 
     expect($user->canCreateWorkspace())->toBeTrue();
@@ -127,7 +128,7 @@ test('user with subscription can create workspaces up to quantity in SaaS mode',
     ]);
 
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
 
     expect($user->canCreateWorkspace())->toBeTrue();
 });
@@ -147,7 +148,7 @@ test('user with subscription cannot exceed workspace quantity in SaaS mode', fun
     $workspaces = Workspace::factory()->count(2)->create(['user_id' => $user->id]);
 
     foreach ($workspaces as $workspace) {
-        $workspace->members()->attach($user->id, ['role' => 'owner']);
+        $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     }
 
     expect($user->canCreateWorkspace())->toBeFalse();
@@ -160,7 +161,7 @@ test('increment workspace quantity does nothing without subscription in SaaS mod
 
     $user->incrementWorkspaceQuantity();
 
-    expect($user->subscription('default'))->toBeNull();
+    expect($user->subscription(User::SUBSCRIPTION_NAME))->toBeNull();
 });
 
 test('increment workspace quantity is skipped in self-hosted mode', function () {
@@ -171,7 +172,7 @@ test('increment workspace quantity is skipped in self-hosted mode', function () 
     // Should not throw any errors even without subscription
     $user->incrementWorkspaceQuantity();
 
-    expect($user->subscription('default'))->toBeNull();
+    expect($user->subscription(User::SUBSCRIPTION_NAME))->toBeNull();
 });
 
 test('decrement workspace quantity does nothing without subscription in SaaS mode', function () {
@@ -181,7 +182,7 @@ test('decrement workspace quantity does nothing without subscription in SaaS mod
 
     $user->decrementWorkspaceQuantity();
 
-    expect($user->subscription('default'))->toBeNull();
+    expect($user->subscription(User::SUBSCRIPTION_NAME))->toBeNull();
 });
 
 test('decrement workspace quantity is skipped in self-hosted mode', function () {
@@ -192,7 +193,7 @@ test('decrement workspace quantity is skipped in self-hosted mode', function () 
     // Should not throw any errors even without subscription
     $user->decrementWorkspaceQuantity();
 
-    expect($user->subscription('default'))->toBeNull();
+    expect($user->subscription(User::SUBSCRIPTION_NAME))->toBeNull();
 });
 
 test('sync workspace quantity does nothing without subscription in SaaS mode', function () {
@@ -202,12 +203,12 @@ test('sync workspace quantity does nothing without subscription in SaaS mode', f
     $workspaces = Workspace::factory()->count(2)->create(['user_id' => $user->id]);
 
     foreach ($workspaces as $workspace) {
-        $workspace->members()->attach($user->id, ['role' => 'owner']);
+        $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     }
 
     $user->syncWorkspaceQuantity();
 
-    expect($user->subscription('default'))->toBeNull();
+    expect($user->subscription(User::SUBSCRIPTION_NAME))->toBeNull();
 });
 
 test('sync workspace quantity is skipped in self-hosted mode', function () {
@@ -217,13 +218,13 @@ test('sync workspace quantity is skipped in self-hosted mode', function () {
     $workspaces = Workspace::factory()->count(2)->create(['user_id' => $user->id]);
 
     foreach ($workspaces as $workspace) {
-        $workspace->members()->attach($user->id, ['role' => 'owner']);
+        $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     }
 
     // Should not throw any errors even without subscription
     $user->syncWorkspaceQuantity();
 
-    expect($user->subscription('default'))->toBeNull();
+    expect($user->subscription(User::SUBSCRIPTION_NAME))->toBeNull();
 });
 
 test('sync workspace quantity does nothing with zero workspaces', function () {
@@ -241,5 +242,5 @@ test('sync workspace quantity does nothing with zero workspaces', function () {
     $user->syncWorkspaceQuantity();
 
     // Quantity remains unchanged because there are no workspaces
-    expect($user->subscription('default')->quantity)->toBe(5);
+    expect($user->subscription(User::SUBSCRIPTION_NAME)->quantity)->toBe(5);
 });

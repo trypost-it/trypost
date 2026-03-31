@@ -10,7 +10,9 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import dayjs from '@/dayjs';
+import { accounts } from '@/routes/app';
 import { index, read, readAll, archiveAll } from '@/routes/app/notifications';
+import { edit as editPost } from '@/routes/app/posts';
 
 interface Notification {
     id: string;
@@ -54,7 +56,7 @@ const handleMarkAsRead = async (notification: Notification) => {
         credentials: 'same-origin',
     });
 
-    notification.read_at = new Date().toISOString();
+    notification.read_at = dayjs().toISOString();
     unreadCount.value = Math.max(0, unreadCount.value - 1);
 };
 
@@ -67,7 +69,7 @@ const handleMarkAllAsRead = async () => {
 
     notifications.value = notifications.value.map((n) => ({
         ...n,
-        read_at: n.read_at ?? new Date().toISOString(),
+        read_at: n.read_at ?? dayjs().toISOString(),
     }));
     unreadCount.value = 0;
 };
@@ -91,9 +93,9 @@ const handleNotificationClick = (notification: Notification) => {
     close();
 
     if (notification.data?.post_id) {
-        router.visit(`/posts/${notification.data.post_id}/edit`);
+        router.visit(editPost.url(notification.data.post_id));
     } else if (notification.data?.social_account_id || notification.data?.workspace_id) {
-        router.visit('/accounts');
+        router.visit(accounts.url());
     }
 };
 

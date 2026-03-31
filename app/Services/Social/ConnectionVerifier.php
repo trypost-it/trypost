@@ -81,9 +81,9 @@ class ConnectionVerifier
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         $account->refresh();
@@ -113,9 +113,9 @@ class ConnectionVerifier
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => now()->addSeconds($data['expires_in'] ?? 7200),
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => now()->addSeconds(data_get($data, 'expires_in', 7200)),
         ]);
 
         $account->refresh();
@@ -132,8 +132,8 @@ class ConnectionVerifier
         if ($response->successful()) {
             $data = $response->json();
             $account->update([
-                'access_token' => $data['accessJwt'],
-                'refresh_token' => $data['refreshJwt'],
+                'access_token' => data_get($data, 'accessJwt'),
+                'refresh_token' => data_get($data, 'refreshJwt'),
                 'token_expires_at' => now()->addHours(2),
             ]);
 
@@ -156,8 +156,8 @@ class ConnectionVerifier
                 if ($response->successful()) {
                     $data = $response->json();
                     $account->update([
-                        'access_token' => $data['accessJwt'],
-                        'refresh_token' => $data['refreshJwt'],
+                        'access_token' => data_get($data, 'accessJwt'),
+                        'refresh_token' => data_get($data, 'refreshJwt'),
                         'token_expires_at' => now()->addHours(2),
                     ]);
 
@@ -196,8 +196,8 @@ class ConnectionVerifier
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         $account->refresh();
@@ -224,9 +224,9 @@ class ConnectionVerifier
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         $account->refresh();
@@ -256,9 +256,9 @@ class ConnectionVerifier
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         $account->refresh();
@@ -280,8 +280,8 @@ class ConnectionVerifier
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         $account->refresh();

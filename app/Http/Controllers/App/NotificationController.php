@@ -15,6 +15,10 @@ class NotificationController extends Controller
     {
         $workspace = $request->user()->currentWorkspace;
 
+        if (! $workspace) {
+            return response()->json(['notifications' => [], 'unread_count' => 0]);
+        }
+
         $notifications = $request->user()
             ->notifications()
             ->where('workspace_id', $workspace->id)
@@ -51,6 +55,10 @@ class NotificationController extends Controller
     {
         $workspace = $request->user()->currentWorkspace;
 
+        if (! $workspace) {
+            return response()->json(['success' => true]);
+        }
+
         $request->user()
             ->notifications()
             ->where('workspace_id', $workspace->id)
@@ -63,6 +71,10 @@ class NotificationController extends Controller
     public function archiveAll(Request $request): JsonResponse
     {
         $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return response()->json(['success' => true]);
+        }
 
         $request->user()
             ->notifications()

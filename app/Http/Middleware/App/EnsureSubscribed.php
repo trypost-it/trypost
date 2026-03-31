@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware\App;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,7 +30,7 @@ class EnsureSubscribed
         }
 
         // Allow access if user has active subscription or is on trial
-        if ($user->subscribed('default') || $user->onTrial('default')) {
+        if ($user->subscribed(User::SUBSCRIPTION_NAME) || $user->onTrial(User::SUBSCRIPTION_NAME)) {
             return $next($request);
         }
 
@@ -39,7 +40,7 @@ class EnsureSubscribed
         if ($currentWorkspace && $currentWorkspace->owner && $currentWorkspace->owner->id !== $user->id) {
             $owner = $currentWorkspace->owner;
 
-            if ($owner->subscribed('default') || $owner->onTrial('default')) {
+            if ($owner->subscribed(User::SUBSCRIPTION_NAME) || $owner->onTrial(User::SUBSCRIPTION_NAME)) {
                 return $next($request);
             }
         }

@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import dayjs from '@/dayjs';
+
 defineProps<{
     title?: string;
 }>();
+
+const currentYear = dayjs().year();
 </script>
 
 <template>
@@ -26,7 +30,7 @@ defineProps<{
         <footer class="border-t mt-auto">
             <div class="mx-auto max-w-5xl px-6 py-8">
                 <p class="text-sm text-muted-foreground text-center">
-                    &copy; {{ new Date().getFullYear() }} TryPost. All rights reserved.
+                    &copy; {{ currentYear }} TryPost. All rights reserved.
                 </p>
             </div>
         </footer>

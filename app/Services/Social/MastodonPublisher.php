@@ -59,13 +59,13 @@ class MastodonPublisher
         $data = $response->json();
 
         Log::info('Mastodon post created', [
-            'id' => $data['id'],
-            'url' => $data['url'],
+            'id' => data_get($data, 'id'),
+            'url' => data_get($data, 'url'),
         ]);
 
         return [
-            'id' => $data['id'],
-            'url' => $data['url'],
+            'id' => data_get($data, 'id'),
+            'url' => data_get($data, 'url'),
         ];
     }
 
@@ -100,9 +100,9 @@ class MastodonPublisher
 
             $data = $response->json();
 
-            Log::info('Mastodon media uploaded', ['id' => $data['id']]);
+            Log::info('Mastodon media uploaded', ['id' => data_get($data, 'id')]);
 
-            return $data['id'];
+            return data_get($data, 'id');
         } catch (\Exception $e) {
             Log::error('Mastodon media upload error', [
                 'error' => $e->getMessage(),

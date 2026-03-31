@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Broadcasting\PostChannel;
+use App\Enums\UserWorkspace\Role;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Workspace;
@@ -10,7 +11,7 @@ use App\Models\Workspace;
 test('post channel allows workspace member to join', function () {
     $user = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $post = Post::factory()->create(['workspace_id' => $workspace->id]);
 
     $channel = new PostChannel;

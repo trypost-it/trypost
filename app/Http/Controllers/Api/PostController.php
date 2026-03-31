@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api;
 use App\Actions\Post\CreatePost;
 use App\Actions\Post\DeletePost;
 use App\Actions\Post\UpdatePost;
+use App\Enums\Post\Action as PostAction;
 use App\Http\Resources\Api\PostResource;
 use App\Models\Post;
 use Illuminate\Http\JsonResponse;
@@ -79,7 +80,7 @@ class PostController extends Controller
 
         $result = UpdatePost::execute($request->workspace, $post, $validated);
 
-        if (data_get($result, 'action') === 'already_published') {
+        if (data_get($result, 'action') === PostAction::AlreadyPublished) {
             return response()->json(
                 ['message' => 'Cannot edit a published post.'],
                 Response::HTTP_UNPROCESSABLE_ENTITY

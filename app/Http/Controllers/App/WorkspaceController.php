@@ -6,6 +6,7 @@ namespace App\Http\Controllers\App;
 
 use App\Actions\Workspace\CreateWorkspace;
 use App\Actions\Workspace\DeleteWorkspace;
+use App\Enums\UserWorkspace\Role;
 use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
 use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
 use App\Models\Workspace;
@@ -94,7 +95,7 @@ class WorkspaceController extends Controller
                 'name' => $member->name,
                 'email' => $member->email,
                 'role' => $member->pivot->role,
-                'is_owner' => $member->id === $workspace->user_id,
+                'is_owner' => $member->pivot->role === Role::Owner->value,
             ]);
 
         $invitations = $workspace->invites()

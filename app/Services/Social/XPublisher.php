@@ -60,7 +60,7 @@ class XPublisher
                 Log::info('X media upload response', ['response' => $uploadedMedia]);
 
                 // v2 API returns data.id, v1 returns media_id
-                $mediaId = $uploadedMedia['data']['id'] ?? $uploadedMedia['media_id'] ?? null;
+                $mediaId = data_get($uploadedMedia, 'data.id', data_get($uploadedMedia, 'media_id'));
                 if ($mediaId) {
                     $mediaIds[] = $mediaId;
                 }
@@ -350,9 +350,9 @@ class XPublisher
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => now()->addSeconds($data['expires_in'] ?? 7200),
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => now()->addSeconds(data_get($data, 'expires_in', 7200)),
         ]);
     }
 

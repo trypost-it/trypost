@@ -34,7 +34,7 @@ class WorkspaceInviteController extends Controller
                 ->latest()
                 ->get(),
             'members' => $workspace->members()
-                ->where('user_id', '!=', $workspace->user_id)
+                ->wherePivot('role', '!=', WorkspaceRole::Owner->value)
                 ->get()
                 ->map(fn ($member) => [
                     'id' => $member->id,
@@ -123,7 +123,9 @@ class WorkspaceInviteController extends Controller
 
         $this->authorize('manageTeam', $workspace);
 
-        if ($workspace->user_id === $userId) {
+        $memberPivot = $workspace->members()->where('user_id', $userId)->first()?->pivot;
+
+        if ($memberPivot && $memberPivot->role === WorkspaceRole::Owner->value) {
             return back()->withErrors(['member' => 'Cannot remove the workspace owner.']);
         }
 
@@ -145,7 +147,9 @@ class WorkspaceInviteController extends Controller
 
         $this->authorize('manageTeam', $workspace);
 
-        if ($workspace->user_id === $userId) {
+        $memberPivot = $workspace->members()->where('user_id', $userId)->first()?->pivot;
+
+        if ($memberPivot && $memberPivot->role === WorkspaceRole::Owner->value) {
             return back()->withErrors(['role' => 'Cannot change the workspace owner role.']);
         }
 

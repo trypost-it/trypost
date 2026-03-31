@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Notification\Type as NotificationType;
 use App\Enums\User\Persona;
 use App\Enums\User\Setup;
 use App\Models\Traits\HasMedia;
@@ -22,6 +23,8 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use Billable, HasFactory, HasMedia, HasUuids, HasWorkspace, Notifiable;
+
+    public const SUBSCRIPTION_NAME = 'default';
 
     /**
      * The attributes that are mass assignable.
@@ -94,7 +97,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(NotificationPreference::class);
     }
 
-    public function wantsEmailFor(string $type): bool
+    public function wantsEmailFor(NotificationType $type): bool
     {
         $preference = $this->notificationPreference;
 
@@ -103,9 +106,9 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return match ($type) {
-            'post_published' => $preference->post_published,
-            'post_failed', 'post_partially_published' => $preference->post_failed,
-            'account_disconnected' => $preference->account_disconnected,
+            NotificationType::PostPublished => $preference->post_published,
+            NotificationType::PostFailed, NotificationType::PostPartiallyPublished => $preference->post_failed,
+            NotificationType::AccountDisconnected => $preference->account_disconnected,
             default => true,
         };
     }
@@ -120,7 +123,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return true;
         }
 
-        return $this->subscribed('default');
+        return $this->subscribed(self::SUBSCRIPTION_NAME);
     }
 
     /**

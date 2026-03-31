@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ApiToken\Status;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasVersion4Uuids as HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -60,10 +61,10 @@ class ApiToken extends Model
         return Attribute::make(
             get: function () {
                 if ($this->expires_at === null) {
-                    return 'active';
+                    return Status::Active->value;
                 }
 
-                return now()->greaterThan($this->expires_at) ? 'expired' : 'active';
+                return now()->greaterThan($this->expires_at) ? Status::Expired->value : Status::Active->value;
             }
         );
     }

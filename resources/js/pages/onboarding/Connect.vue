@@ -7,6 +7,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { storeConnect } from '@/actions/App/Http/Controllers/App/OnboardingController';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import { role } from '@/routes/app/onboarding';
 
 export interface SocialAccount {
     id: string;
@@ -137,7 +138,7 @@ const submit = () => {
             <p class="text-muted-foreground">
                 {{ $t('onboarding.connect.error') }}
             </p>
-            <Button variant="outline" @click="router.visit('/onboarding/role')">
+            <Button variant="outline" @click="router.visit(role.url())">
                 {{ $t('onboarding.connect.go_back') }}
             </Button>
         </div>

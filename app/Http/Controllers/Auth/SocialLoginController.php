@@ -21,7 +21,11 @@ class SocialLoginController extends Controller
 
     public function callback(): RedirectResponse
     {
-        $googleUser = Socialite::driver('google-auth')->user();
+        try {
+            $googleUser = Socialite::driver('google-auth')->user();
+        } catch (\Exception) {
+            return redirect()->route('login');
+        }
 
         $user = User::where('email', $googleUser->getEmail())->first();
 

@@ -14,6 +14,7 @@ beforeEach(function () {
     Mail::fake();
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->workspace->members()->attach($this->user->id, ['role' => WorkspaceRole::Owner->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 

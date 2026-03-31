@@ -36,7 +36,7 @@ class OnboardingController extends Controller
         ]);
 
         $request->user()->update([
-            'persona' => $validated['persona'],
+            'persona' => data_get($validated, 'persona'),
             'setup' => Setup::Connections,
         ]);
 
@@ -92,7 +92,7 @@ class OnboardingController extends Controller
             'setup' => Setup::Subscription,
         ]);
 
-        $subscription = $user->newSubscription('default', config('cashier.plans.monthly.price_id'))
+        $subscription = $user->newSubscription(User::SUBSCRIPTION_NAME, config('cashier.plans.monthly.price_id'))
             ->allowPromotionCodes()
             ->trialDays(config('cashier.trial_days'))
             ->quantity(1);

@@ -36,11 +36,11 @@ class SendPostHogEvent implements ShouldQueue
         }
 
         foreach ($this->calls as $call) {
-            match ($call['method']) {
-                'capture' => PostHog::capture($call['payload']),
-                'identify' => PostHog::identify($call['payload']),
-                'groupIdentify' => PostHog::groupIdentify($call['payload']),
-                default => Log::warning('SendPostHogEvent: unknown method', ['method' => $call['method']]),
+            match (data_get($call, 'method')) {
+                'capture' => PostHog::capture(data_get($call, 'payload')),
+                'identify' => PostHog::identify(data_get($call, 'payload')),
+                'groupIdentify' => PostHog::groupIdentify(data_get($call, 'payload')),
+                default => Log::warning('SendPostHogEvent: unknown method', ['method' => data_get($call, 'method')]),
             };
         }
 

@@ -7,6 +7,8 @@ namespace App\Http\Controllers\App;
 use App\Actions\Post\CreatePost;
 use App\Actions\Post\DeletePost;
 use App\Actions\Post\UpdatePost;
+use App\Enums\Post\Action as PostAction;
+use App\Enums\Post\Status as PostStatus;
 use App\Enums\SocialAccount\Platform;
 use App\Http\Requests\App\Post\UpdatePostRequest;
 use App\Models\Post;
@@ -34,9 +36,9 @@ class PostController extends Controller
 
         if ($status) {
             $query = match ($status) {
-                'draft' => $query->draft(),
-                'scheduled' => $query->scheduled(),
-                'published' => $query->published(),
+                PostStatus::Draft->value => $query->draft(),
+                PostStatus::Scheduled->value => $query->scheduled(),
+                PostStatus::Published->value => $query->published(),
                 default => $query,
             };
         }
@@ -204,21 +206,21 @@ class PostController extends Controller
 
         $action = data_get($result, 'action');
 
-        if ($action === 'already_published') {
+        if ($action === PostAction::AlreadyPublished) {
             session()->flash('flash.banner', __('posts.flash.cannot_edit_published'));
             session()->flash('flash.bannerStyle', 'danger');
 
             return back();
         }
 
-        if ($action === 'publishing') {
+        if ($action === PostAction::Publishing) {
             session()->flash('flash.banner', __('posts.flash.publishing'));
             session()->flash('flash.bannerStyle', 'success');
 
             return redirect()->route('app.posts.edit', $post);
         }
 
-        if ($action === 'scheduled') {
+        if ($action === PostAction::Scheduled) {
             session()->flash('flash.banner', __('posts.flash.scheduled'));
             session()->flash('flash.bannerStyle', 'success');
 

@@ -57,7 +57,6 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                         type="url"
                         :placeholder="trans('accounts.mastodon.instance_placeholder')"
                         :class="{ 'border-destructive': errors?.instance }"
-                        required
                     />
                     <p v-if="errors?.instance" class="text-sm text-destructive">
                         {{ errors.instance }}

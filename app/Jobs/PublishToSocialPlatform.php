@@ -64,7 +64,7 @@ class PublishToSocialPlatform implements ShouldQueue
             $publisher = $this->getPublisher();
             $result = $publisher->publish($this->postPlatform);
 
-            $this->postPlatform->markAsPublished($result['id'], $result['url'] ?? null);
+            $this->postPlatform->markAsPublished(data_get($result, 'id'), data_get($result, 'url'));
         } catch (TokenExpiredException $e) {
             Log::error('Token expired while publishing to social platform', [
                 'post_platform_id' => $this->postPlatform->id,

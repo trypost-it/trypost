@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceLabel;
@@ -10,6 +11,7 @@ use App\Models\WorkspaceLabel;
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
@@ -175,4 +177,19 @@ test('labels index returns all when no search query', function () {
         ->has('labels.data', 3)
         ->where('filters.search', '')
     );
+});
+
+// Member authorization tests
+test('member can create label', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $member->update(['current_workspace_id' => $this->workspace->id]);
+
+    $response = $this->actingAs($member)->post(route('app.labels.store'), [
+        'name' => 'Test Label',
+        'color' => '#FF0000',
+    ]);
+
+    $response->assertRedirect();
+    expect($this->workspace->labels()->count())->toBe(1);
 });

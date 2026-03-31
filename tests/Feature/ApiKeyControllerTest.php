@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Models\ApiToken;
 use App\Models\User;
 use App\Models\Workspace;
@@ -10,7 +11,7 @@ use App\Models\Workspace;
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => 'owner']);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
     $this->user->refresh();
 });
@@ -76,4 +77,26 @@ it('cannot delete api key from another workspace', function () {
     $this->actingAs($this->user)
         ->delete(route('app.api-keys.destroy', $token))
         ->assertNotFound();
+});
+
+it('member cannot create api key', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $member->update(['current_workspace_id' => $this->workspace->id]);
+
+    $this->actingAs($member)
+        ->post(route('app.api-keys.store'), ['name' => 'Test Key'])
+        ->assertForbidden();
+});
+
+it('member cannot delete api key', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $member->update(['current_workspace_id' => $this->workspace->id]);
+
+    $token = ApiToken::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $this->actingAs($member)
+        ->delete(route('app.api-keys.destroy', $token))
+        ->assertForbidden();
 });

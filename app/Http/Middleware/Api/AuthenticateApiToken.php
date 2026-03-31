@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware\Api;
 
 use App\Models\ApiToken;
+use App\Models\User;
 use App\Models\Workspace;
 use Closure;
 use Illuminate\Http\Request;
@@ -60,6 +61,6 @@ class AuthenticateApiToken
             return false;
         }
 
-        return $owner->subscribed('default') || $owner->onTrial('default');
+        return $owner->subscribed(User::SUBSCRIPTION_NAME) || $owner->onTrial(User::SUBSCRIPTION_NAME);
     }
 }

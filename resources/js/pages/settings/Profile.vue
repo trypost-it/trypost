@@ -75,7 +75,6 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
                             id="name"
                             name="name"
                             :default-value="user.name"
-                            required
                             autocomplete="name"
                             :placeholder="trans('settings.profile.name_placeholder')"
                         />
@@ -89,7 +88,6 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
                             type="email"
                             name="email"
                             :default-value="user.email"
-                            required
                             autocomplete="username"
                             :placeholder="trans('settings.profile.email_placeholder')"
                         />

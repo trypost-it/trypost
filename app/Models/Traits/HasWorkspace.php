@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models\Traits;
 
+use App\Enums\UserWorkspace\Role;
+use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -49,7 +51,7 @@ trait HasWorkspace
      */
     public function ownedWorkspacesCount(): int
     {
-        return $this->workspaces()->wherePivot('role', 'owner')->count();
+        return $this->workspaces()->wherePivot('role', Role::Owner->value)->count();
     }
 
     /**
@@ -66,7 +68,7 @@ trait HasWorkspace
             return $this->ownedWorkspacesCount() === 0;
         }
 
-        $subscription = $this->subscription('default');
+        $subscription = $this->subscription(User::SUBSCRIPTION_NAME);
 
         return $subscription && $this->ownedWorkspacesCount() < $subscription->quantity;
     }
@@ -82,7 +84,7 @@ trait HasWorkspace
         }
 
         if ($this->hasActiveSubscription()) {
-            $this->subscription('default')->incrementQuantity();
+            $this->subscription(User::SUBSCRIPTION_NAME)->incrementQuantity();
         }
     }
 
@@ -97,7 +99,7 @@ trait HasWorkspace
         }
 
         if ($this->hasActiveSubscription()) {
-            $subscription = $this->subscription('default');
+            $subscription = $this->subscription(User::SUBSCRIPTION_NAME);
 
             if ($subscription->quantity > 1) {
                 $subscription->decrementQuantity();
@@ -119,7 +121,7 @@ trait HasWorkspace
             $count = $this->ownedWorkspacesCount();
 
             if ($count > 0) {
-                $this->subscription('default')->updateQuantity($count);
+                $this->subscription(User::SUBSCRIPTION_NAME)->updateQuantity($count);
             }
         }
     }

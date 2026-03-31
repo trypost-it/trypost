@@ -8,6 +8,7 @@ use App\Enums\UserWorkspace\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Settings\ProfileDeleteRequest;
 use App\Http\Requests\App\Settings\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -90,8 +91,8 @@ class ProfileController extends Controller
         $user = $request->user();
 
         DB::transaction(function () use ($user) {
-            if ($user->subscribed('default')) {
-                $user->subscription('default')->cancelNow();
+            if ($user->subscribed(User::SUBSCRIPTION_NAME)) {
+                $user->subscription(User::SUBSCRIPTION_NAME)->cancelNow();
             }
             $user->subscriptions()->delete();
             $user->update(['current_workspace_id' => null]);

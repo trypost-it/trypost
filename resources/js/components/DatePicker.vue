@@ -50,7 +50,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 
 // Parse input value into date
-function parseInput(value: string) {
+const parseInput = (value: string) => {
     if (!value) return undefined;
 
     try {
@@ -62,7 +62,7 @@ function parseInput(value: string) {
         return undefined;
     }
     return undefined;
-}
+};
 
 const internalDate = ref(parseInput(props.modelValue));
 const popoverOpen = ref(false);
@@ -94,7 +94,7 @@ const minutes = computed(() => {
 });
 
 // Build full datetime string
-function buildDateTime(dateStr: string | null): string | null {
+const buildDateTime = (dateStr: string | null): string | null => {
     if (!dateStr) return null;
 
     if (!props.showTime) {
@@ -103,15 +103,14 @@ function buildDateTime(dateStr: string | null): string | null {
 
     const timeStr = `${selectedHour.value}:${selectedMinute.value}:00`;
     return `${dateStr}T${timeStr}`;
-}
+};
 
-// Handle time change
-function onTimeChange() {
+const onTimeChange = () => {
     if (internalDate.value) {
         const dateStr = internalDate.value.toString();
         emit('update:modelValue', buildDateTime(dateStr));
     }
-}
+};
 
 // Parse input value into date component
 const isInternalUpdate = ref(false);

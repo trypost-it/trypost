@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\SocialAccount\Platform;
+use App\Enums\UserWorkspace\Role;
 use App\Models\ApiToken;
 use App\Models\Post;
 use App\Models\SocialAccount;
@@ -15,7 +16,7 @@ use Illuminate\Support\Str;
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => 'owner']);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
 
     $plainToken = 'tp_'.Str::random(48);
     $this->plainToken = $plainToken;

@@ -3,12 +3,14 @@
 declare(strict_types=1);
 
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
 
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
@@ -95,4 +97,37 @@ test('portal requires authentication', function () {
     $response = $this->get(route('app.billing.portal'));
 
     $response->assertRedirect(route('login'));
+});
+
+// Authorization tests
+test('admin cannot access subscribe page', function () {
+    $admin = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
+    $admin->update(['current_workspace_id' => $this->workspace->id]);
+
+    $this->actingAs($admin)->get(route('app.subscribe'))->assertForbidden();
+});
+
+test('member cannot access subscribe page', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $member->update(['current_workspace_id' => $this->workspace->id]);
+
+    $this->actingAs($member)->get(route('app.subscribe'))->assertForbidden();
+});
+
+test('admin cannot access billing index', function () {
+    $admin = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
+    $admin->update(['current_workspace_id' => $this->workspace->id]);
+
+    $this->actingAs($admin)->get(route('app.billing.index'))->assertForbidden();
+});
+
+test('member cannot access billing index', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $member->update(['current_workspace_id' => $this->workspace->id]);
+
+    $this->actingAs($member)->get(route('app.billing.index'))->assertForbidden();
 });

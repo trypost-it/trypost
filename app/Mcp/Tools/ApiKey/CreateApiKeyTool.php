@@ -25,8 +25,8 @@ class CreateApiKeyTool extends Tool
         $result = CreateApiKey::execute($request->user()->currentWorkspace, $validated);
 
         return Response::structured([
-            ...$result['token']->toArray(),
-            'token' => $result['plain_token'],
+            ...data_get($result, 'token')->toArray(),
+            'token' => data_get($result, 'plain_token'),
         ]);
     }
 

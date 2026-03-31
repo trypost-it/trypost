@@ -6,6 +6,7 @@ use App\Enums\Post\Status as PostStatus;
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Mail;
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 
     $this->socialAccount = SocialAccount::factory()->create([
@@ -496,4 +498,25 @@ test('update post validates label_ids exist', function () {
     ]);
 
     $response->assertSessionHasErrors('label_ids.0');
+});
+
+// Member authorization tests
+test('member can view posts index', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $member->update(['current_workspace_id' => $this->workspace->id]);
+
+    $response = $this->actingAs($member)->get(route('app.posts.index'));
+
+    $response->assertOk();
+});
+
+test('member can create post', function () {
+    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $member->update(['current_workspace_id' => $this->workspace->id]);
+
+    $response = $this->actingAs($member)->post(route('app.posts.store'));
+
+    $response->assertRedirect();
 });

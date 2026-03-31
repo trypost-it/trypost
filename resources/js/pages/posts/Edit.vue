@@ -332,7 +332,7 @@ const contentTypeKeys: Record<string, string[]> = {
     'mastodon': ['mastodon_post'],
 };
 
-function getDefaultContentType(platform: string): string {
+const getDefaultContentType = (platform: string): string => {
     const defaults: Record<string, string> = {
         'instagram': 'instagram_feed',
         'linkedin': 'linkedin_post',
@@ -346,23 +346,23 @@ function getDefaultContentType(platform: string): string {
         'bluesky': 'bluesky_post',
     };
     return defaults[platform] || '';
-}
+};
 
-function getContentTypeOptions(platform: string): ContentTypeOption[] {
+const getContentTypeOptions = (platform: string): ContentTypeOption[] => {
     const keys = contentTypeKeys[platform] || [];
     return keys.map(key => ({
         value: key,
         label: trans(`posts.content_types.${key}.label`),
         description: trans(`posts.content_types.${key}.description`),
     }));
-}
+};
 
-function getPlatformData(platform: string): Record<string, any> {
+const getPlatformData = (platform: string): Record<string, any> => {
     if (platform === 'pinterest') {
         return { boards: props.pinterestBoards };
     }
     return {};
-}
+};
 
 const getConfig = (postPlatform: PostPlatform): PlatformConfig => {
     return props.platformConfigs[postPlatform.social_account_id] || {

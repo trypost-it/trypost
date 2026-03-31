@@ -427,7 +427,7 @@ class LinkedInPagePublisher
             }
 
             $data = $response->json();
-            $status = $data['status'] ?? 'UNKNOWN';
+            $status = data_get($data, 'status', 'UNKNOWN');
 
             Log::info('LinkedIn Page video processing status', ['status' => $status, 'attempt' => $i]);
 
@@ -465,9 +465,9 @@ class LinkedInPagePublisher
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         // Sync tokens to LinkedIn personal if it exists

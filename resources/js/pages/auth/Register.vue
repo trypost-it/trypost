@@ -53,7 +53,6 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                     <Input
                         id="name"
                         type="text"
-                        required
                         autofocus
                         :tabindex="1"
                         autocomplete="name"
@@ -68,7 +67,6 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                     <Input
                         id="email"
                         type="email"
-                        required
                         :tabindex="2"
                         autocomplete="email"
                         name="email"

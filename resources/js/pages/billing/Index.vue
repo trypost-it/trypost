@@ -51,19 +51,19 @@ const breadcrumbs: BreadcrumbItemType[] = [
     },
 ];
 
-function openPortal() {
+const openPortal = () => {
     window.location.href = portal.url();
-}
+};
 
-function getStatusLabel(status: string): string {
+const getStatusLabel = (status: string): string => {
     return trans(`billing.status.${status}`) || status;
-}
+};
 
-function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+const getStatusVariant = (status: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
     if (status === 'active' || status === 'trialing') return 'default';
     if (status === 'canceled' || status === 'past_due' || status === 'unpaid') return 'destructive';
     return 'secondary';
-}
+};
 </script>
 
 <template>

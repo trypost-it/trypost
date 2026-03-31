@@ -61,39 +61,39 @@ const form = useForm({
     role: 'member',
 });
 
-function submitInvite() {
+const submitInvite = () => {
     form.post(storeInvite.url(), {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
         },
     });
-}
+};
 
-function cancelInvite(inviteId: string) {
+const cancelInvite = (inviteId: string) => {
     if (confirm(trans('settings.members.invite.cancel_confirm'))) {
         router.delete(destroyInvite.url(inviteId), {
             preserveScroll: true,
         });
     }
-}
+};
 
-function handleRemoveMember(memberId: string) {
+const handleRemoveMember = (memberId: string) => {
     if (confirm(trans('settings.members.list.remove_confirm'))) {
         router.delete(removeMember.url(memberId), {
             preserveScroll: true,
         });
     }
-}
+};
 
-function getRoleLabel(role: string): string {
+const getRoleLabel = (role: string): string => {
     return trans(`settings.members.roles.${role}`);
-}
+};
 
-function getRoleIcon(role: string) {
+const getRoleIcon = (role: string) => {
     if (role === 'admin') return IconShield;
     return IconUser;
-}
+};
 </script>
 
 <template>

@@ -23,7 +23,7 @@ class WorkspaceHashtagController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
+        $this->authorize('createPost', $workspace);
 
         $hashtags = $workspace->hashtags()
             ->when($request->input('search'), fn ($query, $search) => $query->where('name', 'ilike', "%{$search}%"))
@@ -47,7 +47,7 @@ class WorkspaceHashtagController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
+        $this->authorize('createPost', $workspace);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -70,7 +70,7 @@ class WorkspaceHashtagController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
+        $this->authorize('createPost', $workspace);
 
         if ($hashtag->workspace_id !== $workspace->id) {
             abort(404);
@@ -97,7 +97,7 @@ class WorkspaceHashtagController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
+        $this->authorize('createPost', $workspace);
 
         if ($hashtag->workspace_id !== $workspace->id) {
             abort(404);

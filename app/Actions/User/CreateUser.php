@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\User;
 
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,7 @@ class CreateUser
                 'timezone' => data_get($data, 'timezone', 'UTC'),
             ]);
 
-            $workspace->members()->attach($user->id, ['role' => 'owner']);
+            $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
 
             $user->update(['current_workspace_id' => $workspace->id]);
 

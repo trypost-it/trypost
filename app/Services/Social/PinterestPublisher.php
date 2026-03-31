@@ -99,11 +99,11 @@ class PinterestPublisher
 
         $data = $response->json();
 
-        Log::info('Pinterest pin created successfully', ['pin_id' => $data['id']]);
+        Log::info('Pinterest pin created successfully', ['pin_id' => data_get($data, 'id')]);
 
         return [
-            'id' => $data['id'],
-            'url' => "https://pinterest.com/pin/{$data['id']}",
+            'id' => data_get($data, 'id'),
+            'url' => 'https://pinterest.com/pin/'.data_get($data, 'id'),
         ];
     }
 
@@ -226,11 +226,11 @@ class PinterestPublisher
 
         $data = $response->json();
 
-        Log::info('Pinterest video pin created successfully', ['pin_id' => $data['id']]);
+        Log::info('Pinterest video pin created successfully', ['pin_id' => data_get($data, 'id')]);
 
         return [
-            'id' => $data['id'],
-            'url' => "https://pinterest.com/pin/{$data['id']}",
+            'id' => data_get($data, 'id'),
+            'url' => 'https://pinterest.com/pin/'.data_get($data, 'id'),
         ];
     }
 
@@ -292,11 +292,11 @@ class PinterestPublisher
 
         $data = $response->json();
 
-        Log::info('Pinterest carousel created successfully', ['pin_id' => $data['id']]);
+        Log::info('Pinterest carousel created successfully', ['pin_id' => data_get($data, 'id')]);
 
         return [
-            'id' => $data['id'],
-            'url' => "https://pinterest.com/pin/{$data['id']}",
+            'id' => data_get($data, 'id'),
+            'url' => 'https://pinterest.com/pin/'.data_get($data, 'id'),
         ];
     }
 
@@ -318,7 +318,7 @@ class PinterestPublisher
             }
 
             $data = $response->json();
-            $status = $data['status'] ?? 'unknown';
+            $status = data_get($data, 'status', 'unknown');
 
             Log::info('Pinterest media processing status', [
                 'media_id' => $mediaId,
@@ -331,7 +331,7 @@ class PinterestPublisher
             }
 
             if ($status === 'failed') {
-                $failureCode = $data['failure_code'] ?? 'unknown';
+                $failureCode = data_get($data, 'failure_code', 'unknown');
                 throw new \Exception("Pinterest media processing failed: {$failureCode}");
             }
 
@@ -363,9 +363,9 @@ class PinterestPublisher
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : now()->addDays(30),
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : now()->addDays(30),
         ]);
 
         Log::info('Pinterest token refreshed successfully');

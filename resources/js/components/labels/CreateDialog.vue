@@ -55,14 +55,14 @@ const handleOpenChange = (value: boolean) => {
 
 <template>
     <Dialog :open="open" @update:open="handleOpenChange">
-        <DialogContent class="sm:max-w-md">
+        <DialogContent class="sm:max-w-lg">
             <DialogHeader>
                 <DialogTitle>{{ $t('labels.create.title') }}</DialogTitle>
                 <DialogDescription>
                     {{ $t('labels.create.description') }}
                 </DialogDescription>
             </DialogHeader>
-            <form @submit.prevent="submit" class="space-y-4">
+            <form @submit.prevent="submit" class="space-y-6">
                 <div class="space-y-2">
                     <Label for="create-name">{{ $t('labels.create.name') }}</Label>
                     <Input
@@ -78,15 +78,15 @@ const handleOpenChange = (value: boolean) => {
 
                 <div class="space-y-2">
                     <Label>{{ $t('labels.create.color') }}</Label>
-                    <div class="flex flex-wrap gap-2">
+                    <div class="flex flex-wrap gap-3">
                         <button
                             v-for="color in colors"
                             :key="color"
                             type="button"
-                            class="h-10 w-10 rounded-lg transition-all"
+                            class="size-8 rounded-full transition-all"
                             :class="[
                                 form.color === color
-                                    ? 'ring-2 ring-primary ring-offset-2'
+                                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
                                     : 'hover:scale-110'
                             ]"
                             :style="{ backgroundColor: color }"

@@ -6,7 +6,9 @@ import { computed, onMounted, onUnmounted } from 'vue';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toggle as toggleAccount } from '@/routes/app/accounts';
 
 export interface SocialAccount {
     id: string;
@@ -16,6 +18,7 @@ export interface SocialAccount {
     display_name: string;
     avatar_url: string;
     status: 'connected' | 'disconnected' | 'token_expired' | null;
+    is_active: boolean;
     error_message: string | null;
 }
 
@@ -41,6 +44,12 @@ const props = withDefaults(defineProps<Props>(), {
     showViewProfile: true,
     columns: 4,
 });
+
+const handleToggle = (accountId: string) => {
+    router.put(toggleAccount.url(accountId), {}, {
+        preserveScroll: true,
+    });
+};
 
 const getConnectUrl = (platformValue: string): string => {
     return `/connect/${platformValue}`;
@@ -141,14 +150,14 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
     <div class="grid gap-4" :class="gridClass">
         <div v-for="platform in platforms" :key="platform.value"
             class="group relative overflow-hidden rounded-xl border bg-card transition-all hover:shadow-md" :class="{
-                'border-green-500/30 bg-green-50/50 dark:bg-green-950/20': platform.connected && !isDisconnected(platform.account),
-                'border-red-500/30 bg-red-50/50 dark:bg-red-950/20': platform.connected && isDisconnected(platform.account),
+                'border-green-500/30 bg-green-50/50 dark:bg-green-950/20': platform.connected && !isDisconnected(platform.account) && platform.account?.is_active,
+                'border-red-500/30 bg-red-50/50 dark:bg-red-950/20': platform.connected && (isDisconnected(platform.account) || !platform.account?.is_active),
             }">
             <!-- Platform Header -->
             <div class="flex items-center gap-3 p-4">
                 <div class="relative">
                     <img :src="getPlatformLogo(platform.value)" :alt="platform.label"
-                        class="h-12 w-12 rounded-lg object-contain" />
+                        class="h-12 w-12 rounded-lg object-contain" :class="{ 'opacity-40': platform.connected && platform.account && !platform.account.is_active }" />
                     <div v-if="platform.connected && !isDisconnected(platform.account)"
                         class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white ring-2 ring-white dark:ring-neutral-900">
                         <IconCheck class="h-3 w-3" />
@@ -159,8 +168,13 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                     </div>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-between gap-2">
                         <h3 class="font-semibold truncate">{{ platform.label }}</h3>
+                        <Switch
+                            v-if="platform.connected && platform.account"
+                            :model-value="platform.account.is_active"
+                            @update:model-value="handleToggle(platform.account.id)"
+                        />
                     </div>
                     <p v-if="platform.connected && platform.account" class="text-sm text-muted-foreground truncate">
                         @{{ platform.account.username || platform.account.display_name }}

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Head, Link, InfiniteScroll } from '@inertiajs/vue3';
-import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconEye, IconTrash } from '@tabler/icons-vue';
+import { Head, Link, InfiniteScroll, router } from '@inertiajs/vue3';
+import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconEye, IconSearch, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import { index as postsIndex, store as storePost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/App/PostController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
@@ -10,9 +10,11 @@ import EmptyState from '@/components/EmptyState.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import dayjs from '@/dayjs';
+import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItemType } from '@/types';
 
@@ -72,9 +74,29 @@ interface Props {
     workspace: Workspace;
     posts: ScrollPosts;
     currentStatus: string | null;
+    filters: {
+        search: string;
+    };
 }
 
 const props = defineProps<Props>();
+
+const searchQuery = ref(props.filters.search);
+
+const search = debounce(() => {
+    const url = props.currentStatus ? postsIndex.url(props.currentStatus) : postsIndex.url();
+    router.get(
+        url,
+        { search: searchQuery.value || undefined },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            reset: ['posts'],
+        },
+    );
+}, 300);
+
+watch(searchQuery, () => search());
 
 const pageTitle = computed(() => {
     if (props.currentStatus) {
@@ -178,6 +200,14 @@ const handleDelete = (post: Post) => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <template #header-right>
+            <div class="relative">
+                <IconSearch class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    v-model="searchQuery"
+                    :placeholder="trans('posts.search')"
+                    class="w-64 pl-9"
+                />
+            </div>
             <Link :href="storePost.url()" method="post">
                 <Button>
                     {{ $t('posts.new_post') }}

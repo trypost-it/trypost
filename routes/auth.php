@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,9 @@ Route::group(
 
         Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
         Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+
+        Route::get('/auth/google/redirect', [SocialLoginController::class, 'redirect'])->name('auth.google.redirect');
+        Route::get('/auth/google/callback', [SocialLoginController::class, 'callback'])->name('auth.google.callback');
     }
 );
 

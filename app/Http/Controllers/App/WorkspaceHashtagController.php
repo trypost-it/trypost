@@ -25,9 +25,17 @@ class WorkspaceHashtagController extends Controller
 
         $this->authorize('view', $workspace);
 
+        $hashtags = $workspace->hashtags()
+            ->when($request->input('search'), fn ($query, $search) => $query->where('name', 'ilike', "%{$search}%"))
+            ->latest()
+            ->paginate(config('app.pagination.default'));
+
         return Inertia::render('hashtags/Index', [
             'workspace' => $workspace,
-            'hashtags' => $workspace->hashtags()->latest()->get(),
+            'hashtags' => Inertia::scroll(fn () => $hashtags),
+            'filters' => [
+                'search' => $request->input('search', ''),
+            ],
         ]);
     }
 

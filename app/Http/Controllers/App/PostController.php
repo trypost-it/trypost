@@ -41,10 +41,17 @@ class PostController extends Controller
             };
         }
 
+        if ($search = $request->input('search')) {
+            $query->whereHas('postPlatforms', fn ($q) => $q->where('content', 'ilike', "%{$search}%"));
+        }
+
         return Inertia::render('posts/Index', [
             'workspace' => $workspace,
-            'posts' => Inertia::scroll(fn () => $query->latest('scheduled_at')->paginate(15)),
+            'posts' => Inertia::scroll(fn () => $query->latest('scheduled_at')->paginate(config('app.pagination.default'))),
             'currentStatus' => $status,
+            'filters' => [
+                'search' => $request->input('search', ''),
+            ],
         ]);
     }
 
@@ -114,7 +121,7 @@ class PostController extends Controller
 
         $this->authorize('createPost', $workspace);
 
-        $socialAccounts = $workspace->socialAccounts;
+        $socialAccounts = $workspace->socialAccounts()->active()->get();
 
         if ($socialAccounts->isEmpty()) {
             session()->flash('flash.banner', __('posts.flash.connect_first'));
@@ -145,7 +152,7 @@ class PostController extends Controller
         }
 
         $post->load(['postPlatforms.socialAccount', 'postPlatforms.media', 'labels']);
-        $socialAccounts = $workspace->socialAccounts;
+        $socialAccounts = $workspace->socialAccounts()->active()->get();
         $labels = $workspace->labels;
         $hashtags = $workspace->hashtags;
 

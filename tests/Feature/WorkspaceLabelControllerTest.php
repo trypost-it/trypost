@@ -29,7 +29,7 @@ test('labels index shows labels for workspace', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('labels/Index', false)
         ->has('workspace')
-        ->has('labels', 3)
+        ->has('labels.data', 3)
     );
 });
 
@@ -148,4 +148,31 @@ test('destroy label returns 404 for other workspace label', function () {
     $response = $this->actingAs($this->user)->delete(route('app.labels.destroy', $label));
 
     $response->assertNotFound();
+});
+
+test('labels index filters by search query', function () {
+    WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id, 'name' => 'Important']);
+    WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id, 'name' => 'Urgent']);
+    WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id, 'name' => 'Review']);
+
+    $response = $this->actingAs($this->user)->get(route('app.labels.index', ['search' => 'import']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('labels.data', 1)
+        ->has('filters')
+        ->where('filters.search', 'import')
+    );
+});
+
+test('labels index returns all when no search query', function () {
+    WorkspaceLabel::factory()->count(3)->create(['workspace_id' => $this->workspace->id]);
+
+    $response = $this->actingAs($this->user)->get(route('app.labels.index'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('labels.data', 3)
+        ->where('filters.search', '')
+    );
 });

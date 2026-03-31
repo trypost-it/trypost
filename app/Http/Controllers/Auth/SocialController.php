@@ -81,6 +81,25 @@ class SocialController extends Controller
         return back();
     }
 
+    public function toggleActive(Request $request, SocialAccount $account): RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        $this->authorize('manageAccounts', $workspace);
+
+        if ($account->workspace_id !== $workspace->id) {
+            abort(403);
+        }
+
+        $account->update(['is_active' => ! $account->is_active]);
+
+        $status = $account->is_active ? 'activated' : 'deactivated';
+        session()->flash('flash.banner', __("accounts.flash.{$status}"));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
     protected function redirectToProvider(Request $request, string $driver, array $scopes): SymfonyResponse
     {
         $workspace = $request->user()->currentWorkspace;

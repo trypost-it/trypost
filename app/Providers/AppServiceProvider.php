@@ -40,6 +40,8 @@ use Laravel\Cashier\Events\WebhookReceived;
 use Laravel\Nightwatch\Facades\Nightwatch;
 use Laravel\Nightwatch\Records\CacheEvent;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
+use PostHog\PostHog;
 use SocialiteProviders\Facebook\FacebookExtendSocialite;
 use SocialiteProviders\LinkedIn\LinkedInExtendSocialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -66,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureMorphMap();
+        $this->configurePostHog();
         $this->configureRateLimiting();
         $this->configureSocialite();
         $this->configureStripeWebhooks();
@@ -93,6 +96,17 @@ class AppServiceProvider extends ServiceProvider
         ]);
     }
 
+    protected function configurePostHog(): void
+    {
+        $apiKey = config('services.posthog.api_key');
+
+        if ($apiKey) {
+            PostHog::init($apiKey, [
+                'host' => config('services.posthog.host'),
+            ]);
+        }
+    }
+
     protected function configureRateLimiting(): void
     {
         RateLimiter::for('api', function (Request $request) {
@@ -111,6 +125,13 @@ class AppServiceProvider extends ServiceProvider
 
     protected function configureSocialite(): void
     {
+        // Google Auth (login/signup) - separate from YouTube OAuth
+        Socialite::extend('google-auth', function ($app) {
+            $config = $app['config']['services.google-auth'];
+
+            return Socialite::buildProvider(GoogleProvider::class, $config);
+        });
+
         // Instagram Business Login
         Socialite::extend('instagram', function ($app) {
             $config = $app['config']['services.instagram'];

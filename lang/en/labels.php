@@ -3,6 +3,7 @@
 return [
     'title' => 'Labels',
     'description' => 'Create labels to organize and categorize your posts',
+    'search' => 'Search labels...',
     'new_label' => 'New Label',
     'no_labels_yet' => 'No labels yet',
     'create_first_label' => 'Create your first label',

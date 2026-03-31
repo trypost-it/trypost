@@ -41,6 +41,14 @@ class PublishToSocialPlatform implements ShouldQueue
 
     public function handle(): void
     {
+        if (! $this->postPlatform->socialAccount->is_active) {
+            $this->postPlatform->markAsFailed(__('posts.errors.account_inactive'));
+            $this->updatePostStatus();
+            $this->broadcastStatus();
+
+            return;
+        }
+
         if ($this->postPlatform->socialAccount->isDisconnected()) {
             $this->postPlatform->markAsFailed(__('posts.errors.account_disconnected'));
             $this->updatePostStatus();

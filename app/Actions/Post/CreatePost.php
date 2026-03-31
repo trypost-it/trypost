@@ -28,7 +28,7 @@ class CreatePost
             'scheduled_at' => $scheduledAt,
         ]);
 
-        $socialAccounts = $workspace->socialAccounts;
+        $socialAccounts = $workspace->socialAccounts()->active()->get();
 
         foreach ($socialAccounts as $account) {
             $post->postPlatforms()->create([

@@ -11,6 +11,7 @@ use App\Enums\SocialAccount\Status;
 use App\Jobs\SendNotification;
 use App\Mail\AccountDisconnected;
 use Database\Factories\SocialAccountFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,6 +39,7 @@ class SocialAccount extends Model
         'scopes',
         'meta',
         'status',
+        'is_active',
         'error_message',
         'disconnected_at',
     ];
@@ -52,6 +54,7 @@ class SocialAccount extends Model
         return [
             'platform' => SocialPlatform::class,
             'status' => Status::class,
+            'is_active' => 'boolean',
             'access_token' => 'encrypted',
             'refresh_token' => 'encrypted',
             'token_expires_at' => 'datetime',
@@ -140,5 +143,10 @@ class SocialAccount extends Model
     public function isDisconnected(): bool
     {
         return $this->status === Status::Disconnected || $this->status === Status::TokenExpired;
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true)->orderBy('platform');
     }
 }

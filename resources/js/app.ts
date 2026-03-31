@@ -1,6 +1,6 @@
 import '../css/app.css';
 
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
 import { configureEcho } from '@laravel/echo-vue';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { i18nVue } from 'laravel-vue-i18n';
@@ -9,6 +9,7 @@ import { createApp, h } from 'vue';
 
 import { initializeTheme } from './composables/useAppearance';
 import dayjs from './dayjs';
+import posthog from './posthog';
 
 configureEcho({
     broadcaster: 'reverb',
@@ -29,6 +30,27 @@ createInertiaApp({
 
         // Set dayjs locale based on user's language
         dayjs.locale(locale.toLowerCase());
+
+        const auth = props.initialPage.props.auth as { user?: { id: string; email: string; name: string }; currentWorkspace?: { id: string; name: string } } | undefined;
+
+        if (auth?.user) {
+            posthog.identify(auth.user.id, {
+                $email: auth.user.email,
+                $name: auth.user.name,
+            });
+
+            if (auth.currentWorkspace) {
+                posthog.group('workspace', auth.currentWorkspace.id, {
+                    name: auth.currentWorkspace.name,
+                });
+            }
+        }
+
+        router.on('navigate', () => {
+            posthog.capture('$pageview', {
+                $current_url: window.location.href,
+            });
+        });
 
         createApp({ render: () => h(App, props) })
             .use(i18nVue, {

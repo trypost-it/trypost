@@ -23,7 +23,7 @@ test('profile information can be updated', function () {
 
     $response = $this
         ->actingAs($user)
-        ->patch(route('app.profile.update'), [
+        ->put(route('app.profile.update'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
@@ -44,7 +44,7 @@ test('email verification status is unchanged when the email address is unchanged
 
     $response = $this
         ->actingAs($user)
-        ->patch(route('app.profile.update'), [
+        ->put(route('app.profile.update'), [
             'name' => 'Test User',
             'email' => $user->email,
         ]);
@@ -62,7 +62,7 @@ test('user can update their locale via cookie', function () {
     $response = $this
         ->actingAs($user)
         ->from(route('app.posts.index'))
-        ->patch(route('app.profile.language'), [
+        ->put(route('app.profile.language'), [
             'locale' => 'es',
         ]);
 
@@ -78,7 +78,7 @@ test('user cannot update locale with invalid code', function () {
 
     $response = $this
         ->actingAs($user)
-        ->patch(route('app.profile.language'), [
+        ->put(route('app.profile.language'), [
             'locale' => 'invalid',
         ]);
 

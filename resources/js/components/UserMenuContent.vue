@@ -52,7 +52,7 @@ const switchLanguage = (code: string) => {
     loadLanguageAsync(code);
     dayjs.locale(code.toLowerCase());
 
-    router.patch(updateLanguage.url(), { locale: code }, {
+    router.put(updateLanguage.url(), { locale: code }, {
         preserveScroll: true,
         preserveState: false,
         onError: () => {

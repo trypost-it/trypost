@@ -1,22 +1,15 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { IconArchive, IconBell, IconCheck, IconChecks } from '@tabler/icons-vue';
-import { trans } from 'laravel-vue-i18n';
-import { onMounted, ref } from 'vue';
+import { IconArchive, IconBell, IconCheck, IconChecks, IconInbox, IconX } from '@tabler/icons-vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import {
     Tooltip,
     TooltipContent,
-    TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
+import dayjs from '@/dayjs';
 import { index, read, readAll, archiveAll } from '@/routes/app/notifications';
 
 interface Notification {
@@ -33,7 +26,11 @@ interface Notification {
 const notifications = ref<Notification[]>([]);
 const unreadCount = ref(0);
 const loading = ref(false);
-const dialogOpen = ref(false);
+const show = ref(false);
+const panel = ref<HTMLElement | null>(null);
+
+const csrfToken = () =>
+    document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 
 const fetchNotifications = async () => {
     loading.value = true;
@@ -50,12 +47,9 @@ const fetchNotifications = async () => {
     }
 };
 
-const csrfToken = () =>
-    document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-
 const handleMarkAsRead = async (notification: Notification) => {
     await fetch(read.url(notification.id), {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken() },
         credentials: 'same-origin',
     });
@@ -94,7 +88,7 @@ const handleNotificationClick = (notification: Notification) => {
         handleMarkAsRead(notification);
     }
 
-    dialogOpen.value = false;
+    close();
 
     if (notification.data?.post_id) {
         router.visit(`/posts/${notification.data.post_id}/edit`);
@@ -103,18 +97,63 @@ const handleNotificationClick = (notification: Notification) => {
     }
 };
 
-const openDialog = () => {
-    dialogOpen.value = true;
+const open = () => {
+    show.value = true;
     fetchNotifications();
 };
+
+const close = () => {
+    show.value = false;
+};
+
+const toggle = () => {
+    if (show.value) {
+        close();
+    } else {
+        open();
+    }
+};
+
+const onClickOutside = (event: MouseEvent) => {
+    if (panel.value && !panel.value.contains(event.target as Node)) {
+        close();
+    }
+};
+
+const onEscape = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+        close();
+    }
+};
+
+const formatTime = (date: string) => {
+    return dayjs.utc(date).fromNow();
+};
+
+watch(show, (value) => {
+    if (value) {
+        setTimeout(() => {
+            document.addEventListener('click', onClickOutside);
+            document.addEventListener('keydown', onEscape);
+        }, 0);
+    } else {
+        document.removeEventListener('click', onClickOutside);
+        document.removeEventListener('keydown', onEscape);
+    }
+});
 
 onMounted(() => {
     fetchNotifications();
 });
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', onClickOutside);
+    document.removeEventListener('keydown', onEscape);
+});
 </script>
 
 <template>
-    <Button variant="ghost" size="icon" class="relative size-8 shrink-0" :title="$t('sidebar.notifications')" @click="openDialog">
+    <Button variant="ghost" size="icon" class="relative size-8 shrink-0" @click.stop="toggle">
         <IconBell class="size-4" />
         <span
             v-if="unreadCount > 0"
@@ -124,68 +163,104 @@ onMounted(() => {
         </span>
     </Button>
 
-    <Dialog v-model:open="dialogOpen">
-        <DialogContent class="sm:max-w-lg">
-            <DialogHeader>
-                <div class="flex items-center justify-between">
-                    <DialogTitle>{{ $t('sidebar.notifications') }}</DialogTitle>
-                    <div v-if="notifications.length > 0" class="flex items-center gap-1">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger as-child>
-                                    <Button variant="ghost" size="icon" class="size-7" @click="handleMarkAllAsRead">
-                                        <IconChecks class="size-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>{{ $t('sidebar.mark_all_read') }}</TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger as-child>
-                                    <Button variant="ghost" size="icon" class="size-7" @click="handleArchiveAll">
-                                        <IconArchive class="size-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>{{ $t('sidebar.archive_all') }}</TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
+    <Teleport to="body">
+        <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="-translate-x-2 opacity-0"
+            enter-to-class="translate-x-0 opacity-100"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="translate-x-0 opacity-100"
+            leave-to-class="-translate-x-2 opacity-0"
+        >
+            <div
+                v-if="show"
+                ref="panel"
+                class="fixed left-[17rem] bottom-2 z-50 w-[22rem] h-[32rem] flex flex-col rounded-xl border border-border bg-card shadow-lg"
+            >
+                <!-- Header -->
+                <div class="flex items-center justify-between px-4 pt-3 pb-2">
+                    <h3 class="text-sm font-semibold">{{ $t('sidebar.notifications') }}</h3>
+                    <div class="flex items-center gap-0.5">
+                        <Tooltip v-if="notifications.length > 0">
+                            <TooltipTrigger as-child>
+                                <button
+                                    type="button"
+                                    class="p-1 text-muted-foreground hover:text-foreground transition-colors rounded"
+                                    @click="handleMarkAllAsRead"
+                                >
+                                    <IconChecks class="size-4" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>{{ $t('sidebar.mark_all_read') }}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip v-if="notifications.length > 0">
+                            <TooltipTrigger as-child>
+                                <button
+                                    type="button"
+                                    class="p-1 text-muted-foreground hover:text-foreground transition-colors rounded"
+                                    @click="handleArchiveAll"
+                                >
+                                    <IconArchive class="size-4" />
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent>{{ $t('sidebar.archive_all') }}</TooltipContent>
+                        </Tooltip>
+                        <button
+                            type="button"
+                            class="p-1 text-muted-foreground hover:text-foreground transition-colors rounded"
+                            @click="close"
+                        >
+                            <IconX class="size-4" />
+                        </button>
                     </div>
                 </div>
-            </DialogHeader>
 
-            <div v-if="notifications.length === 0" class="py-8 text-center text-sm text-muted-foreground">
-                {{ $t('sidebar.no_notifications') }}
-            </div>
-
-            <div v-else class="-mx-6 max-h-96 overflow-y-auto">
-                <div
-                    v-for="notification in notifications"
-                    :key="notification.id"
-                    class="flex cursor-pointer items-start gap-3 border-b px-6 py-3 transition-colors last:border-0 hover:bg-accent/50"
-                    :class="{ 'opacity-60': notification.read_at }"
-                    @click="handleNotificationClick(notification)"
-                >
-                    <span
-                        v-if="!notification.read_at"
-                        class="mt-1.5 size-2 shrink-0 rounded-full bg-primary"
-                    />
-                    <span v-else class="mt-1.5 size-2 shrink-0" />
-                    <div class="min-w-0 flex-1">
-                        <p class="text-sm font-medium leading-tight">{{ notification.title }}</p>
-                        <p class="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{{ notification.body }}</p>
+                <!-- Notification list -->
+                <div class="flex-1 overflow-y-auto">
+                    <div v-if="notifications.length > 0" class="divide-y divide-border">
+                        <div
+                            v-for="notification in notifications"
+                            :key="notification.id"
+                            class="px-3 py-2.5 flex items-start gap-2.5 hover:bg-muted/50 transition-colors cursor-pointer"
+                            @click="handleNotificationClick(notification)"
+                        >
+                            <div class="flex items-center mt-1.5 shrink-0">
+                                <div
+                                    :class="[
+                                        'size-1.5 rounded-full',
+                                        !notification.read_at ? 'bg-primary' : 'bg-transparent',
+                                    ]"
+                                />
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-xs font-medium truncate">{{ notification.title }}</p>
+                                <p class="text-xs text-muted-foreground truncate">{{ notification.body }}</p>
+                                <p class="text-[11px] text-muted-foreground/70 mt-0.5">{{ formatTime(notification.created_at) }}</p>
+                            </div>
+                            <div class="shrink-0" @click.stop>
+                                <Tooltip v-if="!notification.read_at">
+                                    <TooltipTrigger as-child>
+                                        <button
+                                            type="button"
+                                            class="p-1 text-muted-foreground hover:text-foreground transition-colors rounded"
+                                            @click="handleMarkAsRead(notification)"
+                                        >
+                                            <IconCheck class="size-3.5" />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{{ $t('sidebar.mark_as_read') }}</TooltipContent>
+                                </Tooltip>
+                            </div>
+                        </div>
                     </div>
-                    <Button
-                        v-if="!notification.read_at"
-                        variant="ghost"
-                        size="icon"
-                        class="size-7 shrink-0"
-                        @click.stop="handleMarkAsRead(notification)"
-                    >
-                        <IconCheck class="size-3.5" />
-                    </Button>
+
+                    <!-- Empty state -->
+                    <div v-else-if="!loading" class="flex flex-col items-center justify-center py-12 px-6 text-center">
+                        <IconInbox class="size-8 text-muted-foreground/50 mb-3" />
+                        <p class="text-sm font-medium">{{ $t('sidebar.no_notifications') }}</p>
+                    </div>
                 </div>
             </div>
-        </DialogContent>
-    </Dialog>
+        </Transition>
+    </Teleport>
 </template>

@@ -62,6 +62,8 @@ return [
         'connected' => '¡Cuenta conectada correctamente!',
         'session_expired' => 'Sesión expirada. Inténtalo de nuevo.',
         'workspace_not_found' => 'Workspace no encontrado.',
+        'activated' => '¡Cuenta activada!',
+        'deactivated' => '¡Cuenta desactivada!',
         'already_connected' => 'Esta plataforma ya está conectada.',
         'no_youtube_channels' => 'No se encontraron canales de YouTube. Crea un canal primero.',
     ],

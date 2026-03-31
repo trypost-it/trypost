@@ -8,6 +8,7 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import NotificationBell from '@/components/NotificationBell.vue';
 import {
     SidebarMenu,
     SidebarMenuButton,
@@ -20,12 +21,15 @@ import UserMenuContent from './UserMenuContent.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const currentWorkspace = computed(() => page.props.auth.currentWorkspace);
 const { isMobile, state } = useSidebar();
 </script>
 
 <template>
     <SidebarMenu>
         <SidebarMenuItem>
+            <div class="flex items-center gap-1">
+                <NotificationBell v-if="currentWorkspace && state === 'expanded'" />
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                     <SidebarMenuButton
@@ -46,6 +50,7 @@ const { isMobile, state } = useSidebar();
                     <UserMenuContent :user="user" />
                 </DropdownMenuContent>
             </DropdownMenu>
+            </div>
         </SidebarMenuItem>
     </SidebarMenu>
 </template>

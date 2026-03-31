@@ -79,7 +79,7 @@ test('mark notification as read', function () {
         'workspace_id' => $this->workspace->id,
     ]);
 
-    $response = $this->actingAs($this->user)->patchJson(route('app.notifications.read', $notification));
+    $response = $this->actingAs($this->user)->putJson(route('app.notifications.read', $notification));
 
     $response->assertOk();
     expect($notification->fresh()->read_at)->not->toBeNull();
@@ -92,7 +92,7 @@ test('cannot mark another users notification as read', function () {
         'workspace_id' => $this->workspace->id,
     ]);
 
-    $response = $this->actingAs($this->user)->patchJson(route('app.notifications.read', $notification));
+    $response = $this->actingAs($this->user)->putJson(route('app.notifications.read', $notification));
 
     $response->assertForbidden();
 });

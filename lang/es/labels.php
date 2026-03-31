@@ -3,6 +3,7 @@
 return [
     'title' => 'Etiquetas',
     'description' => 'Crea etiquetas para organizar y categorizar tus posts',
+    'search' => 'Buscar etiquetas...',
     'new_label' => 'Nueva etiqueta',
     'no_labels_yet' => 'Aún no hay etiquetas',
     'create_first_label' => 'Crea tu primera etiqueta',

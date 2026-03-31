@@ -29,7 +29,7 @@ test('hashtags index shows hashtags for workspace', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('hashtags/Index', false)
         ->has('workspace')
-        ->has('hashtags', 3)
+        ->has('hashtags.data', 3)
     );
 });
 
@@ -139,4 +139,31 @@ test('destroy hashtag returns 404 for other workspace hashtag', function () {
     $response = $this->actingAs($this->user)->delete(route('app.hashtags.destroy', $hashtag));
 
     $response->assertNotFound();
+});
+
+test('hashtags index filters by search query', function () {
+    WorkspaceHashtag::factory()->create(['workspace_id' => $this->workspace->id, 'name' => 'Marketing']);
+    WorkspaceHashtag::factory()->create(['workspace_id' => $this->workspace->id, 'name' => 'Travel']);
+    WorkspaceHashtag::factory()->create(['workspace_id' => $this->workspace->id, 'name' => 'Food']);
+
+    $response = $this->actingAs($this->user)->get(route('app.hashtags.index', ['search' => 'market']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('hashtags.data', 1)
+        ->has('filters')
+        ->where('filters.search', 'market')
+    );
+});
+
+test('hashtags index returns all when no search query', function () {
+    WorkspaceHashtag::factory()->count(3)->create(['workspace_id' => $this->workspace->id]);
+
+    $response = $this->actingAs($this->user)->get(route('app.hashtags.index'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('hashtags.data', 3)
+        ->where('filters.search', '')
+    );
 });

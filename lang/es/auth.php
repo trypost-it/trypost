@@ -39,6 +39,10 @@ return [
         ],
     ],
 
+    'or_continue_with' => 'O continuar con',
+    'google_login' => 'Iniciar sesión con Google',
+    'google_signup' => 'Registrarse con Google',
+
     'login' => [
         'title' => 'Inicia sesión en tu cuenta',
         'description' => 'Introduce tu correo y contraseña para iniciar sesión',

@@ -51,6 +51,10 @@ return [
         ],
     ],
 
+    'or_continue_with' => 'Or continue with',
+    'google_login' => 'Log in with Google',
+    'google_signup' => 'Sign up with Google',
+
     'login' => [
         'title' => 'Log in to your account',
         'description' => 'Enter your email and password below to log in',

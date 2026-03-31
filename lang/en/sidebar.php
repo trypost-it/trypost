@@ -43,6 +43,7 @@ return [
 
     'notifications' => 'Notifications',
     'mark_all_read' => 'Mark all as read',
+    'mark_as_read' => 'Mark as read',
     'archive_all' => 'Archive all',
     'no_notifications' => 'No notifications',
 

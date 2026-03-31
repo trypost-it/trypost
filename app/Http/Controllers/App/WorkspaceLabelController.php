@@ -25,9 +25,17 @@ class WorkspaceLabelController extends Controller
 
         $this->authorize('view', $workspace);
 
+        $labels = $workspace->labels()
+            ->when($request->input('search'), fn ($query, $search) => $query->where('name', 'ilike', "%{$search}%"))
+            ->latest()
+            ->paginate(config('app.pagination.default'));
+
         return Inertia::render('labels/Index', [
             'workspace' => $workspace,
-            'labels' => $workspace->labels()->latest()->get(),
+            'labels' => Inertia::scroll(fn () => $labels),
+            'filters' => [
+                'search' => $request->input('search', ''),
+            ],
         ]);
     }
 

@@ -43,6 +43,7 @@ return [
 
     'notifications' => 'Notificaciones',
     'mark_all_read' => 'Marcar todo como leído',
+    'mark_as_read' => 'Marcar como leído',
     'archive_all' => 'Archivar todo',
     'no_notifications' => 'Sin notificaciones',
 

@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Posts',
+    'search' => 'Buscar posts...',
     'all_posts' => 'Todos os Posts',
     'new_post' => 'Novo Post',
     'no_posts' => 'Nenhum post encontrado',
@@ -224,5 +225,6 @@ return [
 
     'errors' => [
         'account_disconnected' => 'Conta social está desconectada',
+        'account_inactive' => 'Conta social está desativada',
     ],
 ];

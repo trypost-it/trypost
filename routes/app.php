@@ -120,6 +120,7 @@ Route::group(
             // Social Accounts
             Route::get('accounts', [SocialController::class, 'index'])->name('app.accounts');
             Route::delete('accounts/{account}', [SocialController::class, 'disconnect'])->name('app.accounts.disconnect');
+            Route::put('accounts/{account}/toggle', [SocialController::class, 'toggleActive'])->name('app.accounts.toggle');
 
             // Calendar
             Route::get('calendar', [PostController::class, 'calendar'])->name('app.calendar');
@@ -168,7 +169,7 @@ Route::group(
 
             // Notifications
             Route::get('notifications', [NotificationController::class, 'index'])->name('app.notifications.index');
-            Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('app.notifications.read');
+            Route::put('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('app.notifications.read');
             Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('app.notifications.read-all');
             Route::post('notifications/archive-all', [NotificationController::class, 'archiveAll'])->name('app.notifications.archive-all');
         });
@@ -176,10 +177,10 @@ Route::group(
         // Settings (auth required)
         Route::middleware(['auth'])->group(function () {
             Route::get('settings/profile', [ProfileController::class, 'edit'])->name('app.profile.edit');
-            Route::patch('settings/profile', [ProfileController::class, 'update'])->name('app.profile.update');
+            Route::put('settings/profile', [ProfileController::class, 'update'])->name('app.profile.update');
             Route::post('settings/profile/photo', [ProfileController::class, 'uploadPhoto'])->name('app.profile.upload-photo');
             Route::delete('settings/profile/photo', [ProfileController::class, 'deletePhoto'])->name('app.profile.delete-photo');
-            Route::patch('settings/language', [ProfileController::class, 'updateLanguage'])->name('app.profile.language');
+            Route::put('settings/language', [ProfileController::class, 'updateLanguage'])->name('app.profile.language');
         });
 
         Route::middleware(['auth', 'verified'])->group(function () {

@@ -51,6 +51,10 @@ return [
         ],
     ],
 
+    'or_continue_with' => 'Ou continue com',
+    'google_login' => 'Entrar com Google',
+    'google_signup' => 'Cadastrar com Google',
+
     'login' => [
         'title' => 'Entrar na sua conta',
         'description' => 'Digite seu email e senha abaixo para entrar',

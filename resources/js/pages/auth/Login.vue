@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { register } from '@/routes';
+import { redirect as googleRedirect } from '@/routes/auth/google';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
@@ -64,6 +65,17 @@ defineProps<{
                     {{ $t('auth.login.submit') }}
                 </Button>
             </div>
+
+            <div
+                class="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border"
+            >
+                <span class="relative z-10 bg-background px-2 text-muted-foreground">{{ $t('auth.or_continue_with') }}</span>
+            </div>
+
+            <Button variant="outline" class="w-full" as="a" :href="googleRedirect.url()">
+                <img src="/images/social/google.svg" alt="Google" class="size-4" />
+                {{ $t('auth.google_login') }}
+            </Button>
 
             <div class="text-center text-sm text-muted-foreground">
                 {{ $t('auth.login.no_account') }}

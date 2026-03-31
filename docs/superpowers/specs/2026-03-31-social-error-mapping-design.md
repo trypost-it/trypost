@@ -104,7 +104,9 @@ abstract class SocialPublishException extends Exception
 
 ### Per-Platform Exception (Example: Instagram)
 
-`fromApiResponse` receives the Laravel HTTP response, checks for token errors first, then matches error codes to user-friendly messages with categories.
+`fromApiResponse` receives the Laravel HTTP response, checks for token errors first, then matches on `error_subcode` (the reliable identifier per Instagram's official error docs). When the API includes `error_user_msg`, we prefer that over our own message since it's localized by Meta.
+
+Reference: https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/error-codes/
 
 ```php
 <?php
@@ -114,7 +116,6 @@ declare(strict_types=1);
 namespace App\Exceptions\Social;
 
 use App\Exceptions\TokenExpiredException;
-use Illuminate\Http\Client\Response;
 
 class InstagramPublishException extends SocialPublishException
 {
@@ -125,12 +126,12 @@ class InstagramPublishException extends SocialPublishException
 
     public static function fromApiResponse(mixed $response): static
     {
-        $body = $response->body();
         $json = $response->json() ?? [];
         $error = data_get($json, 'error', []);
         $errorCode = data_get($error, 'code');
         $errorSubcode = data_get($error, 'error_subcode');
         $errorType = data_get($error, 'type');
+        $errorUserMsg = data_get($error, 'error_user_msg');
 
         // Token errors throw TokenExpiredException
         if ($errorType === 'OAuthException' || $errorCode === 190) {
@@ -140,56 +141,58 @@ class InstagramPublishException extends SocialPublishException
             );
         }
 
-        [$message, $category, $code] = match (true) {
-            // Media format
-            str_contains($body, '2207026') => ['Unsupported video format', ErrorCategory::MediaFormat, '2207026'],
-            str_contains($body, '2207005') => ['Unsupported image format', ErrorCategory::MediaFormat, '2207005'],
-            str_contains($body, '2207004') => ['Image is too large', ErrorCategory::MediaFormat, '2207004'],
-            str_contains($body, '2207009') => ['Aspect ratio not supported (must be between 4:5 and 1.91:1)', ErrorCategory::MediaFormat, '2207009'],
-            str_contains($body, '36003') => ['Aspect ratio not supported (must be between 4:5 and 1.91:1)', ErrorCategory::MediaFormat, '36003'],
-            str_contains($body, '36001') => ['Image resolution too high (max 1920x1080)', ErrorCategory::MediaFormat, '36001'],
-            str_contains($body, '2207057') => ['Invalid thumbnail offset for video', ErrorCategory::MediaFormat, '2207057'],
-            str_contains($body, '2207023') => ['Unknown media type', ErrorCategory::MediaFormat, '2207023'],
+        // Match on error_subcode (official Instagram error identifier)
+        [$message, $category] = match ($errorSubcode) {
+            // Media format errors
+            2207026 => ['Unsupported video format. Please upload MP4 or MOV.', ErrorCategory::MediaFormat],
+            2207005 => ['Unsupported image format.', ErrorCategory::MediaFormat],
+            2207004 => ['Image is too large (max 8MB).', ErrorCategory::MediaFormat],
+            2207009 => ['Aspect ratio not supported (must be between 4:5 and 1.91:1).', ErrorCategory::MediaFormat],
+            2207057 => ['Thumbnail offset is outside the video duration.', ErrorCategory::MediaFormat],
+            2207023 => ['Unknown media type.', ErrorCategory::MediaFormat],
 
-            // Upload/processing
-            str_contains($body, '2207003') => ['Timeout downloading media, please try again', ErrorCategory::ServerError, '2207003'],
-            str_contains($body, '2207020') => ['Media expired, please upload again', ErrorCategory::ServerError, '2207020'],
-            str_contains($body, '2207032') => ['Failed to create media, please try again', ErrorCategory::ServerError, '2207032'],
-            str_contains($body, '2207053') => ['Unknown upload error, please try again', ErrorCategory::ServerError, '2207053'],
-            str_contains($body, '2207052') => ['Media fetch failed, please try again', ErrorCategory::ServerError, '2207052'],
-            str_contains($body, '2207006') => ['Media not found, please upload again', ErrorCategory::ServerError, '2207006'],
-            str_contains($body, '2207008') => ['Media builder expired, please try again', ErrorCategory::ServerError, '2207008'],
+            // Upload/processing errors
+            2207003 => ['Media download timed out. Please try again.', ErrorCategory::ServerError],
+            2207020 => ['Media has expired. Please upload again.', ErrorCategory::ServerError],
+            2207032 => ['Failed to create media. Please try again.', ErrorCategory::ServerError],
+            2207053 => ['Unknown upload error. Please try again.', ErrorCategory::ServerError],
+            2207052 => ['Could not fetch media from URL. Please try again.', ErrorCategory::ServerError],
+            2207006 => ['Media not found. Please upload again.', ErrorCategory::ServerError],
+            2207008 => ['Media container expired. Please try again in a few minutes.', ErrorCategory::ServerError],
+            2207027 => ['Media is not ready for publishing. Please wait and try again.', ErrorCategory::ServerError],
+            2207001 => ['Instagram server error. Please try again.', ErrorCategory::ServerError],
 
             // Content validation
-            str_contains($body, '2207010') => ['Caption is too long', ErrorCategory::ContentPolicy, '2207010'],
-            str_contains($body, '2207028') => ['Carousel validation failed', ErrorCategory::ContentPolicy, '2207028'],
-            str_contains($body, '2207001') => ['Instagram detected spam, try different content', ErrorCategory::ContentPolicy, '2207001'],
-            str_contains($body, '2207051') => ['Instagram blocked your request', ErrorCategory::ContentPolicy, '2207051'],
-            str_contains($body, 'param collaborators is not allowed') => ['Collaborators are not allowed for carousel', ErrorCategory::ContentPolicy, 'collaborators'],
+            2207010 => ['Caption is too long (max 2,200 characters, 30 hashtags, 20 @mentions).', ErrorCategory::ContentPolicy],
+            2207028 => ['Carousel needs between 2 and 10 photos/videos.', ErrorCategory::ContentPolicy],
+            2207051 => ['Instagram restricted this action to protect the community.', ErrorCategory::ContentPolicy],
 
             // Product tagging
-            str_contains($body, '2207035') => ['Product tag positions not supported for videos', ErrorCategory::ContentPolicy, '2207035'],
-            str_contains($body, '2207036') => ['Product tag positions required for photos', ErrorCategory::ContentPolicy, '2207036'],
-            str_contains($body, '2207037') => ['Product tag validation failed', ErrorCategory::ContentPolicy, '2207037'],
-            str_contains($body, '2207040') => ['Too many product tags', ErrorCategory::ContentPolicy, '2207040'],
+            2207035 => ['Product tag positions are not supported for videos.', ErrorCategory::ContentPolicy],
+            2207036 => ['Product tag positions are required for photos.', ErrorCategory::ContentPolicy],
+            2207037 => ['Invalid product tag. The product may be deleted or not permitted.', ErrorCategory::ContentPolicy],
+            2207040 => ['Too many tags (max 20).', ErrorCategory::ContentPolicy],
 
             // Rate limits
-            str_contains($body, 'Page request limit reached') => ['Daily posting limit reached, try again tomorrow', ErrorCategory::RateLimit, 'page_limit'],
-            str_contains($body, '2207042') => ['Maximum of 25 posts per day reached', ErrorCategory::RateLimit, '2207042'],
+            2207042 => ['Daily publishing limit reached. Please try again tomorrow.', ErrorCategory::RateLimit],
 
             // Permissions
-            str_contains($body, '2207050') => ['Instagram user is restricted', ErrorCategory::Permission, '2207050'],
-            str_contains($body, '2207081') => ["This account doesn't support Trial Reels", ErrorCategory::Permission, '2207081'],
-            str_contains($body, 'Not enough permissions to post') => ['Missing permissions, please reconnect your account', ErrorCategory::Permission, 'permissions'],
-            str_contains($body, '190,') => ['Account missing permissions, please reconnect and allow all permissions', ErrorCategory::Permission, '190'],
+            2207050 => ['Instagram account is restricted or inactive. Please check the Instagram app.', ErrorCategory::Permission],
+            2207081 => ["This account doesn't support Trial Reels.", ErrorCategory::Permission],
 
-            // Unknown
-            str_contains($body, '2207027') => ['Unknown error, please try again later', ErrorCategory::Unknown, '2207027'],
-
-            default => [data_get($error, 'message', 'Instagram publishing failed'), ErrorCategory::Unknown, (string) $errorSubcode],
+            // Fall through — use Instagram's own error_user_msg if available
+            default => [null, ErrorCategory::Unknown],
         };
 
-        return new static($message, $category, $code, $body);
+        // Prefer Instagram's own user-facing message when we don't have a mapping
+        $message ??= $errorUserMsg ?? data_get($error, 'message', 'Instagram publishing failed');
+
+        return new static(
+            $message,
+            $category,
+            $errorSubcode ? (string) $errorSubcode : (string) $errorCode,
+            $response->body(),
+        );
     }
 }
 ```

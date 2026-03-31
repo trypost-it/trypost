@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Exceptions\Social\TikTokPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -14,23 +15,6 @@ use Illuminate\Support\Facades\Log;
 
 class TikTokPublisher
 {
-    /**
-     * TikTok API error codes that indicate token issues.
-     *
-     * @see https://developers.tiktok.com/doc/tiktok-api-v2-error-handling
-     */
-    private const TOKEN_ERROR_CODES = [
-        'access_token_invalid',
-        'access_token_expired',
-        'token_expired',
-    ];
-
-    private const TOKEN_ERROR_NUMERIC_CODES = [
-        10001, // Invalid Access Token
-        10002, // Access Token Expired
-        10003, // Invalid Client Key
-    ];
-
     private string $baseUrl = 'https://open.tiktokapis.com/v2';
 
     private string $accessToken;
@@ -255,8 +239,8 @@ class TikTokPublisher
             }
 
             if (in_array($status, ['FAILED', 'PUBLISH_FAILED'])) {
-                $errorCode = data_get($data, 'data')['fail_reason'] ?? 'Unknown error';
-                throw new \Exception("TikTok publish failed: {$errorCode}");
+                $failReason = data_get($data, 'data.fail_reason', 'Unknown error');
+                throw TikTokPublishException::fromFailReason($failReason, json_encode($data));
             }
 
             // PROCESSING_UPLOAD, PROCESSING_DOWNLOAD, SENDING_TO_USER_INBOX - continue waiting
@@ -309,23 +293,6 @@ class TikTokPublisher
 
     private function handleApiError(Response $response, string $context): void
     {
-        $body = $response->json() ?? [];
-        $error = $body['error'] ?? [];
-        $errorCode = $error['code'] ?? $body['error']['code'] ?? null;
-        $errorMessage = $error['message'] ?? $body['error']['message'] ?? $response->body();
-
-        // TikTok can return error codes as strings or numeric codes
-        $isTokenError = in_array($errorCode, self::TOKEN_ERROR_CODES)
-            || in_array((int) $errorCode, self::TOKEN_ERROR_NUMERIC_CODES)
-            || $response->status() === 401;
-
-        if ($isTokenError) {
-            throw new TokenExpiredException(
-                "{$context}: {$errorMessage}",
-                is_string($errorCode) ? $errorCode : (string) $errorCode
-            );
-        }
-
-        throw new \Exception("{$context}: {$errorMessage}");
+        throw TikTokPublishException::fromApiResponse($response);
     }
 }

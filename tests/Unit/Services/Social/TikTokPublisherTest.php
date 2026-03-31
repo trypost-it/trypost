@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\TikTokPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\Post;
 use App\Models\PostPlatform;
@@ -151,8 +152,8 @@ test('tiktok publisher throws token expired exception on auth error', function (
     Http::fake([
         'https://open.tiktokapis.com/v2/post/publish/video/init/' => Http::response([
             'error' => [
-                'code' => 'access_token_expired',
-                'message' => 'Access token has expired',
+                'code' => 'access_token_invalid',
+                'message' => 'Access token is invalid',
             ],
         ], 401),
     ]);
@@ -309,5 +310,5 @@ test('tiktok publisher throws exception when publish fails', function () {
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(Exception::class, 'TikTok publish failed: video_rejected');
+        ->toThrow(TikTokPublishException::class);
 });

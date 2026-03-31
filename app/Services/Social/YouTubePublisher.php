@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Exceptions\Social\YouTubePublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -231,22 +232,6 @@ class YouTubePublisher
 
     private function handleGoogleError(\Google\Service\Exception $e): never
     {
-        $message = $e->getMessage();
-        $errors = $e->getErrors();
-        $reason = data_get($errors, '0.reason');
-
-        Log::error('YouTube API error', [
-            'message' => $message,
-            'reason' => $reason,
-            'errors' => $errors,
-        ]);
-
-        $tokenReasons = ['authError', 'forbidden', 'unauthorized', 'invalid_grant'];
-
-        if ($e->getCode() === 401 || in_array($reason, $tokenReasons)) {
-            throw new TokenExpiredException("YouTube API error: {$message}", $reason);
-        }
-
-        throw new \Exception("YouTube API error: {$message}");
+        throw YouTubePublishException::fromGoogleException($e);
     }
 }

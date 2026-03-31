@@ -55,6 +55,12 @@ return [
     'google_login' => 'Entrar com Google',
     'google_signup' => 'Cadastrar com Google',
 
+    'signup_success' => [
+        'page_title' => 'Bem-vindo',
+        'title' => 'Configurando sua conta',
+        'description' => 'Isso geralmente leva apenas alguns segundos...',
+    ],
+
     'login' => [
         'title' => 'Entrar na sua conta',
         'description' => 'Digite seu email e senha abaixo para entrar',

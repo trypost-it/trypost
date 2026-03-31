@@ -55,6 +55,8 @@ class RegisteredUserController extends Controller
             }
         }
 
-        return redirect()->route('app.onboarding.role');
+        session()->flash('auth_provider', 'email');
+
+        return redirect()->route('register.success');
     }
 }

@@ -55,6 +55,12 @@ return [
     'google_login' => 'Log in with Google',
     'google_signup' => 'Sign up with Google',
 
+    'signup_success' => [
+        'page_title' => 'Welcome',
+        'title' => 'Setting up your account',
+        'description' => 'This usually takes just a few seconds...',
+    ],
+
     'login' => [
         'title' => 'Log in to your account',
         'description' => 'Enter your email and password below to log in',

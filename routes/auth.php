@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\SignupSuccessController;
 use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +52,8 @@ Route::group(
         'middleware' => ['auth'],
     ],
     function () {
+        Route::get('/register/success', SignupSuccessController::class)->name('register.success');
+
         Route::get('/verify-email', EmailVerificationPromptController::class)->name('verification.notice');
 
         Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)

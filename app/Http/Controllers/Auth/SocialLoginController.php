@@ -55,6 +55,8 @@ class SocialLoginController extends Controller
 
         Auth::login($user, remember: true);
 
-        return redirect()->route('app.onboarding.role');
+        session()->flash('auth_provider', 'google');
+
+        return redirect()->route('register.success');
     }
 }

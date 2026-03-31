@@ -74,8 +74,6 @@ class ThreadsPublisher
 
     private function publishTextPost(string $userId, string $accessToken, string $content): array
     {
-        Log::info('Threads publishing text post', ['user_id' => $userId]);
-
         // Step 1: Create container
         $containerResponse = Http::post("{$this->baseUrl}/{$userId}/threads", [
             'media_type' => 'TEXT',
@@ -99,8 +97,6 @@ class ThreadsPublisher
 
     private function publishImagePost(string $userId, string $accessToken, ?string $content, $media): array
     {
-        Log::info('Threads publishing image post', ['user_id' => $userId, 'image_url' => $media->url]);
-
         // Step 1: Create container
         $containerResponse = Http::post("{$this->baseUrl}/{$userId}/threads", [
             'media_type' => 'IMAGE',

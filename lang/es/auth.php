@@ -43,6 +43,12 @@ return [
     'google_login' => 'Iniciar sesión con Google',
     'google_signup' => 'Registrarse con Google',
 
+    'signup_success' => [
+        'page_title' => 'Bienvenido',
+        'title' => 'Configurando tu cuenta',
+        'description' => 'Esto suele tardar solo unos segundos...',
+    ],
+
     'login' => [
         'title' => 'Inicia sesión en tu cuenta',
         'description' => 'Introduce tu correo y contraseña para iniciar sesión',

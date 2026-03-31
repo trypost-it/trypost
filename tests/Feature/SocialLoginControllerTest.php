@@ -59,7 +59,7 @@ test('google callback creates new user when email does not exist', function () {
 
     $response = $this->get(route('auth.google.callback'));
 
-    $response->assertRedirect(route('app.onboarding.role'));
+    $response->assertRedirect(route('register.success'));
 
     $user = User::where('email', 'new@example.com')->first();
     expect($user)->not->toBeNull();

@@ -104,6 +104,10 @@ return [
         'redirect' => env('PINTEREST_CLIENT_REDIRECT'),
     ],
 
+    'gtm' => [
+        'id' => env('GTM_ID'),
+    ],
+
     'posthog' => [
         'api_key' => env('POSTHOG_API_KEY'),
         'host' => env('POSTHOG_HOST', 'https://us.i.posthog.com'),

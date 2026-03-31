@@ -106,13 +106,6 @@ const pageTitle = computed(() => {
     return trans('posts.all_posts');
 });
 
-const pageDescription = computed(() => {
-    if (props.currentStatus === 'draft') return trans('posts.descriptions.draft');
-    if (props.currentStatus === 'scheduled') return trans('posts.descriptions.scheduled');
-    if (props.currentStatus === 'published') return trans('posts.descriptions.published');
-    return trans('posts.manage_posts');
-});
-
 const breadcrumbs = computed<BreadcrumbItemType[]>(() => {
     const items: BreadcrumbItemType[] = [
         { title: trans('posts.title'), href: postsIndex.url() },

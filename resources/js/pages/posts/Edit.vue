@@ -667,10 +667,6 @@ const toggleLabel = (labelId: string) => {
     }
 };
 
-const selectedLabels = computed(() => {
-    return props.labels.filter(l => selectedLabelIds.value.includes(l.id));
-});
-
 const appendHashtags = (hashtag: WorkspaceHashtag) => {
     if (isReadOnly.value || !activePlatform.value) return;
 

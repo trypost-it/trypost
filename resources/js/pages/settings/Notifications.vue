@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { preferences } from '@/routes/app/notifications';
+import { preferences as preferencesRoute } from '@/routes/app/notifications';
 import { type BreadcrumbItem } from '@/types';
 
 interface Preferences {
@@ -25,8 +25,8 @@ interface Props {
 const props = defineProps<Props>();
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.title'), href: preferences().url },
-    { title: trans('settings.nav.notifications'), href: preferences().url },
+    { title: trans('settings.title'), href: preferencesRoute().url },
+    { title: trans('settings.nav.notifications'), href: preferencesRoute().url },
 ]);
 
 const postPublished = ref(props.preferences.post_published);
@@ -37,7 +37,7 @@ const processing = ref(false);
 const submit = () => {
     processing.value = true;
 
-    router.put(preferences().url, {
+    router.put(preferencesRoute().url, {
         post_published: postPublished.value,
         post_failed: postFailed.value,
         account_disconnected: accountDisconnected.value,

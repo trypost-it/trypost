@@ -11,6 +11,7 @@ import {
 import { loadLanguageAsync } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
+import { updateLanguage } from '@/actions/App/Http/Controllers/App/Settings/ProfileController';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -26,7 +27,6 @@ import { useAppearance } from '@/composables/useAppearance';
 import dayjs from '@/dayjs';
 import { logout } from '@/routes';
 import { edit } from '@/routes/app/profile';
-import { updateLanguage } from '@/actions/App/Http/Controllers/App/Settings/ProfileController';
 import type { User } from '@/types';
 
 interface Language {

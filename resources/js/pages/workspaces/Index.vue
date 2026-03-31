@@ -21,7 +21,7 @@ interface Props {
     currentWorkspaceId: string | null;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const switchToWorkspace = (workspace: Workspace) => {
     router.post(switchMethod.url(workspace.id), {}, {

@@ -27,9 +27,9 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import date from '@/date';
-import { copyToClipboard } from '@/lib/utils';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { copyToClipboard } from '@/lib/utils';
 import { index as apiKeysIndex } from '@/routes/app/api-keys';
 import { type BreadcrumbItem } from '@/types';
 

@@ -46,7 +46,6 @@ import { accounts, calendar } from '@/routes/app';
 import { index as hashtags } from '@/routes/app/hashtags';
 import { index as labels } from '@/routes/app/labels';
 import { edit as editProfile } from '@/routes/app/profile';
-import { settings as workspaceSettings } from '@/routes/app/workspace';
 import { create as createWorkspaceRoute, switchMethod } from '@/routes/app/workspaces';
 import type { NavItem } from '@/types';
 

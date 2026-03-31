@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { trans } from 'laravel-vue-i18n';
 import { IconCreditCard, IconFileText, IconBuilding, IconExternalLink, IconSparkles } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';

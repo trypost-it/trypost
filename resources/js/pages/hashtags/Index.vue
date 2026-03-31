@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
 import { IconHash, IconPencil, IconSearch, IconTrash } from '@tabler/icons-vue';
-
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 

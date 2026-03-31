@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { IconChevronLeft, IconChevronRight, IconPlus } from '@tabler/icons-vue';
-import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 import DatePicker from '@/components/DatePicker.vue';
@@ -10,10 +9,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import date from '@/date';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
 import { calendar } from '@/routes/app';
 import { store as storePost, edit as editPost } from '@/routes/app/posts';
-import { type BreadcrumbItemType } from '@/types';
 
 interface PostPlatform {
     id: string;

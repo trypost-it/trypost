@@ -3,12 +3,12 @@ import { usePage } from '@inertiajs/vue3';
 import { IconChevronRight } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
+import NotificationBell from '@/components/NotificationBell.vue';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import NotificationBell from '@/components/NotificationBell.vue';
 import {
     SidebarMenu,
     SidebarMenuButton,

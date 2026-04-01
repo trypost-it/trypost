@@ -286,6 +286,82 @@ Vue components must have a single root element.
 
 - All our documentation to final user it's under https://sendkit.dev/docs
 
+## Social Platform API References
+
+Always verify against official docs before making changes to publishers, media handling, or content formatting.
+
+### Content Format
+
+| Platform | Content field | Format | Official docs |
+|---|---|---|---|
+| Instagram | `caption` | Plain text | [IG Media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media) |
+| Facebook | `message` | Plain text | [Page Feed](https://developers.facebook.com/docs/graph-api/reference/page/feed/) |
+| X/Twitter | `text` | Plain text | [Post creation](https://docs.x.com/x-api/posts/creation-of-a-post) |
+| TikTok | `title` | Plain text | [Content Posting](https://developers.tiktok.com/doc/content-posting-api-reference-direct-post) |
+| YouTube | `title`, `description` | Plain text | [Videos.insert](https://developers.google.com/youtube/v3/docs/videos/insert) |
+| Threads | `text` | Plain text | Same as Instagram |
+| Pinterest | `description` | Plain text | [Pin creation](https://developers.pinterest.com/docs/api/v5/pins-create/) |
+| LinkedIn | `commentary` | Plain text (Unicode bold/underline works visually) | [Posts API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api) |
+| Bluesky | `text` + facets | Plain text + facets for links/mentions | [AT Protocol posts](https://docs.bsky.app/docs/advanced-guides/posts) |
+| Mastodon | `status` | HTML subset (p, strong, em, a, br, span) | [Statuses API](https://docs.joinmastodon.org/methods/statuses/) |
+
+### Image Specs
+
+| Platform | Max size | Formats | Max resolution | Official docs |
+|---|---|---|---|---|
+| Instagram | 8 MB | JPEG only | 1440px width | [IG Media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media) |
+| Facebook | 4 MB | JPEG, PNG, BMP, GIF, TIFF | Auto-resized | [Page Photos](https://developers.facebook.com/docs/graph-api/reference/page/photos/) |
+| X/Twitter | 5 MB | JPG, PNG, GIF, WEBP | No hard limit | [Media best practices](https://docs.x.com/x-api/media/quickstart/best-practices) |
+| TikTok | 20 MB | JPEG, WebP | 1080px max | [Media transfer](https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide) |
+| LinkedIn | < 36M pixels | JPG, GIF, PNG | < 36,152,320 pixels | [Images API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/images-api) |
+| Pinterest | 20 MB | PNG, JPEG | 1000x1500 recommended | [Product specs](https://help.pinterest.com/en/business/article/pinterest-product-specs) |
+| Bluesky | 1 MB | Any | No hard limit | [AT Protocol](https://docs.bsky.app/docs/advanced-guides/posts) |
+| Mastodon | ~10 MB | JPG, PNG, GIF, WebP | No hard limit | [Statuses API](https://docs.joinmastodon.org/methods/statuses/) |
+
+### Video Specs
+
+| Platform | Max size | Formats | Duration | Official docs |
+|---|---|---|---|---|
+| Instagram Reel | 300 MB | MP4, MOV | 3s-15min | [IG Media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media) |
+| Instagram Story | 100 MB | MP4, MOV | 3-60s | [IG Media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media) |
+| Facebook | 2 GB | MP4 | 1s-40min | [Video API errors](https://developers.facebook.com/docs/video-api/reference/error-codes/) |
+| X/Twitter | 512 MB | MP4 | 0.5-140s | [Media best practices](https://docs.x.com/x-api/media/quickstart/best-practices) |
+| TikTok | 4 GB | MP4, WebM, MOV | Up to 10min | [Media transfer](https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide) |
+| YouTube Shorts | 128 GB | MP4, MOV, AVI, WebM | Up to 60s | [Videos.insert](https://developers.google.com/youtube/v3/docs/videos/insert) |
+| LinkedIn | 500 MB | MP4 | 3s-30min | [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/videos-api) |
+| Pinterest | 2 GB | MP4, MOV, M4V | 4s-15min | [Product specs](https://help.pinterest.com/en/business/article/pinterest-product-specs) |
+| Bluesky | 50 MB | MP4 | Up to 60s | [AT Protocol](https://docs.bsky.app/docs/advanced-guides/posts) |
+| Mastodon | ~40 MB | MP4, WebM | No limit | [Statuses API](https://docs.joinmastodon.org/methods/statuses/) |
+
+### Error Codes
+
+| Platform | Error docs |
+|---|---|
+| Instagram | [Error codes](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/error-codes/) |
+| Facebook | [Graph API errors](https://developers.facebook.com/docs/graph-api/guides/error-handling/) + [Video API errors](https://developers.facebook.com/docs/video-api/reference/error-codes/) |
+| X/Twitter | [Response codes](https://docs.x.com/x-api/fundamentals/response-codes-and-errors) |
+| TikTok | [Error handling](https://developers.tiktok.com/doc/tiktok-api-v2-error-handling) + [Publish status](https://developers.tiktok.com/doc/content-posting-api-reference-get-video-status) |
+| YouTube | [Videos.insert errors](https://developers.google.com/youtube/v3/docs/videos/insert) |
+| LinkedIn | [Posts API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api) + [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/videos-api) |
+| Pinterest | [API v5](https://developers.pinterest.com/docs/api/v5/) |
+| Bluesky | [AT Protocol](https://docs.bsky.app/docs/advanced-guides/posts) |
+| Mastodon | [Statuses API](https://docs.joinmastodon.org/methods/statuses/) |
+
+### Upload Method Per Platform
+
+| Platform | Method | Notes |
+|---|---|---|
+| Instagram | URL pull (`image_url`/`video_url`) | Platform downloads from our CDN |
+| Facebook | URL pull (`url`/`file_url`) for posts; binary upload for reels/stories | |
+| X/Twitter | Binary upload (chunked for video/GIF) | |
+| TikTok | URL pull (`PULL_FROM_URL`) | |
+| YouTube | Google SDK chunked upload | Uses `google/apiclient` PHP SDK |
+| Threads | URL pull (`image_url`/`video_url`) | |
+| LinkedIn | Binary upload (image PUT, video chunked) | |
+| Pinterest | Base64 for images, multipart for video | |
+| Bluesky | Binary blob upload | 1MB hard limit per blob |
+| Mastodon | Binary upload via multipart | |
+
 ## Git
 
 - NEVER add `Co-Authored-By` lines to commit messages.

@@ -29,24 +29,24 @@ class VerifyWorkspaceConnections implements ShouldQueue
 
     public function handle(ConnectionVerifier $verifier): void
     {
-        $connectedAccounts = $this->workspace->socialAccounts()
+        $accounts = $this->workspace->socialAccounts()
+            ->with('workspace.owner')
             ->whereIn('status', [Status::Connected, Status::TokenExpired])
             ->get();
 
-        if ($connectedAccounts->isEmpty()) {
+        if ($accounts->isEmpty()) {
             return;
         }
 
-        Log::info('Verifying workspace connections', [
-            'workspace_id' => $this->workspace->id,
-            'workspace_name' => $this->workspace->name,
-            'account_count' => $connectedAccounts->count(),
-        ]);
-
         $disconnectedAccounts = collect();
 
-        foreach ($connectedAccounts as $account) {
+        foreach ($accounts as $account) {
             if ($this->verifyAccount($verifier, $account)) {
+                // If was TokenExpired but now verified OK, mark as connected again
+                if ($account->status === Status::TokenExpired) {
+                    $account->markAsConnected();
+                }
+
                 continue;
             }
 
@@ -63,11 +63,6 @@ class VerifyWorkspaceConnections implements ShouldQueue
         try {
             $verifier->verify($account);
 
-            Log::info('Social account connection verified', [
-                'account_id' => $account->id,
-                'platform' => $account->platform->value,
-            ]);
-
             return true;
         } catch (TokenExpiredException $e) {
             Log::warning('Social account connection is invalid', [
@@ -76,11 +71,13 @@ class VerifyWorkspaceConnections implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
-            $account->update([
-                'status' => Status::Disconnected,
-                'error_message' => $e->getMessage(),
-                'disconnected_at' => now(),
-            ]);
+            if ($account->status === Status::TokenExpired) {
+                // Second failure — escalate to Disconnected
+                $account->markAsDisconnected($e->getMessage());
+            } else {
+                // First failure — mark as TokenExpired (softer state)
+                $account->markAsTokenExpired($e->getMessage());
+            }
 
             return false;
         } catch (\Exception $e) {
@@ -90,6 +87,7 @@ class VerifyWorkspaceConnections implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
+            // Unknown error — don't mark as disconnected, retry next time
             return true;
         }
     }
@@ -104,11 +102,6 @@ class VerifyWorkspaceConnections implements ShouldQueue
         if (! $owner) {
             return;
         }
-
-        Log::info('Sending workspace disconnection notification', [
-            'workspace_id' => $this->workspace->id,
-            'disconnected_count' => $disconnectedAccounts->count(),
-        ]);
 
         $accountNames = $disconnectedAccounts
             ->map(fn ($account) => $account->platform->label().' (@'.($account->username ?? $account->display_name).')')

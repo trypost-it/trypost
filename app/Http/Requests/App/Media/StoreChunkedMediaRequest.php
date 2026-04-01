@@ -103,7 +103,7 @@ class StoreChunkedMediaRequest extends FormRequest
 
     public function chunkIdentifier(): string
     {
-        return md5($this->input('file_name').$this->totalSize());
+        return md5($this->user()->id.$this->input('file_name').$this->totalSize());
     }
 
     /**

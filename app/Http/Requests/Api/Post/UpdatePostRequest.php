@@ -29,7 +29,7 @@ class UpdatePostRequest extends FormRequest
             'platforms.*.meta' => ['nullable', 'array'],
             'scheduled_at' => ['nullable', 'date'],
             'label_ids' => ['sometimes', 'array'],
-            'label_ids.*' => ['uuid'],
+            'label_ids.*' => ['uuid', Rule::exists('workspace_labels', 'id')->where('workspace_id', $this->workspace->id)],
         ];
     }
 }

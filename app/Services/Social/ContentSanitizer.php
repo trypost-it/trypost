@@ -12,6 +12,7 @@ class ContentSanitizer
     {
         return match ($platform) {
             Platform::LinkedIn, Platform::LinkedInPage => $this->convertBoldAndStrip($content),
+            Platform::Mastodon => $this->stripUnsafeHtml($content),
             default => $this->stripHtml($content),
         };
     }
@@ -37,6 +38,17 @@ class ContentSanitizer
 
         // Clean up excessive newlines (max 2 consecutive)
         $content = preg_replace("/\n{3,}/", "\n\n", $content);
+
+        return trim($content);
+    }
+
+    private function stripUnsafeHtml(string $content): string
+    {
+        // Mastodon accepts a subset of HTML: p, strong, em, a, br, span
+        $content = strip_tags($content, ['p', 'strong', 'em', 'b', 'i', 'a', 'br', 'span']);
+
+        // Decode HTML entities that aren't part of allowed tags
+        $content = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         return trim($content);
     }

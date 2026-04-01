@@ -54,3 +54,25 @@ test('it converts list items to dashes', function () {
     expect($result)->toContain('- Item one');
     expect($result)->toContain('- Item two');
 });
+
+test('it preserves safe html for mastodon', function () {
+    $sanitizer = new ContentSanitizer;
+    $result = $sanitizer->sanitize('<p>Hello <strong>world</strong> and <em>italic</em></p>', Platform::Mastodon);
+    expect($result)->toContain('<strong>world</strong>');
+    expect($result)->toContain('<em>italic</em>');
+    expect($result)->toContain('<p>');
+});
+
+test('it strips unsafe html for mastodon', function () {
+    $sanitizer = new ContentSanitizer;
+    $result = $sanitizer->sanitize('<p>Hello</p><script>alert("xss")</script><div>block</div>', Platform::Mastodon);
+    expect($result)->toContain('<p>Hello</p>');
+    expect($result)->not->toContain('<script>');
+    expect($result)->not->toContain('<div>');
+});
+
+test('it preserves links for mastodon', function () {
+    $sanitizer = new ContentSanitizer;
+    $result = $sanitizer->sanitize('<p>Check <a href="https://example.com">this</a></p>', Platform::Mastodon);
+    expect($result)->toContain('<a href="https://example.com">this</a>');
+});

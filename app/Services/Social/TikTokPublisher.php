@@ -69,7 +69,7 @@ class TikTokPublisher
     private function queryCreatorInfo(): array
     {
         $response = $this->getHttpClient()
-            ->post("{$this->baseUrl}/post/publish/creator_info/query/");
+            ->post("{$this->baseUrl}/post/publish/creator_info/query/", []);
 
         if ($response->failed()) {
             Log::warning('TikTok creator_info query failed', ['body' => $this->redactResponseBody($response->body())]);

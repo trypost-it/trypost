@@ -23,7 +23,10 @@ class TikTokController extends SocialController
     protected array $scopes = [
         'user.info.basic',
         'user.info.profile',
+        'user.info.stats',
         'video.publish',
+        'video.upload',
+        'video.list',
     ];
 
     public function connect(Request $request): Response|RedirectResponse

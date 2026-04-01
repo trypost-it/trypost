@@ -7,6 +7,8 @@ use App\Enums\PostPlatform\Status as PlatformStatus;
 use App\Enums\SocialAccount\Status as AccountStatus;
 use App\Enums\UserWorkspace\Role;
 use App\Events\PostPlatformStatusUpdated;
+use App\Exceptions\Social\ErrorCategory;
+use App\Exceptions\Social\LinkedInPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Jobs\PublishToSocialPlatform;
 use App\Jobs\SendNotification;
@@ -335,4 +337,71 @@ test('publish to social platform skips if already published (idempotency)', func
     // Should not have called publish
     $this->postPlatform->refresh();
     expect($this->postPlatform->platform_post_id)->toBe('existing-123');
+});
+
+test('publish to social platform saves error context on generic failure', function () {
+    Event::fake();
+
+    $this->postPlatform->update(['content' => 'Test content here']);
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldReceive('publish')->andThrow(new Exception('Something broke'));
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->postPlatform->refresh();
+    expect($this->postPlatform->error_context)->toBeArray();
+    expect($this->postPlatform->error_context['category'])->toBe('unknown');
+    expect($this->postPlatform->error_context['failed_at'])->toBeString();
+    expect($this->postPlatform->error_context['content_length'])->toBe(17);
+    expect($this->postPlatform->error_context['media_count'])->toBe(0);
+});
+
+test('publish to social platform saves error context on social publish exception', function () {
+    Event::fake();
+
+    $this->postPlatform->update(['content' => 'Hello world']);
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldReceive('publish')->andThrow(
+        new LinkedInPublishException(
+            'Not authorized to post',
+            ErrorCategory::Permission,
+            '403',
+            '{"error": "forbidden"}',
+        )
+    );
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->postPlatform->refresh();
+    expect($this->postPlatform->error_context)->toBeArray();
+    expect($this->postPlatform->error_context['category'])->toBe('permission');
+    expect($this->postPlatform->error_context['platform_error_code'])->toBe('403');
+    expect($this->postPlatform->error_context['content_length'])->toBe(11);
+});
+
+test('publish to social platform saves error context on token expired', function () {
+    Event::fake();
+    Mail::fake();
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldReceive('publish')->andThrow(new TokenExpiredException('Token expired', '190'));
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    $verifier = Mockery::mock(ConnectionVerifier::class);
+    $verifier->shouldReceive('verify')->andThrow(new TokenExpiredException('Refresh failed'));
+    $this->app->instance(ConnectionVerifier::class, $verifier);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->postPlatform->refresh();
+    expect($this->postPlatform->error_context)->toBeArray();
+    expect($this->postPlatform->error_context['category'])->toBe('token_expired');
+    expect($this->postPlatform->error_context['platform_error_code'])->toBe('190');
 });

@@ -97,8 +97,6 @@ class ThreadsPublisher
 
         $containerId = $containerResponse->json()['id'];
 
-        Log::info('Threads image container created', ['container_id' => $containerId]);
-
         // Step 2: Wait for image processing
         $this->waitForMediaProcessing($containerId, $accessToken);
 
@@ -108,8 +106,6 @@ class ThreadsPublisher
 
     private function publishVideoPost(string $userId, string $accessToken, ?string $content, $media): array
     {
-        Log::info('Threads publishing video post', ['user_id' => $userId]);
-
         // Step 1: Create container
         $containerResponse = Http::post("{$this->baseUrl}/{$userId}/threads", [
             'media_type' => 'VIDEO',
@@ -137,11 +133,6 @@ class ThreadsPublisher
 
     private function publishCarousel(string $userId, string $accessToken, ?string $content, $mediaCollection): array
     {
-        Log::info('Threads publishing carousel', [
-            'user_id' => $userId,
-            'media_count' => $mediaCollection->count(),
-        ]);
-
         // Step 1: Create containers for each media item
         $childContainers = [];
 
@@ -229,8 +220,6 @@ class ThreadsPublisher
 
         $permalink = $permalinkResponse->json()['permalink'] ?? null;
 
-        Log::info('Threads publish success', ['media_id' => $mediaId, 'permalink' => $permalink]);
-
         return [
             'id' => $mediaId,
             'url' => $permalink,
@@ -258,13 +247,6 @@ class ThreadsPublisher
 
             $data = $statusResponse->json();
             $status = data_get($data, 'status', 'UNKNOWN');
-
-            Log::info('Threads media processing status', [
-                'container_id' => $containerId,
-                'status' => $status,
-                'attempt' => $i,
-                'response' => $data,
-            ]);
 
             if ($status === 'FINISHED') {
                 return;
@@ -304,8 +286,6 @@ class ThreadsPublisher
             'refresh_token' => $newToken,
             'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
-
-        Log::info('Threads token refreshed successfully');
     }
 
     private function handleApiError(Response $response): never

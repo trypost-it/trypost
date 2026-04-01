@@ -41,12 +41,6 @@ class MastodonPublisher
             $payload['media_ids'] = $mediaIds;
         }
 
-        Log::info('Mastodon publishing status', [
-            'instance' => $instance,
-            'user_id' => $account->platform_user_id,
-            'has_media' => count($mediaIds) > 0,
-        ]);
-
         $response = Http::withToken($account->access_token)
             ->post("{$instance}/api/v1/statuses", $payload);
 
@@ -59,11 +53,6 @@ class MastodonPublisher
         }
 
         $data = $response->json();
-
-        Log::info('Mastodon post created', [
-            'id' => data_get($data, 'id'),
-            'url' => data_get($data, 'url'),
-        ]);
 
         return [
             'id' => data_get($data, 'id'),
@@ -112,8 +101,6 @@ class MastodonPublisher
             }
 
             $data = $response->json();
-
-            Log::info('Mastodon media uploaded', ['id' => data_get($data, 'id')]);
 
             return data_get($data, 'id');
         } catch (\Exception $e) {

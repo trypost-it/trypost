@@ -72,12 +72,6 @@ class BlueskyPublisher
             $record['facets'] = $facets;
         }
 
-        Log::info('Bluesky publishing post', [
-            'user_id' => $account->platform_user_id,
-            'has_embed' => $embed !== null,
-            'facet_count' => count($facets),
-        ]);
-
         $response = Http::withToken($account->access_token)
             ->post("{$service}/xrpc/com.atproto.repo.createRecord", [
                 'repo' => $account->platform_user_id,
@@ -99,11 +93,6 @@ class BlueskyPublisher
         // Extract post ID from URI (at://did/app.bsky.feed.post/xxx)
         $uri = data_get($data, 'uri');
         $postId = basename($uri);
-
-        Log::info('Bluesky post created successfully', [
-            'uri' => $uri,
-            'post_id' => $postId,
-        ]);
 
         return [
             'id' => $postId,
@@ -272,8 +261,6 @@ class BlueskyPublisher
     {
         $service = $account->meta['service'] ?? 'https://bsky.social';
 
-        Log::info('Bluesky refreshing token', ['user_id' => $account->platform_user_id]);
-
         // Try refresh first
         $response = Http::withToken($account->refresh_token)
             ->post("{$service}/xrpc/com.atproto.server.refreshSession");
@@ -285,8 +272,6 @@ class BlueskyPublisher
                 'refresh_token' => data_get($data, 'refreshJwt'),
                 'token_expires_at' => now()->addHours(2),
             ]);
-
-            Log::info('Bluesky token refreshed via refresh token');
 
             return;
         }
@@ -314,8 +299,6 @@ class BlueskyPublisher
                         'refresh_token' => data_get($data, 'refreshJwt'),
                         'token_expires_at' => now()->addHours(2),
                     ]);
-
-                    Log::info('Bluesky token refreshed via re-authentication');
 
                     return;
                 }

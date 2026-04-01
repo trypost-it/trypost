@@ -50,12 +50,6 @@ class PinterestPublisher
             throw new \Exception('Pinterest board_id is required');
         }
 
-        Log::info('Pinterest publishing image pin', [
-            'user_id' => $account->platform_user_id,
-            'board_id' => $boardId,
-            'image_url' => $media->url,
-        ]);
-
         // Download and optimize image
         $tempFile = tempnam(sys_get_temp_dir(), 'pin_image_');
 
@@ -113,8 +107,6 @@ class PinterestPublisher
 
         $data = $response->json();
 
-        Log::info('Pinterest pin created successfully', ['pin_id' => data_get($data, 'id')]);
-
         return [
             'id' => data_get($data, 'id'),
             'url' => 'https://pinterest.com/pin/'.data_get($data, 'id'),
@@ -136,11 +128,6 @@ class PinterestPublisher
             throw new \Exception('Pinterest board_id is required');
         }
 
-        Log::info('Pinterest publishing video pin', [
-            'user_id' => $account->platform_user_id,
-            'board_id' => $boardId,
-        ]);
-
         // Step 1: Register media upload
         $registerResponse = Http::withToken($account->access_token)
             ->post(self::API_BASE.'/media', [
@@ -157,8 +144,6 @@ class PinterestPublisher
 
         $registerData = $registerResponse->json();
         $mediaId = $registerData['media_id'];
-
-        Log::info('Pinterest media registered', ['media_id' => $mediaId]);
 
         // Step 2: Upload video to S3
         $uploadParams = $registerData['upload_parameters'] ?? [];
@@ -208,8 +193,6 @@ class PinterestPublisher
             throw new \Exception('Pinterest video upload failed');
         }
 
-        Log::info('Pinterest video uploaded');
-
         // Step 3: Wait for processing
         $this->waitForMediaProcessing($account, $mediaId);
 
@@ -251,8 +234,6 @@ class PinterestPublisher
 
         $data = $response->json();
 
-        Log::info('Pinterest video pin created successfully', ['pin_id' => data_get($data, 'id')]);
-
         return [
             'id' => data_get($data, 'id'),
             'url' => 'https://pinterest.com/pin/'.data_get($data, 'id'),
@@ -273,12 +254,6 @@ class PinterestPublisher
         if (! $boardId) {
             throw new \Exception('Pinterest board_id is required');
         }
-
-        Log::info('Pinterest publishing carousel', [
-            'user_id' => $account->platform_user_id,
-            'board_id' => $boardId,
-            'image_count' => $medias->count(),
-        ]);
 
         $items = $medias->map(fn ($media) => [
             'url' => $media->url,
@@ -317,8 +292,6 @@ class PinterestPublisher
 
         $data = $response->json();
 
-        Log::info('Pinterest carousel created successfully', ['pin_id' => data_get($data, 'id')]);
-
         return [
             'id' => data_get($data, 'id'),
             'url' => 'https://pinterest.com/pin/'.data_get($data, 'id'),
@@ -345,12 +318,6 @@ class PinterestPublisher
             $data = $response->json();
             $status = data_get($data, 'status', 'unknown');
 
-            Log::info('Pinterest media processing status', [
-                'media_id' => $mediaId,
-                'status' => $status,
-                'attempt' => $i,
-            ]);
-
             if ($status === 'succeeded') {
                 return;
             }
@@ -368,8 +335,6 @@ class PinterestPublisher
 
     public function refreshToken(SocialAccount $account): void
     {
-        Log::info('Pinterest refreshing token', ['user_id' => $account->platform_user_id]);
-
         $response = Http::asForm()
             ->withBasicAuth(
                 config('services.pinterest.client_id'),
@@ -392,8 +357,6 @@ class PinterestPublisher
             'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
             'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : now()->addDays(30),
         ]);
-
-        Log::info('Pinterest token refreshed successfully');
     }
 
     /**

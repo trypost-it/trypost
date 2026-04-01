@@ -22,6 +22,45 @@ return [
         'welcome_trial' => 'Welcome to TryPost! Your trial has started.',
     ],
 
+    'legal' => 'By continuing, you agree to our <a href="https://trypost.it/terms" target="_blank">Terms of Service</a> and <a href="https://trypost.it/privacy" target="_blank">Privacy Policy</a>.',
+
+    'slides' => [
+        'calendar' => [
+            'title' => 'Visual Calendar',
+            'description' => 'Plan and schedule your content with an intuitive drag-and-drop calendar across all your social accounts.',
+        ],
+        'scheduling' => [
+            'title' => 'Smart Scheduling',
+            'description' => 'Schedule posts across LinkedIn, X, Instagram, TikTok, YouTube, and more — all from one place.',
+        ],
+        'media' => [
+            'title' => 'Rich Media',
+            'description' => 'Publish images, carousels, stories, and reels. Each platform gets the right format automatically.',
+        ],
+        'video' => [
+            'title' => 'Video Publishing',
+            'description' => 'Upload videos once and publish to TikTok, YouTube Shorts, Instagram Reels, and Facebook Reels.',
+        ],
+        'team' => [
+            'title' => 'Team Workspaces',
+            'description' => 'Invite your team, assign roles, and manage multiple brands from separate workspaces.',
+        ],
+        'hashtags' => [
+            'title' => 'Hashtag Groups',
+            'description' => 'Save hashtag collections and add them to posts with one click. Organize with labels and filters.',
+        ],
+    ],
+
+    'or_continue_with' => 'Or continue with',
+    'google_login' => 'Log in with Google',
+    'google_signup' => 'Sign up with Google',
+
+    'signup_success' => [
+        'page_title' => 'Welcome',
+        'title' => 'Setting up your account',
+        'description' => 'This usually takes just a few seconds...',
+    ],
+
     'login' => [
         'title' => 'Log in to your account',
         'description' => 'Enter your email and password below to log in',
@@ -43,6 +82,8 @@ return [
         'name_placeholder' => 'Full name',
         'email' => 'Email address',
         'password' => 'Password',
+        'show_password' => 'Show password',
+        'hide_password' => 'Hide password',
         'submit' => 'Create account',
         'has_account' => 'Already have an account?',
         'log_in' => 'Log in',

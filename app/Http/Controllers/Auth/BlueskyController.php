@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Auth;
 
 use App\Enums\SocialAccount\Platform as SocialPlatform;
@@ -23,7 +25,7 @@ class BlueskyController extends SocialController
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);
@@ -45,7 +47,7 @@ class BlueskyController extends SocialController
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);
@@ -77,9 +79,9 @@ class BlueskyController extends SocialController
             $data = $response->json();
 
             // Get profile
-            $profileResponse = Http::withToken($data['accessJwt'])
+            $profileResponse = Http::withToken(data_get($data, 'accessJwt'))
                 ->get("{$service}/xrpc/app.bsky.actor.getProfile", [
-                    'actor' => $data['did'],
+                    'actor' => data_get($data, 'did'),
                 ]);
 
             $profile = $profileResponse->successful() ? $profileResponse->json() : [];
@@ -93,16 +95,16 @@ class BlueskyController extends SocialController
                 return back()->withErrors(['identifier' => 'Bluesky is already connected.']);
             }
 
-            $avatarPath = isset($profile['avatar']) ? uploadFromUrl($profile['avatar']) : null;
+            $avatarPath = data_get($profile, 'avatar') ? uploadFromUrl(data_get($profile, 'avatar')) : null;
 
             $accountData = [
                 'platform' => $this->platform->value,
-                'platform_user_id' => $data['did'],
-                'username' => $data['handle'],
-                'display_name' => $profile['displayName'] ?? $data['handle'],
+                'platform_user_id' => data_get($data, 'did'),
+                'username' => data_get($data, 'handle'),
+                'display_name' => data_get($profile, 'displayName', data_get($data, 'handle')),
                 'avatar_url' => $avatarPath,
-                'access_token' => $data['accessJwt'],
-                'refresh_token' => $data['refreshJwt'],
+                'access_token' => data_get($data, 'accessJwt'),
+                'refresh_token' => data_get($data, 'refreshJwt'),
                 'token_expires_at' => now()->addHours(2),
                 'meta' => [
                     'service' => $service,

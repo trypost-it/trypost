@@ -1,17 +1,20 @@
 <script setup lang="ts">
-import { Head, Link, InfiniteScroll } from '@inertiajs/vue3';
-import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconPlus, IconEye, IconTrash } from '@tabler/icons-vue';
+import { Head, Link, InfiniteScroll, router } from '@inertiajs/vue3';
+import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconEye, IconSearch, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
-import { index as postsIndex, store as storePost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/PostController';
+import { index as postsIndex, store as storePost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/App/PostController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import dayjs from '@/dayjs';
+import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItemType } from '@/types';
 
@@ -71,9 +74,29 @@ interface Props {
     workspace: Workspace;
     posts: ScrollPosts;
     currentStatus: string | null;
+    filters: {
+        search: string;
+    };
 }
 
 const props = defineProps<Props>();
+
+const searchQuery = ref(props.filters.search);
+
+const search = debounce(() => {
+    const url = props.currentStatus ? postsIndex.url(props.currentStatus) : postsIndex.url();
+    router.get(
+        url,
+        { search: searchQuery.value || undefined },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            reset: ['posts'],
+        },
+    );
+}, 300);
+
+watch(searchQuery, () => search());
 
 const pageTitle = computed(() => {
     if (props.currentStatus) {
@@ -83,16 +106,22 @@ const pageTitle = computed(() => {
     return trans('posts.all_posts');
 });
 
-const pageDescription = computed(() => {
-    if (props.currentStatus === 'draft') return trans('posts.descriptions.draft');
-    if (props.currentStatus === 'scheduled') return trans('posts.descriptions.scheduled');
-    if (props.currentStatus === 'published') return trans('posts.descriptions.published');
-    return trans('posts.manage_posts');
-});
+const breadcrumbs = computed<BreadcrumbItemType[]>(() => {
+    const items: BreadcrumbItemType[] = [
+        { title: trans('posts.title'), href: postsIndex.url() },
+    ];
 
-const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
-    { title: trans('posts.title'), href: postsIndex.url() },
-]);
+    items.push({
+        title: props.currentStatus
+            ? trans(`posts.status.${props.currentStatus}`)
+            : trans('posts.all_posts'),
+        href: props.currentStatus
+            ? postsIndex.url(props.currentStatus)
+            : postsIndex.url(),
+    });
+
+    return items;
+});
 
 const getPlatformLogo = (platform: string): string => {
     const logos: Record<string, string> = {
@@ -163,40 +192,30 @@ const handleDelete = (post: Post) => {
     <Head :title="pageTitle" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">{{ pageTitle }}</h1>
-                    <p class="text-muted-foreground">
-                        {{ pageDescription }}
-                    </p>
-                </div>
-                <div class="flex gap-2">
-                    <Link :href="storePost.url()" method="post">
-                        <Button>
-                            {{ $t('posts.new_post') }}
-                        </Button>
-                    </Link>
-                </div>
+        <template #header-right>
+            <div class="relative">
+                <IconSearch class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    v-model="searchQuery"
+                    :placeholder="trans('posts.search')"
+                    class="w-64 pl-9"
+                />
             </div>
+            <Link :href="storePost.url()" method="post">
+                <Button>
+                    {{ $t('posts.new_post') }}
+                </Button>
+            </Link>
+        </template>
 
-            <div v-if="posts.data.length === 0">
-                <Card>
-                    <CardContent class="flex flex-col items-center justify-center py-12">
-                        <IconFileText class="h-12 w-12 text-muted-foreground" />
-                        <h3 class="mt-4 text-lg font-semibold">{{ $t('posts.no_posts') }}</h3>
-                        <p class="mt-2 text-sm text-muted-foreground">
-                            {{ $t('posts.start_creating') }}
-                        </p>
-                        <Link :href="storePost.url()" method="post" class="mt-4">
-                            <Button>
-                                <IconPlus class="h-4 w-4" />
-                                {{ $t('posts.new_post') }}
-                            </Button>
-                        </Link>
-                    </CardContent>
-                </Card>
-            </div>
+        <div class="flex flex-col gap-6 p-6">
+
+            <EmptyState
+                v-if="posts.data.length === 0"
+                :icon="IconFileText"
+                :title="$t('posts.no_posts')"
+                :description="$t('posts.start_creating')"
+            />
 
             <div v-else>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

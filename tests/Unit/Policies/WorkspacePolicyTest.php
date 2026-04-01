@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
@@ -18,6 +20,7 @@ test('any user can view any workspaces', function () {
 test('owner can view workspace', function () {
     $user = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
 
     expect($this->policy->view($user, $workspace))->toBeTrue();
 });
@@ -26,6 +29,7 @@ test('member can view workspace', function () {
     $owner = User::factory()->create();
     $member = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
     $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
     expect($this->policy->view($member, $workspace))->toBeTrue();
@@ -35,6 +39,7 @@ test('non member cannot view workspace', function () {
     $owner = User::factory()->create();
     $otherUser = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
 
     expect($this->policy->view($otherUser, $workspace))->toBeFalse();
 });
@@ -48,6 +53,7 @@ test('any user can create workspace', function () {
 test('owner can update workspace', function () {
     $user = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
 
     expect($this->policy->update($user, $workspace))->toBeTrue();
 });
@@ -56,6 +62,7 @@ test('admin can update workspace', function () {
     $owner = User::factory()->create();
     $admin = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
     $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
 
     expect($this->policy->update($admin, $workspace))->toBeTrue();
@@ -65,6 +72,7 @@ test('member cannot update workspace', function () {
     $owner = User::factory()->create();
     $member = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
     $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
     expect($this->policy->update($member, $workspace))->toBeFalse();
@@ -74,6 +82,7 @@ test('only owner can delete workspace', function () {
     $owner = User::factory()->create();
     $admin = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
     $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
 
     expect($this->policy->delete($owner, $workspace))->toBeTrue();
@@ -84,6 +93,7 @@ test('only owner can restore workspace', function () {
     $owner = User::factory()->create();
     $admin = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
     $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
 
     expect($this->policy->restore($owner, $workspace))->toBeTrue();
@@ -94,6 +104,7 @@ test('only owner can force delete workspace', function () {
     $owner = User::factory()->create();
     $admin = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
     $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
 
     expect($this->policy->forceDelete($owner, $workspace))->toBeTrue();
@@ -105,6 +116,7 @@ test('owner and admin can manage team', function () {
     $admin = User::factory()->create();
     $member = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
     $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
     $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
@@ -118,6 +130,7 @@ test('owner and admin can manage accounts', function () {
     $admin = User::factory()->create();
     $member = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
     $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
     $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
@@ -131,9 +144,24 @@ test('owner and member can create post', function () {
     $member = User::factory()->create();
     $otherUser = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
     $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
     expect($this->policy->createPost($owner, $workspace))->toBeTrue();
     expect($this->policy->createPost($member, $workspace))->toBeTrue();
     expect($this->policy->createPost($otherUser, $workspace))->toBeFalse();
+});
+
+test('only owner can manage billing', function () {
+    $owner = User::factory()->create();
+    $admin = User::factory()->create();
+    $member = User::factory()->create();
+    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
+    $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
+    $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+
+    expect($this->policy->manageBilling($owner, $workspace))->toBeTrue();
+    expect($this->policy->manageBilling($admin, $workspace))->toBeFalse();
+    expect($this->policy->manageBilling($member, $workspace))->toBeFalse();
 });

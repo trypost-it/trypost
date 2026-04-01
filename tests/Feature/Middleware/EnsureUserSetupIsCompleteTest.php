@@ -1,6 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
 
@@ -9,11 +12,11 @@ test('user with completed setup can access protected routes', function () {
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
-        ->get(route('calendar'))
+        ->get(route('app.calendar'))
         ->assertOk();
 });
 
@@ -22,12 +25,12 @@ test('user on role step is redirected to onboarding step 1', function () {
 
     $user = User::factory()->create(['setup' => Setup::Role]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
-        ->get(route('calendar'))
-        ->assertRedirect(route('onboarding.step1'));
+        ->get(route('app.calendar'))
+        ->assertRedirect(route('app.onboarding.role'));
 });
 
 test('user on connections step is redirected to onboarding step 2', function () {
@@ -35,32 +38,32 @@ test('user on connections step is redirected to onboarding step 2', function () 
 
     $user = User::factory()->create(['setup' => Setup::Connections]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
-        ->get(route('calendar'))
-        ->assertRedirect(route('onboarding.step2'));
+        ->get(route('app.calendar'))
+        ->assertRedirect(route('app.onboarding.connect'));
 });
 
-test('user on subscription step is redirected to onboarding step 2', function () {
+test('user on subscription step is redirected to subscribe', function () {
     config(['trypost.self_hosted' => true]);
 
     $user = User::factory()->create(['setup' => Setup::Subscription]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => 'owner']);
+    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
-        ->get(route('calendar'))
-        ->assertRedirect(route('onboarding.step2'));
+        ->get(route('app.calendar'))
+        ->assertRedirect(route('app.subscribe'));
 });
 
 test('user on role step can access onboarding step 1', function () {
     $user = User::factory()->create(['setup' => Setup::Role]);
 
     $this->actingAs($user)
-        ->get(route('onboarding.step1'))
+        ->get(route('app.onboarding.role'))
         ->assertOk();
 });
 
@@ -68,7 +71,7 @@ test('user on connections step can access onboarding step 2', function () {
     $user = User::factory()->create(['setup' => Setup::Connections]);
 
     $this->actingAs($user)
-        ->get(route('onboarding.step2'))
+        ->get(route('app.onboarding.connect'))
         ->assertOk();
 });
 
@@ -76,6 +79,6 @@ test('user on connections step can access social connect routes', function () {
     $user = User::factory()->create(['setup' => Setup::Connections]);
 
     $this->actingAs($user)
-        ->get(route('social.linkedin.connect'))
+        ->get(route('app.social.linkedin.connect'))
         ->assertRedirect();
 });

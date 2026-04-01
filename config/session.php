@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Support\Str;
+declare(strict_types=1);
 
 return [
 
@@ -127,10 +127,7 @@ return [
     |
     */
 
-    'cookie' => env(
-        'SESSION_COOKIE',
-        Str::slug((string) env('APP_NAME', 'laravel')).'-session'
-    ),
+    'cookie' => env('SESSION_COOKIE', 'trypost-session'),
 
     /*
     |--------------------------------------------------------------------------

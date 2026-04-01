@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\SocialAccount\Platform;
 use App\Enums\SocialAccount\Status;
+use App\Enums\UserWorkspace\Role;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -12,7 +15,7 @@ beforeEach(function () {
     $this->user = User::factory()->create();
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => 'owner']);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
 });
 
 test('tiktok connect redirects to oauth provider', function () {
@@ -27,7 +30,7 @@ test('tiktok connect redirects to oauth provider', function () {
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')
-        ->get(route('social.tiktok.connect'));
+        ->get(route('app.social.tiktok.connect'));
 
     $response->assertStatus(409); // Inertia::location returns 409 with X-Inertia header
 
@@ -57,7 +60,7 @@ test('tiktok oauth callback creates account', function () {
         ->with('tiktok')
         ->andReturn($socialiteMock);
 
-    $response = $this->actingAs($this->user)->get(route('social.tiktok.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.tiktok.callback'));
 
     $response->assertOk();
     $response->assertViewIs('auth.social-callback');
@@ -75,7 +78,7 @@ test('tiktok oauth callback creates account', function () {
 test('tiktok callback fails with expired session', function () {
     // No session data - simulating expired session
 
-    $response = $this->actingAs($this->user)->get(route('social.tiktok.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.tiktok.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -109,7 +112,7 @@ test('user cannot connect tiktok if already connected', function () {
         ->with('tiktok')
         ->andReturn($socialiteMock);
 
-    $response = $this->actingAs($this->user)->get(route('social.tiktok.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.tiktok.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -145,7 +148,7 @@ test('user can reconnect disconnected tiktok account', function () {
         ->with('tiktok')
         ->andReturn($socialiteMock);
 
-    $response = $this->actingAs($this->user)->get(route('social.tiktok.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.tiktok.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', true);
@@ -162,13 +165,13 @@ test('tiktok callback handles oauth errors gracefully', function () {
 
     $mock = Mockery::mock();
     $mock->shouldReceive('scopes')->andReturn($mock);
-    $mock->shouldReceive('user')->andThrow(new \Exception('OAuth error'));
+    $mock->shouldReceive('user')->andThrow(new Exception('OAuth error'));
 
     Socialite::shouldReceive('driver')
         ->with('tiktok')
         ->andReturn($mock);
 
-    $response = $this->actingAs($this->user)->get(route('social.tiktok.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.tiktok.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);

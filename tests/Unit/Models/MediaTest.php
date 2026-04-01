@@ -1,7 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\Media\Type as MediaType;
-use App\Models\Media;
 use App\Models\Workspace;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;

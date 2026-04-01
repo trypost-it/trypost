@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
+import { IconEye, IconEyeOff } from '@tabler/icons-vue';
+import { ref } from 'vue';
 
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -7,14 +9,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
+import { redirect as googleRedirect } from '@/routes/auth/google';
 import { store } from '@/routes/register';
 
 defineProps<{
     email?: string | null;
     redirect?: string | null;
 }>();
+
+const showPassword = ref(false);
 
 // Get user's timezone from browser
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -24,6 +35,7 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     <AuthBase
         :title="$t('auth.register.title')"
         :description="$t('auth.register.description')"
+        :show-legal="true"
     >
         <Head :title="$t('auth.register.page_title')" />
 
@@ -41,7 +53,6 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                     <Input
                         id="name"
                         type="text"
-                        required
                         autofocus
                         :tabindex="1"
                         autocomplete="name"
@@ -56,7 +67,6 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                     <Input
                         id="email"
                         type="email"
-                        required
                         :tabindex="2"
                         autocomplete="email"
                         name="email"
@@ -68,15 +78,36 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
                 <div class="grid gap-2">
                     <Label for="password">{{ $t('auth.register.password') }}</Label>
-                    <Input
-                        id="password"
-                        type="password"
-                        required
-                        :tabindex="3"
-                        autocomplete="new-password"
-                        name="password"
-                        :placeholder="$t('auth.register.password')"
-                    />
+                    <div class="relative">
+                        <Input
+                            id="password"
+                            :type="showPassword ? 'text' : 'password'"
+                            :tabindex="3"
+                            autocomplete="new-password"
+                            name="password"
+                            :placeholder="$t('auth.register.password')"
+                        />
+                        <div class="absolute inset-y-0 end-0 flex items-center pe-3">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <button
+                                            type="button"
+                                            :tabindex="-1"
+                                            class="cursor-pointer text-muted-foreground hover:text-foreground"
+                                            @click="showPassword = !showPassword"
+                                        >
+                                            <IconEyeOff v-if="showPassword" class="size-4" />
+                                            <IconEye v-else class="size-4" />
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{{ showPassword ? $t('auth.register.hide_password') : $t('auth.register.show_password') }}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    </div>
                     <InputError :message="errors.password" />
                 </div>
 
@@ -91,6 +122,17 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                     {{ $t('auth.register.submit') }}
                 </Button>
             </div>
+
+            <div
+                class="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border"
+            >
+                <span class="relative z-10 bg-background px-2 text-muted-foreground">{{ $t('auth.or_continue_with') }}</span>
+            </div>
+
+            <Button variant="outline" class="w-full" as="a" :href="googleRedirect.url()">
+                <img src="/images/social/google.svg" alt="Google" class="size-4" />
+                {{ $t('auth.google_signup') }}
+            </Button>
 
             <div class="text-center text-sm text-muted-foreground">
                 {{ $t('auth.register.has_account') }}

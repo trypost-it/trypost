@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use App\Listeners\StripeEventListener;
-use App\Models\Language;
 use App\Models\Media;
+use App\Models\Notification;
+use App\Models\NotificationPreference;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -20,12 +23,16 @@ use App\Socialite\LinkedInPageExtendSocialite;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Cashier\Cashier;
@@ -33,6 +40,8 @@ use Laravel\Cashier\Events\WebhookReceived;
 use Laravel\Nightwatch\Facades\Nightwatch;
 use Laravel\Nightwatch\Records\CacheEvent;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\GoogleProvider;
+use PostHog\PostHog;
 use SocialiteProviders\Facebook\FacebookExtendSocialite;
 use SocialiteProviders\LinkedIn\LinkedInExtendSocialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -46,7 +55,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        if ($this->app->environment('local') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
+            $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
+            $this->app->register(TelescopeServiceProvider::class);
+        }
     }
 
     /**
@@ -56,6 +68,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureMorphMap();
+        $this->configurePostHog();
+        $this->configureRateLimiting();
         $this->configureSocialite();
         $this->configureStripeWebhooks();
 
@@ -66,8 +80,9 @@ class AppServiceProvider extends ServiceProvider
     protected function configureMorphMap(): void
     {
         Relation::enforceMorphMap([
-            'language' => Language::class,
             'media' => Media::class,
+            'notification' => Notification::class,
+            'notificationPreference' => NotificationPreference::class,
             'post' => Post::class,
             'postPlatform' => PostPlatform::class,
             'socialAccount' => SocialAccount::class,
@@ -81,6 +96,28 @@ class AppServiceProvider extends ServiceProvider
         ]);
     }
 
+    protected function configurePostHog(): void
+    {
+        $apiKey = config('services.posthog.api_key');
+
+        if ($apiKey) {
+            PostHog::init($apiKey, [
+                'host' => config('services.posthog.host'),
+            ]);
+        }
+    }
+
+    protected function configureRateLimiting(): void
+    {
+        RateLimiter::for('api', function (Request $request) {
+            if ($this->app->environment('local')) {
+                return Limit::none();
+            }
+
+            return Limit::perMinute(60)->by($request->workspace?->id ?: $request->ip());
+        });
+    }
+
     protected function configureStripeWebhooks(): void
     {
         Event::listen(WebhookReceived::class, StripeEventListener::class);
@@ -88,6 +125,13 @@ class AppServiceProvider extends ServiceProvider
 
     protected function configureSocialite(): void
     {
+        // Google Auth (login/signup) - separate from YouTube OAuth
+        Socialite::extend('google-auth', function ($app) {
+            $config = $app['config']['services.google-auth'];
+
+            return Socialite::buildProvider(GoogleProvider::class, $config);
+        });
+
         // Instagram Business Login
         Socialite::extend('instagram', function ($app) {
             $config = $app['config']['services.instagram'];
@@ -108,6 +152,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Disable wrapping of JSON resources
         JsonResource::withoutWrapping();
+        Model::shouldBeStrict(! $this->app->isProduction());
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),

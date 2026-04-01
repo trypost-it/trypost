@@ -1,10 +1,12 @@
 <?php
 
 return [
+    'workspaces' => 'Workspaces',
     'select_workspace' => 'Select workspace',
     'create_workspace' => 'Create workspace',
     'create_post' => 'Create post',
     'profile' => 'Profile',
+    'account' => 'Account',
     'log_out' => 'Log out',
 
     'workspace' => 'Workspace: :name',
@@ -39,10 +41,16 @@ return [
         'settings' => 'Settings',
     ],
 
+    'notifications' => 'Notifications',
+    'mark_all_read' => 'Mark all as read',
+    'mark_as_read' => 'Mark as read',
+    'archive_all' => 'Archive all',
+    'no_notifications' => 'No notifications',
+
     'support' => [
         'discord' => 'Discord',
         'share_feedback' => 'Share feedback',
         'last_updates' => 'Last Updates',
-        'docs' => 'Docs',
+        'docs' => 'Documentation',
     ],
 ];

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
@@ -172,6 +174,7 @@ test('facebook publisher can publish reel', function () {
             ->push(['video_id' => 'reel_video_123'], 200)
             ->push(['id' => 'reel_123', 'success' => true], 200),
         '*/reel_video_123' => Http::response(['success' => true], 200),
+        '*' => Http::response('', 200),
     ]);
 
     $result = $this->publisher->publish($this->postPlatform);
@@ -228,6 +231,7 @@ test('facebook publisher can publish video story', function () {
             ->push(['video_id' => 'story_video_123'], 200)
             ->push(['post_id' => 'video_story_post_123'], 200),
         '*/story_video_123' => Http::response(['success' => true], 200),
+        '*' => Http::response('', 200),
     ]);
 
     $result = $this->publisher->publish($this->postPlatform);
@@ -332,7 +336,37 @@ test('facebook publisher throws exception for text post with null content', func
     $this->postPlatform->update(['content' => null]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'Facebook text posts require content');
+        ->toThrow(Exception::class, 'Facebook text posts require content');
+});
+
+test('facebook publisher cleans up temp files after reel upload', function () {
+    $this->postPlatform->update(['content_type' => ContentType::FacebookReel]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/reel.mp4',
+        'original_filename' => 'reel.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 5120000,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        '*/page_123/video_reels' => Http::sequence()
+            ->push(['video_id' => 'reel_video_cleanup_123'], 200)
+            ->push(['id' => 'reel_cleanup_456', 'success' => true], 200),
+        '*/reel_video_cleanup_123' => Http::response(['success' => true], 200),
+        '*' => Http::response('', 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    // Assert no leftover fb_reel_ temp files exist
+    $tempDir = sys_get_temp_dir();
+    $leftoverFiles = glob("{$tempDir}/fb_reel_*") ?: [];
+
+    expect($leftoverFiles)->toBeEmpty();
 });
 
 test('facebook publisher can publish single image with null content', function () {

@@ -5,7 +5,7 @@ import { ref } from 'vue';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import PopupLayout from '@/layouts/PopupLayout.vue';
-import { select as selectFacebookPage } from '@/routes/social/facebook';
+import { select as selectFacebookPage } from '@/routes/app/social/facebook';
 
 interface Page {
     id: string;

@@ -1,15 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\PostPlatform\Status;
 use App\Enums\SocialAccount\Platform;
 use App\Models\Post;
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\PostPlatform>
+ * @extends Factory<PostPlatform>
  */
 class PostPlatformFactory extends Factory
 {
@@ -27,7 +31,7 @@ class PostPlatformFactory extends Factory
             'platform' => Platform::LinkedIn,
             'content' => $this->faker->paragraph(),
             'content_type' => ContentType::LinkedInPost,
-            'status' => 'pending',
+            'status' => Status::Pending,
             'meta' => [],
         ];
     }
@@ -42,7 +46,7 @@ class PostPlatformFactory extends Factory
     public function published(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'published',
+            'status' => Status::Published,
             'platform_post_id' => $this->faker->uuid(),
             'platform_url' => $this->faker->url(),
             'published_at' => now(),
@@ -52,7 +56,7 @@ class PostPlatformFactory extends Factory
     public function failed(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'failed',
+            'status' => Status::Failed,
             'error_message' => 'Failed to publish',
         ]);
     }

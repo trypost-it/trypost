@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { update as labelsUpdate } from '@/routes/labels';
+import { update as labelsUpdate } from '@/routes/app/labels';
 
 interface LabelType {
     id: string;
@@ -65,14 +65,14 @@ const submit = () => {
 
 <template>
     <Dialog v-model:open="open">
-        <DialogContent class="sm:max-w-md">
+        <DialogContent class="sm:max-w-lg">
             <DialogHeader>
                 <DialogTitle>{{ $t('labels.edit.title') }}</DialogTitle>
                 <DialogDescription>
                     {{ $t('labels.edit.description') }}
                 </DialogDescription>
             </DialogHeader>
-            <form @submit.prevent="submit" class="space-y-4">
+            <form @submit.prevent="submit" class="space-y-6">
                 <div class="space-y-2">
                     <Label for="edit-name">{{ $t('labels.edit.name') }}</Label>
                     <Input
@@ -88,15 +88,15 @@ const submit = () => {
 
                 <div class="space-y-2">
                     <Label>{{ $t('labels.edit.color') }}</Label>
-                    <div class="flex flex-wrap gap-2">
+                    <div class="flex flex-wrap gap-3">
                         <button
                             v-for="color in colors"
                             :key="color"
                             type="button"
-                            class="h-10 w-10 rounded-lg transition-all"
+                            class="size-8 rounded-full transition-all"
                             :class="[
                                 form.color === color
-                                    ? 'ring-2 ring-primary ring-offset-2'
+                                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
                                     : 'hover:scale-110'
                             ]"
                             :style="{ backgroundColor: color }"
@@ -111,6 +111,9 @@ const submit = () => {
                 <DialogFooter>
                     <Button type="submit" :disabled="form.processing">
                         {{ form.processing ? $t('labels.edit.submitting') : $t('labels.edit.submit') }}
+                    </Button>
+                    <Button type="button" variant="secondary" @click="open = false">
+                        {{ $t('common.cancel') }}
                     </Button>
                 </DialogFooter>
             </form>

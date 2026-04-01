@@ -1,108 +1,72 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { IconPlus, IconCalendar, IconUsers, IconSettings } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { accounts, calendar } from '@/routes';
-import { settings } from '@/routes/workspace';
-import { create as createWorkspace, index as workspacesIndex, switchMethod } from '@/routes/workspaces';
-import { type BreadcrumbItemType } from '@/types';
+import AuthLayout from '@/layouts/AuthLayout.vue';
+import { create as createWorkspace, switchMethod } from '@/routes/app/workspaces';
 
 interface Workspace {
     id: string;
     name: string;
+    logo_url: string | null;
     social_accounts_count: number;
     posts_count: number;
-    created_at: string;
 }
 
 interface Props {
     workspaces: Workspace[];
+    currentWorkspaceId: string | null;
 }
 
 defineProps<Props>();
 
-const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Workspaces', href: workspacesIndex.url() },
-];
-
-function switchAndNavigate(workspaceId: string, destination: string) {
-    router.post(switchMethod.url(workspaceId), {}, {
-        onSuccess: () => {
-            router.visit(destination);
-        },
+const switchToWorkspace = (workspace: Workspace) => {
+    router.post(switchMethod.url(workspace.id), {}, {
+        preserveState: false,
     });
-}
+};
 </script>
 
 <template>
-    <Head title="Workspaces" />
+    <Head :title="$t('workspaces.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-6 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Workspaces</h1>
-                    <p class="text-muted-foreground">
-                        Gerencie seus workspaces e redes sociais
+    <AuthLayout
+        :title="$t('workspaces.select_title')"
+        :description="$t('workspaces.select_description')"
+    >
+        <div class="space-y-3">
+            <div
+                v-for="workspace in workspaces"
+                :key="workspace.id"
+                class="flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent/50"
+                :class="workspace.id === currentWorkspaceId ? 'border-primary/50 bg-accent/30' : ''"
+                @click="switchToWorkspace(workspace)"
+            >
+                <Avatar
+                    :src="workspace.logo_url"
+                    :name="workspace.name"
+                    class="size-10 shrink-0 rounded-lg"
+                    fallback-class="bg-muted text-muted-foreground"
+                />
+                <div class="min-w-0 flex-1">
+                    <p class="truncate font-medium">{{ workspace.name }}</p>
+                    <p class="text-xs text-muted-foreground">
+                        {{ trans('workspaces.connections', { count: String(workspace.social_accounts_count) }) }} · {{ trans('workspaces.posts', { count: String(workspace.posts_count) }) }}
                     </p>
                 </div>
-                <Link :href="createWorkspace.url()">
-                    <Button>
-                        <IconPlus class="mr-2 h-4 w-4" />
-                        Novo Workspace
-                    </Button>
-                </Link>
-            </div>
-
-            <div v-if="workspaces.length === 0" class="flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
-                <div class="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-                    <h3 class="mt-4 text-lg font-semibold">Nenhum workspace</h3>
-                    <p class="mb-4 mt-2 text-sm text-muted-foreground">
-                        Crie seu primeiro workspace para começar a agendar posts.
-                    </p>
-                    <Link :href="createWorkspace.url()">
-                        <Button>
-                            <IconPlus class="mr-2 h-4 w-4" />
-                            Criar Workspace
-                        </Button>
-                    </Link>
-                </div>
-            </div>
-
-            <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card v-for="workspace in workspaces" :key="workspace.id" class="hover:bg-accent/50 transition-colors">
-                    <CardHeader>
-                        <CardTitle>{{ workspace.name }}</CardTitle>
-                        <CardDescription>
-                            {{ workspace.social_accounts_count }} redes conectadas
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-4 text-sm text-muted-foreground">
-                                <span class="flex items-center gap-1">
-                                    <IconCalendar class="h-4 w-4" />
-                                    {{ workspace.posts_count }} posts
-                                </span>
-                            </div>
-                            <div class="flex gap-2">
-                                <Button variant="outline" size="sm" @click="switchAndNavigate(workspace.id, calendar.url())">
-                                    <IconCalendar class="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="sm" @click="switchAndNavigate(workspace.id, accounts.url())">
-                                    <IconUsers class="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="sm" @click="switchAndNavigate(workspace.id, settings.url())">
-                                    <IconSettings class="h-4 w-4" />
-                                </Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <Badge v-if="workspace.id === currentWorkspaceId" variant="secondary" class="shrink-0">
+                    {{ $t('workspaces.current') }}
+                </Badge>
             </div>
         </div>
-    </AppLayout>
+
+        <Link :href="createWorkspace.url()">
+            <Button variant="outline" class="w-full">
+                {{ $t('workspaces.create.submit') }}
+            </Button>
+        </Link>
+    </AuthLayout>
 </template>

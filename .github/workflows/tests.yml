@@ -68,22 +68,20 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
+      - name: Prepare environment
+        run: cp .env.ci .env
+
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Install npm dependencies
         run: npm ci
 
+      - name: Generate application key
+        run: php artisan key:generate
+
       - name: Build assets
         run: npm run build
-
-      - name: Prepare environment
-        run: |
-          cp .env.ci .env
-          php artisan key:generate
-
-      - name: Clear Config
-        run: php artisan config:clear
 
       - name: Run migrations
         run: php artisan migrate --force

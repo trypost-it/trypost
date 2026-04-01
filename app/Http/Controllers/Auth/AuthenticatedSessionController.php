@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\App\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -37,10 +37,13 @@ class AuthenticatedSessionController extends Controller
 
         // Check for redirect param
         if ($redirect = $request->input('redirect')) {
-            return redirect($redirect);
+            // Only allow internal redirects (paths starting with /)
+            if (str_starts_with($redirect, '/') && ! str_starts_with($redirect, '//')) {
+                return redirect($redirect);
+            }
         }
 
-        return redirect()->intended(route('calendar'));
+        return redirect()->intended(route('app.calendar'));
     }
 
     /**

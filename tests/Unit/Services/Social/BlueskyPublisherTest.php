@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
@@ -9,6 +11,7 @@ use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\Media\MediaOptimizer;
 use App\Services\Social\BlueskyPublisher;
 use Illuminate\Support\Facades\Http;
 
@@ -184,6 +187,100 @@ test('bluesky publisher throws token expired exception on auth error', function 
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(TokenExpiredException::class);
+});
+
+test('bluesky publisher optimizes images before upload', function () {
+    $tempFile = tempnam(sys_get_temp_dir(), 'bsky_test_');
+    file_put_contents($tempFile, str_repeat('x', 1024));
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/test-image.jpg',
+        'original_filename' => 'test.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 12345,
+        'order' => 0,
+        'meta' => ['width' => 1920, 'height' => 1080],
+    ]);
+
+    $this->mock(MediaOptimizer::class)
+        ->shouldReceive('optimizeImage')
+        ->once()
+        ->with(Mockery::any(), Platform::Bluesky)
+        ->andReturn($tempFile);
+
+    Http::fake(function ($request) {
+        $url = $request->url();
+
+        if (str_contains($url, 'uploadBlob')) {
+            return Http::response([
+                'blob' => [
+                    '$type' => 'blob',
+                    'ref' => ['$link' => 'bafkreiabc123'],
+                    'mimeType' => 'image/jpeg',
+                    'size' => 1024,
+                ],
+            ], 200);
+        }
+
+        if (str_contains($url, 'createRecord')) {
+            return Http::response([
+                'uri' => 'at://did:plc:testuser123/app.bsky.feed.post/3abc123xyz',
+                'cid' => 'bafyreiabc123',
+            ], 200);
+        }
+
+        // Media download fallback (covers relative storage URLs in test env)
+        return Http::response(str_repeat('x', 1024), 200);
+    });
+
+    $this->publisher->publish($this->postPlatform);
+
+    @unlink($tempFile);
+});
+
+test('bluesky publisher handles media download failure gracefully', function () {
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/test-image.jpg',
+        'original_filename' => 'test.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 12345,
+        'order' => 0,
+        'meta' => ['width' => 1920, 'height' => 1080],
+    ]);
+
+    Http::fake(function ($request) {
+        $url = $request->url();
+
+        if (str_contains($url, 'createRecord')) {
+            return Http::response([
+                'uri' => 'at://did:plc:testuser123/app.bsky.feed.post/3textonly',
+                'cid' => 'bafyreiabc123',
+            ], 200);
+        }
+
+        // CDN download returns 404 — blob upload is skipped
+        return Http::response('Not Found', 404);
+    });
+
+    // When media download fails, uploadBlob returns null and post publishes as text-only
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result)->toHaveKey('id');
+    expect($result['id'])->toBe('3textonly');
+
+    // The createRecord request should NOT contain an embed (no images uploaded)
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), 'createRecord')) {
+            return false;
+        }
+        $record = $request['record'];
+
+        return ! isset($record['embed']);
+    });
 });
 
 test('bluesky publisher limits images to 4', function () {

@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\Media\Type as MediaType;
+use Database\Factories\MediaFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 
 class Media extends Model
 {
-    /** @use HasFactory<\Database\Factories\MediaFactory> */
+    /** @use HasFactory<MediaFactory> */
     use HasFactory, HasUuids;
 
     protected $table = 'medias';
@@ -53,6 +56,28 @@ class Media extends Model
         return Attribute::make(
             get: fn () => Storage::url($this->path),
         );
+    }
+
+    public function isVideo(): bool
+    {
+        if ($this->mime_type) {
+            return str_starts_with($this->mime_type, 'video/');
+        }
+
+        $extension = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
+
+        return in_array($extension, ['mp4', 'mov', 'avi', 'wmv', 'webm', 'mkv', 'm4v']);
+    }
+
+    public function isImage(): bool
+    {
+        if ($this->mime_type) {
+            return str_starts_with($this->mime_type, 'image/');
+        }
+
+        $extension = strtolower(pathinfo($this->path, PATHINFO_EXTENSION));
+
+        return in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'heic', 'heif']);
     }
 
     public function getTemporaryUrl(int $expirationMinutes = 60): string

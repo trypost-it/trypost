@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Auth;
 
+use App\Actions\SocialAccount\ToggleSocialAccount;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\SocialAccount\Status;
 use App\Http\Controllers\Controller;
@@ -32,7 +35,7 @@ class SocialController extends Controller
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('view', $workspace);
@@ -62,7 +65,7 @@ class SocialController extends Controller
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);
@@ -79,12 +82,35 @@ class SocialController extends Controller
         return back();
     }
 
+    public function toggleActive(Request $request, SocialAccount $account): RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('app.workspaces.create');
+        }
+
+        $this->authorize('manageAccounts', $workspace);
+
+        if ($account->workspace_id !== $workspace->id) {
+            abort(403);
+        }
+
+        ToggleSocialAccount::execute($account);
+
+        $status = $account->is_active ? 'activated' : 'deactivated';
+        session()->flash('flash.banner', __("accounts.flash.{$status}"));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
     protected function redirectToProvider(Request $request, string $driver, array $scopes): SymfonyResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         session(['social_connect_workspace' => $workspace->id]);
@@ -177,7 +203,7 @@ class SocialController extends Controller
 
     protected function getRedirectRoute(): string
     {
-        return session('social_connect_onboarding', false) ? 'onboarding.step2' : 'accounts';
+        return session('social_connect_onboarding', false) ? 'onboarding.connect' : 'accounts';
     }
 
     /**

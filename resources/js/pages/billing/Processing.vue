@@ -5,8 +5,8 @@ import { IconLoader2, IconCircleCheck, IconCircleX } from '@tabler/icons-vue';
 import { ref, onMounted } from 'vue';
 
 import { Button } from '@/components/ui/button';
-import { subscribe } from '@/routes';
-import { index as workspacesIndex } from '@/routes/workspaces';
+import { subscribe } from '@/routes/app';
+import { index as workspacesIndex } from '@/routes/app/workspaces';
 
 interface Props {
     userId: number;
@@ -49,13 +49,13 @@ if (props.status === 'success') {
     });
 }
 
-function retry() {
+const retry = () => {
     router.visit(subscribe.url());
-}
+};
 </script>
 
 <template>
-    <Head title="Processing..." />
+    <Head :title="$t('billing.processing.page_title')" />
 
     <div class="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 flex items-center justify-center">
         <div class="text-center max-w-md px-4">
@@ -64,9 +64,9 @@ function retry() {
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
                     <IconLoader2 class="w-10 h-10 text-primary animate-spin" />
                 </div>
-                <h1 class="text-2xl font-bold tracking-tight mb-3">Processing your subscription</h1>
+                <h1 class="text-2xl font-bold tracking-tight mb-3">{{ $t('billing.processing.title') }}</h1>
                 <p class="text-muted-foreground">
-                    Please wait while we set up your account. This will only take a moment.
+                    {{ $t('billing.processing.description') }}
                 </p>
             </template>
 
@@ -75,9 +75,9 @@ function retry() {
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mb-6">
                     <IconCircleCheck class="w-10 h-10 text-green-600" />
                 </div>
-                <h1 class="text-2xl font-bold tracking-tight mb-3">You're all set!</h1>
+                <h1 class="text-2xl font-bold tracking-tight mb-3">{{ $t('billing.processing.success_title') }}</h1>
                 <p class="text-muted-foreground">
-                    Your subscription is active. Redirecting you to your workspaces...
+                    {{ $t('billing.processing.success_description') }}
                 </p>
             </template>
 
@@ -86,12 +86,12 @@ function retry() {
                 <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mb-6">
                     <IconCircleX class="w-10 h-10 text-red-600" />
                 </div>
-                <h1 class="text-2xl font-bold tracking-tight mb-3">Checkout cancelled</h1>
+                <h1 class="text-2xl font-bold tracking-tight mb-3">{{ $t('billing.processing.cancelled_title') }}</h1>
                 <p class="text-muted-foreground mb-6">
-                    Your checkout was cancelled. No charges were made.
+                    {{ $t('billing.processing.cancelled_description') }}
                 </p>
                 <Button @click="retry">
-                    Try again
+                    {{ $t('billing.processing.retry') }}
                 </Button>
             </template>
         </div>

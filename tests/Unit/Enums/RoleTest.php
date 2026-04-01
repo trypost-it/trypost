@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\UserWorkspace\Role;
 
 test('role has correct labels', function () {

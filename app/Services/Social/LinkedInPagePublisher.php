@@ -1,11 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Social;
 
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\LinkedInPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Media\MediaOptimizer;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -13,16 +19,7 @@ use Illuminate\Support\Facades\Log;
 
 class LinkedInPagePublisher
 {
-    /**
-     * LinkedIn API error codes that indicate token issues.
-     *
-     * @see https://learn.microsoft.com/en-us/linkedin/shared/api-guide/concepts/error-handling
-     */
-    private const TOKEN_ERROR_CODES = [
-        'REVOKED_ACCESS_TOKEN',
-        'EXPIRED_ACCESS_TOKEN',
-        'INVALID_ACCESS_TOKEN',
-    ];
+    use HasSocialHttpClient;
 
     private string $baseUrl = 'https://api.linkedin.com';
 
@@ -36,11 +33,15 @@ class LinkedInPagePublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $this->account = $postPlatform->socialAccount;
         $this->hasRetried = false;
 
         if ($this->account->is_token_expired || $this->account->is_token_expiring_soon) {
-            $this->refreshToken($this->account);
+            $this->refreshTokenWithLock($this->account, fn () => $this->refreshToken($this->account));
             $this->account->refresh();
         }
 
@@ -57,26 +58,22 @@ class LinkedInPagePublisher
 
         try {
             return match ($contentType) {
-                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
-                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $content, $postPlatform->media, $this->account),
                 default => throw new \Exception("Unsupported LinkedIn Page content type: {$contentType?->value}"),
             };
         } catch (TokenExpiredException $e) {
-            return $this->retryWithRefresh($postPlatform, $e);
+            return $this->retryWithRefresh($postPlatform, $content, $e);
         }
     }
 
-    private function retryWithRefresh(PostPlatform $postPlatform, TokenExpiredException $originalException): array
+    private function retryWithRefresh(PostPlatform $postPlatform, ?string $content, TokenExpiredException $originalException): array
     {
         if ($this->hasRetried) {
             throw $originalException;
         }
 
         $this->hasRetried = true;
-
-        Log::info('LinkedIn Page token rejected, attempting refresh and retry', [
-            'account_id' => $this->account->id,
-        ]);
 
         try {
             $this->refreshToken($this->account);
@@ -88,8 +85,8 @@ class LinkedInPagePublisher
             $contentType = $postPlatform->content_type;
 
             return match ($contentType) {
-                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
-                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $content, $postPlatform->media, $this->account),
                 default => throw new \Exception("Unsupported LinkedIn Page content type: {$contentType?->value}"),
             };
         } catch (\Throwable $e) {
@@ -128,17 +125,15 @@ class LinkedInPagePublisher
             }
         }
 
-        Log::info('LinkedIn Page creating post', ['payload' => $payload]);
-
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/rest/posts", $payload);
 
         if ($response->failed()) {
             Log::error('LinkedIn Page post creation failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
-            $this->handleApiError($response, 'LinkedIn Page API error');
+            $this->handleApiError($response);
         }
 
         $postId = $response->header('x-restli-id');
@@ -157,16 +152,11 @@ class LinkedInPagePublisher
 
     private function publishCarousel(string $organizationUrn, ?string $content, $mediaCollection, $account): array
     {
-        Log::info('LinkedIn Page publishing carousel', [
-            'owner' => $organizationUrn,
-            'media_count' => $mediaCollection->count(),
-        ]);
-
         // Upload images and build carousel items
         $carouselItems = [];
 
         foreach ($mediaCollection as $media) {
-            if (! str_starts_with($media->mime_type, 'image/')) {
+            if (! $media->isImage()) {
                 continue;
             }
 
@@ -201,17 +191,15 @@ class LinkedInPagePublisher
             ],
         ];
 
-        Log::info('LinkedIn Page creating carousel post', ['payload' => $payload]);
-
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/rest/posts", $payload);
 
         if ($response->failed()) {
             Log::error('LinkedIn Page carousel post creation failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
-            $this->handleApiError($response, 'LinkedIn Page API error');
+            $this->handleApiError($response);
         }
 
         $postId = $response->header('x-restli-id');
@@ -230,13 +218,12 @@ class LinkedInPagePublisher
 
     private function getHttpClient(): PendingRequest
     {
-        return Http::withToken($this->accessToken)
+        return $this->socialHttp()->withToken($this->accessToken)
             ->withHeaders([
                 'X-Restli-Protocol-Version' => '2.0.0',
                 'LinkedIn-Version' => $this->apiVersion,
                 'Content-Type' => 'application/json',
-            ])
-            ->timeout(300);
+            ]);
     }
 
     private function uploadMedia($mediaItem, string $ownerUrn): ?string
@@ -258,8 +245,6 @@ class LinkedInPagePublisher
 
     private function uploadImage($mediaItem, string $ownerUrn): ?string
     {
-        Log::info('LinkedIn Page initializing image upload', ['owner' => $ownerUrn]);
-
         // Step 1: Initialize upload
         $initResponse = $this->getHttpClient()
             ->post("{$this->baseUrl}/rest/images?action=initializeUpload", [
@@ -269,8 +254,8 @@ class LinkedInPagePublisher
             ]);
 
         if ($initResponse->failed()) {
-            Log::error('LinkedIn Page image init failed', ['body' => $initResponse->body()]);
-            $this->handleApiError($initResponse, 'Failed to initialize LinkedIn Page image upload');
+            Log::error('LinkedIn Page image init failed', ['body' => $this->redactResponseBody($initResponse->body())]);
+            $this->handleApiError($initResponse);
         }
 
         $initData = $initResponse->json();
@@ -281,37 +266,68 @@ class LinkedInPagePublisher
             throw new \Exception('LinkedIn Page image upload init missing uploadUrl or image URN');
         }
 
-        Log::info('LinkedIn Page image init success', ['imageUrn' => $imageUrn]);
+        // Step 2: Download and optimize image
+        $tempFile = tempnam(sys_get_temp_dir(), 'lip_image_');
 
-        // Step 2: Upload binary data
-        $imageContent = file_get_contents($mediaItem->url);
+        try {
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
 
-        $uploadResponse = Http::withToken($this->accessToken)
-            ->withHeaders([
-                'Content-Type' => 'application/octet-stream',
-            ])
-            ->withBody($imageContent, 'application/octet-stream')
-            ->put($uploadUrl);
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+            }
 
-        if ($uploadResponse->failed()) {
-            Log::error('LinkedIn Page image upload failed', ['body' => $uploadResponse->body()]);
-            $this->handleApiError($uploadResponse, 'Failed to upload LinkedIn Page image');
+            $detectedMime = mime_content_type($tempFile) ?: '';
+            if (str_starts_with($detectedMime, 'image/') && ! str_starts_with($detectedMime, 'image/gif')) {
+                $optimizer = app(MediaOptimizer::class);
+                $optimizedPath = $optimizer->optimizeImage($tempFile, Platform::LinkedInPage);
+                @unlink($tempFile);
+                $tempFile = $optimizedPath;
+            }
+
+            $stream = fopen($tempFile, 'r');
+
+            $uploadResponse = Http::withToken($this->accessToken)
+                ->withHeaders([
+                    'Content-Type' => 'application/octet-stream',
+                ])
+                ->withBody($stream, 'application/octet-stream')
+                ->put($uploadUrl);
+
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+
+            if ($uploadResponse->failed()) {
+                Log::error('LinkedIn Page image upload failed', ['body' => $this->redactResponseBody($uploadResponse->body())]);
+                $this->handleApiError($uploadResponse);
+            }
+
+            return $imageUrn;
+        } finally {
+            @unlink($tempFile);
         }
-
-        Log::info('LinkedIn Page image upload success', ['imageUrn' => $imageUrn]);
-
-        return $imageUrn;
     }
 
     private function uploadVideo($mediaItem, string $ownerUrn): ?string
     {
-        $videoContent = file_get_contents($mediaItem->url);
-        $fileSize = strlen($videoContent);
+        $tempFile = tempnam(sys_get_temp_dir(), 'lip_video_');
 
-        Log::info('LinkedIn Page initializing video upload', [
-            'owner' => $ownerUrn,
-            'fileSize' => $fileSize,
-        ]);
+        try {
+            return $this->doUploadVideo($tempFile, $mediaItem, $ownerUrn);
+        } finally {
+            @unlink($tempFile);
+        }
+    }
+
+    private function doUploadVideo(string $tempFile, $mediaItem, string $ownerUrn): ?string
+    {
+        $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+
+        if ($downloadResponse->failed()) {
+            throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+        }
+
+        $fileSize = (int) filesize($tempFile);
 
         // Step 1: Initialize upload
         $initResponse = $this->getHttpClient()
@@ -325,8 +341,8 @@ class LinkedInPagePublisher
             ]);
 
         if ($initResponse->failed()) {
-            Log::error('LinkedIn Page video init failed', ['body' => $initResponse->body()]);
-            $this->handleApiError($initResponse, 'Failed to initialize LinkedIn Page video upload');
+            Log::error('LinkedIn Page video init failed', ['body' => $this->redactResponseBody($initResponse->body())]);
+            $this->handleApiError($initResponse);
         }
 
         $initData = $initResponse->json();
@@ -338,55 +354,47 @@ class LinkedInPagePublisher
             throw new \Exception('LinkedIn Page video upload init missing video URN or upload instructions');
         }
 
-        Log::info('LinkedIn Page video init success', [
-            'videoUrn' => $videoUrn,
-            'chunks' => count($uploadInstructions),
-        ]);
-
         // Step 2: Upload chunks
         $uploadedPartIds = [];
+        $handle = fopen($tempFile, 'r');
 
-        foreach ($uploadInstructions as $index => $instruction) {
-            $uploadUrl = $instruction['uploadUrl'];
-            $firstByte = $instruction['firstByte'];
-            $lastByte = $instruction['lastByte'];
+        try {
+            foreach ($uploadInstructions as $index => $instruction) {
+                $uploadUrl = data_get($instruction, 'uploadUrl');
+                $firstByte = data_get($instruction, 'firstByte');
+                $lastByte = data_get($instruction, 'lastByte');
 
-            $chunkData = substr($videoContent, $firstByte, $lastByte - $firstByte + 1);
+                $chunkLength = $lastByte - $firstByte + 1;
+                fseek($handle, $firstByte);
+                $chunkData = fread($handle, $chunkLength);
 
-            Log::info('LinkedIn Page uploading video chunk', [
-                'index' => $index,
-                'firstByte' => $firstByte,
-                'lastByte' => $lastByte,
-                'chunkSize' => strlen($chunkData),
-            ]);
+                $chunkResponse = Http::withToken($this->accessToken)
+                    ->withHeaders([
+                        'Content-Type' => 'application/octet-stream',
+                    ])
+                    ->timeout(600)
+                    ->withBody($chunkData, 'application/octet-stream')
+                    ->put($uploadUrl);
 
-            $chunkResponse = Http::withToken($this->accessToken)
-                ->withHeaders([
-                    'Content-Type' => 'application/octet-stream',
-                ])
-                ->timeout(600)
-                ->withBody($chunkData, 'application/octet-stream')
-                ->put($uploadUrl);
+                if ($chunkResponse->failed()) {
+                    Log::error('LinkedIn Page video chunk upload failed', [
+                        'index' => $index,
+                        'body' => $this->redactResponseBody($chunkResponse->body()),
+                    ]);
+                    $this->handleApiError($chunkResponse);
+                }
 
-            if ($chunkResponse->failed()) {
-                Log::error('LinkedIn Page video chunk upload failed', [
-                    'index' => $index,
-                    'body' => $chunkResponse->body(),
-                ]);
-                $this->handleApiError($chunkResponse, 'Failed to upload LinkedIn Page video chunk');
+                $etag = $chunkResponse->header('etag');
+                if ($etag) {
+                    $uploadedPartIds[] = $etag;
+                }
+
             }
-
-            $etag = $chunkResponse->header('etag');
-            if ($etag) {
-                $uploadedPartIds[] = $etag;
-            }
-
-            Log::info('LinkedIn Page video chunk uploaded', ['index' => $index, 'etag' => $etag]);
+        } finally {
+            fclose($handle);
         }
 
         // Step 3: Finalize upload
-        Log::info('LinkedIn Page finalizing video upload', ['videoUrn' => $videoUrn]);
-
         $finalizeResponse = $this->getHttpClient()
             ->post("{$this->baseUrl}/rest/videos?action=finalizeUpload", [
                 'finalizeUploadRequest' => [
@@ -397,11 +405,9 @@ class LinkedInPagePublisher
             ]);
 
         if ($finalizeResponse->failed()) {
-            Log::error('LinkedIn Page video finalize failed', ['body' => $finalizeResponse->body()]);
-            $this->handleApiError($finalizeResponse, 'Failed to finalize LinkedIn Page video upload');
+            Log::error('LinkedIn Page video finalize failed', ['body' => $this->redactResponseBody($finalizeResponse->body())]);
+            $this->handleApiError($finalizeResponse);
         }
-
-        Log::info('LinkedIn Page video upload finalized', ['videoUrn' => $videoUrn]);
 
         // Step 4: Wait for processing
         $this->waitForVideoProcessing($videoUrn);
@@ -425,9 +431,7 @@ class LinkedInPagePublisher
             }
 
             $data = $response->json();
-            $status = $data['status'] ?? 'UNKNOWN';
-
-            Log::info('LinkedIn Page video processing status', ['status' => $status, 'attempt' => $i]);
+            $status = data_get($data, 'status', 'UNKNOWN');
 
             if ($status === 'AVAILABLE') {
                 return;
@@ -457,34 +461,23 @@ class LinkedInPagePublisher
         ]);
 
         if ($response->failed()) {
-            $this->handleApiError($response, 'Failed to refresh LinkedIn Page token');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         // Sync tokens to LinkedIn personal if it exists
         app(LinkedInTokenSynchronizer::class)->syncTokens($account);
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function handleApiError(Response $response): never
     {
-        $body = $response->json() ?? [];
-        $errorCode = $body['code'] ?? null;
-        $message = $body['message'] ?? $response->body();
-
-        if ($response->status() === 401 || in_array($errorCode, self::TOKEN_ERROR_CODES)) {
-            throw new TokenExpiredException(
-                "{$context}: {$message}",
-                $errorCode
-            );
-        }
-
-        throw new \Exception("{$context}: {$message}");
+        throw LinkedInPublishException::fromApiResponse($response);
     }
 }

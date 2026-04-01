@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums\SocialAccount;
 
 use App\Enums\Media\Type as MediaType;
@@ -99,6 +101,26 @@ enum Platform: string
         };
     }
 
+    /**
+     * @return array<string>
+     */
+    public function requiredPublishScopes(): array
+    {
+        return match ($this) {
+            self::Instagram => ['instagram_business_content_publish'],
+            self::Facebook => ['pages_manage_posts'],
+            self::TikTok => ['video.publish'],
+            self::YouTube => ['https://www.googleapis.com/auth/youtube.upload'],
+            self::LinkedIn => ['w_member_social'],
+            self::LinkedInPage => ['w_organization_social'],
+            self::X => ['tweet.write'],
+            self::Threads => ['threads_content_publish'],
+            self::Pinterest => ['pins:write'],
+            self::Bluesky => [],
+            self::Mastodon => ['write:statuses'],
+        };
+    }
+
     public function supportsTextOnly(): bool
     {
         return match ($this) {
@@ -113,6 +135,27 @@ enum Platform: string
             self::Bluesky => true,
             self::Mastodon => true,
         };
+    }
+
+    public function requiresContent(): bool
+    {
+        return match ($this) {
+            self::YouTube => true,
+            default => false,
+        };
+    }
+
+    public function queue(): string
+    {
+        return 'social-'.$this->value;
+    }
+
+    /**
+     * @return array<string>
+     */
+    public static function allQueues(): array
+    {
+        return array_map(fn (self $platform) => $platform->queue(), self::cases());
     }
 
     public function isEnabled(): bool

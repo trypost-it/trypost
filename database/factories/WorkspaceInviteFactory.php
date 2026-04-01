@@ -1,13 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Enums\UserWorkspace\Role;
 use App\Models\Workspace;
+use App\Models\WorkspaceInvite;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\WorkspaceInvite>
+ * @extends Factory<WorkspaceInvite>
  */
 class WorkspaceInviteFactory extends Factory
 {

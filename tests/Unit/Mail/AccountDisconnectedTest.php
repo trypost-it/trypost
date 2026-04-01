@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\SocialAccount\Platform;
 use App\Mail\AccountDisconnected;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 test('account disconnected mail has correct subject', function () {
     $workspace = Workspace::factory()->create(['name' => 'My Workspace']);
@@ -36,7 +39,7 @@ test('account disconnected mail has correct content', function () {
     expect($content->with['platformName'])->toBe('LinkedIn');
     expect($content->with['accountName'])->toBe('John Doe');
     expect($content->with['workspaceName'])->toBe('Test Team');
-    expect($content->with['url'])->toBe(route('accounts'));
+    expect($content->with['url'])->toBe(route('app.accounts'));
 });
 
 test('account disconnected mail uses username when display name is null', function () {
@@ -64,5 +67,5 @@ test('account disconnected mail is queueable', function () {
 
     $mail = new AccountDisconnected($account);
 
-    expect($mail)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class);
+    expect($mail)->toBeInstanceOf(ShouldQueue::class);
 });

@@ -1,12 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Models\Workspace;
+use App\Models\WorkspaceLabel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\WorkspaceLabel>
+ * @extends Factory<WorkspaceLabel>
  */
 class WorkspaceLabelFactory extends Factory
 {

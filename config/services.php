@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -67,6 +69,13 @@ return [
         'redirect' => env('GOOGLE_CLIENT_REDIRECT'),
     ],
 
+    // Google OAuth (used for login/signup)
+    'google-auth' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_AUTH_CALLBACK'),
+    ],
+
     // Facebook Pages
     'facebook' => [
         'client_id' => env('FACEBOOK_CLIENT_ID'),
@@ -93,6 +102,15 @@ return [
         'client_id' => env('PINTEREST_CLIENT_ID'),
         'client_secret' => env('PINTEREST_CLIENT_SECRET'),
         'redirect' => env('PINTEREST_CLIENT_REDIRECT'),
+    ],
+
+    'gtm' => [
+        'id' => env('GTM_ID'),
+    ],
+
+    'posthog' => [
+        'api_key' => env('POSTHOG_API_KEY'),
+        'host' => env('POSTHOG_HOST', 'https://us.i.posthog.com'),
     ],
 
 ];

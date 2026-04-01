@@ -1,41 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Social;
 
 use App\Enums\PostPlatform\ContentType;
+use App\Exceptions\Social\InstagramPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
+use App\Models\SocialAccount;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class InstagramPublisher
 {
-    /**
-     * Meta Graph API error codes that indicate token issues.
-     *
-     * @see https://developers.facebook.com/docs/graph-api/guides/error-handling
-     */
-    private const TOKEN_ERROR_CODES = [
-        190, // Invalid OAuth access token
-    ];
-
-    private const TOKEN_ERROR_SUBCODES = [
-        458, // App not installed
-        459, // User checkpointed
-        460, // Password changed
-        463, // Session expired
-        464, // Unconfirmed user
-        467, // Invalid access token
-    ];
+    use HasSocialHttpClient;
 
     private string $baseUrl = 'https://graph.instagram.com/v24.0';
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
         $account = $postPlatform->socialAccount;
+
+        if ($account->is_token_expired || $account->is_token_expiring_soon) {
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
+            $account->refresh();
+        }
+
         $instagramId = $account->platform_user_id;
         $accessToken = $account->access_token;
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
 
         $media = $postPlatform->media;
 
@@ -47,37 +46,43 @@ class InstagramPublisher
         $contentType = $postPlatform->content_type;
 
         return match ($contentType) {
-            ContentType::InstagramReel => $this->publishReel($instagramId, $accessToken, $postPlatform->content, $firstMedia),
+            ContentType::InstagramReel => $this->publishReel($instagramId, $accessToken, $content, $firstMedia),
             ContentType::InstagramStory => $this->publishStory($instagramId, $accessToken, $firstMedia),
-            ContentType::InstagramFeed => $media->count() > 1
-                ? $this->publishCarousel($instagramId, $accessToken, $postPlatform->content, $media)
-                : $this->publishSingleImage($instagramId, $accessToken, $postPlatform->content, $firstMedia),
+            ContentType::InstagramFeed => $this->publishFeed($instagramId, $accessToken, $content, $media),
             default => throw new \Exception("Unsupported Instagram content type: {$contentType?->value}"),
         };
     }
 
+    private function publishFeed(string $instagramId, string $accessToken, ?string $content, $media): array
+    {
+        if ($media->count() > 1) {
+            return $this->publishCarousel($instagramId, $accessToken, $content, $media);
+        }
+
+        $firstMedia = $media->first();
+
+        if ($firstMedia->isVideo()) {
+            return $this->publishReel($instagramId, $accessToken, $content, $firstMedia);
+        }
+
+        return $this->publishSingleImage($instagramId, $accessToken, $content, $firstMedia);
+    }
+
     private function publishSingleImage(string $instagramId, string $accessToken, ?string $content, $media): array
     {
-        Log::info('Instagram publishing single image', ['instagram_id' => $instagramId, 'image_url' => $media->url]);
-
         // Step 1: Create container
-        $containerResponse = Http::post("{$this->baseUrl}/{$instagramId}/media", [
+        $containerResponse = $this->socialHttp()->post("{$this->baseUrl}/{$instagramId}/media", [
             'image_url' => $media->url,
             'caption' => $content,
             'access_token' => $accessToken,
         ]);
 
-        Log::info('Instagram container response', [
-            'status' => $containerResponse->status(),
-            'body' => $containerResponse->json(),
-        ]);
-
         if ($containerResponse->failed()) {
             Log::error('Instagram container creation failed', [
                 'status' => $containerResponse->status(),
-                'body' => $containerResponse->body(),
+                'body' => $this->redactResponseBody($containerResponse->body()),
             ]);
-            $this->handleApiError($containerResponse, 'Instagram API error');
+            $this->handleApiError($containerResponse);
         }
 
         $containerId = $containerResponse->json()['id'] ?? null;
@@ -95,10 +100,8 @@ class InstagramPublisher
 
     private function publishReel(string $instagramId, string $accessToken, ?string $content, $media): array
     {
-        Log::info('Instagram publishing reel', ['instagram_id' => $instagramId]);
-
         // Step 1: Create container for video/reel
-        $containerResponse = Http::post("{$this->baseUrl}/{$instagramId}/media", [
+        $containerResponse = $this->socialHttp()->post("{$this->baseUrl}/{$instagramId}/media", [
             'video_url' => $media->url,
             'caption' => $content,
             'media_type' => 'REELS',
@@ -108,9 +111,9 @@ class InstagramPublisher
         if ($containerResponse->failed()) {
             Log::error('Instagram reel container creation failed', [
                 'status' => $containerResponse->status(),
-                'body' => $containerResponse->body(),
+                'body' => $this->redactResponseBody($containerResponse->body()),
             ]);
-            $this->handleApiError($containerResponse, 'Instagram API error');
+            $this->handleApiError($containerResponse);
         }
 
         $containerId = $containerResponse->json()['id'] ?? null;
@@ -128,9 +131,7 @@ class InstagramPublisher
 
     private function publishStory(string $instagramId, string $accessToken, $media): array
     {
-        Log::info('Instagram publishing story', ['instagram_id' => $instagramId]);
-
-        $isVideo = str_starts_with($media->mime_type, 'video/');
+        $isVideo = $media->isVideo();
 
         $params = [
             'media_type' => 'STORIES',
@@ -144,14 +145,14 @@ class InstagramPublisher
         }
 
         // Step 1: Create story container
-        $containerResponse = Http::post("{$this->baseUrl}/{$instagramId}/media", $params);
+        $containerResponse = $this->socialHttp()->post("{$this->baseUrl}/{$instagramId}/media", $params);
 
         if ($containerResponse->failed()) {
             Log::error('Instagram story container creation failed', [
                 'status' => $containerResponse->status(),
-                'body' => $containerResponse->body(),
+                'body' => $this->redactResponseBody($containerResponse->body()),
             ]);
-            $this->handleApiError($containerResponse, 'Instagram API error');
+            $this->handleApiError($containerResponse);
         }
 
         $containerId = $containerResponse->json()['id'] ?? null;
@@ -169,16 +170,11 @@ class InstagramPublisher
 
     private function publishCarousel(string $instagramId, string $accessToken, ?string $content, $mediaCollection): array
     {
-        Log::info('Instagram publishing carousel', [
-            'instagram_id' => $instagramId,
-            'media_count' => $mediaCollection->count(),
-        ]);
-
         // Step 1: Create containers for each media item
         $childContainers = [];
 
         foreach ($mediaCollection as $media) {
-            $isVideo = str_starts_with($media->mime_type, 'video/');
+            $isVideo = $media->isVideo();
 
             $params = [
                 'is_carousel_item' => 'true',
@@ -192,17 +188,23 @@ class InstagramPublisher
                 $params['image_url'] = $media->url;
             }
 
-            $containerResponse = Http::post("{$this->baseUrl}/{$instagramId}/media", $params);
+            $containerResponse = $this->socialHttp()->post("{$this->baseUrl}/{$instagramId}/media", $params);
 
             if ($containerResponse->failed()) {
                 Log::error('Instagram carousel item creation failed', [
-                    'body' => $containerResponse->body(),
+                    'body' => $this->redactResponseBody($containerResponse->body()),
                 ]);
 
                 continue;
             }
 
-            $childId = $containerResponse->json()['id'];
+            $childId = $containerResponse->json()['id'] ?? null;
+
+            if (! $childId) {
+                Log::error('Instagram carousel item creation returned no ID', ['body' => $this->redactResponseBody($containerResponse->body())]);
+
+                continue;
+            }
 
             // Wait for video processing if needed
             if ($isVideo) {
@@ -217,7 +219,7 @@ class InstagramPublisher
         }
 
         // Step 2: Create carousel container
-        $carouselResponse = Http::post("{$this->baseUrl}/{$instagramId}/media", [
+        $carouselResponse = $this->socialHttp()->post("{$this->baseUrl}/{$instagramId}/media", [
             'media_type' => 'CAROUSEL',
             'caption' => $content,
             'children' => implode(',', $childContainers),
@@ -226,9 +228,9 @@ class InstagramPublisher
 
         if ($carouselResponse->failed()) {
             Log::error('Instagram carousel container creation failed', [
-                'body' => $carouselResponse->body(),
+                'body' => $this->redactResponseBody($carouselResponse->body()),
             ]);
-            $this->handleApiError($carouselResponse, 'Instagram API error');
+            $this->handleApiError($carouselResponse);
         }
 
         $carouselId = $carouselResponse->json()['id'] ?? null;
@@ -246,7 +248,7 @@ class InstagramPublisher
 
     private function publishContainer(string $instagramId, string $accessToken, string $containerId): array
     {
-        $publishResponse = Http::post("{$this->baseUrl}/{$instagramId}/media_publish", [
+        $publishResponse = $this->socialHttp()->post("{$this->baseUrl}/{$instagramId}/media_publish", [
             'creation_id' => $containerId,
             'access_token' => $accessToken,
         ]);
@@ -254,22 +256,24 @@ class InstagramPublisher
         if ($publishResponse->failed()) {
             Log::error('Instagram publish failed', [
                 'status' => $publishResponse->status(),
-                'body' => $publishResponse->body(),
+                'body' => $this->redactResponseBody($publishResponse->body()),
             ]);
-            $this->handleApiError($publishResponse, 'Instagram publish error');
+            $this->handleApiError($publishResponse);
         }
 
-        $mediaId = $publishResponse->json()['id'];
+        $mediaId = $publishResponse->json()['id'] ?? null;
+
+        if (! $mediaId) {
+            throw new \Exception('Instagram publish failed: no media ID returned');
+        }
 
         // Get permalink
-        $permalinkResponse = Http::get("{$this->baseUrl}/{$mediaId}", [
+        $permalinkResponse = $this->socialHttp()->get("{$this->baseUrl}/{$mediaId}", [
             'fields' => 'permalink',
             'access_token' => $accessToken,
         ]);
 
         $permalink = $permalinkResponse->json()['permalink'] ?? null;
-
-        Log::info('Instagram publish success', ['media_id' => $mediaId, 'permalink' => $permalink]);
 
         return [
             'id' => $mediaId,
@@ -280,7 +284,7 @@ class InstagramPublisher
     private function waitForMediaProcessing(string $containerId, string $accessToken, int $maxAttempts = 30): void
     {
         for ($i = 0; $i < $maxAttempts; $i++) {
-            $statusResponse = Http::get("{$this->baseUrl}/{$containerId}", [
+            $statusResponse = $this->socialHttp()->get("{$this->baseUrl}/{$containerId}", [
                 'fields' => 'status_code',
                 'access_token' => $accessToken,
             ]);
@@ -292,8 +296,6 @@ class InstagramPublisher
             }
 
             $status = $statusResponse->json()['status_code'] ?? 'UNKNOWN';
-
-            Log::info('Instagram media processing status', ['status' => $status, 'attempt' => $i]);
 
             if ($status === 'FINISHED') {
                 return;
@@ -309,26 +311,32 @@ class InstagramPublisher
         Log::warning('Instagram media processing timeout, proceeding anyway');
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function refreshToken(SocialAccount $account): void
     {
-        $body = $response->json() ?? [];
-        $error = $body['error'] ?? [];
-        $errorCode = $error['code'] ?? null;
-        $errorSubcode = $error['error_subcode'] ?? null;
-        $errorType = $error['type'] ?? null;
-        $message = $error['message'] ?? $response->body();
+        $response = Http::get('https://graph.instagram.com/refresh_access_token', [
+            'grant_type' => 'ig_refresh_token',
+            'access_token' => $account->access_token,
+        ]);
 
-        $isTokenError = $errorType === 'OAuthException'
-            || in_array($errorCode, self::TOKEN_ERROR_CODES)
-            || in_array($errorSubcode, self::TOKEN_ERROR_SUBCODES);
+        if ($response->failed()) {
+            Log::error('Instagram token refresh failed', ['body' => $this->redactResponseBody($response->body())]);
 
-        if ($isTokenError) {
-            throw new TokenExpiredException(
-                "{$context}: {$message}",
-                $errorCode ? (string) $errorCode : null
-            );
+            throw new TokenExpiredException('Failed to refresh Instagram token');
         }
 
-        throw new \Exception("{$context}: {$message}");
+        $data = $response->json();
+        $newToken = data_get($data, 'access_token');
+
+        $account->update([
+            'access_token' => $newToken,
+            'refresh_token' => $newToken,
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
+        ]);
+
+    }
+
+    private function handleApiError(Response $response): never
+    {
+        throw InstagramPublishException::fromApiResponse($response);
     }
 }

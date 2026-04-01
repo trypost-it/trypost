@@ -13,9 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { members as membersRoute } from '@/routes';
-import { destroy as destroyInvite, store as storeInvite } from '@/routes/invites';
-import { remove as removeMember } from '@/routes/members';
+import { members as membersRoute } from '@/routes/app';
+import { destroy as destroyInvite, store as storeInvite } from '@/routes/app/invites';
+import { remove as removeMember } from '@/routes/app/members';
 import { type BreadcrumbItem } from '@/types';
 
 interface Workspace {
@@ -52,7 +52,8 @@ interface Props {
 defineProps<Props>();
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.members.title'), href: membersRoute.url() },
+    { title: trans('settings.title'), href: membersRoute.url() },
+    { title: trans('settings.nav.members'), href: membersRoute.url() },
 ]);
 
 const form = useForm({
@@ -60,39 +61,39 @@ const form = useForm({
     role: 'member',
 });
 
-function submitInvite() {
+const submitInvite = () => {
     form.post(storeInvite.url(), {
         preserveScroll: true,
         onSuccess: () => {
             form.reset();
         },
     });
-}
+};
 
-function cancelInvite(inviteId: string) {
+const cancelInvite = (inviteId: string) => {
     if (confirm(trans('settings.members.invite.cancel_confirm'))) {
         router.delete(destroyInvite.url(inviteId), {
             preserveScroll: true,
         });
     }
-}
+};
 
-function handleRemoveMember(memberId: string) {
+const handleRemoveMember = (memberId: string) => {
     if (confirm(trans('settings.members.list.remove_confirm'))) {
         router.delete(removeMember.url(memberId), {
             preserveScroll: true,
         });
     }
-}
+};
 
-function getRoleLabel(role: string): string {
+const getRoleLabel = (role: string): string => {
     return trans(`settings.members.roles.${role}`);
-}
+};
 
-function getRoleIcon(role: string) {
+const getRoleIcon = (role: string) => {
     if (role === 'admin') return IconShield;
     return IconUser;
-}
+};
 </script>
 
 <template>

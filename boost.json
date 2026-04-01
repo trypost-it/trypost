@@ -5,15 +5,20 @@
     "guidelines": true,
     "mcp": true,
     "nightwatch_mcp": true,
-    "sail": true,
+    "packages": [
+        "laravel/ai"
+    ],
+    "sail": false,
     "skills": [
         "cashier-stripe-development",
         "laravel-best-practices",
         "configuring-horizon",
+        "mcp-development",
         "socialite-development",
         "wayfinder-development",
         "pest-testing",
         "inertia-vue-development",
-        "tailwindcss-development"
+        "tailwindcss-development",
+        "ai-sdk-development"
     ]
 }

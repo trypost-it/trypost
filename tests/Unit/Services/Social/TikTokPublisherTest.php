@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\TikTokPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\Post;
 use App\Models\PostPlatform;
@@ -149,8 +152,8 @@ test('tiktok publisher throws token expired exception on auth error', function (
     Http::fake([
         'https://open.tiktokapis.com/v2/post/publish/video/init/' => Http::response([
             'error' => [
-                'code' => 'access_token_expired',
-                'message' => 'Access token has expired',
+                'code' => 'access_token_invalid',
+                'message' => 'Access token is invalid',
             ],
         ], 401),
     ]);
@@ -283,6 +286,49 @@ test('tiktok publisher returns null url when username missing', function () {
     expect($result['url'])->toBeNull();
 });
 
+test('tiktok publisher falls back to self only when creator info fails', function () {
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/test-video.mp4',
+        'original_filename' => 'test-video.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 1024000,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        // creator_info/query returns 500 — publisher should fall back to SELF_ONLY
+        'https://open.tiktokapis.com/v2/post/publish/creator_info/query/' => Http::response([
+            'error' => ['code' => 'internal_error', 'message' => 'Internal server error'],
+        ], 500),
+        'https://open.tiktokapis.com/v2/post/publish/video/init/' => Http::response([
+            'data' => ['publish_id' => 'pub_fallback_123'],
+        ], 200),
+        'https://open.tiktokapis.com/v2/post/publish/status/fetch/' => Http::response([
+            'data' => [
+                'status' => 'PUBLISH_COMPLETE',
+                'publish_id' => 'pub_fallback_123',
+            ],
+        ], 200),
+    ]);
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result)->toHaveKey('id');
+    expect($result['id'])->toBe('pub_fallback_123');
+
+    // Assert SELF_ONLY was used in the video init payload
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), '/post/publish/video/init/')) {
+            return false;
+        }
+        $body = json_decode($request->body(), true);
+
+        return data_get($body, 'post_info.privacy_level') === 'SELF_ONLY';
+    });
+});
+
 test('tiktok publisher throws exception when publish fails', function () {
     $this->postPlatform->media()->create([
         'collection' => 'default',
@@ -307,5 +353,5 @@ test('tiktok publisher throws exception when publish fails', function () {
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(Exception::class, 'TikTok publish failed: video_rejected');
+        ->toThrow(TikTokPublishException::class);
 });

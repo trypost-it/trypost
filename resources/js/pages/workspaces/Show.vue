@@ -5,8 +5,8 @@ import { IconCalendar, IconUsers, IconFileText, IconCircleCheck, IconClock, Icon
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { accounts, calendar } from '@/routes';
-import { settings } from '@/routes/workspace';
+import { accounts, calendar } from '@/routes/app';
+import { settings } from '@/routes/app/workspace';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {

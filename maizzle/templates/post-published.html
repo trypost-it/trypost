@@ -1,0 +1,50 @@
+<x-main>
+  <div class="bg-zinc-50 sm:px-4 font-sans">
+    <table align="center">
+      <tr>
+        <td class="w-[552px] max-w-full">
+          <x-header />
+
+          <table class="w-full">
+            <tr>
+              <td class="p-12 sm:px-6 text-base text-zinc-700 bg-white rounded shadow-sm">
+                <h1 class="m-0 mb-6 text-2xl sm:leading-8 text-black font-semibold">
+                  @{{ $title }}
+                </h1>
+
+                <p class="m-0 leading-6">
+                  @{{ $body }}
+                </p>
+
+                <div class="mt-4 p-4 bg-green-50 rounded">
+                  <p class="m-0 text-sm font-semibold text-green-900">
+                    Published on:
+                  </p>
+                  <ul class="m-0 mt-2 pl-5 leading-6 text-sm">
+                    @foreach($publishedPlatforms as $platform)
+                      <li>
+                        <strong>@{{ $platform['name'] }}</strong>
+                        @if($platform['url'])
+                          — <a href="@{{ $platform['url'] }}" target="_blank" class="text-green-700 underline">View post</a>
+                        @endif
+                      </li>
+                    @endforeach
+                  </ul>
+                </div>
+
+                <x-spacer height="24px" />
+
+                <div class="flex items-center justify-center">
+                  <x-button href="@{{ $url }}">
+                    View Post &rarr;
+                  </x-button>
+                </div>
+              </td>
+            </tr>
+          </table>
+          <x-footer />
+        </td>
+      </tr>
+    </table>
+  </div>
+</x-main>

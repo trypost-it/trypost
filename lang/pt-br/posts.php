@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Posts',
+    'search' => 'Buscar posts...',
     'all_posts' => 'Todos os Posts',
     'new_post' => 'Novo Post',
     'no_posts' => 'Nenhum post encontrado',
@@ -35,6 +36,7 @@ return [
     ],
 
     'status' => [
+        'pending' => 'Pendente',
         'draft' => 'Rascunho',
         'scheduled' => 'Agendado',
         'publishing' => 'Publicando',
@@ -54,7 +56,7 @@ return [
         'view_title' => 'Visualizar Post',
         'manage_platforms' => 'Gerenciar plataformas',
         'sync' => 'Sincronizar',
-        'labels' => 'Etiquetas',
+        'labels' => 'Etiqueta',
         'hashtags' => 'Hashtags',
         'schedule' => 'Agendar',
         'publish' => 'Publicar',
@@ -113,6 +115,7 @@ return [
             'videos_not_supported' => 'Vídeos não suportados',
             'max_images' => 'Máx :count imagens',
             'requires_media' => 'Requer mídia',
+            'requires_content' => 'Texto é obrigatório',
             'exceeded' => ':count excedido',
             'does_not_support_images' => ':platform não suporta imagens',
             'supports_up_to_images' => ':platform suporta até :count imagens',
@@ -223,5 +226,6 @@ return [
 
     'errors' => [
         'account_disconnected' => 'Conta social está desconectada',
+        'account_inactive' => 'Conta social está desativada',
     ],
 ];

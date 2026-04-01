@@ -27,19 +27,19 @@ const open = useVModel(props, "open", emits, {
   passive: (props.open === undefined) as false,
 }) as Ref<boolean>
 
-function setOpen(value: boolean) {
+const setOpen = (value: boolean) => {
   open.value = value // emits('update:open', value)
 
   // This sets the cookie to keep the sidebar state.
   document.cookie = `${SIDEBAR_COOKIE_NAME}=${open.value}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
 }
 
-function setOpenMobile(value: boolean) {
+const setOpenMobile = (value: boolean) => {
   openMobile.value = value
 }
 
 // Helper to toggle the sidebar.
-function toggleSidebar() {
+const toggleSidebar = () => {
   return isMobile.value ? setOpenMobile(!openMobile.value) : setOpen(!open.value)
 }
 
@@ -73,7 +73,7 @@ provideSidebarContext({
         '--sidebar-width': SIDEBAR_WIDTH,
         '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
       }"
-      :class="cn('group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full', props.class)"
+      :class="cn('group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex h-svh w-full overflow-hidden', props.class)"
       v-bind="$attrs"
     >
       <slot />

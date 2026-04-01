@@ -9,10 +9,14 @@ use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\SignupSuccessController;
+use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest')->group(function () {
+Route::get('/invites/{invite}', [AcceptInviteController::class, 'show'])->name('app.invites.show');
+
+Route::middleware(['guest'])->group(function () {
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
     Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.store');
 
@@ -24,14 +28,14 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+
+    Route::get('/auth/google/redirect', [SocialLoginController::class, 'redirect'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [SocialLoginController::class, 'callback'])->name('auth.google.callback');
 });
 
-// Invite routes - accessible by both guests and authenticated users
-Route::get('/invites/{invite}', [AcceptInviteController::class, 'show'])->name('invites.show');
-Route::post('/invites/{invite}/accept', [AcceptInviteController::class, 'accept'])->name('invites.accept')->middleware('auth');
-Route::post('/invites/{invite}/decline', [AcceptInviteController::class, 'decline'])->name('invites.decline')->middleware('auth');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/register/success', SignupSuccessController::class)->name('register.success');
 
-Route::middleware('auth')->group(function () {
     Route::get('/verify-email', EmailVerificationPromptController::class)->name('verification.notice');
 
     Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
@@ -43,4 +47,7 @@ Route::middleware('auth')->group(function () {
         ->name('verification.send');
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+    Route::post('/invites/{invite}/accept', [AcceptInviteController::class, 'accept'])->name('app.invites.accept');
+    Route::post('/invites/{invite}/decline', [AcceptInviteController::class, 'decline'])->name('app.invites.decline');
 });

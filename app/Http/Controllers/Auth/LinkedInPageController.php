@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Auth;
 
 use App\Enums\SocialAccount\Platform as SocialPlatform;
@@ -39,7 +41,7 @@ class LinkedInPageController extends SocialController
         $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
-            return redirect()->route('workspaces.create');
+            return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('manageAccounts', $workspace);
@@ -116,7 +118,7 @@ class LinkedInPageController extends SocialController
                 ],
             ]);
 
-            return redirect()->route('social.linkedin-page.select-page');
+            return redirect()->route('app.social.linkedin-page.select-page');
         } catch (\Exception $e) {
             Log::error('LinkedIn Page OAuth Error', [
                 'error' => $e->getMessage(),
@@ -134,7 +136,7 @@ class LinkedInPageController extends SocialController
             session()->flash('flash.banner', __('accounts.flash.session_expired'));
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('accounts');
+            return redirect()->route('app.accounts');
         }
 
         $workspace = Workspace::find($pendingData['workspace_id']);
@@ -143,7 +145,7 @@ class LinkedInPageController extends SocialController
             session()->flash('flash.banner', __('accounts.flash.workspace_not_found'));
             session()->flash('flash.bannerStyle', 'danger');
 
-            return redirect()->route('accounts');
+            return redirect()->route('app.accounts');
         }
 
         return Inertia::render('accounts/LinkedInPageSelect', [
@@ -260,18 +262,16 @@ class LinkedInPageController extends SocialController
         $data = $response->json();
         $organizations = [];
 
-        foreach ($data['elements'] ?? [] as $element) {
-            $org = $element['organization~'] ?? null;
+        foreach (data_get($data, 'elements', []) as $element) {
+            $org = data_get($element, 'organization~', null);
             if ($org) {
                 $logoUrl = null;
-                if (isset($org['logoV2']['original~']['elements'][0]['identifiers'][0]['identifier'])) {
-                    $logoUrl = $org['logoV2']['original~']['elements'][0]['identifiers'][0]['identifier'];
-                }
+                $logoUrl = data_get($org, 'logoV2.original~.elements.0.identifiers.0.identifier');
 
                 $organizations[] = [
-                    'id' => $org['id'],
-                    'name' => $org['localizedName'] ?? 'Unknown',
-                    'vanity_name' => $org['vanityName'] ?? null,
+                    'id' => data_get($org, 'id'),
+                    'name' => data_get($org, 'localizedName', 'Unknown'),
+                    'vanity_name' => data_get($org, 'vanityName', null),
                     'logo' => $logoUrl,
                 ];
             }

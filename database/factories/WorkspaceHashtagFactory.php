@@ -1,12 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Models\Workspace;
+use App\Models\WorkspaceHashtag;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\WorkspaceHashtag>
+ * @extends Factory<WorkspaceHashtag>
  */
 class WorkspaceHashtagFactory extends Factory
 {

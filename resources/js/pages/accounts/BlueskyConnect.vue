@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import PopupLayout from '@/layouts/PopupLayout.vue';
-import { store as storeBluesky } from '@/routes/social/bluesky';
+import { store as storeBluesky } from '@/routes/app/social/bluesky';
 
 interface Props {
     errors?: Record<string, string>;
@@ -47,7 +47,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                     <Label for="identifier">{{ $t('accounts.bluesky.email') }}</Label>
                     <Input id="identifier" name="identifier" v-model="identifier" type="text"
                         :placeholder="trans('accounts.bluesky.email_placeholder')" :class="{ 'border-destructive': errors?.identifier }"
-                        required />
+                    />
                     <p v-if="errors?.identifier" class="text-sm text-destructive">
                         {{ errors.identifier }}
                     </p>
@@ -57,7 +57,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                     <Label for="password">{{ $t('accounts.bluesky.app_password') }}</Label>
                     <Input id="password" name="password" v-model="password" type="password"
                         :placeholder="trans('accounts.bluesky.app_password_placeholder')" :class="{ 'border-destructive': errors?.password }"
-                        required />
+                    />
                     <p v-if="errors?.password" class="text-sm text-destructive">
                         {{ errors.password }}
                     </p>

@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Policies;
 
-use App\Enums\UserWorkspace\Role as WorkspaceRole;
+use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
 
@@ -15,7 +17,7 @@ class WorkspacePolicy
 
     public function view(User $user, Workspace $workspace): bool
     {
-        return $this->isOwner($user, $workspace) || $workspace->members->contains($user);
+        return $this->isMember($user, $workspace);
     }
 
     public function create(User $user): bool
@@ -25,45 +27,48 @@ class WorkspacePolicy
 
     public function update(User $user, Workspace $workspace): bool
     {
-        return $this->isOwner($user, $workspace) || $this->isAdmin($user, $workspace);
+        return $this->hasRole($user, $workspace, [Role::Owner, Role::Admin]);
     }
 
     public function delete(User $user, Workspace $workspace): bool
     {
-        return $this->isOwner($user, $workspace);
+        return $this->hasRole($user, $workspace, [Role::Owner]);
     }
 
     public function restore(User $user, Workspace $workspace): bool
     {
-        return $this->isOwner($user, $workspace);
+        return $this->hasRole($user, $workspace, [Role::Owner]);
     }
 
     public function forceDelete(User $user, Workspace $workspace): bool
     {
-        return $this->isOwner($user, $workspace);
+        return $this->hasRole($user, $workspace, [Role::Owner]);
     }
 
     public function manageTeam(User $user, Workspace $workspace): bool
     {
-        return $this->isOwner($user, $workspace) || $this->isAdmin($user, $workspace);
+        return $this->hasRole($user, $workspace, [Role::Owner, Role::Admin]);
     }
 
     public function manageAccounts(User $user, Workspace $workspace): bool
     {
-        return $this->isOwner($user, $workspace) || $this->isAdmin($user, $workspace);
+        return $this->hasRole($user, $workspace, [Role::Owner, Role::Admin]);
     }
 
     public function createPost(User $user, Workspace $workspace): bool
     {
-        return $this->isOwner($user, $workspace) || $workspace->members->contains($user);
+        return $this->isMember($user, $workspace);
     }
 
-    private function isOwner(User $user, Workspace $workspace): bool
+    public function manageBilling(User $user, Workspace $workspace): bool
     {
-        return $user->id === $workspace->user_id;
+        return $this->hasRole($user, $workspace, [Role::Owner]);
     }
 
-    private function isAdmin(User $user, Workspace $workspace): bool
+    /**
+     * @param  Role[]  $roles
+     */
+    private function hasRole(User $user, Workspace $workspace, array $roles): bool
     {
         $member = $workspace->members()->where('user_id', $user->id)->first();
 
@@ -71,6 +76,11 @@ class WorkspacePolicy
             return false;
         }
 
-        return $member->pivot->role === WorkspaceRole::Admin->value;
+        return in_array(Role::tryFrom($member->pivot->role), $roles);
+    }
+
+    private function isMember(User $user, Workspace $workspace): bool
+    {
+        return $workspace->members()->where('user_id', $user->id)->exists();
     }
 }

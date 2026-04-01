@@ -1,14 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
-use App\Models\Language;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvite;
 
 beforeEach(function () {
-    Language::factory()->create(['code' => 'en']);
     $this->owner = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->owner->id]);
 });
@@ -20,7 +20,7 @@ test('show invite displays invite details for guest', function () {
         'role' => WorkspaceRole::Member,
     ]);
 
-    $response = $this->get(route('invites.show', $invite));
+    $response = $this->get(route('app.invites.show', $invite));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -45,7 +45,7 @@ test('show invite displays invite details for authenticated user', function () {
         'role' => WorkspaceRole::Member,
     ]);
 
-    $response = $this->actingAs($user)->get(route('invites.show', $invite));
+    $response = $this->actingAs($user)->get(route('app.invites.show', $invite));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -55,7 +55,7 @@ test('show invite displays invite details for authenticated user', function () {
 });
 
 test('show invite returns 404 for non-existent invite', function () {
-    $response = $this->get(route('invites.show', 'non-existent-uuid'));
+    $response = $this->get(route('app.invites.show', 'non-existent-uuid'));
 
     $response->assertNotFound();
 });
@@ -65,7 +65,7 @@ test('accept invite requires authentication', function () {
         'workspace_id' => $this->workspace->id,
     ]);
 
-    $response = $this->post(route('invites.accept', $invite));
+    $response = $this->post(route('app.invites.accept', $invite));
 
     $response->assertRedirect(route('login'));
 });
@@ -82,9 +82,9 @@ test('accept invite adds user to workspace', function () {
         'role' => WorkspaceRole::Admin,
     ]);
 
-    $response = $this->actingAs($user)->post(route('invites.accept', $invite));
+    $response = $this->actingAs($user)->post(route('app.invites.accept', $invite));
 
-    $response->assertRedirect(route('calendar'));
+    $response->assertRedirect(route('app.calendar'));
 
     // User should be member of workspace
     expect($this->workspace->hasMember($user))->toBeTrue();
@@ -109,9 +109,9 @@ test('accept invite fails for wrong email', function () {
         'role' => WorkspaceRole::Member,
     ]);
 
-    $response = $this->actingAs($user)->post(route('invites.accept', $invite));
+    $response = $this->actingAs($user)->post(route('app.invites.accept', $invite));
 
-    $response->assertRedirect(route('calendar'));
+    $response->assertRedirect(route('app.calendar'));
     $response->assertSessionHas('flash.bannerStyle', 'danger');
 
     // Invite should NOT be deleted
@@ -132,9 +132,9 @@ test('accept invite handles already member', function () {
         'role' => WorkspaceRole::Admin,
     ]);
 
-    $response = $this->actingAs($user)->post(route('invites.accept', $invite));
+    $response = $this->actingAs($user)->post(route('app.invites.accept', $invite));
 
-    $response->assertRedirect(route('calendar'));
+    $response->assertRedirect(route('app.calendar'));
     $response->assertSessionHas('flash.bannerStyle', 'info');
 
     // Invite should be deleted
@@ -146,7 +146,7 @@ test('decline invite requires authentication', function () {
         'workspace_id' => $this->workspace->id,
     ]);
 
-    $response = $this->post(route('invites.decline', $invite));
+    $response = $this->post(route('app.invites.decline', $invite));
 
     $response->assertRedirect(route('login'));
 });
@@ -163,9 +163,9 @@ test('decline invite deletes the invite', function () {
         'role' => WorkspaceRole::Member,
     ]);
 
-    $response = $this->actingAs($user)->post(route('invites.decline', $invite));
+    $response = $this->actingAs($user)->post(route('app.invites.decline', $invite));
 
-    $response->assertRedirect(route('calendar'));
+    $response->assertRedirect(route('app.calendar'));
     $response->assertSessionHas('flash.bannerStyle', 'info');
 
     // Invite should be deleted
@@ -187,9 +187,9 @@ test('decline invite fails for wrong email', function () {
         'role' => WorkspaceRole::Member,
     ]);
 
-    $response = $this->actingAs($user)->post(route('invites.decline', $invite));
+    $response = $this->actingAs($user)->post(route('app.invites.decline', $invite));
 
-    $response->assertRedirect(route('calendar'));
+    $response->assertRedirect(route('app.calendar'));
     $response->assertSessionHas('flash.bannerStyle', 'danger');
 
     // Invite should NOT be deleted

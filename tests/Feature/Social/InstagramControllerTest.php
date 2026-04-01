@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\SocialAccount\Platform;
 use App\Enums\SocialAccount\Status;
+use App\Enums\UserWorkspace\Role;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -12,7 +15,7 @@ beforeEach(function () {
     $this->user = User::factory()->create();
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => 'owner']);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
 });
 
 test('instagram connect redirects to oauth provider', function () {
@@ -27,7 +30,7 @@ test('instagram connect redirects to oauth provider', function () {
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')
-        ->get(route('social.instagram.connect'));
+        ->get(route('app.social.instagram.connect'));
 
     $response->assertStatus(409);
 
@@ -55,7 +58,7 @@ test('instagram oauth callback creates account', function () {
             'user' => $socialiteUser,
         ]));
 
-    $response = $this->actingAs($this->user)->get(route('social.instagram.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.instagram.callback'));
 
     $response->assertOk();
     $response->assertViewIs('auth.social-callback');
@@ -71,7 +74,7 @@ test('instagram oauth callback creates account', function () {
 });
 
 test('instagram callback fails with expired session', function () {
-    $response = $this->actingAs($this->user)->get(route('social.instagram.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.instagram.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -106,7 +109,7 @@ test('user cannot connect instagram if already connected', function () {
             'user' => $socialiteUser,
         ]));
 
-    $response = $this->actingAs($this->user)->get(route('social.instagram.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.instagram.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -141,7 +144,7 @@ test('user can reconnect disconnected instagram account', function () {
             'user' => $socialiteUser,
         ]));
 
-    $response = $this->actingAs($this->user)->get(route('social.instagram.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.instagram.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', true);
@@ -157,13 +160,13 @@ test('instagram callback handles oauth errors gracefully', function () {
     ]);
 
     $mock = Mockery::mock();
-    $mock->shouldReceive('user')->andThrow(new \Exception('OAuth error'));
+    $mock->shouldReceive('user')->andThrow(new Exception('OAuth error'));
 
     Socialite::shouldReceive('driver')
         ->with('instagram')
         ->andReturn($mock);
 
-    $response = $this->actingAs($this->user)->get(route('social.instagram.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.instagram.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -173,7 +176,7 @@ test('instagram callback handles oauth errors gracefully', function () {
 test('instagram connect redirects to create workspace if none exists', function () {
     $this->user->update(['current_workspace_id' => null]);
 
-    $response = $this->actingAs($this->user)->get(route('social.instagram.connect'));
+    $response = $this->actingAs($this->user)->get(route('app.social.instagram.connect'));
 
-    $response->assertRedirect(route('workspaces.create'));
+    $response->assertRedirect(route('app.workspaces.create'));
 });

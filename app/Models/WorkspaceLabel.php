@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use Database\Factories\WorkspaceLabelFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WorkspaceLabel extends Model
 {
-    /** @use HasFactory<\Database\Factories\WorkspaceLabelFactory> */
+    /** @use HasFactory<WorkspaceLabelFactory> */
     use HasFactory, HasUuids, SoftDeletes;
 
     protected $fillable = [

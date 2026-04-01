@@ -1,48 +1,41 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Social;
 
+use App\Exceptions\Social\YouTubePublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
-use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Http\Client\Response;
+use App\Services\Social\Concerns\HasSocialHttpClient;
+use Google\Client as GoogleClient;
+use Google\Service\YouTube;
+use Google\Service\YouTube\Video;
+use Google\Service\YouTube\VideoSnippet;
+use Google\Service\YouTube\VideoStatus;
+use Google_Http_MediaFileUpload;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class YouTubePublisher
 {
-    /**
-     * Google/YouTube API error codes that indicate token issues.
-     *
-     * @see https://developers.google.com/youtube/v3/docs/errors
-     */
-    private const TOKEN_ERROR_CODES = [
-        'invalid_grant',
-        'invalid_token',
-        'unauthorized',
-    ];
+    use HasSocialHttpClient;
 
-    private const TOKEN_ERROR_REASONS = [
-        'authError',
-        'forbidden',
-        'unauthorized',
-    ];
-
-    private string $baseUrl = 'https://www.googleapis.com';
-
-    private string $accessToken;
+    private const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
-            $this->refreshToken($account);
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
             $account->refresh();
         }
-
-        $this->accessToken = $account->access_token;
 
         $media = $postPlatform->media;
 
@@ -51,121 +44,154 @@ class YouTubePublisher
         }
 
         $firstMedia = $media->first();
-        $isVideo = str_starts_with($firstMedia->mime_type, 'video/');
 
-        if (! $isVideo) {
+        if (! $firstMedia->isVideo()) {
             throw new \Exception('YouTube Shorts only supports video content.');
         }
 
-        return $this->publishShort($postPlatform, $firstMedia);
+        return $this->publishShort($postPlatform, $firstMedia, $account, $content);
     }
 
-    private function getHttpClient(): PendingRequest
+    private function createGoogleClient(SocialAccount $account): GoogleClient
     {
-        return Http::withToken($this->accessToken)
-            ->timeout(600);
+        $client = new GoogleClient;
+        $client->setClientId(config('services.google.client_id'));
+        $client->setClientSecret(config('services.google.client_secret'));
+
+        $remainingSeconds = $account->token_expires_at
+            ? max(0, (int) now()->diffInSeconds($account->token_expires_at, false))
+            : 3600;
+
+        $tokenData = [
+            'access_token' => $account->access_token,
+            'created' => time(),
+            'expires_in' => $remainingSeconds,
+        ];
+
+        if ($account->refresh_token) {
+            $tokenData['refresh_token'] = $account->refresh_token;
+        }
+
+        $client->setAccessToken($tokenData);
+
+        return $client;
     }
 
-    private function publishShort(PostPlatform $postPlatform, $media): array
+    private function publishShort(PostPlatform $postPlatform, $media, SocialAccount $account, ?string $content): array
     {
-        if (empty($postPlatform->content)) {
+        if (empty($content)) {
             throw new \Exception('YouTube Shorts require a title. Please add text to your post.');
         }
 
-        $title = $this->buildTitle($postPlatform->content);
-        $description = $postPlatform->content;
+        $title = $this->buildTitle($content);
+        $description = $content;
 
-        Log::info('YouTube Shorts publishing video', [
-            'video_url' => $media->url,
-            'title' => $title,
-        ]);
+        $tempFile = tempnam(sys_get_temp_dir(), 'yt_upload_');
+        $handle = null;
 
-        // Step 1: Get video content
-        $videoContent = file_get_contents($media->url);
-        $fileSize = strlen($videoContent);
+        try {
+            // Download video to temp file (memory-safe)
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])
+                ->timeout(600)
+                ->get($media->url);
 
-        Log::info('YouTube video file size', ['size' => $fileSize]);
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download video for YouTube upload: HTTP '.$downloadResponse->status());
+            }
 
-        // Step 2: Initialize resumable upload
-        $initResponse = $this->getHttpClient()
-            ->withHeaders([
-                'Content-Type' => 'application/json; charset=UTF-8',
-                'X-Upload-Content-Length' => $fileSize,
-                'X-Upload-Content-Type' => $media->mime_type,
-            ])
-            ->post("{$this->baseUrl}/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status", [
-                'snippet' => [
-                    'title' => $title,
-                    'description' => $description,
-                    'categoryId' => '22', // People & Blogs
-                ],
-                'status' => [
-                    'privacyStatus' => 'public',
-                    'selfDeclaredMadeForKids' => false,
-                ],
+            $fileSize = filesize($tempFile);
+
+            if ($fileSize === false || $fileSize < 1024) {
+                throw new \Exception('Downloaded video is too small or empty ('.$fileSize.' bytes), aborting upload');
+            }
+
+            // Set up Google Client with deferred mode for resumable upload
+            $client = $this->createGoogleClient($account);
+            $client->setDefer(true);
+
+            $youtube = new YouTube($client);
+
+            // Build video metadata
+            $snippet = new VideoSnippet;
+            $snippet->setTitle($title);
+            $snippet->setDescription($description);
+            $snippet->setCategoryId('22');
+
+            $status = new VideoStatus;
+            $status->setPrivacyStatus('public');
+            $status->setSelfDeclaredMadeForKids(false);
+
+            $video = new Video;
+            $video->setSnippet($snippet);
+            $video->setStatus($status);
+
+            // Initialize resumable upload request
+            $insertRequest = $youtube->videos->insert('snippet,status', $video);
+
+            $mediaUpload = new Google_Http_MediaFileUpload(
+                $client,
+                $insertRequest,
+                $media->mime_type ?: 'video/mp4',
+                null,
+                true,
+                self::CHUNK_SIZE
+            );
+            $mediaUpload->setFileSize($fileSize);
+
+            // Upload in chunks (memory-safe for large files)
+            $uploadStatus = false;
+            $handle = fopen($tempFile, 'r');
+
+            if ($handle === false) {
+                throw new \Exception('Failed to open temp file for YouTube upload');
+            }
+
+            while (! $uploadStatus && ! feof($handle)) {
+                $chunk = fread($handle, self::CHUNK_SIZE);
+                $uploadStatus = $mediaUpload->nextChunk($chunk);
+            }
+
+            fclose($handle);
+            $handle = null;
+
+            $client->setDefer(false);
+
+            if (! $uploadStatus instanceof Video) {
+                throw new \Exception('YouTube upload failed: no video object returned');
+            }
+
+            $videoId = $uploadStatus->getId();
+
+            return [
+                'id' => $videoId,
+                'url' => "https://www.youtube.com/shorts/{$videoId}",
+            ];
+        } catch (\Google\Service\Exception $e) {
+            $this->handleGoogleError($e);
+        } catch (\Throwable $e) {
+            Log::error('YouTube upload failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
-        if ($initResponse->failed()) {
-            Log::error('YouTube upload init failed', [
-                'status' => $initResponse->status(),
-                'body' => $initResponse->body(),
-            ]);
-            $this->handleApiError($initResponse, 'YouTube API error');
+            throw $e;
+        } finally {
+            if ($handle !== null && is_resource($handle)) {
+                fclose($handle);
+            }
+
+            @unlink($tempFile);
         }
-
-        $uploadUrl = $initResponse->header('Location');
-
-        if (! $uploadUrl) {
-            throw new \Exception('YouTube did not return an upload URL');
-        }
-
-        Log::info('YouTube upload initialized', ['uploadUrl' => $uploadUrl]);
-
-        // Step 3: Upload the video content
-        $uploadResponse = Http::withToken($this->accessToken)
-            ->withHeaders([
-                'Content-Type' => $media->mime_type,
-                'Content-Length' => $fileSize,
-            ])
-            ->timeout(600)
-            ->withBody($videoContent, $media->mime_type)
-            ->put($uploadUrl);
-
-        if ($uploadResponse->failed()) {
-            Log::error('YouTube video upload failed', [
-                'status' => $uploadResponse->status(),
-                'body' => $uploadResponse->body(),
-            ]);
-            $this->handleApiError($uploadResponse, 'YouTube upload error');
-        }
-
-        $data = $uploadResponse->json();
-
-        Log::info('YouTube upload response', ['data' => $data]);
-
-        $videoId = $data['id'] ?? null;
-
-        if (! $videoId) {
-            throw new \Exception('YouTube did not return a video ID');
-        }
-
-        return [
-            'id' => $videoId,
-            'url' => "https://www.youtube.com/shorts/{$videoId}",
-        ];
     }
 
     private function buildTitle(string $content): string
     {
-        // YouTube title max is 100 characters
-        // For Shorts, add #Shorts hashtag to help YouTube classify it
         $maxLength = 100;
         $shortsTag = ' #Shorts';
         $availableLength = $maxLength - strlen($shortsTag);
 
-        // Get first line or first sentence as title
-        $title = strtok($content, "\n");
-        $title = strtok($title, '.');
+        $firstLine = explode("\n", $content)[0];
+        $title = explode('.', $firstLine)[0];
 
         if (strlen($title) > $availableLength) {
             $title = substr($title, 0, $availableLength - 3).'...';
@@ -188,51 +214,23 @@ class YouTubePublisher
         ]);
 
         if ($response->failed()) {
-            Log::error('YouTube token refresh failed', ['body' => $response->body()]);
-            $this->handleApiError($response, 'Failed to refresh YouTube token');
+            Log::error('YouTube token refresh failed', ['body' => $this->redactResponseBody($response->body())]);
+
+            throw new TokenExpiredException('Failed to refresh YouTube token');
         }
 
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
-        Log::info('YouTube token refreshed successfully');
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function handleGoogleError(\Google\Service\Exception $e): never
     {
-        $body = $response->json() ?? [];
-
-        // Google OAuth error format
-        $errorCode = $body['error'] ?? null;
-        $errorDescription = $body['error_description'] ?? null;
-
-        // YouTube API error format
-        $error = $body['error'] ?? [];
-        if (is_array($error)) {
-            $errors = $error['errors'] ?? [];
-            $reason = $errors[0]['reason'] ?? null;
-            $message = $error['message'] ?? $errorDescription ?? $response->body();
-        } else {
-            $reason = null;
-            $message = $errorDescription ?? $response->body();
-        }
-
-        $isTokenError = $response->status() === 401
-            || in_array($errorCode, self::TOKEN_ERROR_CODES)
-            || in_array($reason, self::TOKEN_ERROR_REASONS);
-
-        if ($isTokenError) {
-            throw new TokenExpiredException(
-                "{$context}: {$message}",
-                is_string($errorCode) ? $errorCode : $reason
-            );
-        }
-
-        throw new \Exception("{$context}: {$message}");
+        throw YouTubePublishException::fromGoogleException($e);
     }
 }

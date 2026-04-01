@@ -67,7 +67,7 @@ import { useMediaManager, type MediaItem } from '@/composables/useMediaManager';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { destroy as destroyPost, index as postsIndex, update as updatePost } from '@/routes/posts';
+import { destroy as destroyPost, edit as editPost, index as postsIndex, update as updatePost } from '@/routes/app/posts';
 import { type BreadcrumbItemType } from '@/types';
 
 interface SocialAccount {
@@ -133,6 +133,7 @@ interface PlatformConfig {
     maxImages: number;
     allowedMediaTypes: string[];
     supportsTextOnly: boolean;
+    requiresContent: boolean;
 }
 
 interface Workspace {
@@ -155,7 +156,7 @@ const props = defineProps<Props>();
 
 const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
     { title: trans('posts.title'), href: postsIndex.url() },
-    { title: trans('posts.edit.title'), href: '#' },
+    { title: isReadOnly.value ? trans('posts.edit.view_title') : trans('posts.edit.title'), href: editPost.url(post.value.id) },
 ]);
 
 // Reactive state for real-time updates
@@ -332,7 +333,7 @@ const contentTypeKeys: Record<string, string[]> = {
     'mastodon': ['mastodon_post'],
 };
 
-function getDefaultContentType(platform: string): string {
+const getDefaultContentType = (platform: string): string => {
     const defaults: Record<string, string> = {
         'instagram': 'instagram_feed',
         'linkedin': 'linkedin_post',
@@ -344,25 +345,26 @@ function getDefaultContentType(platform: string): string {
         'threads': 'threads_post',
         'pinterest': 'pinterest_pin',
         'bluesky': 'bluesky_post',
+        'mastodon': 'mastodon_post',
     };
     return defaults[platform] || '';
-}
+};
 
-function getContentTypeOptions(platform: string): ContentTypeOption[] {
+const getContentTypeOptions = (platform: string): ContentTypeOption[] => {
     const keys = contentTypeKeys[platform] || [];
     return keys.map(key => ({
         value: key,
         label: trans(`posts.content_types.${key}.label`),
         description: trans(`posts.content_types.${key}.description`),
     }));
-}
+};
 
-function getPlatformData(platform: string): Record<string, any> {
+const getPlatformData = (platform: string): Record<string, any> => {
     if (platform === 'pinterest') {
         return { boards: props.pinterestBoards };
     }
     return {};
-}
+};
 
 const getConfig = (postPlatform: PostPlatform): PlatformConfig => {
     return props.platformConfigs[postPlatform.social_account_id] || {
@@ -370,6 +372,7 @@ const getConfig = (postPlatform: PostPlatform): PlatformConfig => {
         maxImages: 10,
         allowedMediaTypes: ['image', 'video'],
         supportsTextOnly: true,
+        requiresContent: false,
     };
 };
 
@@ -563,13 +566,15 @@ const contentValidation = computed(() => {
         } else if (hasUnsupportedVideos) {
             results[pp.id] = { valid: false, message: trans('posts.edit.validation.videos_not_supported'), charCount, maxLength: config.maxContentLength };
         } else if (hasTooManyImages) {
-            results[pp.id] = { valid: false, message: trans('posts.edit.validation.max_images', { count: config.maxImages }), charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.max_images', { count: String(config.maxImages) }), charCount, maxLength: config.maxContentLength };
         } else if (!config.supportsTextOnly && !hasMedia) {
             results[pp.id] = { valid: false, message: trans('posts.edit.validation.requires_media'), charCount, maxLength: config.maxContentLength };
+        } else if (config.requiresContent && !hasContent) {
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.requires_content'), charCount, maxLength: config.maxContentLength };
         } else if (!hasContent && !hasMedia) {
             results[pp.id] = { valid: false, message: trans('posts.edit.no_content'), charCount, maxLength: config.maxContentLength };
         } else if (!withinLimit) {
-            results[pp.id] = { valid: false, message: trans('posts.edit.validation.exceeded', { count: charCount - config.maxContentLength }), charCount, maxLength: config.maxContentLength };
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.exceeded', { count: String(charCount - config.maxContentLength) }), charCount, maxLength: config.maxContentLength };
         } else {
             results[pp.id] = { valid: true, message: `${charCount}/${config.maxContentLength}`, charCount, maxLength: config.maxContentLength };
         }
@@ -594,7 +599,7 @@ const mediaValidation = computed(() => {
         }
 
         if (imageCount > config.maxImages && config.maxImages > 0) {
-            errors.push(trans('posts.edit.validation.supports_up_to_images', { platform: getPlatformLabel(pp.platform), count: config.maxImages }));
+            errors.push(trans('posts.edit.validation.supports_up_to_images', { platform: getPlatformLabel(pp.platform), count: String(config.maxImages) }));
         }
 
         if (!config.allowedMediaTypes.includes('video') && videoCount > 0) {
@@ -654,7 +659,7 @@ const deletePost = () => {
     if (isReadOnly.value) return;
     deleteModal.value?.open({
         url: destroyPost.url(post.value.id),
-        redirect: 'posts.index',
+        confirmText: 'DELETE',
     });
 };
 
@@ -666,10 +671,6 @@ const toggleLabel = (labelId: string) => {
         selectedLabelIds.value.splice(index, 1);
     }
 };
-
-const selectedLabels = computed(() => {
-    return props.labels.filter(l => selectedLabelIds.value.includes(l.id));
-});
 
 const appendHashtags = (hashtag: WorkspaceHashtag) => {
     if (isReadOnly.value || !activePlatform.value) return;
@@ -686,13 +687,34 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
 
     <Head :title="isReadOnly ? $t('posts.edit.view_title') : $t('posts.edit.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout :breadcrumbs="breadcrumbs" :fullWidth="true">
+        <template v-if="!isReadOnly" #header-right>
+            <div class="flex items-center gap-3">
+                <Button type="button" variant="ghost" size="icon" @click="deletePost"
+                    :disabled="isSaving || isSubmitting" class="text-muted-foreground hover:text-destructive">
+                    <IconTrash class="h-4 w-4" />
+                </Button>
+
+                <span class="h-4 w-px bg-border" />
+
+                <Button type="button" variant="secondary" class="shrink-0"
+                    :disabled="!canSubmit || isSubmitting || isSaving" @click="submit('scheduled')">
+                    {{ $t('posts.edit.schedule') }}
+                </Button>
+
+                <Button type="button" class="shrink-0" :disabled="!canSubmit || isSubmitting || isSaving"
+                    @click="submit('publishing')">
+                    {{ $t('posts.edit.publish') }}
+                </Button>
+            </div>
+        </template>
+
         <div class="flex flex-col h-screen">
             <!-- Top Bar with Tabs and Actions -->
-            <div class="relative flex items-center justify-between border-b px-4 py-2 bg-background">
+            <div class="relative flex items-center justify-between gap-4 border-b px-4 py-2 bg-background">
 
                 <!-- Platform Tabs -->
-                <div class="flex items-center gap-2">
+                <div class="flex min-w-0 items-center gap-2">
                     <!-- Status Badge (when read-only) -->
                     <Badge v-if="isReadOnly" :class="getStatusConfig(post.status).color" class="mr-2">
                         <component :is="getStatusConfig(post.status).icon" class="mr-1 h-3 w-3"
@@ -762,24 +784,23 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
 
                 <!-- Mobile Actions Button (edit mode only) -->
                 <div v-if="!isReadOnly" class="lg:hidden flex items-center gap-2">
-                    <Button type="button" size="sm" :disabled="!canSubmit || isSubmitting || isSaving"
+                    <Button type="button" :disabled="!canSubmit || isSubmitting || isSaving"
                         @click="submit('publishing')">
                         {{ $t('posts.edit.publish') }}
                     </Button>
-                    <Button type="button" variant="outline" size="icon-sm" @click="showMobileActionsSheet = true">
+                    <Button type="button" variant="outline" size="icon" @click="showMobileActionsSheet = true">
                         <IconSettings class="h-4 w-4" />
                     </Button>
                 </div>
 
-                <!-- Desktop Schedule & Actions (only in edit mode) -->
-                <div v-if="!isReadOnly" class="hidden lg:flex items-center gap-3">
+                <!-- Desktop: Labels, Hashtags, DatePicker (only in edit mode) -->
+                <div v-if="!isReadOnly" class="hidden lg:flex shrink-0 items-center gap-2">
                     <!-- Labels Selector -->
-                    <Popover v-if="labels.length > 0">
+                    <Popover>
                         <PopoverTrigger asChild>
-                            <Button type="button" variant="outline" size="sm" class="gap-2">
+                            <Button type="button" variant="outline">
                                 <IconTag class="h-4 w-4" />
-                                <span v-if="selectedLabels.length === 0">{{ $t('posts.edit.labels') }}</span>
-                                <span v-else>{{ selectedLabels.length }}</span>
+                                {{ $t('posts.edit.labels') }}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent class="w-56 p-2" align="end">
@@ -797,35 +818,16 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
                     </Popover>
 
                     <!-- Hashtags Selector -->
-                    <Button v-if="hashtags.length > 0" type="button" variant="outline" size="icon-sm"
+                    <Button type="button" variant="outline" size="icon"
                         @click="hashtagsModal?.open()">
                         <IconHash class="h-4 w-4" />
                     </Button>
 
                     <!-- DateTime Picker -->
-                    <div class="flex items-center gap-2">
-                        <DatePicker name="scheduled_datetime" v-model="scheduledDateTime" :show-time="true" />
-                        <span class="text-xs text-muted-foreground">
-                            {{ timezoneAbbr }}
-                        </span>
-                    </div>
-
-                    <span class="text-muted-foreground">|</span>
-
-                    <Button type="button" variant="outline" size="icon-sm" @click="deletePost"
-                        :disabled="isSaving || isSubmitting" class="text-muted-foreground hover:text-destructive">
-                        <IconTrash class="h-4 w-4" />
-                    </Button>
-
-                    <Button type="button" variant="secondary" size="sm"
-                        :disabled="!canSubmit || isSubmitting || isSaving" @click="submit('scheduled')">
-                        {{ $t('posts.edit.schedule') }}
-                    </Button>
-
-                    <Button type="button" size="sm" :disabled="!canSubmit || isSubmitting || isSaving"
-                        @click="submit('publishing')">
-                        {{ $t('posts.edit.publish') }}
-                    </Button>
+                    <DatePicker name="scheduled_datetime" v-model="scheduledDateTime" :show-time="true" class="w-auto" />
+                    <span class="whitespace-nowrap text-xs text-muted-foreground">
+                        {{ timezoneAbbr }}
+                    </span>
                 </div>
 
                 <!-- Read-only info (responsive) -->
@@ -1126,8 +1128,7 @@ const appendHashtags = (hashtag: WorkspaceHashtag) => {
                 <div>
                     <Button type="button" variant="outline"
                         class="w-full justify-start gap-2 text-destructive hover:text-destructive"
-                        :disabled="isSaving || isSubmitting"
-                        @click="deletePost(); showMobileActionsSheet = false">
+                        :disabled="isSaving || isSubmitting" @click="deletePost(); showMobileActionsSheet = false">
                         <IconTrash class="h-4 w-4" />
                         {{ $t('posts.edit.delete') }}
                     </Button>

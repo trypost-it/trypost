@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -13,7 +15,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'TryPost.it'),
 
     /*
     |--------------------------------------------------------------------------
@@ -52,7 +54,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'url' => env('APP_URL', 'https://trypost.it'),
 
     /*
     |--------------------------------------------------------------------------
@@ -83,6 +85,18 @@ return [
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Pagination
+    |--------------------------------------------------------------------------
+    |
+    | This is default pagination value for the application.
+    |
+    */
+    'pagination' => [
+        'default' => 25,
+    ],
 
     /*
     |--------------------------------------------------------------------------

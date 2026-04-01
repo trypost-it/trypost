@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Models\User;
 
 test('registration screen can be rendered', function () {
@@ -17,7 +19,7 @@ test('new users can register', function () {
 
     $response->assertSessionHasNoErrors();
     $this->assertAuthenticated();
-    $response->assertRedirect(route('onboarding.step1', absolute: false));
+    $response->assertRedirect(route('register.success', absolute: false));
 });
 
 test('new users get a default workspace on registration', function () {

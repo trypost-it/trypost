@@ -6,8 +6,8 @@ import { computed, ref } from 'vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import SocialAccountsGrid, { type Platform } from '@/components/SocialAccountsGrid.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { accounts } from '@/routes';
-import { disconnect as disconnectAccount } from '@/routes/accounts';
+import { accounts } from '@/routes/app';
+import { disconnect as disconnectAccount } from '@/routes/app/accounts';
 import { type BreadcrumbItemType } from '@/types';
 
 interface Workspace {

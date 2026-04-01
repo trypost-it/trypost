@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\Post\Status;
 
 test('post status has correct values', function () {
@@ -12,12 +14,12 @@ test('post status has correct values', function () {
 });
 
 test('post status has labels', function () {
-    expect(Status::Draft->label())->toBe('Rascunho');
-    expect(Status::Scheduled->label())->toBe('Agendado');
-    expect(Status::Publishing->label())->toBe('Publicando');
-    expect(Status::Published->label())->toBe('Publicado');
-    expect(Status::PartiallyPublished->label())->toBe('Parcialmente Publicado');
-    expect(Status::Failed->label())->toBe('Falhou');
+    expect(Status::Draft->label())->toBe('Draft');
+    expect(Status::Scheduled->label())->toBe('Scheduled');
+    expect(Status::Publishing->label())->toBe('Publishing');
+    expect(Status::Published->label())->toBe('Published');
+    expect(Status::PartiallyPublished->label())->toBe('Partially Published');
+    expect(Status::Failed->label())->toBe('Failed');
 });
 
 test('post status has colors', function () {

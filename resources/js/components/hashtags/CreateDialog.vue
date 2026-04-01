@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { store as hashtagsStore } from '@/routes/hashtags';
+import { store as hashtagsStore } from '@/routes/app/hashtags';
 
 const open = defineModel<boolean>('open', { default: false });
 
@@ -84,6 +84,9 @@ const handleOpenChange = (value: boolean) => {
                 <DialogFooter>
                     <Button type="submit" :disabled="form.processing">
                         {{ form.processing ? $t('hashtags.create.submitting') : $t('hashtags.create.submit') }}
+                    </Button>
+                    <Button type="button" variant="secondary" @click="open = false">
+                        {{ $t('common.cancel') }}
                     </Button>
                 </DialogFooter>
             </form>

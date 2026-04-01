@@ -3,19 +3,19 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
-import Heading from '@/components/Heading.vue';
 import { useActiveUrl } from '@/composables/useActiveUrl';
 import { toUrl } from '@/lib/utils';
-import { members } from '@/routes';
-import { index as billing } from '@/routes/billing';
-import { edit as editProfile } from '@/routes/profile';
-import { edit as editPassword } from '@/routes/user-password';
-import { settings as workspaceSettings } from '@/routes/workspace';
+import { index as apiKeys } from '@/routes/app/api-keys';
+import { index as billing } from '@/routes/app/billing';
+import { preferences as notificationPreferences } from '@/routes/app/notifications';
+import { edit as editProfile } from '@/routes/app/profile';
+import { edit as editPassword } from '@/routes/app/user-password';
+import { settings as workspaceSettings } from '@/routes/app/workspace';
 import { type NavItem, type SharedData } from '@/types';
 
 const page = usePage<SharedData>();
 const auth = computed(() => page.props.auth);
-const canManageWorkspace = computed(() => auth.value.role !== 'member');
+const canManageWorkspace = computed(() => auth.value.currentWorkspace?.role !== 'member');
 
 const navItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [
@@ -27,6 +27,10 @@ const navItems = computed<NavItem[]>(() => {
             title: trans('settings.nav.password'),
             href: editPassword(),
         },
+        {
+            title: trans('settings.nav.notifications'),
+            href: notificationPreferences(),
+        },
     ];
 
     if (canManageWorkspace.value) {
@@ -36,8 +40,8 @@ const navItems = computed<NavItem[]>(() => {
                 href: workspaceSettings(),
             },
             {
-                title: trans('settings.nav.members'),
-                href: members(),
+                title: 'API Keys',
+                href: apiKeys(),
             },
         );
 
@@ -56,36 +60,21 @@ const { urlIsActive } = useActiveUrl();
 </script>
 
 <template>
-    <div class="px-4 py-6">
-        <div class="flex flex-col items-center gap-6">
-            <Heading
-                :title="$t('settings.title')"
-                :description="$t('settings.description')"
-                class="w-full max-w-2xl"
-            />
+    <div class="mx-auto max-w-4xl px-4 py-6">
+        <nav
+            class="mb-8 inline-flex h-9 w-fit items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
+            <Link v-for="item in navItems" :key="toUrl(item.href)" :href="item.href"
+                class="inline-flex items-center justify-center rounded-md px-3 py-1 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                :class="urlIsActive(item.href)
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'hover:bg-background/50 hover:text-foreground'
+                    ">
+                {{ item.title }}
+            </Link>
+        </nav>
 
-            <nav
-                class="inline-flex h-9 w-full max-w-2xl items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground"
-                aria-label="Settings"
-            >
-                <Link
-                    v-for="item in navItems"
-                    :key="toUrl(item.href)"
-                    :href="item.href"
-                    :class="[
-                        'inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                        urlIsActive(item.href)
-                            ? 'bg-background text-foreground shadow'
-                            : 'hover:bg-background/50 hover:text-foreground',
-                    ]"
-                >
-                    {{ item.title }}
-                </Link>
-            </nav>
-
-            <div class="w-full max-w-2xl">
-                <slot />
-            </div>
-        </div>
+        <section class="space-y-12">
+            <slot />
+        </section>
     </div>
 </template>

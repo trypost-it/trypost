@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { IconCheck, IconChevronDown, IconSearch } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { FocusScope } from 'reka-ui';
 import { ref, watchEffect } from 'vue';
 
@@ -77,7 +78,7 @@ watchEffect(() => {
         <Combobox
             :model-value="selectedTimezone"
             @update:model-value="
-                (v: Timezone) => {
+                (v: any) => {
                     selectedTimezone = v;
                     emit('update:modelValue', v?.value || null);
                 }
@@ -92,7 +93,7 @@ watchEffect(() => {
                         {{
                             selectedTimezone
                                 ? selectedTimezone.label
-                                : 'Select timezone'
+                                : trans('common.timezone.select')
                         }}
                         <IconChevronDown
                             class="ml-2 h-4 w-4 shrink-0 opacity-50"
@@ -102,14 +103,14 @@ watchEffect(() => {
             </ComboboxAnchor>
             <ComboboxList class="w-full">
                 <div class="relative">
-                    <ComboboxInput placeholder="Search timezone..." />
+                    <ComboboxInput :placeholder="trans('common.timezone.search')" />
                     <span
                         class="absolute inset-y-0 start-0 flex items-center justify-center px-3"
                     >
                         <IconSearch class="size-4 text-muted-foreground" />
                     </span>
                 </div>
-                <ComboboxEmpty>No timezone found</ComboboxEmpty>
+                <ComboboxEmpty>{{ $t('common.timezone.empty') }}</ComboboxEmpty>
                 <ComboboxGroup>
                     <ComboboxItem
                         v-for="tz in timezones"

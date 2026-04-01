@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\XPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\Post;
 use App\Models\PostPlatform;
@@ -105,7 +108,7 @@ test('x publisher throws exception on api error', function () {
     $publisher = new XPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class);
+        ->toThrow(Exception::class);
 });
 
 test('x publisher returns unknown id when no id in response', function () {
@@ -177,7 +180,7 @@ test('x publisher handles 403 error as generic error', function () {
     $publisher = new XPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'X API error');
+        ->toThrow(XPublishException::class);
 });
 
 test('x publisher handles empty error response', function () {
@@ -188,5 +191,5 @@ test('x publisher handles empty error response', function () {
     $publisher = new XPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class);
+        ->toThrow(Exception::class);
 });

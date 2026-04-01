@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events;
 
 use App\Models\PostPlatform;
@@ -29,7 +31,7 @@ class PostPlatformStatusUpdated implements ShouldBroadcastNow
         return [
             'post_platform' => [
                 'id' => $this->postPlatform->id,
-                'status' => $this->postPlatform->status,
+                'status' => $this->postPlatform->status->value,
                 'platform_url' => $this->postPlatform->platform_url,
                 'error_message' => $this->postPlatform->error_message,
                 'published_at' => $this->postPlatform->published_at?->toISOString(),

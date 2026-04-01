@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\User\Setup;
 
 test('user setup has correct values', function () {

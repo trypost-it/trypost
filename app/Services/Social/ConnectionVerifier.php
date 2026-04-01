@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Social;
 
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
 use App\Models\SocialAccount;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -44,18 +47,32 @@ class ConnectionVerifier
      */
     private function refreshTokenIfNeeded(SocialAccount $account): void
     {
-        match ($account->platform) {
-            Platform::LinkedIn, Platform::LinkedInPage => $this->refreshLinkedInToken($account),
-            Platform::X => $this->refreshXToken($account),
-            Platform::Bluesky => $this->refreshBlueskyToken($account),
-            Platform::YouTube => $this->refreshYouTubeToken($account),
-            Platform::TikTok => $this->refreshTikTokToken($account),
-            Platform::Pinterest => $this->refreshPinterestToken($account),
-            Platform::Threads => $this->refreshThreadsToken($account),
-            // Facebook, Instagram use long-lived tokens without refresh mechanism
-            // Mastodon tokens don't expire
-            default => null,
-        };
+        $lock = Cache::lock("token_refresh:{$account->id}", 30);
+
+        if (! $lock->get()) {
+            // Another process is already refreshing this token
+            $account->refresh();
+
+            return;
+        }
+
+        try {
+            match ($account->platform) {
+                Platform::LinkedIn, Platform::LinkedInPage => $this->refreshLinkedInToken($account),
+                Platform::X => $this->refreshXToken($account),
+                Platform::Bluesky => $this->refreshBlueskyToken($account),
+                Platform::YouTube => $this->refreshYouTubeToken($account),
+                Platform::TikTok => $this->refreshTikTokToken($account),
+                Platform::Pinterest => $this->refreshPinterestToken($account),
+                Platform::Threads => $this->refreshThreadsToken($account),
+                Platform::Instagram => $this->refreshInstagramToken($account),
+                // Facebook uses page tokens that don't expire
+                // Mastodon tokens don't expire
+                default => null,
+            };
+        } finally {
+            $lock->release();
+        }
     }
 
     private function refreshLinkedInToken(SocialAccount $account): void
@@ -72,16 +89,16 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: LinkedIn token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: LinkedIn token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh LinkedIn token');
         }
 
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         $account->refresh();
@@ -104,16 +121,16 @@ class ConnectionVerifier
             ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: X token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: X token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh X token');
         }
 
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => now()->addSeconds($data['expires_in'] ?? 7200),
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => now()->addSeconds(data_get($data, 'expires_in', 7200)),
         ]);
 
         $account->refresh();
@@ -130,8 +147,8 @@ class ConnectionVerifier
         if ($response->successful()) {
             $data = $response->json();
             $account->update([
-                'access_token' => $data['accessJwt'],
-                'refresh_token' => $data['refreshJwt'],
+                'access_token' => data_get($data, 'accessJwt'),
+                'refresh_token' => data_get($data, 'refreshJwt'),
                 'token_expires_at' => now()->addHours(2),
             ]);
 
@@ -154,8 +171,8 @@ class ConnectionVerifier
                 if ($response->successful()) {
                     $data = $response->json();
                     $account->update([
-                        'access_token' => $data['accessJwt'],
-                        'refresh_token' => $data['refreshJwt'],
+                        'access_token' => data_get($data, 'accessJwt'),
+                        'refresh_token' => data_get($data, 'refreshJwt'),
                         'token_expires_at' => now()->addHours(2),
                     ]);
 
@@ -187,15 +204,15 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: YouTube token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: YouTube token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh YouTube token');
         }
 
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         $account->refresh();
@@ -215,16 +232,16 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: TikTok token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: TikTok token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh TikTok token');
         }
 
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         $account->refresh();
@@ -247,16 +264,16 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: Pinterest token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: Pinterest token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh Pinterest token');
         }
 
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         $account->refresh();
@@ -271,15 +288,41 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: Threads token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: Threads token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh Threads token');
         }
 
         $data = $response->json();
+        $newToken = data_get($data, 'access_token');
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => $newToken,
+            'refresh_token' => $newToken,
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
+        ]);
+
+        $account->refresh();
+    }
+
+    private function refreshInstagramToken(SocialAccount $account): void
+    {
+        $response = Http::get('https://graph.instagram.com/refresh_access_token', [
+            'grant_type' => 'ig_refresh_token',
+            'access_token' => $account->access_token,
+        ]);
+
+        if ($response->failed()) {
+            Log::error('ConnectionVerifier: Instagram token refresh failed', ['body' => $this->redactBody($response->body())]);
+            throw new TokenExpiredException('Failed to refresh Instagram token');
+        }
+
+        $data = $response->json();
+        $newToken = data_get($data, 'access_token');
+
+        $account->update([
+            'access_token' => $newToken,
+            'refresh_token' => $newToken,
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
         $account->refresh();
@@ -472,5 +515,24 @@ class ConnectionVerifier
         }
 
         return $response->successful();
+    }
+
+    private function redactBody(string $body): string
+    {
+        return preg_replace(
+            [
+                '/access_token=([^&"\s]+)/',
+                '/"access_token"\s*:\s*"([^"]+)"/',
+                '/Bearer\s+\S+/',
+                '/"token"\s*:\s*"([^"]+)"/',
+            ],
+            [
+                'access_token=[REDACTED]',
+                '"access_token":"[REDACTED]"',
+                'Bearer [REDACTED]',
+                '"token":"[REDACTED]"',
+            ],
+            $body
+        );
     }
 }

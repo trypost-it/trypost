@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
@@ -40,7 +42,7 @@ beforeEach(function () {
 
 test('instagram publisher throws exception without media', function () {
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'Instagram requires at least one image or video');
+        ->toThrow(Exception::class, 'Instagram requires at least one image or video');
 });
 
 test('instagram publisher can publish single image', function () {
@@ -607,6 +609,45 @@ test('instagram publisher can publish single image with empty string content', f
     $result = $this->publisher->publish($this->postPlatform);
 
     expect($result['id'])->toBe('media-empty-content');
+});
+
+test('instagram publisher routes feed video to reel', function () {
+    // InstagramFeed content type with a single video should route to publishReel (REELS media_type)
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/feed-video.mp4',
+        'original_filename' => 'feed-video.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 2048000,
+        'order' => 0,
+        'meta' => ['width' => 1080, 'height' => 1920, 'duration' => 15],
+    ]);
+
+    Http::fake([
+        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+            'id' => 'reel-container-999',
+        ], 200),
+        'https://graph.instagram.com/v24.0/reel-container-999*' => Http::response([
+            'status_code' => 'FINISHED',
+        ], 200),
+        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+            'id' => 'feed-reel-123',
+        ], 200),
+        'https://graph.instagram.com/v24.0/feed-reel-123*' => Http::response([
+            'permalink' => 'https://www.instagram.com/reel/FEEDVID/',
+        ], 200),
+    ]);
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('feed-reel-123');
+
+    // Assert media_type=REELS was sent in the container creation request
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), '/ig_123456789/media')
+            && str_contains($request->body(), 'REELS');
+    });
 });
 
 test('instagram publisher handles publish failure', function () {

@@ -9,18 +9,38 @@ const currentUrlReactive = computed(
     () => new URL(page.url, window?.location.origin).pathname,
 );
 
+const toPathname = (url: string): string => {
+    try {
+        return new URL(url, window.location.origin).pathname;
+    } catch {
+        return url;
+    }
+};
+
 export function useActiveUrl() {
     function urlIsActive(
         urlToCheck: NonNullable<InertiaLinkProps['href']>,
-        options?: { prefix?: boolean },
+        options?: { prefix?: boolean; exact?: boolean; exclude?: string[] },
     ) {
-        const targetUrl = toUrl(urlToCheck);
+        const current = currentUrlReactive.value;
+        const pathname = toPathname(toUrl(urlToCheck));
 
-        if (options?.prefix) {
-            return currentUrlReactive.value.startsWith(targetUrl);
+        if (options?.exact) {
+            return current === pathname;
         }
 
-        return targetUrl === currentUrlReactive.value;
+        if (options?.prefix) {
+            return current.startsWith(pathname);
+        }
+
+        const isMatch = current === pathname ||
+            (pathname !== '/' && current.startsWith(pathname + '/'));
+
+        if (isMatch && options?.exclude) {
+            return !options.exclude.some((ex) => current === toPathname(ex) || current.startsWith(toPathname(ex) + '/'));
+        }
+
+        return isMatch;
     }
 
     return {

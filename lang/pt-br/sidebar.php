@@ -1,10 +1,12 @@
 <?php
 
 return [
+    'workspaces' => 'Espaços de trabalho',
     'select_workspace' => 'Selecionar workspace',
     'create_workspace' => 'Criar workspace',
     'create_post' => 'Novo post',
     'profile' => 'Perfil',
+    'account' => 'Conta',
     'log_out' => 'Sair',
 
     'workspace' => 'Workspace: :name',
@@ -38,6 +40,12 @@ return [
         'labels' => 'Etiquetas',
         'settings' => 'Configurações',
     ],
+
+    'notifications' => 'Notificações',
+    'mark_all_read' => 'Marcar tudo como lido',
+    'mark_as_read' => 'Marcar como lido',
+    'archive_all' => 'Arquivar tudo',
+    'no_notifications' => 'Sem notificações',
 
     'support' => [
         'discord' => 'Discord',

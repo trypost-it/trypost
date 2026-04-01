@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
@@ -8,6 +10,7 @@ use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\Media\MediaOptimizer;
 use App\Services\Social\PinterestPublisher;
 use Illuminate\Support\Facades\Http;
 
@@ -40,6 +43,17 @@ beforeEach(function () {
     ]);
 
     $this->publisher = new PinterestPublisher;
+
+    // Mock MediaOptimizer to return the same temp file path
+    $mockOptimizer = Mockery::mock(MediaOptimizer::class);
+    $mockOptimizer->shouldReceive('optimizeImage')->andReturnUsing(function (string $tempFile) {
+        // Copy to a new temp file to simulate optimization
+        $optimized = tempnam(sys_get_temp_dir(), 'pin_opt_');
+        copy($tempFile, $optimized);
+
+        return $optimized;
+    });
+    app()->instance(MediaOptimizer::class, $mockOptimizer);
 });
 
 test('pinterest publisher can publish image pin', function () {
@@ -57,6 +71,7 @@ test('pinterest publisher can publish image pin', function () {
         '*/v5/pins' => Http::response([
             'id' => 'pin_123456',
         ], 200),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     $result = $this->publisher->publish($this->postPlatform);
@@ -111,12 +126,14 @@ test('pinterest publisher uses default board id from account', function () {
         '*/v5/pins' => Http::response([
             'id' => 'pin_123456',
         ], 200),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     $this->publisher->publish($this->postPlatform);
 
     Http::assertSent(function ($request) {
-        return $request['board_id'] === 'board_123'; // from account meta
+        return str_contains($request->url(), '/v5/pins')
+            && $request['board_id'] === 'board_123'; // from account meta
     });
 });
 
@@ -205,6 +222,7 @@ test('pinterest publisher throws exception on api error', function () {
             'code' => 400,
             'message' => 'Invalid request',
         ], 400),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -227,6 +245,7 @@ test('pinterest publisher throws token expired exception on auth error', functio
             'code' => 1,
             'message' => 'Invalid access token',
         ], 401),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -255,6 +274,7 @@ test('pinterest publisher refreshes token when expired', function () {
         '*/v5/pins' => Http::response([
             'id' => 'pin_123456',
         ], 200),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     $this->publisher->publish($this->postPlatform);
@@ -290,12 +310,14 @@ test('pinterest publisher includes title and link when provided', function () {
         '*/v5/pins' => Http::response([
             'id' => 'pin_123456',
         ], 200),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     $this->publisher->publish($this->postPlatform);
 
     Http::assertSent(function ($request) {
-        return $request['title'] === 'My Pin Title'
+        return str_contains($request->url(), '/v5/pins')
+            && $request['title'] === 'My Pin Title'
             && $request['link'] === 'https://example.com/my-page';
     });
 });
@@ -314,6 +336,68 @@ test('pinterest publisher can get boards', function () {
 
     expect($boards)->toHaveCount(2);
     expect($boards[0]['id'])->toBe('board_1');
+});
+
+test('pinterest publisher can publish video pin', function () {
+    $this->postPlatform->update(['content_type' => ContentType::PinterestVideoPin]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/video.mp4',
+        'original_filename' => 'video.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 5120000,
+        'order' => 0,
+    ]);
+
+    $s3UploadUrl = 'https://pinterest-media-upload.s3.amazonaws.com/upload';
+
+    Http::fake(function ($request) use ($s3UploadUrl) {
+        $url = $request->url();
+
+        // Step 1: Register media
+        if (str_contains($url, '/v5/media') && $request->method() === 'POST') {
+            return Http::response([
+                'media_id' => 'media_video_789',
+                'upload_url' => $s3UploadUrl,
+                'upload_parameters' => [
+                    'key' => 'uploads/video.mp4',
+                    'AWSAccessKeyId' => 'FAKE_KEY',
+                ],
+            ], 201);
+        }
+
+        // Step 2: S3 upload
+        if ($url === $s3UploadUrl) {
+            return Http::response('', 204);
+        }
+
+        // Step 3: Media status check
+        if (str_contains($url, '/v5/media/media_video_789')) {
+            return Http::response(['status' => 'succeeded'], 200);
+        }
+
+        // Step 4: Create pin
+        if (str_contains($url, '/v5/pins')) {
+            return Http::response(['id' => 'video_pin_999'], 200);
+        }
+
+        // Video download
+        return Http::response('fake-video-content', 200);
+    });
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result)->toHaveKey('id');
+    expect($result)->toHaveKey('url');
+    expect($result['id'])->toBe('video_pin_999');
+    expect($result['url'])->toBe('https://pinterest.com/pin/video_pin_999');
+
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), '/v5/pins')
+            && data_get($request->data(), 'media_source.source_type') === 'video_id';
+    });
 });
 
 test('pinterest publisher throws exception for unsupported content type', function () {

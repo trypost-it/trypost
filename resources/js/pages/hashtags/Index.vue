@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { IconPlus, IconHash, IconPencil, IconTrash } from '@tabler/icons-vue';
+import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
+import { IconHash, IconPencil, IconSearch, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import CreateDialog from '@/components/hashtags/CreateDialog.vue';
 import EditDialog from '@/components/hashtags/EditDialog.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as hashtagsIndex, destroy as hashtagsDestroy } from '@/routes/hashtags';
+import { index as hashtagsIndex, destroy as hashtagsDestroy } from '@/routes/app/hashtags';
 import { type BreadcrumbItemType } from '@/types';
 
 interface Workspace {
@@ -25,12 +29,38 @@ interface Hashtag {
     created_at: string;
 }
 
-interface Props {
-    workspace: Workspace;
-    hashtags: Hashtag[];
+interface ScrollHashtags {
+    data: Hashtag[];
+    meta: {
+        hasNextPage: boolean;
+    };
 }
 
-defineProps<Props>();
+interface Props {
+    workspace: Workspace;
+    hashtags: ScrollHashtags;
+    filters: {
+        search: string;
+    };
+}
+
+const props = defineProps<Props>();
+
+const searchQuery = ref(props.filters.search);
+
+const search = debounce(() => {
+    router.get(
+        hashtagsIndex.url(),
+        { search: searchQuery.value || undefined },
+        {
+            preserveState: true,
+            preserveScroll: true,
+            reset: ['hashtags'],
+        },
+    );
+}, 300);
+
+watch(searchQuery, () => search());
 
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const isCreateDialogOpen = ref(false);
@@ -62,59 +92,78 @@ const getHashtagCount = (hashtags: string): number => {
     <Head :title="$t('hashtags.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
+        <template #header-right>
+            <div class="relative">
+                <IconSearch class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    v-model="searchQuery"
+                    :placeholder="trans('hashtags.search')"
+                    class="w-64 pl-9"
+                />
+            </div>
+            <Button @click="isCreateDialogOpen = true">
+                {{ $t('hashtags.new_group') }}
+            </Button>
+        </template>
+
         <div class="flex flex-col gap-6 p-6">
-            <div v-if="hashtags.length > 0" class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">{{ $t('hashtags.title') }}</h1>
-                    <p class="text-muted-foreground">
-                        {{ $t('hashtags.description') }}
-                    </p>
-                </div>
-                <Button @click="isCreateDialogOpen = true">
-                    {{ $t('hashtags.new_group') }}
-                </Button>
-            </div>
 
-            <div v-if="hashtags.length === 0" class="flex flex-col items-center justify-center py-16">
-                <div class="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <IconHash class="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 class="text-lg font-semibold mb-2">{{ $t('hashtags.no_groups_yet') }}</h3>
-                <p class="text-muted-foreground mb-4 text-center max-w-sm">
-                    {{ $t('hashtags.no_groups_description') }}
-                </p>
-                <Button @click="isCreateDialogOpen = true">
-                    <IconPlus class="mr-2 h-4 w-4" />
-                    {{ $t('hashtags.create_first_group') }}
-                </Button>
-            </div>
+            <EmptyState
+                v-if="hashtags.data.length === 0"
+                :icon="IconHash"
+                :title="$t('hashtags.no_groups_yet')"
+                :description="$t('hashtags.no_groups_description')"
+            />
 
-            <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card v-for="hashtag in hashtags" :key="hashtag.id">
-                    <CardHeader class="pb-3">
-                        <div class="flex items-center justify-between">
-                            <CardTitle class="text-lg">{{ hashtag.name }}</CardTitle>
-                            <div class="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" class="h-8 w-8" @click="openEditDialog(hashtag)">
-                                    <IconPencil class="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon"
-                                    class="h-8 w-8 text-destructive hover:text-destructive"
-                                    @click="handleDelete(hashtag.id)">
-                                    <IconTrash class="h-4 w-4" />
-                                </Button>
+            <div v-else>
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <Card v-for="hashtag in hashtags.data" :key="hashtag.id">
+                        <CardHeader class="pb-3">
+                            <div class="flex items-center justify-between">
+                                <CardTitle class="text-lg">{{ hashtag.name }}</CardTitle>
+                                <div class="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" class="h-8 w-8" @click="openEditDialog(hashtag)">
+                                        <IconPencil class="h-4 w-4" />
+                                    </Button>
+                                    <Button variant="ghost" size="icon"
+                                        class="h-8 w-8 text-destructive hover:text-destructive"
+                                        @click="handleDelete(hashtag.id)">
+                                        <IconTrash class="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
-                        <CardDescription>
-                            {{ $t('hashtags.hashtags_count', { count: getHashtagCount(hashtag.hashtags) }) }}
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p class="text-sm text-muted-foreground line-clamp-3">
-                            {{ hashtag.hashtags }}
-                        </p>
-                    </CardContent>
-                </Card>
+                            <CardDescription>
+                                {{ $t('hashtags.hashtags_count', { count: String(getHashtagCount(hashtag.hashtags)) }) }}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <p class="text-sm text-muted-foreground line-clamp-3">
+                                {{ hashtag.hashtags }}
+                            </p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <InfiniteScroll data="hashtags" #default="{ loading }">
+                    <div v-if="loading" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
+                        <Card v-for="i in 3" :key="i">
+                            <CardHeader class="pb-3">
+                                <div class="flex items-center justify-between">
+                                    <Skeleton class="h-6 w-32" />
+                                    <div class="flex gap-1">
+                                        <Skeleton class="h-8 w-8" />
+                                        <Skeleton class="h-8 w-8" />
+                                    </div>
+                                </div>
+                                <Skeleton class="h-4 w-20" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton class="h-4 w-full" />
+                                <Skeleton class="h-4 w-3/4 mt-2" />
+                            </CardContent>
+                        </Card>
+                    </div>
+                </InfiniteScroll>
             </div>
         </div>
     </AppLayout>

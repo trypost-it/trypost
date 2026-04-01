@@ -9,11 +9,27 @@ return [
         'password' => 'Password',
         'workspace' => 'Workspace',
         'members' => 'Members',
+        'notifications' => 'Notifications',
         'billing' => 'Billing',
+    ],
+
+    'notifications' => [
+        'title' => 'Notification preferences',
+        'heading' => 'Email notifications',
+        'description' => 'Choose which email notifications you want to receive',
+        'post_published' => 'Post published',
+        'post_published_description' => 'Receive an email when your post is published successfully',
+        'post_failed' => 'Post failed',
+        'post_failed_description' => 'Receive an email when your post fails to publish',
+        'account_disconnected' => 'Account disconnected',
+        'account_disconnected_description' => 'Receive an email when a social account is disconnected',
+        'save' => 'Save preferences',
     ],
 
     'profile' => [
         'title' => 'Profile settings',
+        'photo_heading' => 'Profile photo',
+        'photo_description' => 'Upload a profile photo',
         'heading' => 'Profile information',
         'description' => 'Update your name and email address',
         'avatar' => 'Avatar',
@@ -56,20 +72,27 @@ return [
 
     'workspace' => [
         'title' => 'Workspace settings',
-        'heading' => 'Workspace settings',
-        'description' => 'Update your workspace name, logo, and timezone',
-        'logo' => 'Logo',
+        'logo_heading' => 'Workspace logo',
+        'logo_description' => 'Upload a logo for your workspace',
+        'heading' => 'Workspace name',
+        'description' => 'Update your workspace name and timezone',
+        'members_heading' => 'Members',
+        'members_description' => 'Manage workspace members and invitations',
         'name' => 'Name',
         'name_placeholder' => 'My Workspace',
         'timezone' => 'Timezone',
         'save' => 'Save',
-        'saved' => 'Saved.',
     ],
 
     'members' => [
         'title' => 'Members',
         'heading' => 'Team members',
         'description' => 'Manage members and invites for this workspace',
+
+        'cancel' => 'Cancel',
+        'remove' => 'Remove',
+        'make_admin' => 'Make admin',
+        'make_member' => 'Make member',
 
         'invite' => [
             'title' => 'Invite Member',
@@ -79,7 +102,6 @@ return [
             'role' => 'Role',
             'role_placeholder' => 'Select a role',
             'submit' => 'Send Invite',
-            'cancel_confirm' => 'Are you sure you want to cancel this invite?',
         ],
 
         'pending' => [
@@ -92,7 +114,18 @@ return [
             'title' => 'Members',
             'description' => 'People with access to this workspace',
             'empty' => 'No members besides the owner',
-            'remove_confirm' => 'Are you sure you want to remove this member?',
+        ],
+
+        'remove_modal' => [
+            'title' => 'Remove member',
+            'description' => 'Are you sure you want to remove this member from the workspace? They will lose access to all workspace resources.',
+            'action' => 'Remove member',
+        ],
+
+        'cancel_invite_modal' => [
+            'title' => 'Cancel invitation',
+            'description' => 'Are you sure you want to cancel this invitation?',
+            'action' => 'Cancel invitation',
         ],
 
         'roles' => [
@@ -105,6 +138,7 @@ return [
             'invite_sent' => 'Invite sent successfully!',
             'invite_deleted' => 'Invite deleted.',
             'member_removed' => 'Member removed successfully.',
+            'role_updated' => 'Member role updated.',
             'wrong_email' => 'This invite is for a different email address.',
             'already_member' => 'You are already a member of this workspace.',
             'invite_accepted' => 'Welcome! You are now a member of the workspace.',
@@ -117,5 +151,56 @@ return [
         'language_updated' => 'Language updated successfully!',
         'password_updated' => 'Password updated successfully!',
         'workspace_updated' => 'Settings updated successfully!',
+        'photo_updated' => 'Photo updated successfully!',
+        'photo_deleted' => 'Photo removed successfully!',
+        'logo_updated' => 'Logo uploaded successfully!',
+        'logo_deleted' => 'Logo removed successfully!',
+        'notifications_updated' => 'Notification preferences updated!',
+    ],
+
+    'api_keys' => [
+        'title' => 'API Keys',
+        'page_title' => 'API Keys',
+        'heading' => 'API Keys',
+        'description' => 'Manage API keys for programmatic access to your workspace.',
+        'create' => 'Create API Key',
+        'copy' => 'Copy',
+        'new_token_message' => 'Your new API key has been created. Copy it now — you won\'t be able to see it again.',
+        'table' => [
+            'name' => 'Name',
+            'key' => 'Key',
+            'status' => 'Status',
+            'expires' => 'Expires',
+            'last_used' => 'Last Used',
+            'never' => 'Never',
+        ],
+        'actions' => [
+            'copy_id' => 'Copy API Key ID',
+            'copy_id_success' => 'API Key ID copied to clipboard',
+            'delete' => 'Delete',
+        ],
+        'empty' => [
+            'title' => 'No API keys yet',
+            'description' => 'Create an API key to access your workspace programmatically.',
+        ],
+        'delete_modal' => [
+            'title' => 'Delete API key',
+            'description' => 'Are you sure you want to delete this API key? Any applications using this key will lose access immediately.',
+            'action' => 'Delete API key',
+        ],
+        'create_dialog' => [
+            'title' => 'Create API Key',
+            'description' => 'Create a new API key for programmatic access to your workspace.',
+            'name' => 'Name',
+            'name_placeholder' => 'e.g. Production API Key',
+            'expires' => 'Expiration date (optional)',
+            'expires_placeholder' => 'No expiration',
+            'submit' => 'Create',
+            'cancel' => 'Cancel',
+        ],
+        'flash' => [
+            'created' => 'API key created successfully!',
+            'deleted' => 'API key deleted successfully!',
+        ],
     ],
 ];

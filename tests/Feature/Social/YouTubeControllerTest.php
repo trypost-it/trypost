@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\SocialAccount\Platform;
 use App\Enums\SocialAccount\Status;
+use App\Enums\UserWorkspace\Role;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -13,7 +16,7 @@ beforeEach(function () {
     $this->user = User::factory()->create();
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => 'owner']);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
 });
 
 test('youtube connect redirects to oauth provider', function () {
@@ -29,7 +32,7 @@ test('youtube connect redirects to oauth provider', function () {
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')
-        ->get(route('social.youtube.connect'));
+        ->get(route('app.social.youtube.connect'));
 
     $response->assertStatus(409); // Inertia::location returns 409 with X-Inertia header
 
@@ -74,7 +77,7 @@ test('youtube oauth callback creates account with single channel', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.youtube.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.youtube.callback'));
 
     $response->assertOk();
     $response->assertViewIs('auth.social-callback');
@@ -132,9 +135,9 @@ test('youtube callback redirects to channel selection when multiple channels', f
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.youtube.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.youtube.callback'));
 
-    $response->assertRedirect(route('social.youtube.select-channel'));
+    $response->assertRedirect(route('app.social.youtube.select-channel'));
     expect(session('youtube_oauth'))->not->toBeNull();
 });
 
@@ -161,7 +164,7 @@ test('youtube callback fails when no channels found', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.youtube.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.youtube.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -171,7 +174,7 @@ test('youtube callback fails when no channels found', function () {
 test('youtube callback fails with expired session', function () {
     // No session data - simulating expired session
 
-    $response = $this->actingAs($this->user)->get(route('social.youtube.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.youtube.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -216,7 +219,7 @@ test('user cannot connect youtube if already connected', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.youtube.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.youtube.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -263,7 +266,7 @@ test('user can reconnect disconnected youtube account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.youtube.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.youtube.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', true);
@@ -279,13 +282,13 @@ test('youtube callback handles oauth errors gracefully', function () {
     ]);
 
     $mock = Mockery::mock();
-    $mock->shouldReceive('user')->andThrow(new \Exception('OAuth error'));
+    $mock->shouldReceive('user')->andThrow(new Exception('OAuth error'));
 
     Socialite::shouldReceive('driver')
         ->with('google')
         ->andReturn($mock);
 
-    $response = $this->actingAs($this->user)->get(route('social.youtube.callback'));
+    $response = $this->actingAs($this->user)->get(route('app.social.youtube.callback'));
 
     $response->assertOk();
     $response->assertViewHas('success', false);
@@ -320,7 +323,7 @@ test('youtube channel selection creates account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->post(route('social.youtube.select'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.youtube.select'), [
         'channel_id' => 'UC_channel_123',
     ]);
 
@@ -338,7 +341,7 @@ test('youtube channel selection creates account', function () {
 test('youtube channel selection fails with expired session', function () {
     // No session data
 
-    $response = $this->actingAs($this->user)->post(route('social.youtube.select'), [
+    $response = $this->actingAs($this->user)->post(route('app.social.youtube.select'), [
         'channel_id' => 'UC_channel_123',
     ]);
 

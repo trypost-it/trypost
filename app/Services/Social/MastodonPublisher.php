@@ -1,18 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Social;
 
-use App\Exceptions\TokenExpiredException;
+use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\MastodonPublishException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Media\MediaOptimizer;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class MastodonPublisher
 {
+    use HasSocialHttpClient;
+
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
         $instance = $account->meta['instance'] ?? 'https://mastodon.social';
 
@@ -21,7 +32,7 @@ class MastodonPublisher
 
         // Upload media first (max 4)
         foreach ($medias->take(4) as $media) {
-            $mediaId = $this->uploadMedia($account, $instance, $media->url, $media->filename);
+            $mediaId = $this->uploadMedia($account, $instance, $media->url, $media->original_filename);
             if ($mediaId) {
                 $mediaIds[] = $mediaId;
             }
@@ -29,7 +40,7 @@ class MastodonPublisher
 
         // Create status
         $payload = [
-            'status' => $postPlatform->content ?? '',
+            'status' => $content ?? '',
             'visibility' => 'public',
         ];
 
@@ -37,60 +48,70 @@ class MastodonPublisher
             $payload['media_ids'] = $mediaIds;
         }
 
-        Log::info('Mastodon publishing status', [
-            'instance' => $instance,
-            'user_id' => $account->platform_user_id,
-            'has_media' => count($mediaIds) > 0,
-        ]);
-
-        $response = Http::withToken($account->access_token)
+        $response = $this->socialHttp()->withToken($account->access_token)
             ->post("{$instance}/api/v1/statuses", $payload);
 
         if ($response->failed()) {
             Log::error('Mastodon post failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
 
         $data = $response->json();
 
-        Log::info('Mastodon post created', [
-            'id' => $data['id'],
-            'url' => $data['url'],
-        ]);
-
         return [
-            'id' => $data['id'],
-            'url' => $data['url'],
+            'id' => data_get($data, 'id'),
+            'url' => data_get($data, 'url'),
         ];
     }
 
     private function uploadMedia(SocialAccount $account, string $instance, string $url, ?string $filename): ?string
     {
+        $tempFile = tempnam(sys_get_temp_dir(), 'masto_media_');
+
         try {
-            $fileContent = file_get_contents($url);
-            if ($fileContent === false) {
-                Log::error('Mastodon failed to read media', ['url' => $url]);
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($url);
+
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+            }
+
+            if (filesize($tempFile) === 0) {
+                Log::error('Mastodon failed to download media', ['url' => $url]);
 
                 return null;
             }
 
-            // Determine filename from URL if not provided
+            // Optimize images (skip GIFs)
+            $detectedMime = mime_content_type($tempFile) ?: '';
+            if (str_starts_with($detectedMime, 'image/') && ! str_starts_with($detectedMime, 'image/gif')) {
+                $optimizer = app(MediaOptimizer::class);
+                $optimizedPath = $optimizer->optimizeImage($tempFile, Platform::Mastodon);
+                @unlink($tempFile);
+                $tempFile = $optimizedPath;
+            }
+
             $name = $filename ?? basename(parse_url($url, PHP_URL_PATH));
             if (empty($name)) {
                 $name = 'media';
             }
 
-            $response = Http::withToken($account->access_token)
-                ->attach('file', $fileContent, $name)
+            $stream = fopen($tempFile, 'r');
+
+            $response = $this->socialHttp()->withToken($account->access_token)
+                ->attach('file', $stream, $name)
                 ->post("{$instance}/api/v1/media");
+
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
 
             if ($response->failed()) {
                 Log::error('Mastodon media upload failed', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
+                    'body' => $this->redactResponseBody($response->body()),
                 ]);
 
                 return null;
@@ -98,9 +119,7 @@ class MastodonPublisher
 
             $data = $response->json();
 
-            Log::info('Mastodon media uploaded', ['id' => $data['id']]);
-
-            return $data['id'];
+            return data_get($data, 'id');
         } catch (\Exception $e) {
             Log::error('Mastodon media upload error', [
                 'error' => $e->getMessage(),
@@ -108,18 +127,13 @@ class MastodonPublisher
             ]);
 
             return null;
+        } finally {
+            @unlink($tempFile);
         }
     }
 
-    private function handleApiError(Response $response): void
+    private function handleApiError(Response $response): never
     {
-        $body = $response->json() ?? [];
-        $error = $body['error'] ?? $response->body();
-
-        if ($response->status() === 401 || $response->status() === 403) {
-            throw new TokenExpiredException("Mastodon: {$error}");
-        }
-
-        throw new \Exception("Mastodon API error: {$error}");
+        throw MastodonPublishException::fromApiResponse($response);
     }
 }

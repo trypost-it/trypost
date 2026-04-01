@@ -1,10 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Social;
 
+use App\Exceptions\Social\TikTokPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -12,22 +16,7 @@ use Illuminate\Support\Facades\Log;
 
 class TikTokPublisher
 {
-    /**
-     * TikTok API error codes that indicate token issues.
-     *
-     * @see https://developers.tiktok.com/doc/tiktok-api-v2-error-handling
-     */
-    private const TOKEN_ERROR_CODES = [
-        'access_token_invalid',
-        'access_token_expired',
-        'token_expired',
-    ];
-
-    private const TOKEN_ERROR_NUMERIC_CODES = [
-        10001, // Invalid Access Token
-        10002, // Access Token Expired
-        10003, // Invalid Client Key
-    ];
+    use HasSocialHttpClient;
 
     private string $baseUrl = 'https://open.tiktokapis.com/v2';
 
@@ -35,10 +24,14 @@ class TikTokPublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
-            $this->refreshToken($account);
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
             $account->refresh();
         }
 
@@ -51,15 +44,15 @@ class TikTokPublisher
         }
 
         $firstMedia = $media->first();
-        $isVideo = str_starts_with($firstMedia->mime_type, 'video/');
-        $isImage = str_starts_with($firstMedia->mime_type, 'image/');
+        $isVideo = $firstMedia->isVideo();
+        $isImage = $firstMedia->isImage();
 
         if ($isVideo) {
-            return $this->publishVideo($postPlatform, $firstMedia);
+            return $this->publishVideo($postPlatform, $firstMedia, $content);
         }
 
         if ($isImage) {
-            return $this->publishPhotos($postPlatform, $media);
+            return $this->publishPhotos($postPlatform, $media, $content);
         }
 
         throw new \Exception('TikTok only supports video or image content.');
@@ -67,26 +60,52 @@ class TikTokPublisher
 
     private function getHttpClient(): PendingRequest
     {
-        return Http::withToken($this->accessToken)
+        return $this->socialHttp()->withToken($this->accessToken)
             ->withHeaders([
                 'Content-Type' => 'application/json; charset=UTF-8',
-            ])
-            ->timeout(120);
+            ]);
     }
 
-    private function publishVideo(PostPlatform $postPlatform, $media): array
+    private function queryCreatorInfo(): array
     {
-        Log::info('TikTok publishing video', [
-            'video_url' => $media->url,
-            'media_full_url' => $media->full_url ?? $media->url,
-            'content' => $postPlatform->content,
-        ]);
+        $response = $this->getHttpClient()
+            ->post("{$this->baseUrl}/post/publish/creator_info/query/");
+
+        if ($response->failed()) {
+            Log::warning('TikTok creator_info query failed', ['body' => $this->redactResponseBody($response->body())]);
+
+            return ['privacy_level' => 'SELF_ONLY'];
+        }
+
+        $data = data_get($response->json(), 'data', []);
+        $privacyOptions = data_get($data, 'privacy_level_options', ['SELF_ONLY']);
+
+        // Prefer PUBLIC_TO_EVERYONE > MUTUAL_FOLLOW_FRIENDS > FOLLOWER_OF_CREATOR > SELF_ONLY
+        $preferred = ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'FOLLOWER_OF_CREATOR', 'SELF_ONLY'];
+
+        $privacyLevel = 'SELF_ONLY';
+        foreach ($preferred as $level) {
+            if (in_array($level, $privacyOptions)) {
+                $privacyLevel = $level;
+                break;
+            }
+        }
+
+        return [
+            'privacy_level' => $privacyLevel,
+            'max_video_post_duration_sec' => data_get($data, 'max_video_post_duration_sec'),
+        ];
+    }
+
+    private function publishVideo(PostPlatform $postPlatform, $media, ?string $content): array
+    {
+        $creatorInfo = $this->queryCreatorInfo();
 
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/video/init/", [
                 'post_info' => [
-                    'title' => $postPlatform->content ?? '',
-                    'privacy_level' => 'SELF_ONLY',
+                    'title' => $content ?? '',
+                    'privacy_level' => data_get($creatorInfo, 'privacy_level'),
                     'disable_duet' => false,
                     'disable_comment' => false,
                     'disable_stitch' => false,
@@ -100,23 +119,21 @@ class TikTokPublisher
         if ($response->failed()) {
             Log::error('TikTok video publish failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
-            $this->handleApiError($response, 'TikTok API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
 
-        Log::info('TikTok video init response', ['data' => $data]);
-
-        $publishId = $data['data']['publish_id'] ?? null;
+        $publishId = data_get($data, 'data.publish_id');
 
         if (! $publishId) {
             throw new \Exception('TikTok did not return a publish_id');
         }
 
         // Wait for processing and get final status
-        $finalStatus = $this->waitForPublishStatus($publishId);
+        $this->waitForPublishStatus($publishId);
 
         return [
             'id' => $publishId,
@@ -124,10 +141,10 @@ class TikTokPublisher
         ];
     }
 
-    private function publishPhotos(PostPlatform $postPlatform, $mediaCollection): array
+    private function publishPhotos(PostPlatform $postPlatform, $mediaCollection, ?string $content): array
     {
         $photoUrls = $mediaCollection
-            ->filter(fn ($m) => str_starts_with($m->mime_type, 'image/'))
+            ->filter(fn ($m) => $m->isImage())
             ->map(fn ($m) => $m->url)
             ->values()
             ->toArray();
@@ -136,17 +153,13 @@ class TikTokPublisher
             throw new \Exception('No valid images found for TikTok photo post');
         }
 
-        Log::info('TikTok publishing photos', [
-            'photo_urls' => $photoUrls,
-            'photo_count' => count($photoUrls),
-            'content' => $postPlatform->content,
-        ]);
+        $creatorInfo = $this->queryCreatorInfo();
 
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/content/init/", [
                 'post_info' => [
-                    'title' => $postPlatform->content ?? '',
-                    'privacy_level' => 'SELF_ONLY',
+                    'title' => $content ?? '',
+                    'privacy_level' => data_get($creatorInfo, 'privacy_level'),
                     'disable_comment' => false,
                 ],
                 'source_info' => [
@@ -161,23 +174,21 @@ class TikTokPublisher
         if ($response->failed()) {
             Log::error('TikTok photo publish failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
-            $this->handleApiError($response, 'TikTok API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
 
-        Log::info('TikTok photo init response', ['data' => $data]);
-
-        $publishId = $data['data']['publish_id'] ?? null;
+        $publishId = data_get($data, 'data.publish_id');
 
         if (! $publishId) {
             throw new \Exception('TikTok did not return a publish_id');
         }
 
         // Wait for processing and get final status
-        $finalStatus = $this->waitForPublishStatus($publishId);
+        $this->waitForPublishStatus($publishId);
 
         return [
             'id' => $publishId,
@@ -198,28 +209,22 @@ class TikTokPublisher
             if ($response->failed()) {
                 Log::warning('TikTok status check failed', [
                     'attempt' => $i,
-                    'body' => $response->body(),
+                    'body' => $this->redactResponseBody($response->body()),
                 ]);
 
                 continue;
             }
 
             $data = $response->json();
-            $status = $data['data']['status'] ?? 'UNKNOWN';
-
-            Log::info('TikTok publish status', [
-                'status' => $status,
-                'attempt' => $i,
-                'data' => $data,
-            ]);
+            $status = data_get($data, 'data.status', 'UNKNOWN');
 
             if ($status === 'PUBLISH_COMPLETE') {
-                return $data['data'] ?? [];
+                return data_get($data, 'data', []);
             }
 
             if (in_array($status, ['FAILED', 'PUBLISH_FAILED'])) {
-                $errorCode = $data['data']['fail_reason'] ?? 'Unknown error';
-                throw new \Exception("TikTok publish failed: {$errorCode}");
+                $failReason = data_get($data, 'data.fail_reason', 'Unknown error');
+                throw TikTokPublishException::fromFailReason($failReason, json_encode($data));
             }
 
             // PROCESSING_UPLOAD, PROCESSING_DOWNLOAD, SENDING_TO_USER_INBOX - continue waiting
@@ -255,40 +260,22 @@ class TikTokPublisher
         ]);
 
         if ($response->failed()) {
-            Log::error('TikTok token refresh failed', ['body' => $response->body()]);
-            $this->handleApiError($response, 'Failed to refresh TikTok token');
+            Log::error('TikTok token refresh failed', ['body' => $this->redactResponseBody($response->body())]);
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => isset($data['expires_in']) ? now()->addSeconds($data['expires_in']) : null,
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
-        Log::info('TikTok token refreshed successfully');
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function handleApiError(Response $response): never
     {
-        $body = $response->json() ?? [];
-        $error = $body['error'] ?? [];
-        $errorCode = $error['code'] ?? $body['error']['code'] ?? null;
-        $errorMessage = $error['message'] ?? $body['error']['message'] ?? $response->body();
-
-        // TikTok can return error codes as strings or numeric codes
-        $isTokenError = in_array($errorCode, self::TOKEN_ERROR_CODES)
-            || in_array((int) $errorCode, self::TOKEN_ERROR_NUMERIC_CODES)
-            || $response->status() === 401;
-
-        if ($isTokenError) {
-            throw new TokenExpiredException(
-                "{$context}: {$errorMessage}",
-                is_string($errorCode) ? $errorCode : (string) $errorCode
-            );
-        }
-
-        throw new \Exception("{$context}: {$errorMessage}");
+        throw TikTokPublishException::fromApiResponse($response);
     }
 }

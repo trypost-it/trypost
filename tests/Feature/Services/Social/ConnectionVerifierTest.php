@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Exceptions\TokenExpiredException;
 use App\Models\SocialAccount;
 use App\Services\Social\ConnectionVerifier;
@@ -234,9 +236,14 @@ test('does not refresh facebook token as it uses long-lived tokens', function ()
     Http::assertSent(fn ($request) => str_contains($request->url(), 'graph.facebook.com'));
 });
 
-test('does not refresh instagram token as it uses long-lived tokens', function () {
+test('refreshes instagram token when expired', function () {
     Http::fake([
-        'graph.instagram.com/*' => Http::response(['id' => '123', 'username' => 'test'], 200),
+        'graph.instagram.com/refresh_access_token*' => Http::response([
+            'access_token' => 'new-instagram-token',
+            'token_type' => 'bearer',
+            'expires_in' => 5184000,
+        ], 200),
+        'graph.instagram.com/v24.0/me*' => Http::response(['id' => '123', 'username' => 'test'], 200),
     ]);
 
     $account = SocialAccount::factory()->instagram()->create([
@@ -248,8 +255,12 @@ test('does not refresh instagram token as it uses long-lived tokens', function (
 
     expect($result)->toBeTrue();
 
-    Http::assertSentCount(1);
-    Http::assertSent(fn ($request) => str_contains($request->url(), 'graph.instagram.com'));
+    $account->refresh();
+    expect($account->access_token)->toBe('new-instagram-token');
+    expect($account->refresh_token)->toBe('new-instagram-token');
+
+    Http::assertSentCount(2);
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'refresh_access_token'));
 });
 
 test('refreshes token when expiring soon', function () {

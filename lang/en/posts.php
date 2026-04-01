@@ -2,6 +2,7 @@
 
 return [
     'title' => 'Posts',
+    'search' => 'Search posts...',
     'all_posts' => 'All Posts',
     'new_post' => 'New Post',
     'no_posts' => 'No posts found',
@@ -35,6 +36,7 @@ return [
     ],
 
     'status' => [
+        'pending' => 'Pending',
         'draft' => 'Draft',
         'scheduled' => 'Scheduled',
         'publishing' => 'Publishing',
@@ -113,6 +115,7 @@ return [
             'videos_not_supported' => 'Videos not supported',
             'max_images' => 'Max :count images',
             'requires_media' => 'Requires media',
+            'requires_content' => 'Text content is required',
             'exceeded' => ':count exceeded',
             'does_not_support_images' => ':platform does not support images',
             'supports_up_to_images' => ':platform supports up to :count images',
@@ -223,5 +226,6 @@ return [
 
     'errors' => [
         'account_disconnected' => 'Social account is disconnected',
+        'account_inactive' => 'Social account is deactivated',
     ],
 ];

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
@@ -9,7 +11,6 @@ use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Services\Social\LinkedInPublisher;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     $this->workspace = Workspace::factory()->create();
@@ -47,7 +48,7 @@ test('linkedin publisher throws exception for carousel without images', function
     $publisher = new LinkedInPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'No valid images for LinkedIn carousel');
+        ->toThrow(Exception::class, 'No valid images for LinkedIn carousel');
 });
 
 test('linkedin publisher throws token expired exception on oauth error', function () {
@@ -138,7 +139,7 @@ test('linkedin publisher throws exception on api error', function () {
     $publisher = new LinkedInPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class);
+        ->toThrow(Exception::class);
 });
 
 test('linkedin publisher throws exception for unsupported content type', function () {
@@ -147,7 +148,7 @@ test('linkedin publisher throws exception for unsupported content type', functio
     $publisher = new LinkedInPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'Unsupported LinkedIn content type');
+        ->toThrow(Exception::class, 'Unsupported LinkedIn content type');
 });
 
 test('linkedin publisher handles 401 status as token error', function () {
@@ -179,7 +180,7 @@ test('linkedin publisher handles token refresh failure', function () {
     $publisher = new LinkedInPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class);
+        ->toThrow(Exception::class);
 });
 
 test('linkedin publisher refreshes token when expiring soon', function () {

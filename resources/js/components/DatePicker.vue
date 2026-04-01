@@ -22,7 +22,7 @@ import dayjs from '@/dayjs';
 const props = defineProps({
     name: {
         type: String,
-        required: true,
+        default: '',
     },
     modelValue: {
         type: String,
@@ -43,14 +43,16 @@ const props = defineProps({
     },
     placeholder: {
         type: String,
-        default: 'Select date',
+        default: '',
     },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+    'update:modelValue': [value: string | null];
+}>();
 
 // Parse input value into date
-function parseInput(value: string) {
+const parseInput = (value: string) => {
     if (!value) return undefined;
 
     try {
@@ -62,7 +64,7 @@ function parseInput(value: string) {
         return undefined;
     }
     return undefined;
-}
+};
 
 const internalDate = ref(parseInput(props.modelValue));
 const popoverOpen = ref(false);
@@ -94,7 +96,7 @@ const minutes = computed(() => {
 });
 
 // Build full datetime string
-function buildDateTime(dateStr: string | null): string | null {
+const buildDateTime = (dateStr: string | null): string | null => {
     if (!dateStr) return null;
 
     if (!props.showTime) {
@@ -103,15 +105,14 @@ function buildDateTime(dateStr: string | null): string | null {
 
     const timeStr = `${selectedHour.value}:${selectedMinute.value}:00`;
     return `${dateStr}T${timeStr}`;
-}
+};
 
-// Handle time change
-function onTimeChange() {
+const onTimeChange = () => {
     if (internalDate.value) {
         const dateStr = internalDate.value.toString();
         emit('update:modelValue', buildDateTime(dateStr));
     }
-}
+};
 
 // Parse input value into date component
 const isInternalUpdate = ref(false);
@@ -174,14 +175,14 @@ const displayText = computed(() => {
 <template>
     <Popover v-model:open="popoverOpen">
         <PopoverTrigger as-child :disabled="disabled">
-            <Button :id="name" type="button" variant="outline" class="justify-between text-left font-normal"
-                :class="{ 'text-muted-foreground': !displayText }" :disabled="disabled">
-                <span>{{ displayText || placeholder }}</span>
-                <IconCalendar class="h-4 w-4" />
+            <Button :id="name" type="button" variant="outline" class="w-full justify-between text-left font-normal"
+                :class="[{ 'text-muted-foreground': !displayText }, $attrs.class]" :disabled="disabled">
+                <span>{{ displayText || placeholder || $t('common.date_picker.select') }}</span>
+                <IconCalendar class="h-4 w-4 shrink-0" />
             </Button>
         </PopoverTrigger>
         <PopoverContent class="w-auto p-0" :align="align">
-            <Calendar v-model="internalDate" :placeholder="internalDate" layout="month-and-year" locale="en"
+            <Calendar v-model="internalDate as any" :placeholder="(internalDate as any)" layout="month-and-year" locale="en"
                 calendar-label="Date picker" initial-focus />
             <!-- Time Picker -->
             <div v-if="showTime" class="border-t p-3">

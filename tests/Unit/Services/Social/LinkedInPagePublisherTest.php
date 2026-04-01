@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
@@ -214,4 +216,55 @@ test('linkedin page publisher builds feed url when username missing', function (
     $result = $this->publisher->publish($this->postPlatform);
 
     expect($result['url'])->toContain('linkedin.com/feed/update/urn:li:share:1234567890');
+});
+
+test('linkedin page publisher can publish post with image using organization urn', function () {
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/test-image.jpg',
+        'original_filename' => 'test.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 512000,
+        'order' => 0,
+        'meta' => ['width' => 1920, 'height' => 1080],
+    ]);
+
+    $uploadUrl = 'https://www.linkedin.com/dms/upload/v2/pic/0/OrgFake';
+
+    Http::fake(function ($request) use ($uploadUrl) {
+        $url = $request->url();
+
+        if (str_contains($url, '/rest/images')) {
+            return Http::response([
+                'value' => [
+                    'uploadUrl' => $uploadUrl,
+                    'image' => 'urn:li:image:OrgFakeImageUrn',
+                ],
+            ], 200);
+        }
+
+        if ($url === $uploadUrl) {
+            return Http::response(null, 201);
+        }
+
+        if (str_contains($url, '/rest/posts')) {
+            return Http::response(null, 201, ['x-restli-id' => 'urn:li:share:9999999999']);
+        }
+
+        // Media download fallback
+        return Http::response('fake-image-content', 200);
+    });
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('urn:li:share:9999999999');
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/rest/images'));
+
+    // Assert the post was created with organization URN as author
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/rest/posts')
+        && ($request['author'] ?? '') === 'urn:li:organization:123456'
+        && isset($request['content']['media']['id'])
+    );
 });

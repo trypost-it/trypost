@@ -3,6 +3,7 @@
 return [
     'title' => 'Hashtags',
     'description' => 'Create hashtag groups to quickly add to your posts',
+    'search' => 'Search hashtags...',
     'new_group' => 'New Group',
     'no_groups_yet' => 'No hashtag groups yet',
     'no_groups_description' => 'Create hashtag groups to quickly add popular hashtags to your posts',

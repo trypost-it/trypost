@@ -1,19 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Http\UploadedFile;
 
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => 'owner']);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
 // Index tests
 test('workspaces index requires authentication', function () {
-    $response = $this->get(route('workspaces.index'));
+    $response = $this->get(route('app.workspaces.index'));
 
     $response->assertRedirect(route('login'));
 });
@@ -21,10 +25,10 @@ test('workspaces index requires authentication', function () {
 test('workspaces index shows all workspaces for user', function () {
     $workspaces = Workspace::factory()->count(2)->create(['user_id' => $this->user->id]);
     foreach ($workspaces as $workspace) {
-        $workspace->members()->attach($this->user->id, ['role' => 'owner']);
+        $workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
     }
 
-    $response = $this->actingAs($this->user)->get(route('workspaces.index'));
+    $response = $this->actingAs($this->user)->get(route('app.workspaces.index'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -36,7 +40,7 @@ test('workspaces index shows all workspaces for user', function () {
 
 // Create tests
 test('create workspace requires authentication', function () {
-    $response = $this->get(route('workspaces.create'));
+    $response = $this->get(route('app.workspaces.create'));
 
     $response->assertRedirect(route('login'));
 });
@@ -46,7 +50,7 @@ test('create workspace shows form for user with no workspaces', function () {
     $this->user->update(['current_workspace_id' => null]);
     $this->workspace->delete();
 
-    $response = $this->actingAs($this->user)->get(route('workspaces.create'));
+    $response = $this->actingAs($this->user)->get(route('app.workspaces.create'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -57,7 +61,7 @@ test('create workspace shows form for user with no workspaces', function () {
 test('create workspace shows form when user already has workspace in self-hosted mode', function () {
     config(['trypost.self_hosted' => true]);
 
-    $response = $this->actingAs($this->user)->get(route('workspaces.create'));
+    $response = $this->actingAs($this->user)->get(route('app.workspaces.create'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
@@ -67,7 +71,7 @@ test('create workspace shows form when user already has workspace in self-hosted
 
 // Store tests
 test('store workspace requires authentication', function () {
-    $response = $this->post(route('workspaces.store'), ['name' => 'Test Workspace']);
+    $response = $this->post(route('app.workspaces.store'), ['name' => 'Test Workspace']);
 
     $response->assertRedirect(route('login'));
 });
@@ -77,11 +81,11 @@ test('store workspace creates first workspace', function () {
     $this->user->update(['current_workspace_id' => null]);
     $this->workspace->delete();
 
-    $response = $this->actingAs($this->user)->post(route('workspaces.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.workspaces.store'), [
         'name' => 'New Workspace',
     ]);
 
-    $response->assertRedirect(route('calendar'));
+    $response->assertRedirect(route('app.calendar'));
 
     $this->assertDatabaseHas('workspaces', [
         'name' => 'New Workspace',
@@ -92,11 +96,11 @@ test('store workspace creates first workspace', function () {
 test('store workspace creates second workspace in self-hosted mode', function () {
     config(['trypost.self_hosted' => true]);
 
-    $response = $this->actingAs($this->user)->post(route('workspaces.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.workspaces.store'), [
         'name' => 'Second Workspace',
     ]);
 
-    $response->assertRedirect(route('calendar'));
+    $response->assertRedirect(route('app.calendar'));
 
     $this->assertDatabaseHas('workspaces', [
         'name' => 'Second Workspace',
@@ -105,7 +109,7 @@ test('store workspace creates second workspace in self-hosted mode', function ()
 });
 
 test('store workspace validates name is required', function () {
-    $response = $this->actingAs($this->user)->post(route('workspaces.store'), [
+    $response = $this->actingAs($this->user)->post(route('app.workspaces.store'), [
         'name' => '',
     ]);
 
@@ -117,7 +121,7 @@ test('store workspace sets new workspace as current', function () {
     $this->user->update(['current_workspace_id' => null]);
     $this->workspace->delete();
 
-    $this->actingAs($this->user)->post(route('workspaces.store'), [
+    $this->actingAs($this->user)->post(route('app.workspaces.store'), [
         'name' => 'New Workspace',
     ]);
 
@@ -129,18 +133,18 @@ test('store workspace sets new workspace as current', function () {
 
 // Switch tests
 test('switch workspace requires authentication', function () {
-    $response = $this->post(route('workspaces.switch', $this->workspace));
+    $response = $this->post(route('app.workspaces.switch', $this->workspace));
 
     $response->assertRedirect(route('login'));
 });
 
 test('switch workspace changes current workspace', function () {
     $otherWorkspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $otherWorkspace->members()->attach($this->user->id, ['role' => 'owner']);
+    $otherWorkspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
 
-    $response = $this->actingAs($this->user)->post(route('workspaces.switch', $otherWorkspace));
+    $response = $this->actingAs($this->user)->post(route('app.workspaces.switch', $otherWorkspace));
 
-    $response->assertRedirect(route('calendar'));
+    $response->assertRedirect(route('app.calendar'));
 
     $this->user->refresh();
     expect($this->user->current_workspace_id)->toBe($otherWorkspace->id);
@@ -150,40 +154,42 @@ test('switch workspace returns 403 for workspace user does not belong to', funct
     $otherUser = User::factory()->create(['setup' => Setup::Completed]);
     $otherWorkspace = Workspace::factory()->create(['user_id' => $otherUser->id]);
 
-    $response = $this->actingAs($this->user)->post(route('workspaces.switch', $otherWorkspace));
+    $response = $this->actingAs($this->user)->post(route('app.workspaces.switch', $otherWorkspace));
 
     $response->assertForbidden();
 });
 
 // Settings tests
 test('workspace settings requires authentication', function () {
-    $response = $this->get(route('workspace.settings'));
+    $response = $this->get(route('app.workspace.settings'));
 
     $response->assertRedirect(route('login'));
 });
 
-test('workspace settings shows settings page', function () {
-    $response = $this->actingAs($this->user)->get(route('workspace.settings'));
+test('workspace settings shows settings page with members and invitations', function () {
+    $response = $this->actingAs($this->user)->get(route('app.workspace.settings'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('settings/Workspace', false)
         ->has('workspace')
         ->has('timezones')
+        ->has('members')
+        ->has('invitations')
     );
 });
 
 test('workspace settings redirects to create if no workspace', function () {
     $this->user->update(['current_workspace_id' => null]);
 
-    $response = $this->actingAs($this->user)->get(route('workspace.settings'));
+    $response = $this->actingAs($this->user)->get(route('app.workspace.settings'));
 
-    $response->assertRedirect(route('workspaces.create'));
+    $response->assertRedirect(route('app.workspaces.create'));
 });
 
 // Update settings tests
 test('update workspace settings requires authentication', function () {
-    $response = $this->put(route('workspace.settings.update'), [
+    $response = $this->put(route('app.workspace.settings.update'), [
         'name' => 'Updated Name',
         'timezone' => 'America/New_York',
     ]);
@@ -192,12 +198,12 @@ test('update workspace settings requires authentication', function () {
 });
 
 test('update workspace settings updates workspace', function () {
-    $response = $this->actingAs($this->user)->put(route('workspace.settings.update'), [
+    $response = $this->actingAs($this->user)->put(route('app.workspace.settings.update'), [
         'name' => 'Updated Name',
         'timezone' => 'America/New_York',
     ]);
 
-    $response->assertRedirect(route('workspace.settings'));
+    $response->assertRedirect(route('app.workspace.settings'));
 
     $this->workspace->refresh();
     expect($this->workspace->name)->toBe('Updated Name');
@@ -205,7 +211,7 @@ test('update workspace settings updates workspace', function () {
 });
 
 test('update workspace settings validates required fields', function () {
-    $response = $this->actingAs($this->user)->put(route('workspace.settings.update'), [
+    $response = $this->actingAs($this->user)->put(route('app.workspace.settings.update'), [
         'name' => '',
         'timezone' => '',
     ]);
@@ -214,7 +220,7 @@ test('update workspace settings validates required fields', function () {
 });
 
 test('update workspace settings validates timezone', function () {
-    $response = $this->actingAs($this->user)->put(route('workspace.settings.update'), [
+    $response = $this->actingAs($this->user)->put(route('app.workspace.settings.update'), [
         'name' => 'Valid Name',
         'timezone' => 'Invalid/Timezone',
     ]);
@@ -222,9 +228,88 @@ test('update workspace settings validates timezone', function () {
     $response->assertSessionHasErrors('timezone');
 });
 
+// Logo upload tests
+test('upload workspace logo requires authentication', function () {
+    $response = $this->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->image('logo.jpg'),
+    ]);
+
+    $response->assertRedirect(route('login'));
+});
+
+test('upload workspace logo succeeds with valid image', function () {
+    $response = $this->actingAs($this->user)->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->image('logo.jpg', 200, 200),
+    ]);
+
+    $response->assertRedirect();
+
+    $this->workspace->refresh();
+    expect($this->workspace->has_logo)->toBeTrue();
+    expect($this->workspace->logo_url)->not->toBeNull();
+});
+
+test('upload workspace logo validates file is an image', function () {
+    $response = $this->actingAs($this->user)->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->create('document.pdf', 100),
+    ]);
+
+    $response->assertSessionHasErrors('photo');
+});
+
+test('upload workspace logo validates max size', function () {
+    $response = $this->actingAs($this->user)->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->image('logo.jpg')->size(3000),
+    ]);
+
+    $response->assertSessionHasErrors('photo');
+});
+
+test('upload workspace logo requires authorization', function () {
+    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+
+    $response = $this->actingAs($otherUser)->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->image('logo.jpg'),
+    ]);
+
+    $response->assertForbidden();
+});
+
+test('delete workspace logo requires authentication', function () {
+    $response = $this->delete(route('app.workspace.delete-logo'));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('delete workspace logo succeeds', function () {
+    // Upload first
+    $this->actingAs($this->user)->post(route('app.workspace.upload-logo'), [
+        'photo' => UploadedFile::fake()->image('logo.jpg', 200, 200),
+    ]);
+
+    $this->workspace->refresh();
+    expect($this->workspace->has_logo)->toBeTrue();
+
+    // Delete
+    $response = $this->actingAs($this->user)->delete(route('app.workspace.delete-logo'));
+
+    $response->assertRedirect();
+
+    $this->workspace->refresh();
+    expect($this->workspace->has_logo)->toBeFalse();
+});
+
+test('delete workspace logo requires authorization', function () {
+    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+
+    $response = $this->actingAs($otherUser)->delete(route('app.workspace.delete-logo'));
+
+    $response->assertForbidden();
+});
+
 // Destroy tests
 test('destroy workspace requires authentication', function () {
-    $response = $this->delete(route('workspaces.destroy', $this->workspace));
+    $response = $this->delete(route('app.workspaces.destroy', $this->workspace));
 
     $response->assertRedirect(route('login'));
 });
@@ -232,14 +317,14 @@ test('destroy workspace requires authentication', function () {
 test('destroy workspace deletes the workspace', function () {
     $workspaceId = $this->workspace->id;
 
-    $response = $this->actingAs($this->user)->delete(route('workspaces.destroy', $this->workspace));
+    $response = $this->actingAs($this->user)->delete(route('app.workspaces.destroy', $this->workspace));
 
-    $response->assertRedirect(route('workspaces.index'));
+    $response->assertRedirect(route('app.workspaces.index'));
     expect(Workspace::find($workspaceId))->toBeNull();
 });
 
 test('destroy workspace clears current workspace if deleting current', function () {
-    $this->actingAs($this->user)->delete(route('workspaces.destroy', $this->workspace));
+    $this->actingAs($this->user)->delete(route('app.workspaces.destroy', $this->workspace));
 
     $this->user->refresh();
     expect($this->user->current_workspace_id)->toBeNull();
@@ -248,7 +333,7 @@ test('destroy workspace clears current workspace if deleting current', function 
 test('destroy workspace returns 403 for non-owner', function () {
     $otherUser = User::factory()->create(['setup' => Setup::Completed]);
 
-    $response = $this->actingAs($otherUser)->delete(route('workspaces.destroy', $this->workspace));
+    $response = $this->actingAs($otherUser)->delete(route('app.workspaces.destroy', $this->workspace));
 
     $response->assertForbidden();
 });

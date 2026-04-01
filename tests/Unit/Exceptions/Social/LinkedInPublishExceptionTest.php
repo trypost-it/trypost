@@ -1,0 +1,83 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Exceptions\Social\ErrorCategory;
+use App\Exceptions\Social\LinkedInPublishException;
+use App\Exceptions\TokenExpiredException;
+use Illuminate\Support\Facades\Http;
+
+test('HTTP 401 throws TokenExpiredException', function () {
+    $response = Http::response(['message' => 'Unauthorized'], 401);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.linkedin.com/test');
+
+    LinkedInPublishException::fromApiResponse($fakeResponse);
+})->throws(TokenExpiredException::class);
+
+test('HTTP 403 maps to Permission category', function () {
+    $response = Http::response(['message' => 'Forbidden'], 403);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.linkedin.com/test');
+
+    $exception = LinkedInPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception)
+        ->toBeInstanceOf(LinkedInPublishException::class)
+        ->and($exception->category)->toBe(ErrorCategory::Permission)
+        ->and($exception->userMessage)->toBe('Not authorized to post to this account.');
+});
+
+test('body containing "Unable to obtain activity" maps to ServerError category', function () {
+    $response = Http::response(['message' => 'Unable to obtain activity for URN'], 400);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.linkedin.com/test');
+
+    $exception = LinkedInPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->category)->toBe(ErrorCategory::ServerError)
+        ->and($exception->userMessage)->toBe('LinkedIn server error. Please try again.');
+});
+
+test('unknown error maps to Unknown category with response body as message', function () {
+    $response = Http::response(['message' => 'Something went wrong.'], 400);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.linkedin.com/test');
+
+    $exception = LinkedInPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->category)->toBe(ErrorCategory::Unknown)
+        ->and($exception->userMessage)->toBe('Something went wrong.');
+});
+
+test('HTTP 422 maps to ContentPolicy category', function () {
+    $response = Http::response(['message' => 'Validation error'], 422);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.linkedin.com/test');
+
+    $exception = LinkedInPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->category)->toBe(ErrorCategory::ContentPolicy)
+        ->and($exception->userMessage)->toBe('Invalid post data. Please check your content.');
+});
+
+test('body containing "resource is forbidden" maps to Permission category', function () {
+    $response = Http::response(['message' => 'The resource is forbidden'], 403);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.linkedin.com/test');
+
+    $exception = LinkedInPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->category)->toBe(ErrorCategory::Permission)
+        ->and($exception->userMessage)->toBe('Not authorized to post to this account.');
+});
+
+test('platform returns linkedin', function () {
+    $response = Http::response(['message' => 'Some error'], 400);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.linkedin.com/test');
+
+    $exception = LinkedInPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->platform())->toBe('linkedin');
+});

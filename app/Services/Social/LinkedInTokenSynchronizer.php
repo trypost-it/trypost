@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Social;
 
 use App\Enums\SocialAccount\Platform;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
-use Illuminate\Support\Facades\Log;
 
 class LinkedInTokenSynchronizer
 {
@@ -27,13 +28,6 @@ class LinkedInTokenSynchronizer
         if (! $targetAccount) {
             return;
         }
-
-        Log::info('Syncing LinkedIn tokens between accounts', [
-            'source_id' => $sourceAccount->id,
-            'source_platform' => $sourceAccount->platform->value,
-            'target_id' => $targetAccount->id,
-            'target_platform' => $targetAccount->platform->value,
-        ]);
 
         $targetAccount->update([
             'access_token' => $sourceAccount->access_token,

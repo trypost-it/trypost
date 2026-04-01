@@ -9,11 +9,27 @@ return [
         'password' => 'Senha',
         'workspace' => 'Workspace',
         'members' => 'Membros',
+        'notifications' => 'Notificações',
         'billing' => 'Faturamento',
+    ],
+
+    'notifications' => [
+        'title' => 'Preferências de notificações',
+        'heading' => 'Notificações por e-mail',
+        'description' => 'Escolha quais notificações por e-mail deseja receber',
+        'post_published' => 'Post publicado',
+        'post_published_description' => 'Receber um e-mail quando seu post for publicado com sucesso',
+        'post_failed' => 'Post falhou',
+        'post_failed_description' => 'Receber um e-mail quando seu post falhar ao publicar',
+        'account_disconnected' => 'Conta desconectada',
+        'account_disconnected_description' => 'Receber um e-mail quando uma conta social for desconectada',
+        'save' => 'Salvar preferências',
     ],
 
     'profile' => [
         'title' => 'Configurações do perfil',
+        'photo_heading' => 'Foto do perfil',
+        'photo_description' => 'Envie uma foto de perfil',
         'heading' => 'Informações do perfil',
         'description' => 'Atualize seu nome e endereço de e-mail',
         'avatar' => 'Avatar',
@@ -56,20 +72,27 @@ return [
 
     'workspace' => [
         'title' => 'Configurações do workspace',
-        'heading' => 'Configurações do workspace',
-        'description' => 'Atualize o nome, logo e fuso horário do workspace',
-        'logo' => 'Logo',
+        'logo_heading' => 'Logo do workspace',
+        'logo_description' => 'Envie um logo para o workspace',
+        'heading' => 'Nome do workspace',
+        'description' => 'Atualize o nome e fuso horário do workspace',
+        'members_heading' => 'Membros',
+        'members_description' => 'Gerencie membros e convites do workspace',
         'name' => 'Nome',
         'name_placeholder' => 'Meu Workspace',
         'timezone' => 'Fuso horário',
         'save' => 'Salvar',
-        'saved' => 'Salvo.',
     ],
 
     'members' => [
         'title' => 'Membros',
         'heading' => 'Membros da equipe',
         'description' => 'Gerencie membros e convites deste workspace',
+
+        'cancel' => 'Cancelar',
+        'remove' => 'Remover',
+        'make_admin' => 'Tornar administrador',
+        'make_member' => 'Tornar membro',
 
         'invite' => [
             'title' => 'Convidar Membro',
@@ -79,7 +102,6 @@ return [
             'role' => 'Função',
             'role_placeholder' => 'Selecione uma função',
             'submit' => 'Enviar Convite',
-            'cancel_confirm' => 'Tem certeza que deseja cancelar este convite?',
         ],
 
         'pending' => [
@@ -92,7 +114,18 @@ return [
             'title' => 'Membros',
             'description' => 'Pessoas com acesso a este workspace',
             'empty' => 'Nenhum membro além do proprietário',
-            'remove_confirm' => 'Tem certeza que deseja remover este membro?',
+        ],
+
+        'remove_modal' => [
+            'title' => 'Remover membro',
+            'description' => 'Tem certeza que deseja remover este membro do workspace? Ele perderá acesso a todos os recursos do workspace.',
+            'action' => 'Remover membro',
+        ],
+
+        'cancel_invite_modal' => [
+            'title' => 'Cancelar convite',
+            'description' => 'Tem certeza que deseja cancelar este convite?',
+            'action' => 'Cancelar convite',
         ],
 
         'roles' => [
@@ -105,6 +138,7 @@ return [
             'invite_sent' => 'Convite enviado com sucesso!',
             'invite_deleted' => 'Convite excluído.',
             'member_removed' => 'Membro removido com sucesso.',
+            'role_updated' => 'Função do membro atualizada.',
             'wrong_email' => 'Este convite é para um endereço de e-mail diferente.',
             'already_member' => 'Você já é membro deste workspace.',
             'invite_accepted' => 'Bem-vindo! Você agora é membro do workspace.',
@@ -117,5 +151,56 @@ return [
         'language_updated' => 'Idioma atualizado com sucesso!',
         'password_updated' => 'Senha atualizada com sucesso!',
         'workspace_updated' => 'Configurações atualizadas com sucesso!',
+        'photo_updated' => 'Foto atualizada com sucesso!',
+        'photo_deleted' => 'Foto removida com sucesso!',
+        'logo_updated' => 'Logo enviado com sucesso!',
+        'logo_deleted' => 'Logo removido com sucesso!',
+        'notifications_updated' => 'Preferências de notificações atualizadas!',
+    ],
+
+    'api_keys' => [
+        'title' => 'Chaves API',
+        'page_title' => 'Chaves API',
+        'heading' => 'Chaves API',
+        'description' => 'Gerencie chaves API para acesso programático ao seu workspace.',
+        'create' => 'Criar chave API',
+        'copy' => 'Copiar',
+        'new_token_message' => 'Sua nova chave API foi criada. Copie agora — você não poderá vê-la novamente.',
+        'table' => [
+            'name' => 'Nome',
+            'key' => 'Chave',
+            'status' => 'Status',
+            'expires' => 'Expira',
+            'last_used' => 'Último uso',
+            'never' => 'Nunca',
+        ],
+        'actions' => [
+            'copy_id' => 'Copiar ID da chave API',
+            'copy_id_success' => 'ID da chave API copiado',
+            'delete' => 'Excluir',
+        ],
+        'empty' => [
+            'title' => 'Nenhuma chave API',
+            'description' => 'Crie uma chave API para acessar seu workspace programaticamente.',
+        ],
+        'delete_modal' => [
+            'title' => 'Excluir chave API',
+            'description' => 'Tem certeza que deseja excluir esta chave API? Aplicações que a usam perderão acesso imediatamente.',
+            'action' => 'Excluir chave API',
+        ],
+        'create_dialog' => [
+            'title' => 'Criar chave API',
+            'description' => 'Crie uma nova chave API para acesso programático ao seu workspace.',
+            'name' => 'Nome',
+            'name_placeholder' => 'ex. Chave API de Produção',
+            'expires' => 'Data de expiração (opcional)',
+            'expires_placeholder' => 'Sem expiração',
+            'submit' => 'Criar',
+            'cancel' => 'Cancelar',
+        ],
+        'flash' => [
+            'created' => 'Chave de API criada com sucesso!',
+            'deleted' => 'Chave de API excluída com sucesso!',
+        ],
     ],
 ];

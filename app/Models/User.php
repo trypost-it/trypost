@@ -1,23 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
+use App\Enums\Notification\Type as NotificationType;
 use App\Enums\User\Persona;
 use App\Enums\User\Setup;
 use App\Models\Traits\HasMedia;
 use App\Models\Traits\HasWorkspace;
+use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use Billable, HasFactory, HasMedia, HasUuids, HasWorkspace, Notifiable;
+
+    public const SUBSCRIPTION_NAME = 'default';
 
     /**
      * The attributes that are mass assignable.
@@ -31,7 +38,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'setup',
         'persona',
         'current_workspace_id',
-        'language_id',
         'email_verified_at',
     ];
 
@@ -47,19 +53,19 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    protected $appends = ['avatar'];
+    protected $appends = [
+        'has_photo',
+        'photo_url',
+    ];
 
-    /**
-     * @return array{url: string, media_id: string|null}
-     */
-    public function getAvatarAttribute(): array
+    public function getHasPhotoAttribute(): bool
     {
-        $media = $this->getFirstMedia('avatar');
+        return $this->getFirstMedia('avatar') !== null;
+    }
 
-        return [
-            'url' => $media?->url ?? $this->getFallbackAvatarUrl($this->name),
-            'media_id' => $media?->id,
-        ];
+    public function getPhotoUrlAttribute(): ?string
+    {
+        return $this->getFirstMediaUrl('avatar');
     }
 
     /**
@@ -79,11 +85,32 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Get the user's language.
+     * @return HasMany<Notification, $this>
      */
-    public function language(): BelongsTo
+    public function notifications(): HasMany
     {
-        return $this->belongsTo(Language::class);
+        return $this->hasMany(Notification::class);
+    }
+
+    public function notificationPreference(): HasOne
+    {
+        return $this->hasOne(NotificationPreference::class);
+    }
+
+    public function wantsEmailFor(NotificationType $type): bool
+    {
+        $preference = $this->notificationPreference;
+
+        if (! $preference) {
+            return true; // Default: all enabled
+        }
+
+        return match ($type) {
+            NotificationType::PostPublished => $preference->post_published,
+            NotificationType::PostFailed, NotificationType::PostPartiallyPublished => $preference->post_failed,
+            NotificationType::AccountDisconnected => $preference->account_disconnected,
+            default => true,
+        };
     }
 
     /**
@@ -96,7 +123,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return true;
         }
 
-        return $this->subscribed('default');
+        return $this->subscribed(self::SUBSCRIPTION_NAME);
     }
 
     /**

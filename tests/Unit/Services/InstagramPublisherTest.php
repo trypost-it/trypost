@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
@@ -32,7 +34,7 @@ test('instagram publisher throws exception when no media', function () {
     $publisher = new InstagramPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class, 'Instagram requires at least one image or video.');
+        ->toThrow(Exception::class, 'Instagram requires at least one image or video.');
 });
 
 test('instagram publisher publishes single image', function () {
@@ -142,5 +144,5 @@ test('instagram publisher throws exception on api error', function () {
     $publisher = new InstagramPublisher;
 
     expect(fn () => $publisher->publish($this->postPlatform))
-        ->toThrow(\Exception::class);
+        ->toThrow(Exception::class);
 });

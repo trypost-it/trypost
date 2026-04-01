@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\SocialAccount\Platform;
 use App\Enums\SocialAccount\Status;
+use App\Enums\UserWorkspace\Role;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -11,13 +14,13 @@ beforeEach(function () {
     $this->user = User::factory()->create();
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => 'owner']);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
 });
 
 test('threads connect redirects to oauth', function () {
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')
-        ->get(route('social.threads.connect'));
+        ->get(route('app.social.threads.connect'));
 
     $response->assertStatus(409); // Inertia::location returns 409 with X-Inertia header
 
@@ -50,7 +53,7 @@ test('threads oauth callback creates account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'test-auth-code',
         'state' => $state,
     ]));
@@ -74,7 +77,7 @@ test('threads callback fails with invalid state', function () {
         'threads_oauth_state' => 'correct-state',
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'test-auth-code',
         'state' => 'wrong-state',
     ]));
@@ -92,7 +95,7 @@ test('threads callback fails with invalid state', function () {
 test('threads callback fails with expired session', function () {
     // No session data - simulating expired session
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'test-auth-code',
         'state' => 'test-state',
     ]));
@@ -131,7 +134,7 @@ test('user cannot connect threads if already connected', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'test-auth-code',
         'state' => $state,
     ]));
@@ -171,7 +174,7 @@ test('user can reconnect disconnected threads account', function () {
         ], 200),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'test-auth-code',
         'state' => $state,
     ]));
@@ -199,7 +202,7 @@ test('threads callback handles token exchange failure', function () {
         ], 400),
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('social.threads.callback', [
+    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
         'code' => 'expired-auth-code',
         'state' => $state,
     ]));

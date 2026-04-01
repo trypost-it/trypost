@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\Media\Type as MediaType;
 use App\Enums\SocialAccount\Platform;
 

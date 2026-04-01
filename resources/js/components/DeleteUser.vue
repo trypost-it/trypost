@@ -3,7 +3,7 @@ import { Form } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { useTemplateRef } from 'vue';
 
-import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import ProfileController from '@/actions/App/Http/Controllers/App/Settings/ProfileController';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';

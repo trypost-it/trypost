@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Mail;
 
 use App\Models\SocialAccount;
@@ -43,7 +45,7 @@ class AccountDisconnected extends Mailable implements ShouldQueue
                 'platformName' => $platformName,
                 'accountName' => $accountName,
                 'workspaceName' => $workspaceName,
-                'url' => route('accounts'),
+                'url' => route('app.accounts'),
             ],
         );
     }

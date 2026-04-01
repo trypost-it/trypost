@@ -1,24 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Social;
 
+use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\BlueskyPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Media\MediaOptimizer;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class BlueskyPublisher
 {
+    use HasSocialHttpClient;
+
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
         $service = $account->meta['service'] ?? 'https://bsky.social';
 
         // Refresh token if needed
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
-            $this->refreshToken($account);
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
             $account->refresh();
         }
 
@@ -29,7 +41,7 @@ class BlueskyPublisher
         if ($medias->count() > 0) {
             $images = [];
             foreach ($medias->take(4) as $media) {
-                if (str_starts_with($media->mime_type, 'image/')) {
+                if ($media->isImage()) {
                     $blob = $this->uploadBlob($account, $service, $media->url, $media->mime_type);
                     if ($blob) {
                         $images[] = [
@@ -49,7 +61,7 @@ class BlueskyPublisher
         }
 
         // Parse facets (links, mentions, hashtags) from text
-        $text = $postPlatform->content ?? '';
+        $text = $content ?? '';
         $facets = $this->parseFacets($text);
 
         // Create post record
@@ -67,13 +79,7 @@ class BlueskyPublisher
             $record['facets'] = $facets;
         }
 
-        Log::info('Bluesky publishing post', [
-            'user_id' => $account->platform_user_id,
-            'has_embed' => $embed !== null,
-            'facet_count' => count($facets),
-        ]);
-
-        $response = Http::withToken($account->access_token)
+        $response = $this->socialHttp()->withToken($account->access_token)
             ->post("{$service}/xrpc/com.atproto.repo.createRecord", [
                 'repo' => $account->platform_user_id,
                 'collection' => 'app.bsky.feed.post',
@@ -83,7 +89,7 @@ class BlueskyPublisher
         if ($response->failed()) {
             Log::error('Bluesky post failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
 
             $this->handleApiError($response);
@@ -92,13 +98,8 @@ class BlueskyPublisher
         $data = $response->json();
 
         // Extract post ID from URI (at://did/app.bsky.feed.post/xxx)
-        $uri = $data['uri'];
+        $uri = data_get($data, 'uri');
         $postId = basename($uri);
-
-        Log::info('Bluesky post created successfully', [
-            'uri' => $uri,
-            'post_id' => $postId,
-        ]);
 
         return [
             'id' => $postId,
@@ -108,33 +109,47 @@ class BlueskyPublisher
 
     private function uploadBlob(SocialAccount $account, string $service, string $url, string $mimeType): ?array
     {
-        try {
-            $imageContent = file_get_contents($url);
+        $tempFile = tempnam(sys_get_temp_dir(), 'bsky_blob_');
 
-            if ($imageContent === false) {
-                Log::error('Bluesky failed to read image', ['url' => $url]);
+        try {
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($url);
+
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+            }
+
+            $fileSize = filesize($tempFile);
+
+            if ($fileSize === false || $fileSize === 0) {
+                Log::error('Bluesky failed to download media', ['url' => $url]);
 
                 return null;
             }
 
-            // Bluesky has 1MB limit for images
-            if (strlen($imageContent) > 1000000) {
-                Log::warning('Bluesky image exceeds 1MB limit', [
-                    'size' => strlen($imageContent),
-                    'url' => $url,
-                ]);
-                // TODO: Resize image if needed
+            // Optimize images for Bluesky's 1MB limit
+            if (str_starts_with($mimeType, 'image/') && ! str_starts_with($mimeType, 'image/gif')) {
+                $optimizer = app(MediaOptimizer::class);
+                $optimizedPath = $optimizer->optimizeImage($tempFile, Platform::Bluesky);
+                @unlink($tempFile);
+                $tempFile = $optimizedPath;
+                $mimeType = 'image/jpeg';
             }
 
-            $response = Http::withToken($account->access_token)
+            $stream = fopen($tempFile, 'r');
+
+            $response = $this->socialHttp()->withToken($account->access_token)
                 ->withHeaders(['Content-Type' => $mimeType])
-                ->withBody($imageContent, $mimeType)
+                ->withBody($stream, $mimeType)
                 ->post("{$service}/xrpc/com.atproto.repo.uploadBlob");
+
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
 
             if ($response->failed()) {
                 Log::error('Bluesky blob upload failed', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
+                    'body' => $this->redactResponseBody($response->body()),
                 ]);
 
                 return null;
@@ -148,6 +163,8 @@ class BlueskyPublisher
             ]);
 
             return null;
+        } finally {
+            @unlink($tempFile);
         }
     }
 
@@ -255,28 +272,23 @@ class BlueskyPublisher
     {
         $service = $account->meta['service'] ?? 'https://bsky.social';
 
-        Log::info('Bluesky refreshing token', ['user_id' => $account->platform_user_id]);
-
         // Try refresh first
-        $response = Http::withToken($account->refresh_token)
+        $response = $this->socialHttp()->withToken($account->refresh_token)
             ->post("{$service}/xrpc/com.atproto.server.refreshSession");
 
         if ($response->successful()) {
             $data = $response->json();
             $account->update([
-                'access_token' => $data['accessJwt'],
-                'refresh_token' => $data['refreshJwt'],
+                'access_token' => data_get($data, 'accessJwt'),
+                'refresh_token' => data_get($data, 'refreshJwt'),
                 'token_expires_at' => now()->addHours(2),
             ]);
-
-            Log::info('Bluesky token refreshed via refresh token');
 
             return;
         }
 
         Log::warning('Bluesky refresh token failed, trying re-authentication', [
             'status' => $response->status(),
-            'body' => $response->body(),
         ]);
 
         // If refresh fails, re-authenticate with stored credentials
@@ -293,12 +305,10 @@ class BlueskyPublisher
                 if ($response->successful()) {
                     $data = $response->json();
                     $account->update([
-                        'access_token' => $data['accessJwt'],
-                        'refresh_token' => $data['refreshJwt'],
+                        'access_token' => data_get($data, 'accessJwt'),
+                        'refresh_token' => data_get($data, 'refreshJwt'),
                         'token_expires_at' => now()->addHours(2),
                     ]);
-
-                    Log::info('Bluesky token refreshed via re-authentication');
 
                     return;
                 }
@@ -312,16 +322,8 @@ class BlueskyPublisher
         throw new TokenExpiredException('Bluesky session expired');
     }
 
-    private function handleApiError(Response $response): void
+    private function handleApiError(Response $response): never
     {
-        $body = $response->json() ?? [];
-        $error = $body['error'] ?? 'Unknown error';
-        $message = $body['message'] ?? $response->body();
-
-        if ($error === 'ExpiredToken' || $error === 'InvalidToken') {
-            throw new TokenExpiredException("Bluesky: {$message}");
-        }
-
-        throw new \Exception("Bluesky API error: {$message}");
+        throw BlueskyPublishException::fromApiResponse($response);
     }
 }

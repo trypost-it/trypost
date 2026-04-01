@@ -5,7 +5,7 @@ import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { login, register } from '@/routes';
-import { accept, decline } from '@/routes/invites';
+import { accept, decline } from '@/routes/app/invites';
 import { type SharedData } from '@/types';
 
 const props = defineProps<{

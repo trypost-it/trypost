@@ -1,10 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Social;
 
+use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\XPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Media\MediaOptimizer;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -12,14 +18,7 @@ use Illuminate\Support\Facades\Log;
 
 class XPublisher
 {
-    /**
-     * X/Twitter API error titles that indicate token issues.
-     *
-     * @see https://developer.twitter.com/en/support/twitter-api/error-troubleshooting
-     */
-    private const TOKEN_ERROR_TITLES = [
-        'Unauthorized',
-    ];
+    use HasSocialHttpClient;
 
     private string $baseUrl = 'https://api.x.com';
 
@@ -27,11 +26,15 @@ class XPublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
 
         // Refresh token if expired or expiring soon
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
-            $this->refreshToken($account);
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
             $account->refresh();
         }
 
@@ -39,8 +42,8 @@ class XPublisher
 
         $data = [];
 
-        if (! empty($postPlatform->content)) {
-            $data['text'] = $postPlatform->content;
+        if (! empty($content)) {
+            $data['text'] = $content;
         }
 
         $mediaIds = [];
@@ -48,17 +51,10 @@ class XPublisher
 
         if ($media->isNotEmpty()) {
             foreach ($media as $mediaItem) {
-                Log::info('Uploading media to X', [
-                    'url' => $mediaItem->url,
-                    'mime_type' => $mediaItem->mime_type,
-                ]);
-
                 $uploadedMedia = $this->uploadMedia($mediaItem);
 
-                Log::info('X media upload response', ['response' => $uploadedMedia]);
-
                 // v2 API returns data.id, v1 returns media_id
-                $mediaId = $uploadedMedia['data']['id'] ?? $uploadedMedia['media_id'] ?? null;
+                $mediaId = data_get($uploadedMedia, 'data.id', data_get($uploadedMedia, 'media_id'));
                 if ($mediaId) {
                     $mediaIds[] = $mediaId;
                 }
@@ -71,11 +67,9 @@ class XPublisher
             ];
         }
 
-        if (empty($data['text']) && empty($mediaIds)) {
+        if (empty($content) && empty($mediaIds)) {
             throw new \Exception('X posts require either text or media. Please add content to your post.');
         }
-
-        Log::info('Posting tweet', ['data' => $data]);
 
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/2/tweets", $data);
@@ -83,9 +77,9 @@ class XPublisher
         if ($response->failed()) {
             Log::error('X post creation failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
-            $this->handleApiError($response, 'X API error');
+            $this->handleApiError($response);
         }
 
         $responseData = $response->json();
@@ -99,46 +93,54 @@ class XPublisher
 
     private function getHttpClient(): PendingRequest
     {
-        return Http::withToken($this->accessToken)
+        return $this->socialHttp()->withToken($this->accessToken)
             ->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ])
-            ->timeout(360);
+            ]);
     }
 
     private function uploadMedia($mediaItem): ?array
     {
-        $mediaContent = file_get_contents($mediaItem->url);
         $mimeType = $mediaItem->mime_type;
-        $fileSize = strlen($mediaContent);
 
-        // Create temp file
+        // Download to temp file (memory-safe)
         $tempFile = tempnam(sys_get_temp_dir(), 'x_media_');
-        file_put_contents($tempFile, $mediaContent);
 
         try {
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+            }
+
+            // Optimize images (skip GIFs — they need special handling)
+            if (str_starts_with($mimeType, 'image/') && ! str_starts_with($mimeType, 'image/gif')) {
+                $optimizer = app(MediaOptimizer::class);
+                $optimizedPath = $optimizer->optimizeImage($tempFile, Platform::X);
+                @unlink($tempFile);
+                $tempFile = $optimizedPath;
+                $mimeType = 'image/jpeg';
+            }
+
+            $fileSize = filesize($tempFile);
             $mediaCategory = $this->getMediaCategory($mimeType, $fileSize);
 
             $isVideo = str_starts_with($mimeType, 'video/');
             $isGif = $mimeType === 'image/gif';
 
-            // Use chunked upload for:
-            // - Videos (always)
-            // - GIFs (need async processing)
-            // - Files > 5MB (API limit for simple upload)
             $useChunkedUpload = $isVideo || $isGif || $fileSize > 5 * 1024 * 1024;
 
             if ($useChunkedUpload) {
-                return $this->chunkedUpload($mediaContent, $mimeType, $mediaCategory);
+                return $this->chunkedUpload($tempFile, $fileSize, $mimeType, $mediaCategory);
             }
 
             // Simple upload for small images
-            $response = Http::withToken($this->accessToken)
+            $response = $this->socialHttp()->withToken($this->accessToken)
                 ->timeout(360)
                 ->attach(
                     'media',
-                    file_get_contents($tempFile),
+                    fopen($tempFile, 'r'),
                     basename($tempFile),
                     ['Content-Type' => $mimeType]
                 );
@@ -153,14 +155,13 @@ class XPublisher
             if ($response->failed()) {
                 Log::error('X media upload error', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
+                    'body' => $this->redactResponseBody($response->body()),
                 ]);
-                $this->handleApiError($response, 'Failed to upload media');
+                $this->handleApiError($response);
             }
 
             $responseData = $response->json();
 
-            // v2 API returns data.id
             $mediaId = $responseData['data']['id'] ?? $responseData['media_id'] ?? null;
 
             if ($isGif && $mediaId) {
@@ -169,24 +170,14 @@ class XPublisher
 
             return $responseData;
         } finally {
-            if (file_exists($tempFile)) {
-                unlink($tempFile);
-            }
+            @unlink($tempFile);
         }
     }
 
-    private function chunkedUpload(string $mediaContent, string $mimeType, string $mediaCategory): array
+    private function chunkedUpload(string $tempFile, int $totalBytes, string $mimeType, string $mediaCategory): array
     {
-        $totalBytes = strlen($mediaContent);
-
-        Log::info('X chunked upload INIT', [
-            'total_bytes' => $totalBytes,
-            'media_type' => $mimeType,
-            'media_category' => $mediaCategory,
-        ]);
-
-        // INIT - Use dedicated initialize endpoint
-        $initResponse = Http::withToken($this->accessToken)
+        // INIT
+        $initResponse = $this->socialHttp()->withToken($this->accessToken)
             ->timeout(60)
             ->post("{$this->baseUrl}/2/media/upload/initialize", [
                 'media_type' => $mimeType,
@@ -197,9 +188,9 @@ class XPublisher
         if ($initResponse->failed()) {
             Log::error('X chunked upload INIT error', [
                 'status' => $initResponse->status(),
-                'body' => $initResponse->body(),
+                'body' => $this->redactResponseBody($initResponse->body()),
             ]);
-            $this->handleApiError($initResponse, 'Failed to initialize chunked upload');
+            $this->handleApiError($initResponse);
         }
 
         $initData = $initResponse->json();
@@ -209,50 +200,52 @@ class XPublisher
             throw new \Exception('No media_id returned from INIT');
         }
 
-        Log::info('X chunked upload INIT success', ['media_id' => $mediaId]);
+        // APPEND - Read from temp file in 5MB chunks (memory-safe)
+        $chunkSize = 5 * 1024 * 1024;
+        $handle = fopen($tempFile, 'r');
+        $index = 0;
 
-        // APPEND - Upload in 1MB chunks (API limit)
-        $chunkSize = 1 * 1024 * 1024;
-        $chunks = str_split($mediaContent, $chunkSize);
+        try {
+            while (! feof($handle)) {
+                $chunk = fread($handle, $chunkSize);
 
-        foreach ($chunks as $index => $chunk) {
-            Log::info('X chunked upload APPEND', [
-                'media_id' => $mediaId,
-                'segment' => $index,
-                'chunk_size' => strlen($chunk),
-            ]);
+                if ($chunk === '' || $chunk === false) {
+                    break;
+                }
 
-            // APPEND uses the new v2 endpoint with media_id in URL
-            $appendResponse = Http::withToken($this->accessToken)
-                ->timeout(300)
-                ->attach('media', $chunk, 'chunk'.$index)
-                ->post("{$this->baseUrl}/2/media/upload/{$mediaId}/append", [
-                    'segment_index' => $index,
-                ]);
+                $appendResponse = $this->socialHttp()->withToken($this->accessToken)
+                    ->timeout(300)
+                    ->attach('media', $chunk, 'chunk'.$index)
+                    ->post("{$this->baseUrl}/2/media/upload/{$mediaId}/append", [
+                        'segment_index' => $index,
+                    ]);
 
-            if ($appendResponse->failed()) {
-                Log::error('X chunked upload APPEND error', [
-                    'status' => $appendResponse->status(),
-                    'body' => $appendResponse->body(),
-                    'segment' => $index,
-                ]);
-                $this->handleApiError($appendResponse, 'Failed to append chunk');
+                if ($appendResponse->failed()) {
+                    Log::error('X chunked upload APPEND error', [
+                        'status' => $appendResponse->status(),
+                        'body' => $this->redactResponseBody($appendResponse->body()),
+                        'segment' => $index,
+                    ]);
+                    $this->handleApiError($appendResponse);
+                }
+
+                $index++;
             }
+        } finally {
+            fclose($handle);
         }
 
         // FINALIZE - Use the new v2 endpoint
-        Log::info('X chunked upload FINALIZE', ['media_id' => $mediaId]);
-
-        $finalizeResponse = Http::withToken($this->accessToken)
+        $finalizeResponse = $this->socialHttp()->withToken($this->accessToken)
             ->timeout(60)
             ->post("{$this->baseUrl}/2/media/upload/{$mediaId}/finalize");
 
         if ($finalizeResponse->failed()) {
             Log::error('X chunked upload FINALIZE error', [
                 'status' => $finalizeResponse->status(),
-                'body' => $finalizeResponse->body(),
+                'body' => $this->redactResponseBody($finalizeResponse->body()),
             ]);
-            $this->handleApiError($finalizeResponse, 'Failed to finalize chunked upload');
+            $this->handleApiError($finalizeResponse);
         }
 
         $finalizeData = $finalizeResponse->json();
@@ -294,7 +287,7 @@ class XPublisher
                 ->get("{$this->baseUrl}/2/media/{$mediaId}");
 
             if ($response->failed()) {
-                Log::error('X media status check error: '.$response->body());
+                Log::error('X media status check error', ['body' => $this->redactResponseBody($response->body())]);
                 sleep(3);
 
                 continue;
@@ -342,31 +335,20 @@ class XPublisher
             ]);
 
         if ($response->failed()) {
-            $this->handleApiError($response, 'Failed to refresh X token');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
 
         $account->update([
-            'access_token' => $data['access_token'],
-            'refresh_token' => $data['refresh_token'] ?? $account->refresh_token,
-            'token_expires_at' => now()->addSeconds($data['expires_in'] ?? 7200),
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => now()->addSeconds(data_get($data, 'expires_in', 7200)),
         ]);
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function handleApiError(Response $response): never
     {
-        $body = $response->json() ?? [];
-        $errorTitle = $body['title'] ?? null;
-        $message = $body['detail'] ?? $response->body();
-
-        if ($response->status() === 401 || in_array($errorTitle, self::TOKEN_ERROR_TITLES)) {
-            throw new TokenExpiredException(
-                "{$context}: {$message}",
-                $errorTitle
-            );
-        }
-
-        throw new \Exception("{$context}: {$message}");
+        throw XPublishException::fromApiResponse($response);
     }
 }

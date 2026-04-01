@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Mail\WorkspaceInvite;
 use App\Models\Workspace;
 use App\Models\WorkspaceInvite as WorkspaceInviteModel;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 test('workspace invite mail has correct subject', function () {
     $workspace = Workspace::factory()->create(['name' => 'Test Workspace']);
@@ -28,7 +31,7 @@ test('workspace invite mail has correct content', function () {
     expect($content->with['title'])->toBe("You've been invited to join My Team");
     expect($content->with['previewText'])->toBe("You've been invited to join My Team");
     expect($content->with['invite'])->toBe($invite);
-    expect($content->with['url'])->toBe(route('invites.show', $invite->id));
+    expect($content->with['url'])->toBe(route('app.invites.show', $invite->id));
 });
 
 test('workspace invite mail has no attachments', function () {
@@ -44,5 +47,5 @@ test('workspace invite mail is queueable', function () {
 
     $mail = new WorkspaceInvite($invite);
 
-    expect($mail)->toBeInstanceOf(\Illuminate\Contracts\Queue\ShouldQueue::class);
+    expect($mail)->toBeInstanceOf(ShouldQueue::class);
 });

@@ -5,7 +5,7 @@ import { ref } from 'vue';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import PopupLayout from '@/layouts/PopupLayout.vue';
-import { select as selectLinkedInPage } from '@/routes/social/linkedin-page';
+import { select as selectLinkedInPage } from '@/routes/app/social/linkedin-page';
 
 interface Organization {
     id: string;

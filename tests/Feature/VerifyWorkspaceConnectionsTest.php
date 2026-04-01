@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Enums\SocialAccount\Status;
 use App\Exceptions\TokenExpiredException;
 use App\Jobs\VerifyWorkspaceConnections;
@@ -36,7 +38,7 @@ test('job does not send email when all connections are valid', function () {
     Mail::assertNothingSent();
 });
 
-test('job marks account as disconnected and sends email when token is invalid', function () {
+test('job marks account as token expired on first failure and disconnected on second', function () {
     Mail::fake();
 
     $workspace = Workspace::factory()->create();
@@ -48,10 +50,16 @@ test('job marks account as disconnected and sends email when token is invalid', 
 
     app()->instance(ConnectionVerifier::class, $verifier);
 
+    // First run — marks as TokenExpired
+    VerifyWorkspaceConnections::dispatch($workspace);
+
+    expect($account->fresh()->status)->toBe(Status::TokenExpired);
+    expect($account->fresh()->error_message)->toBe('Token expired');
+
+    // Second run — escalates to Disconnected
     VerifyWorkspaceConnections::dispatch($workspace);
 
     expect($account->fresh()->status)->toBe(Status::Disconnected);
-    expect($account->fresh()->error_message)->toBe('Token expired');
 
     Mail::assertQueued(WorkspaceConnectionsDisconnected::class, function ($mail) use ($workspace) {
         return $mail->workspace->id === $workspace->id
@@ -59,7 +67,7 @@ test('job marks account as disconnected and sends email when token is invalid', 
     });
 });
 
-test('job sends single email with all disconnected accounts', function () {
+test('job sends single email with all failed accounts', function () {
     Mail::fake();
 
     $workspace = Workspace::factory()->create();
@@ -74,8 +82,8 @@ test('job sends single email with all disconnected accounts', function () {
 
     VerifyWorkspaceConnections::dispatch($workspace);
 
-    expect($account1->fresh()->status)->toBe(Status::Disconnected);
-    expect($account2->fresh()->status)->toBe(Status::Disconnected);
+    expect($account1->fresh()->status)->toBe(Status::TokenExpired);
+    expect($account2->fresh()->status)->toBe(Status::TokenExpired);
 
     Mail::assertQueued(WorkspaceConnectionsDisconnected::class, function ($mail) use ($workspace) {
         return $mail->workspace->id === $workspace->id
@@ -94,10 +102,10 @@ test('job only includes failed accounts in email', function () {
 
     $verifier = mock(ConnectionVerifier::class);
     $verifier->shouldReceive('verify')
-        ->with(\Mockery::on(fn ($acc) => $acc->id === $validAccount->id))
+        ->with(Mockery::on(fn ($acc) => $acc->id === $validAccount->id))
         ->andReturn(true);
     $verifier->shouldReceive('verify')
-        ->with(\Mockery::on(fn ($acc) => $acc->id === $invalidAccount->id))
+        ->with(Mockery::on(fn ($acc) => $acc->id === $invalidAccount->id))
         ->andThrow(new TokenExpiredException('Token expired'));
 
     app()->instance(ConnectionVerifier::class, $verifier);
@@ -105,7 +113,7 @@ test('job only includes failed accounts in email', function () {
     VerifyWorkspaceConnections::dispatch($workspace);
 
     expect($validAccount->fresh()->status)->toBe(Status::Connected);
-    expect($invalidAccount->fresh()->status)->toBe(Status::Disconnected);
+    expect($invalidAccount->fresh()->status)->toBe(Status::TokenExpired);
 
     Mail::assertQueued(WorkspaceConnectionsDisconnected::class, function ($mail) use ($invalidAccount) {
         return $mail->disconnectedAccounts->count() === 1

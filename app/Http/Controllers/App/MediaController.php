@@ -9,6 +9,8 @@ use App\Http\Requests\App\Media\StoreMediaRequest;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\PostPlatform;
+use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
@@ -162,6 +164,16 @@ class MediaController extends Controller
             if ($model->workspace_id !== $workspace->id) {
                 abort(403);
             }
+        } elseif ($model instanceof Workspace) {
+            if ($model->id !== $workspace->id) {
+                abort(403);
+            }
+        } elseif ($model instanceof User) {
+            if ($model->id !== $request->user()->id) {
+                abort(403);
+            }
+        } else {
+            abort(403);
         }
     }
 

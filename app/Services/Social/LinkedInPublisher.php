@@ -348,17 +348,16 @@ class LinkedInPublisher
 
         // Step 2: Upload chunks
         $uploadedPartIds = [];
+        $handle = fopen($tempFile, 'r');
 
         foreach ($uploadInstructions as $index => $instruction) {
-            $uploadUrl = $instruction['uploadUrl'];
-            $firstByte = $instruction['firstByte'];
-            $lastByte = $instruction['lastByte'];
+            $uploadUrl = data_get($instruction, 'uploadUrl');
+            $firstByte = data_get($instruction, 'firstByte');
+            $lastByte = data_get($instruction, 'lastByte');
 
             $chunkLength = $lastByte - $firstByte + 1;
-            $handle = fopen($tempFile, 'r');
             fseek($handle, $firstByte);
             $chunkData = fread($handle, $chunkLength);
-            fclose($handle);
 
             Log::info('LinkedIn uploading video chunk', [
                 'index' => $index,
@@ -390,6 +389,8 @@ class LinkedInPublisher
 
             Log::info('LinkedIn video chunk uploaded', ['index' => $index, 'etag' => $etag]);
         }
+
+        fclose($handle);
 
         // Step 3: Finalize upload
         Log::info('LinkedIn finalizing video upload', ['videoUrn' => $videoUrn]);

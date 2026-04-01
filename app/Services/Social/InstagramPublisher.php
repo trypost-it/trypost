@@ -233,7 +233,7 @@ class InstagramPublisher
             Log::error('Instagram carousel container creation failed', [
                 'body' => $carouselResponse->body(),
             ]);
-            $this->handleApiError($carouselResponse, 'Instagram API error');
+            $this->handleApiError($carouselResponse);
         }
 
         $carouselId = $carouselResponse->json()['id'] ?? null;

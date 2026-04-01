@@ -128,7 +128,7 @@ class TikTokPublisher
 
         Log::info('TikTok video init response', ['data' => $data]);
 
-        $publishId = data_get($data, 'data')['publish_id'] ?? null;
+        $publishId = data_get($data, 'data.publish_id');
 
         if (! $publishId) {
             throw new \Exception('TikTok did not return a publish_id');
@@ -191,7 +191,7 @@ class TikTokPublisher
 
         Log::info('TikTok photo init response', ['data' => $data]);
 
-        $publishId = data_get($data, 'data')['publish_id'] ?? null;
+        $publishId = data_get($data, 'data.publish_id');
 
         if (! $publishId) {
             throw new \Exception('TikTok did not return a publish_id');
@@ -226,7 +226,7 @@ class TikTokPublisher
             }
 
             $data = $response->json();
-            $status = data_get($data, 'data')['status'] ?? 'UNKNOWN';
+            $status = data_get($data, 'data.status', 'UNKNOWN');
 
             Log::info('TikTok publish status', [
                 'status' => $status,

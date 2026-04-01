@@ -51,12 +51,14 @@ class YouTubePublisher
         $client->setClientId(config('services.google.client_id'));
         $client->setClientSecret(config('services.google.client_secret'));
 
+        $remainingSeconds = $account->token_expires_at
+            ? max(0, (int) now()->diffInSeconds($account->token_expires_at, false))
+            : 3600;
+
         $tokenData = [
             'access_token' => $account->access_token,
-            'created' => $account->token_expires_at
-                ? $account->token_expires_at->subHour()->getTimestamp()
-                : time(),
-            'expires_in' => 3600,
+            'created' => time(),
+            'expires_in' => $remainingSeconds,
         ];
 
         if ($account->refresh_token) {

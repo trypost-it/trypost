@@ -31,7 +31,7 @@ class UpdatePostRequest extends FormRequest
                 'nullable',
                 'date',
                 Rule::when(
-                    in_array($this->input('status'), ['scheduled', 'publishing']),
+                    $this->input('status') === 'scheduled',
                     ['after:now']
                 ),
             ],

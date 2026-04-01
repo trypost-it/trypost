@@ -255,14 +255,18 @@ class LinkedInPublisher
                 $tempFile = $optimizedPath;
             }
 
-            $imageContent = file_get_contents($tempFile);
+            $stream = fopen($tempFile, 'r');
 
             $uploadResponse = Http::withToken($this->accessToken)
                 ->withHeaders([
                     'Content-Type' => 'application/octet-stream',
                 ])
-                ->withBody($imageContent, 'application/octet-stream')
+                ->withBody($stream, 'application/octet-stream')
                 ->put($uploadUrl);
+
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
 
             if ($uploadResponse->failed()) {
                 Log::error('LinkedIn image upload failed', ['body' => $uploadResponse->body()]);

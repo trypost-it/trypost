@@ -87,9 +87,15 @@ class MastodonPublisher
                 $name = 'media';
             }
 
+            $stream = fopen($tempFile, 'r');
+
             $response = Http::withToken($account->access_token)
-                ->attach('file', fopen($tempFile, 'r'), $name)
+                ->attach('file', $stream, $name)
                 ->post("{$instance}/api/v1/media");
+
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
 
             if ($response->failed()) {
                 Log::error('Mastodon media upload failed', [

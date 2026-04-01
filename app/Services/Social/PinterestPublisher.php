@@ -161,36 +161,35 @@ class PinterestPublisher
 
         // Download video to temp file (memory-safe)
         $tempFile = tempnam(sys_get_temp_dir(), 'pin_video_');
-        Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
+        $videoStream = null;
 
-        $videoContent = fopen($tempFile, 'r');
+        try {
+            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
 
-        if ($videoContent === false) {
+            $videoStream = fopen($tempFile, 'r');
+
+            if ($videoStream === false) {
+                throw new \Exception('Failed to read video file');
+            }
+
+            $multipart[] = [
+                'name' => 'file',
+                'contents' => $videoStream,
+                'filename' => basename($media->url),
+            ];
+
+            $uploadResponse = Http::asMultipart()
+                ->timeout(600)
+                ->post($uploadUrl, $multipart);
+
+            if ($uploadResponse->failed()) {
+                $this->handleApiError($uploadResponse);
+            }
+        } finally {
+            if ($videoStream !== null && is_resource($videoStream)) {
+                fclose($videoStream);
+            }
             @unlink($tempFile);
-            throw new \Exception('Failed to read video file');
-        }
-
-        $multipart[] = [
-            'name' => 'file',
-            'contents' => $videoContent,
-            'filename' => basename($media->url),
-        ];
-
-        $uploadResponse = Http::asMultipart()
-            ->timeout(600)
-            ->post($uploadUrl, $multipart);
-
-        if (is_resource($videoContent)) {
-            fclose($videoContent);
-        }
-        @unlink($tempFile);
-
-        if ($uploadResponse->failed()) {
-            Log::error('Pinterest video upload failed', [
-                'status' => $uploadResponse->status(),
-                'body' => $uploadResponse->body(),
-            ]);
-            throw new \Exception('Pinterest video upload failed');
         }
 
         // Step 3: Wait for processing

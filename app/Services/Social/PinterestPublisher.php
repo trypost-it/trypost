@@ -108,7 +108,7 @@ class PinterestPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'Pinterest API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -152,7 +152,7 @@ class PinterestPublisher
                 'status' => $registerResponse->status(),
                 'body' => $registerResponse->body(),
             ]);
-            $this->handleApiError($registerResponse, 'Pinterest media registration error');
+            $this->handleApiError($registerResponse);
         }
 
         $registerData = $registerResponse->json();
@@ -246,7 +246,7 @@ class PinterestPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'Pinterest API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -312,7 +312,7 @@ class PinterestPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'Pinterest API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -382,7 +382,7 @@ class PinterestPublisher
 
         if ($response->failed()) {
             Log::error('Pinterest token refresh failed', ['body' => $response->body()]);
-            $this->handleApiError($response, 'Failed to refresh Pinterest token');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -413,13 +413,13 @@ class PinterestPublisher
 
         if ($response->failed()) {
             Log::error('Pinterest get boards failed', ['body' => $response->body()]);
-            $this->handleApiError($response, 'Pinterest API error');
+            $this->handleApiError($response);
         }
 
         return $response->json()['items'] ?? [];
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function handleApiError(Response $response): never
     {
         throw PinterestPublishException::fromApiResponse($response);
     }

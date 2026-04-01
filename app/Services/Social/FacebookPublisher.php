@@ -77,7 +77,7 @@ class FacebookPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'Facebook API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -104,7 +104,7 @@ class FacebookPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'Facebook API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -170,7 +170,7 @@ class FacebookPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'Facebook API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -198,7 +198,7 @@ class FacebookPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'Facebook API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -225,7 +225,7 @@ class FacebookPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'Facebook API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -242,7 +242,7 @@ class FacebookPublisher
             Log::error('Facebook reel upload transfer failed', [
                 'body' => $uploadResponse->body(),
             ]);
-            $this->handleApiError($uploadResponse, 'Facebook API error');
+            $this->handleApiError($uploadResponse);
         }
 
         // Finish and publish the reel
@@ -258,7 +258,7 @@ class FacebookPublisher
             Log::error('Facebook reel finish failed', [
                 'body' => $finishResponse->body(),
             ]);
-            $this->handleApiError($finishResponse, 'Facebook API error');
+            $this->handleApiError($finishResponse);
         }
 
         $finishData = $finishResponse->json();
@@ -284,7 +284,7 @@ class FacebookPublisher
             ]);
 
             if ($response->failed()) {
-                $this->handleApiError($response, 'Facebook API error');
+                $this->handleApiError($response);
             }
 
             $videoId = $response->json()['video_id'];
@@ -304,7 +304,7 @@ class FacebookPublisher
             ]);
 
             if ($finishResponse->failed()) {
-                $this->handleApiError($finishResponse, 'Facebook API error');
+                $this->handleApiError($finishResponse);
             }
 
             $storyId = $finishResponse->json()['post_id'] ?? $videoId;
@@ -325,7 +325,7 @@ class FacebookPublisher
             Log::error('Facebook photo story failed', [
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'Facebook API error');
+            $this->handleApiError($response);
         }
 
         $storyId = $response->json()['post_id'] ?? $response->json()['id'];
@@ -345,13 +345,13 @@ class FacebookPublisher
         ]);
 
         if ($response->failed()) {
-            $this->handleApiError($response, 'Facebook API error');
+            $this->handleApiError($response);
         }
 
         return $response->json()['id'];
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function handleApiError(Response $response): never
     {
         throw FacebookPublishException::fromApiResponse($response);
     }

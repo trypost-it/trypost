@@ -81,7 +81,7 @@ class XPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'X API error');
+            $this->handleApiError($response);
         }
 
         $responseData = $response->json();
@@ -156,7 +156,7 @@ class XPublisher
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
-                $this->handleApiError($response, 'Failed to upload media');
+                $this->handleApiError($response);
             }
 
             $responseData = $response->json();
@@ -195,7 +195,7 @@ class XPublisher
                 'status' => $initResponse->status(),
                 'body' => $initResponse->body(),
             ]);
-            $this->handleApiError($initResponse, 'Failed to initialize chunked upload');
+            $this->handleApiError($initResponse);
         }
 
         $initData = $initResponse->json();
@@ -238,7 +238,7 @@ class XPublisher
                     'body' => $appendResponse->body(),
                     'segment' => $index,
                 ]);
-                $this->handleApiError($appendResponse, 'Failed to append chunk');
+                $this->handleApiError($appendResponse);
             }
 
             $index++;
@@ -258,7 +258,7 @@ class XPublisher
                 'status' => $finalizeResponse->status(),
                 'body' => $finalizeResponse->body(),
             ]);
-            $this->handleApiError($finalizeResponse, 'Failed to finalize chunked upload');
+            $this->handleApiError($finalizeResponse);
         }
 
         $finalizeData = $finalizeResponse->json();
@@ -348,7 +348,7 @@ class XPublisher
             ]);
 
         if ($response->failed()) {
-            $this->handleApiError($response, 'Failed to refresh X token');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -360,7 +360,7 @@ class XPublisher
         ]);
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function handleApiError(Response $response): never
     {
         throw XPublishException::fromApiResponse($response);
     }

@@ -121,7 +121,7 @@ class TikTokPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'TikTok API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -184,7 +184,7 @@ class TikTokPublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'TikTok API error');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -277,7 +277,7 @@ class TikTokPublisher
 
         if ($response->failed()) {
             Log::error('TikTok token refresh failed', ['body' => $response->body()]);
-            $this->handleApiError($response, 'Failed to refresh TikTok token');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -291,7 +291,7 @@ class TikTokPublisher
         Log::info('TikTok token refreshed successfully');
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function handleApiError(Response $response): never
     {
         throw TikTokPublishException::fromApiResponse($response);
     }

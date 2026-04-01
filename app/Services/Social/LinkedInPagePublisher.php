@@ -132,7 +132,7 @@ class LinkedInPagePublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'LinkedIn Page API error');
+            $this->handleApiError($response);
         }
 
         $postId = $response->header('x-restli-id');
@@ -205,7 +205,7 @@ class LinkedInPagePublisher
                 'status' => $response->status(),
                 'body' => $response->body(),
             ]);
-            $this->handleApiError($response, 'LinkedIn Page API error');
+            $this->handleApiError($response);
         }
 
         $postId = $response->header('x-restli-id');
@@ -264,7 +264,7 @@ class LinkedInPagePublisher
 
         if ($initResponse->failed()) {
             Log::error('LinkedIn Page image init failed', ['body' => $initResponse->body()]);
-            $this->handleApiError($initResponse, 'Failed to initialize LinkedIn Page image upload');
+            $this->handleApiError($initResponse);
         }
 
         $initData = $initResponse->json();
@@ -302,7 +302,7 @@ class LinkedInPagePublisher
 
             if ($uploadResponse->failed()) {
                 Log::error('LinkedIn Page image upload failed', ['body' => $uploadResponse->body()]);
-                $this->handleApiError($uploadResponse, 'Failed to upload LinkedIn Page image');
+                $this->handleApiError($uploadResponse);
             }
 
             Log::info('LinkedIn Page image upload success', ['imageUrn' => $imageUrn]);
@@ -348,7 +348,7 @@ class LinkedInPagePublisher
 
         if ($initResponse->failed()) {
             Log::error('LinkedIn Page video init failed', ['body' => $initResponse->body()]);
-            $this->handleApiError($initResponse, 'Failed to initialize LinkedIn Page video upload');
+            $this->handleApiError($initResponse);
         }
 
         $initData = $initResponse->json();
@@ -399,7 +399,7 @@ class LinkedInPagePublisher
                     'index' => $index,
                     'body' => $chunkResponse->body(),
                 ]);
-                $this->handleApiError($chunkResponse, 'Failed to upload LinkedIn Page video chunk');
+                $this->handleApiError($chunkResponse);
             }
 
             $etag = $chunkResponse->header('etag');
@@ -424,7 +424,7 @@ class LinkedInPagePublisher
 
         if ($finalizeResponse->failed()) {
             Log::error('LinkedIn Page video finalize failed', ['body' => $finalizeResponse->body()]);
-            $this->handleApiError($finalizeResponse, 'Failed to finalize LinkedIn Page video upload');
+            $this->handleApiError($finalizeResponse);
         }
 
         Log::info('LinkedIn Page video upload finalized', ['videoUrn' => $videoUrn]);
@@ -483,7 +483,7 @@ class LinkedInPagePublisher
         ]);
 
         if ($response->failed()) {
-            $this->handleApiError($response, 'Failed to refresh LinkedIn Page token');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -498,7 +498,7 @@ class LinkedInPagePublisher
         app(LinkedInTokenSynchronizer::class)->syncTokens($account);
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function handleApiError(Response $response): never
     {
         throw LinkedInPublishException::fromApiResponse($response);
     }

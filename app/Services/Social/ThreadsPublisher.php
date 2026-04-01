@@ -68,7 +68,7 @@ class ThreadsPublisher
                 'status' => $containerResponse->status(),
                 'body' => $containerResponse->body(),
             ]);
-            $this->handleApiError($containerResponse, 'Threads API error');
+            $this->handleApiError($containerResponse);
         }
 
         $containerId = $containerResponse->json()['id'];
@@ -92,7 +92,7 @@ class ThreadsPublisher
                 'status' => $containerResponse->status(),
                 'body' => $containerResponse->body(),
             ]);
-            $this->handleApiError($containerResponse, 'Threads API error');
+            $this->handleApiError($containerResponse);
         }
 
         $containerId = $containerResponse->json()['id'];
@@ -123,7 +123,7 @@ class ThreadsPublisher
                 'status' => $containerResponse->status(),
                 'body' => $containerResponse->body(),
             ]);
-            $this->handleApiError($containerResponse, 'Threads API error');
+            $this->handleApiError($containerResponse);
         }
 
         $containerId = $containerResponse->json()['id'];
@@ -195,7 +195,7 @@ class ThreadsPublisher
             Log::error('Threads carousel container creation failed', [
                 'body' => $carouselResponse->body(),
             ]);
-            $this->handleApiError($carouselResponse, 'Threads API error');
+            $this->handleApiError($carouselResponse);
         }
 
         $carouselId = $carouselResponse->json()['id'];
@@ -216,7 +216,7 @@ class ThreadsPublisher
                 'status' => $publishResponse->status(),
                 'body' => $publishResponse->body(),
             ]);
-            $this->handleApiError($publishResponse, 'Threads publish error');
+            $this->handleApiError($publishResponse);
         }
 
         $mediaId = $publishResponse->json()['id'];
@@ -292,7 +292,7 @@ class ThreadsPublisher
 
         if ($response->failed()) {
             Log::error('Threads token refresh failed', ['body' => $response->body()]);
-            $this->handleApiError($response, 'Failed to refresh Threads token');
+            $this->handleApiError($response);
         }
 
         $data = $response->json();
@@ -308,7 +308,7 @@ class ThreadsPublisher
         Log::info('Threads token refreshed successfully');
     }
 
-    private function handleApiError(Response $response, string $context): void
+    private function handleApiError(Response $response): never
     {
         throw ThreadsPublishException::fromApiResponse($response);
     }

@@ -20,7 +20,7 @@ class StorePostRequest extends FormRequest
     {
         return [
             'platforms' => ['required', 'array', 'min:1'],
-            'platforms.*.social_account_id' => ['required', 'uuid'],
+            'platforms.*.social_account_id' => ['required', 'uuid', Rule::exists('social_accounts', 'id')->where('workspace_id', $this->workspace->id)],
             'platforms.*.content_type' => ['required', 'string', Rule::in(array_column(ContentType::cases(), 'value'))],
             'platforms.*.content' => ['nullable', 'string', 'max:63206'],
             'scheduled_at' => ['nullable', 'date', 'after:now'],

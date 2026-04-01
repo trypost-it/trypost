@@ -8,7 +8,7 @@ use App\Console\Commands\RecoverStuckPosts;
 use App\Console\Commands\RefreshExpiringTokens;
 use Illuminate\Support\Facades\Schedule;
 
-Schedule::command(ProcessScheduledPosts::class)->everyMinute();
-Schedule::command(CheckSocialConnections::class)->daily();
-Schedule::command(RefreshExpiringTokens::class)->hourly();
-Schedule::command(RecoverStuckPosts::class)->everyThirtyMinutes();
+Schedule::command(ProcessScheduledPosts::class)->everyMinute()->withoutOverlapping()->onOneServer();
+Schedule::command(CheckSocialConnections::class)->daily()->withoutOverlapping()->onOneServer();
+Schedule::command(RefreshExpiringTokens::class)->hourly()->withoutOverlapping()->onOneServer();
+Schedule::command(RecoverStuckPosts::class)->everyThirtyMinutes()->withoutOverlapping()->onOneServer();

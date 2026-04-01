@@ -33,7 +33,7 @@ class YouTubePublisher
         $account = $postPlatform->socialAccount;
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
-            $this->refreshToken($account);
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
             $account->refresh();
         }
 

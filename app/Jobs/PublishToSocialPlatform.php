@@ -8,6 +8,7 @@ use App\Enums\Notification\Channel;
 use App\Enums\Notification\Type;
 use App\Enums\PostPlatform\Status as PostPlatformStatus;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
+use App\Enums\SocialAccount\Status;
 use App\Events\PostPlatformStatusUpdated;
 use App\Exceptions\Social\SocialPublishException;
 use App\Exceptions\TokenExpiredException;
@@ -61,7 +62,7 @@ class PublishToSocialPlatform implements ShouldQueue
             return;
         }
 
-        if ($this->postPlatform->socialAccount->isDisconnected()) {
+        if ($this->postPlatform->socialAccount->status === Status::Disconnected) {
             $this->postPlatform->markAsFailed(__('posts.errors.account_disconnected'));
             $this->updatePostStatus();
             $this->broadcastStatus();

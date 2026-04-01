@@ -41,7 +41,7 @@ class LinkedInPagePublisher
         $this->hasRetried = false;
 
         if ($this->account->is_token_expired || $this->account->is_token_expiring_soon) {
-            $this->refreshToken($this->account);
+            $this->refreshTokenWithLock($this->account, fn () => $this->refreshToken($this->account));
             $this->account->refresh();
         }
 

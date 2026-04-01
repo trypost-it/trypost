@@ -204,7 +204,7 @@ test('publish to social platform skips publishing when account is inactive', fun
     expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_inactive'));
 });
 
-test('publish to social platform skips publishing when account token is expired', function () {
+test('publish to social platform attempts publishing when account token is expired', function () {
     Event::fake();
 
     $this->socialAccount->update([
@@ -212,15 +212,17 @@ test('publish to social platform skips publishing when account token is expired'
     ]);
 
     $publisher = Mockery::mock(LinkedInPublisher::class);
-    $publisher->shouldNotReceive('publish');
+    $publisher->shouldReceive('publish')->andReturn([
+        'id' => 'post-123',
+        'url' => 'https://linkedin.com/post/123',
+    ]);
 
     $this->app->instance(LinkedInPublisher::class, $publisher);
 
     (new PublishToSocialPlatform($this->postPlatform))->handle();
 
     $this->postPlatform->refresh();
-    expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
-    expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_disconnected'));
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Published);
 });
 
 test('publish to social platform dispatches success notification when all platforms published', function () {

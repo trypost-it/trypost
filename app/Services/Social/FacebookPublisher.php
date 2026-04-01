@@ -65,8 +65,6 @@ class FacebookPublisher
 
     private function publishTextPost(string $pageId, string $accessToken, string $content): array
     {
-        Log::info('Facebook publishing text post', ['page_id' => $pageId]);
-
         $response = Http::post("{$this->baseUrl}/{$pageId}/feed", [
             'message' => $content,
             'access_token' => $accessToken,
@@ -91,8 +89,6 @@ class FacebookPublisher
 
     private function publishSingleImagePost(string $pageId, string $accessToken, ?string $content, $media): array
     {
-        Log::info('Facebook publishing single image post', ['page_id' => $pageId]);
-
         $response = Http::post("{$this->baseUrl}/{$pageId}/photos", [
             'message' => $content,
             'url' => $media->url,
@@ -118,11 +114,6 @@ class FacebookPublisher
 
     private function publishMultiImagePost(string $pageId, string $accessToken, ?string $content, $mediaCollection): array
     {
-        Log::info('Facebook publishing multi-image post', [
-            'page_id' => $pageId,
-            'image_count' => $mediaCollection->count(),
-        ]);
-
         // Upload each image as unpublished
         $attachedMedia = [];
 
@@ -184,8 +175,6 @@ class FacebookPublisher
 
     private function publishVideoPost(string $pageId, string $accessToken, ?string $content, $media): array
     {
-        Log::info('Facebook publishing video post', ['page_id' => $pageId]);
-
         // Use resumable upload for videos
         $response = Http::post("{$this->baseUrl}/{$pageId}/videos", [
             'description' => $content,
@@ -212,8 +201,6 @@ class FacebookPublisher
 
     private function publishReel(string $pageId, string $accessToken, ?string $content, $media): array
     {
-        Log::info('Facebook publishing reel', ['page_id' => $pageId]);
-
         // Upload video as reel
         $response = Http::post("{$this->baseUrl}/{$pageId}/video_reels", [
             'upload_phase' => 'start',
@@ -272,8 +259,6 @@ class FacebookPublisher
 
     private function publishStory(string $pageId, string $accessToken, $media): array
     {
-        Log::info('Facebook publishing story', ['page_id' => $pageId]);
-
         $isVideo = $media->isVideo();
 
         if ($isVideo) {

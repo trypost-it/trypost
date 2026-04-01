@@ -44,14 +44,7 @@ class XPublisher
 
         if ($media->isNotEmpty()) {
             foreach ($media as $mediaItem) {
-                Log::info('Uploading media to X', [
-                    'url' => $mediaItem->url,
-                    'mime_type' => $mediaItem->mime_type,
-                ]);
-
                 $uploadedMedia = $this->uploadMedia($mediaItem);
-
-                Log::info('X media upload response', ['response' => $uploadedMedia]);
 
                 // v2 API returns data.id, v1 returns media_id
                 $mediaId = data_get($uploadedMedia, 'data.id', data_get($uploadedMedia, 'media_id'));
@@ -70,8 +63,6 @@ class XPublisher
         if (empty($data['text'] ?? null) && empty($mediaIds)) {
             throw new \Exception('X posts require either text or media. Please add content to your post.');
         }
-
-        Log::info('Posting tweet', ['data' => $data]);
 
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/2/tweets", $data);
@@ -175,12 +166,6 @@ class XPublisher
 
     private function chunkedUpload(string $tempFile, int $totalBytes, string $mimeType, string $mediaCategory): array
     {
-        Log::info('X chunked upload INIT', [
-            'total_bytes' => $totalBytes,
-            'media_type' => $mimeType,
-            'media_category' => $mediaCategory,
-        ]);
-
         // INIT
         $initResponse = Http::withToken($this->accessToken)
             ->timeout(60)
@@ -205,8 +190,6 @@ class XPublisher
             throw new \Exception('No media_id returned from INIT');
         }
 
-        Log::info('X chunked upload INIT success', ['media_id' => $mediaId]);
-
         // APPEND - Read from temp file in 5MB chunks (memory-safe)
         $chunkSize = 5 * 1024 * 1024;
         $handle = fopen($tempFile, 'r');
@@ -218,12 +201,6 @@ class XPublisher
             if ($chunk === '' || $chunk === false) {
                 break;
             }
-
-            Log::info('X chunked upload APPEND', [
-                'media_id' => $mediaId,
-                'segment' => $index,
-                'chunk_size' => strlen($chunk),
-            ]);
 
             $appendResponse = Http::withToken($this->accessToken)
                 ->timeout(300)
@@ -247,8 +224,6 @@ class XPublisher
         fclose($handle);
 
         // FINALIZE - Use the new v2 endpoint
-        Log::info('X chunked upload FINALIZE', ['media_id' => $mediaId]);
-
         $finalizeResponse = Http::withToken($this->accessToken)
             ->timeout(60)
             ->post("{$this->baseUrl}/2/media/upload/{$mediaId}/finalize");

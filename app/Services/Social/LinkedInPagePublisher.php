@@ -68,10 +68,6 @@ class LinkedInPagePublisher
 
         $this->hasRetried = true;
 
-        Log::info('LinkedIn Page token rejected, attempting refresh and retry', [
-            'account_id' => $this->account->id,
-        ]);
-
         try {
             $this->refreshToken($this->account);
             $this->account->refresh();
@@ -122,8 +118,6 @@ class LinkedInPagePublisher
             }
         }
 
-        Log::info('LinkedIn Page creating post', ['payload' => $payload]);
-
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/rest/posts", $payload);
 
@@ -151,11 +145,6 @@ class LinkedInPagePublisher
 
     private function publishCarousel(string $organizationUrn, ?string $content, $mediaCollection, $account): array
     {
-        Log::info('LinkedIn Page publishing carousel', [
-            'owner' => $organizationUrn,
-            'media_count' => $mediaCollection->count(),
-        ]);
-
         // Upload images and build carousel items
         $carouselItems = [];
 
@@ -194,8 +183,6 @@ class LinkedInPagePublisher
                 ],
             ],
         ];
-
-        Log::info('LinkedIn Page creating carousel post', ['payload' => $payload]);
 
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/rest/posts", $payload);
@@ -252,8 +239,6 @@ class LinkedInPagePublisher
 
     private function uploadImage($mediaItem, string $ownerUrn): ?string
     {
-        Log::info('LinkedIn Page initializing image upload', ['owner' => $ownerUrn]);
-
         // Step 1: Initialize upload
         $initResponse = $this->getHttpClient()
             ->post("{$this->baseUrl}/rest/images?action=initializeUpload", [
@@ -274,8 +259,6 @@ class LinkedInPagePublisher
         if (! $uploadUrl || ! $imageUrn) {
             throw new \Exception('LinkedIn Page image upload init missing uploadUrl or image URN');
         }
-
-        Log::info('LinkedIn Page image init success', ['imageUrn' => $imageUrn]);
 
         // Step 2: Download and optimize image
         $tempFile = tempnam(sys_get_temp_dir(), 'lip_image_');
@@ -305,8 +288,6 @@ class LinkedInPagePublisher
                 $this->handleApiError($uploadResponse);
             }
 
-            Log::info('LinkedIn Page image upload success', ['imageUrn' => $imageUrn]);
-
             return $imageUrn;
         } finally {
             @unlink($tempFile);
@@ -329,11 +310,6 @@ class LinkedInPagePublisher
         Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
 
         $fileSize = (int) filesize($tempFile);
-
-        Log::info('LinkedIn Page initializing video upload', [
-            'owner' => $ownerUrn,
-            'fileSize' => $fileSize,
-        ]);
 
         // Step 1: Initialize upload
         $initResponse = $this->getHttpClient()
@@ -360,11 +336,6 @@ class LinkedInPagePublisher
             throw new \Exception('LinkedIn Page video upload init missing video URN or upload instructions');
         }
 
-        Log::info('LinkedIn Page video init success', [
-            'videoUrn' => $videoUrn,
-            'chunks' => count($uploadInstructions),
-        ]);
-
         // Step 2: Upload chunks
         $uploadedPartIds = [];
         $handle = fopen($tempFile, 'r');
@@ -377,13 +348,6 @@ class LinkedInPagePublisher
             $chunkLength = $lastByte - $firstByte + 1;
             fseek($handle, $firstByte);
             $chunkData = fread($handle, $chunkLength);
-
-            Log::info('LinkedIn Page uploading video chunk', [
-                'index' => $index,
-                'firstByte' => $firstByte,
-                'lastByte' => $lastByte,
-                'chunkSize' => strlen($chunkData),
-            ]);
 
             $chunkResponse = Http::withToken($this->accessToken)
                 ->withHeaders([
@@ -406,14 +370,11 @@ class LinkedInPagePublisher
                 $uploadedPartIds[] = $etag;
             }
 
-            Log::info('LinkedIn Page video chunk uploaded', ['index' => $index, 'etag' => $etag]);
         }
 
         fclose($handle);
 
         // Step 3: Finalize upload
-        Log::info('LinkedIn Page finalizing video upload', ['videoUrn' => $videoUrn]);
-
         $finalizeResponse = $this->getHttpClient()
             ->post("{$this->baseUrl}/rest/videos?action=finalizeUpload", [
                 'finalizeUploadRequest' => [
@@ -427,8 +388,6 @@ class LinkedInPagePublisher
             Log::error('LinkedIn Page video finalize failed', ['body' => $finalizeResponse->body()]);
             $this->handleApiError($finalizeResponse);
         }
-
-        Log::info('LinkedIn Page video upload finalized', ['videoUrn' => $videoUrn]);
 
         // Step 4: Wait for processing
         $this->waitForVideoProcessing($videoUrn);
@@ -453,8 +412,6 @@ class LinkedInPagePublisher
 
             $data = $response->json();
             $status = data_get($data, 'status', 'UNKNOWN');
-
-            Log::info('LinkedIn Page video processing status', ['status' => $status, 'attempt' => $i]);
 
             if ($status === 'AVAILABLE') {
                 return;

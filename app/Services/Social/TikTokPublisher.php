@@ -93,12 +93,6 @@ class TikTokPublisher
 
     private function publishVideo(PostPlatform $postPlatform, $media): array
     {
-        Log::info('TikTok publishing video', [
-            'video_url' => $media->url,
-            'media_full_url' => $media->full_url ?? $media->url,
-            'content' => $postPlatform->content,
-        ]);
-
         $creatorInfo = $this->queryCreatorInfo();
 
         $response = $this->getHttpClient()
@@ -125,8 +119,6 @@ class TikTokPublisher
         }
 
         $data = $response->json();
-
-        Log::info('TikTok video init response', ['data' => $data]);
 
         $publishId = data_get($data, 'data.publish_id');
 
@@ -155,12 +147,6 @@ class TikTokPublisher
             throw new \Exception('No valid images found for TikTok photo post');
         }
 
-        Log::info('TikTok publishing photos', [
-            'photo_urls' => $photoUrls,
-            'photo_count' => count($photoUrls),
-            'content' => $postPlatform->content,
-        ]);
-
         $creatorInfo = $this->queryCreatorInfo();
 
         $response = $this->getHttpClient()
@@ -188,8 +174,6 @@ class TikTokPublisher
         }
 
         $data = $response->json();
-
-        Log::info('TikTok photo init response', ['data' => $data]);
 
         $publishId = data_get($data, 'data.publish_id');
 
@@ -227,12 +211,6 @@ class TikTokPublisher
 
             $data = $response->json();
             $status = data_get($data, 'data.status', 'UNKNOWN');
-
-            Log::info('TikTok publish status', [
-                'status' => $status,
-                'attempt' => $i,
-                'data' => $data,
-            ]);
 
             if ($status === 'PUBLISH_COMPLETE') {
                 return data_get($data, 'data', []);
@@ -288,7 +266,6 @@ class TikTokPublisher
             'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
-        Log::info('TikTok token refreshed successfully');
     }
 
     private function handleApiError(Response $response): never

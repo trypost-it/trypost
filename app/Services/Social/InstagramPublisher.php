@@ -63,18 +63,11 @@ class InstagramPublisher
 
     private function publishSingleImage(string $instagramId, string $accessToken, ?string $content, $media): array
     {
-        Log::info('Instagram publishing single image', ['instagram_id' => $instagramId, 'image_url' => $media->url]);
-
         // Step 1: Create container
         $containerResponse = Http::post("{$this->baseUrl}/{$instagramId}/media", [
             'image_url' => $media->url,
             'caption' => $content,
             'access_token' => $accessToken,
-        ]);
-
-        Log::info('Instagram container response', [
-            'status' => $containerResponse->status(),
-            'body' => $containerResponse->json(),
         ]);
 
         if ($containerResponse->failed()) {
@@ -100,8 +93,6 @@ class InstagramPublisher
 
     private function publishReel(string $instagramId, string $accessToken, ?string $content, $media): array
     {
-        Log::info('Instagram publishing reel', ['instagram_id' => $instagramId]);
-
         // Step 1: Create container for video/reel
         $containerResponse = Http::post("{$this->baseUrl}/{$instagramId}/media", [
             'video_url' => $media->url,
@@ -133,8 +124,6 @@ class InstagramPublisher
 
     private function publishStory(string $instagramId, string $accessToken, $media): array
     {
-        Log::info('Instagram publishing story', ['instagram_id' => $instagramId]);
-
         $isVideo = $media->isVideo();
 
         $params = [
@@ -174,11 +163,6 @@ class InstagramPublisher
 
     private function publishCarousel(string $instagramId, string $accessToken, ?string $content, $mediaCollection): array
     {
-        Log::info('Instagram publishing carousel', [
-            'instagram_id' => $instagramId,
-            'media_count' => $mediaCollection->count(),
-        ]);
-
         // Step 1: Create containers for each media item
         $childContainers = [];
 
@@ -274,8 +258,6 @@ class InstagramPublisher
 
         $permalink = $permalinkResponse->json()['permalink'] ?? null;
 
-        Log::info('Instagram publish success', ['media_id' => $mediaId, 'permalink' => $permalink]);
-
         return [
             'id' => $mediaId,
             'url' => $permalink,
@@ -297,8 +279,6 @@ class InstagramPublisher
             }
 
             $status = $statusResponse->json()['status_code'] ?? 'UNKNOWN';
-
-            Log::info('Instagram media processing status', ['status' => $status, 'attempt' => $i]);
 
             if ($status === 'FINISHED') {
                 return;
@@ -336,7 +316,6 @@ class InstagramPublisher
             'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
-        Log::info('Instagram token refreshed successfully');
     }
 
     private function handleApiError(Response $response): never

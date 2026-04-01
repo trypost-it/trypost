@@ -79,11 +79,6 @@ class YouTubePublisher
         $title = $this->buildTitle($postPlatform->content);
         $description = $postPlatform->content;
 
-        Log::info('YouTube Shorts publishing video', [
-            'video_url' => $media->url,
-            'title' => $title,
-        ]);
-
         $tempFile = tempnam(sys_get_temp_dir(), 'yt_upload_');
         $handle = null;
 
@@ -102,8 +97,6 @@ class YouTubePublisher
             if ($fileSize === false || $fileSize < 1024) {
                 throw new \Exception('Downloaded video is too small or empty ('.$fileSize.' bytes), aborting upload');
             }
-
-            Log::info('YouTube video downloaded', ['size' => $fileSize]);
 
             // Set up Google Client with deferred mode for resumable upload
             $client = $this->createGoogleClient($account);
@@ -161,8 +154,6 @@ class YouTubePublisher
             }
 
             $videoId = $uploadStatus->getId();
-
-            Log::info('YouTube upload success', ['video_id' => $videoId]);
 
             return [
                 'id' => $videoId,
@@ -229,7 +220,6 @@ class YouTubePublisher
             'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
         ]);
 
-        Log::info('YouTube token refreshed successfully');
     }
 
     private function handleGoogleError(\Google\Service\Exception $e): never

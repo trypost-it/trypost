@@ -54,7 +54,11 @@ class PinterestPublisher
         $tempFile = tempnam(sys_get_temp_dir(), 'pin_image_');
 
         try {
-            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
+
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+            }
 
             $detectedMime = mime_content_type($tempFile) ?: '';
             if (str_starts_with($detectedMime, 'image/') && ! str_starts_with($detectedMime, 'image/gif')) {
@@ -164,7 +168,11 @@ class PinterestPublisher
         $videoStream = null;
 
         try {
-            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
+
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+            }
 
             $videoStream = fopen($tempFile, 'r');
 

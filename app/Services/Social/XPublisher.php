@@ -102,7 +102,11 @@ class XPublisher
         $tempFile = tempnam(sys_get_temp_dir(), 'x_media_');
 
         try {
-            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+            }
 
             // Optimize images (skip GIFs — they need special handling)
             if (str_starts_with($mimeType, 'image/') && ! str_starts_with($mimeType, 'image/gif')) {
@@ -130,7 +134,7 @@ class XPublisher
                 ->timeout(360)
                 ->attach(
                     'media',
-                    file_get_contents($tempFile),
+                    fopen($tempFile, 'r'),
                     basename($tempFile),
                     ['Content-Type' => $mimeType]
                 );

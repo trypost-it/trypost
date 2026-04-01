@@ -105,7 +105,11 @@ class BlueskyPublisher
         $tempFile = tempnam(sys_get_temp_dir(), 'bsky_blob_');
 
         try {
-            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($url);
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($url);
+
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+            }
 
             $fileSize = filesize($tempFile);
 

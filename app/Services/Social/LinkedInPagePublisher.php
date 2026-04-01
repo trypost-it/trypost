@@ -264,7 +264,11 @@ class LinkedInPagePublisher
         $tempFile = tempnam(sys_get_temp_dir(), 'lip_image_');
 
         try {
-            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+            }
 
             $detectedMime = mime_content_type($tempFile) ?: '';
             if (str_starts_with($detectedMime, 'image/') && ! str_starts_with($detectedMime, 'image/gif')) {
@@ -311,7 +315,11 @@ class LinkedInPagePublisher
 
     private function doUploadVideo(string $tempFile, $mediaItem, string $ownerUrn): ?string
     {
-        Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+        $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+
+        if ($downloadResponse->failed()) {
+            throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+        }
 
         $fileSize = (int) filesize($tempFile);
 

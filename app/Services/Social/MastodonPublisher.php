@@ -65,7 +65,11 @@ class MastodonPublisher
         $tempFile = tempnam(sys_get_temp_dir(), 'masto_media_');
 
         try {
-            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($url);
+            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($url);
+
+            if ($downloadResponse->failed()) {
+                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+            }
 
             if (filesize($tempFile) === 0) {
                 Log::error('Mastodon failed to download media', ['url' => $url]);

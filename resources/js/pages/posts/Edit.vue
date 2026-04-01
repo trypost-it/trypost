@@ -133,6 +133,7 @@ interface PlatformConfig {
     maxImages: number;
     allowedMediaTypes: string[];
     supportsTextOnly: boolean;
+    requiresContent: boolean;
 }
 
 interface Workspace {
@@ -371,6 +372,7 @@ const getConfig = (postPlatform: PostPlatform): PlatformConfig => {
         maxImages: 10,
         allowedMediaTypes: ['image', 'video'],
         supportsTextOnly: true,
+        requiresContent: false,
     };
 };
 
@@ -567,6 +569,8 @@ const contentValidation = computed(() => {
             results[pp.id] = { valid: false, message: trans('posts.edit.validation.max_images', { count: String(config.maxImages) }), charCount, maxLength: config.maxContentLength };
         } else if (!config.supportsTextOnly && !hasMedia) {
             results[pp.id] = { valid: false, message: trans('posts.edit.validation.requires_media'), charCount, maxLength: config.maxContentLength };
+        } else if (config.requiresContent && !hasContent) {
+            results[pp.id] = { valid: false, message: trans('posts.edit.validation.requires_content'), charCount, maxLength: config.maxContentLength };
         } else if (!hasContent && !hasMedia) {
             results[pp.id] = { valid: false, message: trans('posts.edit.no_content'), charCount, maxLength: config.maxContentLength };
         } else if (!withinLimit) {

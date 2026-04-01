@@ -164,6 +164,7 @@ class PostController extends Controller
                 'maxImages' => $account->platform->maxImages(),
                 'allowedMediaTypes' => array_map(fn ($type) => $type->value, $account->platform->allowedMediaTypes()),
                 'supportsTextOnly' => $account->platform->supportsTextOnly(),
+                'requiresContent' => $account->platform->requiresContent(),
             ],
         ]);
 

@@ -115,6 +115,7 @@ return [
             'videos_not_supported' => 'Videos not supported',
             'max_images' => 'Max :count images',
             'requires_media' => 'Requires media',
+            'requires_content' => 'Text content is required',
             'exceeded' => ':count exceeded',
             'does_not_support_images' => ':platform does not support images',
             'supports_up_to_images' => ':platform supports up to :count images',

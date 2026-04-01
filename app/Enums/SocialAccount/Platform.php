@@ -137,6 +137,14 @@ enum Platform: string
         };
     }
 
+    public function requiresContent(): bool
+    {
+        return match ($this) {
+            self::YouTube => true,
+            default => false,
+        };
+    }
+
     public function queue(): string
     {
         return 'social-'.$this->value;

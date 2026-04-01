@@ -44,6 +44,21 @@ class StoreChunkedMediaRequest extends FormRequest
         ];
     }
 
+    public function after(): array
+    {
+        return [
+            function ($validator) {
+                if ($validator->errors()->has('content_range')) {
+                    return;
+                }
+
+                if ($this->totalSize() > 1073741824) { // 1GB
+                    $validator->errors()->add('content_range', 'File size exceeds the maximum allowed (1GB).');
+                }
+            },
+        ];
+    }
+
     public function rangeStart(): int
     {
         return (int) $this->parsedRange()[1];

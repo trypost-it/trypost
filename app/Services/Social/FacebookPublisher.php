@@ -7,12 +7,15 @@ namespace App\Services\Social;
 use App\Enums\PostPlatform\ContentType;
 use App\Exceptions\Social\FacebookPublishException;
 use App\Models\PostPlatform;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class FacebookPublisher
 {
+    use HasSocialHttpClient;
+
     private string $baseUrl = 'https://graph.facebook.com/v24.0';
 
     public function publish(PostPlatform $postPlatform): array
@@ -65,7 +68,7 @@ class FacebookPublisher
 
     private function publishTextPost(string $pageId, string $accessToken, string $content): array
     {
-        $response = Http::post("{$this->baseUrl}/{$pageId}/feed", [
+        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/feed", [
             'message' => $content,
             'access_token' => $accessToken,
         ]);
@@ -73,7 +76,7 @@ class FacebookPublisher
         if ($response->failed()) {
             Log::error('Facebook text post failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -89,7 +92,7 @@ class FacebookPublisher
 
     private function publishSingleImagePost(string $pageId, string $accessToken, ?string $content, $media): array
     {
-        $response = Http::post("{$this->baseUrl}/{$pageId}/photos", [
+        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/photos", [
             'message' => $content,
             'url' => $media->url,
             'access_token' => $accessToken,
@@ -98,7 +101,7 @@ class FacebookPublisher
         if ($response->failed()) {
             Log::error('Facebook single image post failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -122,7 +125,7 @@ class FacebookPublisher
                 continue;
             }
 
-            $uploadResponse = Http::post("{$this->baseUrl}/{$pageId}/photos", [
+            $uploadResponse = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/photos", [
                 'url' => $media->url,
                 'published' => 'false',
                 'access_token' => $accessToken,
@@ -130,7 +133,7 @@ class FacebookPublisher
 
             if ($uploadResponse->failed()) {
                 Log::error('Facebook image upload failed', [
-                    'body' => $uploadResponse->body(),
+                    'body' => $this->redactResponseBody($uploadResponse->body()),
                 ]);
 
                 continue;
@@ -154,12 +157,12 @@ class FacebookPublisher
             $postData["attached_media[{$index}]"] = json_encode($media);
         }
 
-        $response = Http::post("{$this->baseUrl}/{$pageId}/feed", $postData);
+        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/feed", $postData);
 
         if ($response->failed()) {
             Log::error('Facebook multi-image post failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -176,7 +179,7 @@ class FacebookPublisher
     private function publishVideoPost(string $pageId, string $accessToken, ?string $content, $media): array
     {
         // Use resumable upload for videos
-        $response = Http::post("{$this->baseUrl}/{$pageId}/videos", [
+        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/videos", [
             'description' => $content,
             'file_url' => $media->url,
             'access_token' => $accessToken,
@@ -185,7 +188,7 @@ class FacebookPublisher
         if ($response->failed()) {
             Log::error('Facebook video post failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -202,7 +205,7 @@ class FacebookPublisher
     private function publishReel(string $pageId, string $accessToken, ?string $content, $media): array
     {
         // Upload video as reel
-        $response = Http::post("{$this->baseUrl}/{$pageId}/video_reels", [
+        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/video_reels", [
             'upload_phase' => 'start',
             'access_token' => $accessToken,
         ]);
@@ -210,7 +213,7 @@ class FacebookPublisher
         if ($response->failed()) {
             Log::error('Facebook reel upload start failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -241,7 +244,7 @@ class FacebookPublisher
             }
 
             if ($uploadResponse->failed()) {
-                Log::error('Facebook reel upload transfer failed', ['body' => $uploadResponse->body()]);
+                Log::error('Facebook reel upload transfer failed', ['body' => $this->redactResponseBody($uploadResponse->body())]);
                 $this->handleApiError($uploadResponse);
             }
         } finally {
@@ -249,7 +252,7 @@ class FacebookPublisher
         }
 
         // Finish and publish the reel
-        $finishResponse = Http::post("{$this->baseUrl}/{$pageId}/video_reels", [
+        $finishResponse = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/video_reels", [
             'upload_phase' => 'finish',
             'video_id' => $videoId,
             'video_state' => 'PUBLISHED',
@@ -259,7 +262,7 @@ class FacebookPublisher
 
         if ($finishResponse->failed()) {
             Log::error('Facebook reel finish failed', [
-                'body' => $finishResponse->body(),
+                'body' => $this->redactResponseBody($finishResponse->body()),
             ]);
             $this->handleApiError($finishResponse);
         }
@@ -279,7 +282,7 @@ class FacebookPublisher
 
         if ($isVideo) {
             // Video story
-            $response = Http::post("{$this->baseUrl}/{$pageId}/video_stories", [
+            $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/video_stories", [
                 'upload_phase' => 'start',
                 'access_token' => $accessToken,
             ]);
@@ -288,7 +291,11 @@ class FacebookPublisher
                 $this->handleApiError($response);
             }
 
-            $videoId = $response->json()['video_id'];
+            $videoId = $response->json()['video_id'] ?? null;
+
+            if (! $videoId) {
+                throw new \Exception('Facebook story upload failed: no video ID returned');
+            }
 
             // Transfer the video
             $tempFile = tempnam(sys_get_temp_dir(), 'fb_story_');
@@ -313,7 +320,7 @@ class FacebookPublisher
                 }
 
                 if ($transferResponse->failed()) {
-                    Log::error('Facebook video story transfer failed', ['body' => $transferResponse->body()]);
+                    Log::error('Facebook video story transfer failed', ['body' => $this->redactResponseBody($transferResponse->body())]);
                     $this->handleApiError($transferResponse);
                 }
             } finally {
@@ -321,7 +328,7 @@ class FacebookPublisher
             }
 
             // Finish the story
-            $finishResponse = Http::post("{$this->baseUrl}/{$pageId}/video_stories", [
+            $finishResponse = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/video_stories", [
                 'upload_phase' => 'finish',
                 'video_id' => $videoId,
                 'access_token' => $accessToken,
@@ -340,14 +347,14 @@ class FacebookPublisher
         }
 
         // Image story
-        $response = Http::post("{$this->baseUrl}/{$pageId}/photo_stories", [
+        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/photo_stories", [
             'photo_id' => $this->uploadUnpublishedPhoto($pageId, $accessToken, $media),
             'access_token' => $accessToken,
         ]);
 
         if ($response->failed()) {
             Log::error('Facebook photo story failed', [
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -362,7 +369,7 @@ class FacebookPublisher
 
     private function uploadUnpublishedPhoto(string $pageId, string $accessToken, $media): string
     {
-        $response = Http::post("{$this->baseUrl}/{$pageId}/photos", [
+        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/photos", [
             'url' => $media->url,
             'published' => 'false',
             'access_token' => $accessToken,

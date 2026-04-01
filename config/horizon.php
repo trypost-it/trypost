@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\SocialAccount\Platform;
 use Illuminate\Support\Str;
 
 return [
@@ -224,6 +225,21 @@ return [
             'timeout' => 630,
             'nice' => 0,
         ],
+
+        'social-publishing' => [
+            'connection' => 'redis',
+            'queue' => Platform::allQueues(),
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'minProcesses' => 1,
+            'maxProcesses' => 3,
+            'timeout' => 630,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 1,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -233,10 +249,20 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+
+            'social-publishing' => [
+                'maxProcesses' => 10,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
         ],
 
         'local' => [
             'supervisor-1' => [
+                'maxProcesses' => 3,
+            ],
+
+            'social-publishing' => [
                 'maxProcesses' => 3,
             ],
         ],

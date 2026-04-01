@@ -28,11 +28,13 @@ class PublishPost implements ShouldQueue
         }
     }
 
-    public function failed(\Throwable $exception): void
+    public function failed(?\Throwable $exception): void
     {
         Log::error('PublishPost job failed', [
             'post_id' => $this->post->id,
-            'error' => $exception->getMessage(),
+            'error' => $exception?->getMessage(),
         ]);
+
+        $this->post->markAsFailed();
     }
 }

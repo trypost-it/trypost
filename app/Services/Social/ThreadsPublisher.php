@@ -7,12 +7,15 @@ namespace App\Services\Social;
 use App\Exceptions\Social\ThreadsPublishException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class ThreadsPublisher
 {
+    use HasSocialHttpClient;
+
     private string $baseUrl = 'https://graph.threads.net/v1.0';
 
     public function publish(PostPlatform $postPlatform): array
@@ -57,7 +60,7 @@ class ThreadsPublisher
     private function publishTextPost(string $userId, string $accessToken, string $content): array
     {
         // Step 1: Create container
-        $containerResponse = Http::post("{$this->baseUrl}/{$userId}/threads", [
+        $containerResponse = $this->socialHttp()->post("{$this->baseUrl}/{$userId}/threads", [
             'media_type' => 'TEXT',
             'text' => $content,
             'access_token' => $accessToken,
@@ -66,12 +69,16 @@ class ThreadsPublisher
         if ($containerResponse->failed()) {
             Log::error('Threads container creation failed', [
                 'status' => $containerResponse->status(),
-                'body' => $containerResponse->body(),
+                'body' => $this->redactResponseBody($containerResponse->body()),
             ]);
             $this->handleApiError($containerResponse);
         }
 
-        $containerId = $containerResponse->json()['id'];
+        $containerId = $containerResponse->json()['id'] ?? null;
+
+        if (! $containerId) {
+            throw new \Exception('Threads text container creation failed: no container ID returned');
+        }
 
         // Step 2: Publish
         return $this->publishContainer($userId, $accessToken, $containerId);
@@ -80,7 +87,7 @@ class ThreadsPublisher
     private function publishImagePost(string $userId, string $accessToken, ?string $content, $media): array
     {
         // Step 1: Create container
-        $containerResponse = Http::post("{$this->baseUrl}/{$userId}/threads", [
+        $containerResponse = $this->socialHttp()->post("{$this->baseUrl}/{$userId}/threads", [
             'media_type' => 'IMAGE',
             'image_url' => $media->url,
             'text' => $content,
@@ -90,12 +97,16 @@ class ThreadsPublisher
         if ($containerResponse->failed()) {
             Log::error('Threads image container creation failed', [
                 'status' => $containerResponse->status(),
-                'body' => $containerResponse->body(),
+                'body' => $this->redactResponseBody($containerResponse->body()),
             ]);
             $this->handleApiError($containerResponse);
         }
 
-        $containerId = $containerResponse->json()['id'];
+        $containerId = $containerResponse->json()['id'] ?? null;
+
+        if (! $containerId) {
+            throw new \Exception('Threads image container creation failed: no container ID returned');
+        }
 
         // Step 2: Wait for image processing
         $this->waitForMediaProcessing($containerId, $accessToken);
@@ -107,7 +118,7 @@ class ThreadsPublisher
     private function publishVideoPost(string $userId, string $accessToken, ?string $content, $media): array
     {
         // Step 1: Create container
-        $containerResponse = Http::post("{$this->baseUrl}/{$userId}/threads", [
+        $containerResponse = $this->socialHttp()->post("{$this->baseUrl}/{$userId}/threads", [
             'media_type' => 'VIDEO',
             'video_url' => $media->url,
             'text' => $content,
@@ -117,12 +128,16 @@ class ThreadsPublisher
         if ($containerResponse->failed()) {
             Log::error('Threads video container creation failed', [
                 'status' => $containerResponse->status(),
-                'body' => $containerResponse->body(),
+                'body' => $this->redactResponseBody($containerResponse->body()),
             ]);
             $this->handleApiError($containerResponse);
         }
 
-        $containerId = $containerResponse->json()['id'];
+        $containerId = $containerResponse->json()['id'] ?? null;
+
+        if (! $containerId) {
+            throw new \Exception('Threads video container creation failed: no container ID returned');
+        }
 
         // Wait for video processing
         $this->waitForMediaProcessing($containerId, $accessToken);
@@ -152,17 +167,23 @@ class ThreadsPublisher
                 $params['image_url'] = $media->url;
             }
 
-            $containerResponse = Http::post("{$this->baseUrl}/{$userId}/threads", $params);
+            $containerResponse = $this->socialHttp()->post("{$this->baseUrl}/{$userId}/threads", $params);
 
             if ($containerResponse->failed()) {
                 Log::error('Threads carousel item creation failed', [
-                    'body' => $containerResponse->body(),
+                    'body' => $this->redactResponseBody($containerResponse->body()),
                 ]);
 
                 continue;
             }
 
-            $childId = $containerResponse->json()['id'];
+            $childId = $containerResponse->json()['id'] ?? null;
+
+            if (! $childId) {
+                Log::error('Threads carousel item creation returned no ID', ['body' => $this->redactResponseBody($containerResponse->body())]);
+
+                continue;
+            }
 
             // Wait for media processing (both images and videos)
             $this->waitForMediaProcessing($childId, $accessToken);
@@ -175,7 +196,7 @@ class ThreadsPublisher
         }
 
         // Step 2: Create carousel container
-        $carouselResponse = Http::post("{$this->baseUrl}/{$userId}/threads", [
+        $carouselResponse = $this->socialHttp()->post("{$this->baseUrl}/{$userId}/threads", [
             'media_type' => 'CAROUSEL',
             'text' => $content,
             'children' => implode(',', $childContainers),
@@ -184,12 +205,16 @@ class ThreadsPublisher
 
         if ($carouselResponse->failed()) {
             Log::error('Threads carousel container creation failed', [
-                'body' => $carouselResponse->body(),
+                'body' => $this->redactResponseBody($carouselResponse->body()),
             ]);
             $this->handleApiError($carouselResponse);
         }
 
-        $carouselId = $carouselResponse->json()['id'];
+        $carouselId = $carouselResponse->json()['id'] ?? null;
+
+        if (! $carouselId) {
+            throw new \Exception('Threads carousel container creation failed: no container ID returned');
+        }
 
         // Step 3: Publish carousel
         return $this->publishContainer($userId, $accessToken, $carouselId);
@@ -197,7 +222,7 @@ class ThreadsPublisher
 
     private function publishContainer(string $userId, string $accessToken, string $containerId): array
     {
-        $publishResponse = Http::post("{$this->baseUrl}/{$userId}/threads_publish", [
+        $publishResponse = $this->socialHttp()->post("{$this->baseUrl}/{$userId}/threads_publish", [
             'creation_id' => $containerId,
             'access_token' => $accessToken,
         ]);
@@ -205,15 +230,19 @@ class ThreadsPublisher
         if ($publishResponse->failed()) {
             Log::error('Threads publish failed', [
                 'status' => $publishResponse->status(),
-                'body' => $publishResponse->body(),
+                'body' => $this->redactResponseBody($publishResponse->body()),
             ]);
             $this->handleApiError($publishResponse);
         }
 
-        $mediaId = $publishResponse->json()['id'];
+        $mediaId = $publishResponse->json()['id'] ?? null;
+
+        if (! $mediaId) {
+            throw new \Exception('Threads publish failed: no media ID returned');
+        }
 
         // Get permalink
-        $permalinkResponse = Http::get("{$this->baseUrl}/{$mediaId}", [
+        $permalinkResponse = $this->socialHttp()->get("{$this->baseUrl}/{$mediaId}", [
             'fields' => 'permalink',
             'access_token' => $accessToken,
         ]);
@@ -229,7 +258,7 @@ class ThreadsPublisher
     private function waitForMediaProcessing(string $containerId, string $accessToken, int $maxAttempts = 30): void
     {
         for ($i = 0; $i < $maxAttempts; $i++) {
-            $statusResponse = Http::get("{$this->baseUrl}/{$containerId}", [
+            $statusResponse = $this->socialHttp()->get("{$this->baseUrl}/{$containerId}", [
                 'fields' => 'status,error_message',
                 'access_token' => $accessToken,
             ]);
@@ -238,7 +267,7 @@ class ThreadsPublisher
                 Log::warning('Threads status check failed', [
                     'container_id' => $containerId,
                     'attempt' => $i,
-                    'body' => $statusResponse->body(),
+                    'body' => $this->redactResponseBody($statusResponse->body()),
                 ]);
                 sleep(3);
 
@@ -273,7 +302,7 @@ class ThreadsPublisher
         ]);
 
         if ($response->failed()) {
-            Log::error('Threads token refresh failed', ['body' => $response->body()]);
+            Log::error('Threads token refresh failed', ['body' => $this->redactResponseBody($response->body())]);
             $this->handleApiError($response);
         }
 

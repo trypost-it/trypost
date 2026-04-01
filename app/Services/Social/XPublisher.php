@@ -10,6 +10,7 @@ use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Media\MediaOptimizer;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 
 class XPublisher
 {
+    use HasSocialHttpClient;
+
     private string $baseUrl = 'https://api.x.com';
 
     private string $accessToken;
@@ -70,7 +73,7 @@ class XPublisher
         if ($response->failed()) {
             Log::error('X post creation failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -86,12 +89,11 @@ class XPublisher
 
     private function getHttpClient(): PendingRequest
     {
-        return Http::withToken($this->accessToken)
+        return $this->socialHttp()->withToken($this->accessToken)
             ->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ])
-            ->timeout(360);
+            ]);
     }
 
     private function uploadMedia($mediaItem): ?array
@@ -130,7 +132,7 @@ class XPublisher
             }
 
             // Simple upload for small images
-            $response = Http::withToken($this->accessToken)
+            $response = $this->socialHttp()->withToken($this->accessToken)
                 ->timeout(360)
                 ->attach(
                     'media',
@@ -149,7 +151,7 @@ class XPublisher
             if ($response->failed()) {
                 Log::error('X media upload error', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
+                    'body' => $this->redactResponseBody($response->body()),
                 ]);
                 $this->handleApiError($response);
             }
@@ -171,7 +173,7 @@ class XPublisher
     private function chunkedUpload(string $tempFile, int $totalBytes, string $mimeType, string $mediaCategory): array
     {
         // INIT
-        $initResponse = Http::withToken($this->accessToken)
+        $initResponse = $this->socialHttp()->withToken($this->accessToken)
             ->timeout(60)
             ->post("{$this->baseUrl}/2/media/upload/initialize", [
                 'media_type' => $mimeType,
@@ -182,7 +184,7 @@ class XPublisher
         if ($initResponse->failed()) {
             Log::error('X chunked upload INIT error', [
                 'status' => $initResponse->status(),
-                'body' => $initResponse->body(),
+                'body' => $this->redactResponseBody($initResponse->body()),
             ]);
             $this->handleApiError($initResponse);
         }
@@ -207,7 +209,7 @@ class XPublisher
                     break;
                 }
 
-                $appendResponse = Http::withToken($this->accessToken)
+                $appendResponse = $this->socialHttp()->withToken($this->accessToken)
                     ->timeout(300)
                     ->attach('media', $chunk, 'chunk'.$index)
                     ->post("{$this->baseUrl}/2/media/upload/{$mediaId}/append", [
@@ -217,7 +219,7 @@ class XPublisher
                 if ($appendResponse->failed()) {
                     Log::error('X chunked upload APPEND error', [
                         'status' => $appendResponse->status(),
-                        'body' => $appendResponse->body(),
+                        'body' => $this->redactResponseBody($appendResponse->body()),
                         'segment' => $index,
                     ]);
                     $this->handleApiError($appendResponse);
@@ -230,14 +232,14 @@ class XPublisher
         }
 
         // FINALIZE - Use the new v2 endpoint
-        $finalizeResponse = Http::withToken($this->accessToken)
+        $finalizeResponse = $this->socialHttp()->withToken($this->accessToken)
             ->timeout(60)
             ->post("{$this->baseUrl}/2/media/upload/{$mediaId}/finalize");
 
         if ($finalizeResponse->failed()) {
             Log::error('X chunked upload FINALIZE error', [
                 'status' => $finalizeResponse->status(),
-                'body' => $finalizeResponse->body(),
+                'body' => $this->redactResponseBody($finalizeResponse->body()),
             ]);
             $this->handleApiError($finalizeResponse);
         }
@@ -281,7 +283,7 @@ class XPublisher
                 ->get("{$this->baseUrl}/2/media/{$mediaId}");
 
             if ($response->failed()) {
-                Log::error('X media status check error: '.$response->body());
+                Log::error('X media status check error', ['body' => $this->redactResponseBody($response->body())]);
                 sleep(3);
 
                 continue;

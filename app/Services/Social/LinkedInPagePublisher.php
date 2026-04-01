@@ -11,6 +11,7 @@ use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Media\MediaOptimizer;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\Log;
 
 class LinkedInPagePublisher
 {
+    use HasSocialHttpClient;
+
     private string $baseUrl = 'https://api.linkedin.com';
 
     private string $apiVersion = '202601';
@@ -124,7 +127,7 @@ class LinkedInPagePublisher
         if ($response->failed()) {
             Log::error('LinkedIn Page post creation failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -190,7 +193,7 @@ class LinkedInPagePublisher
         if ($response->failed()) {
             Log::error('LinkedIn Page carousel post creation failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -211,13 +214,12 @@ class LinkedInPagePublisher
 
     private function getHttpClient(): PendingRequest
     {
-        return Http::withToken($this->accessToken)
+        return $this->socialHttp()->withToken($this->accessToken)
             ->withHeaders([
                 'X-Restli-Protocol-Version' => '2.0.0',
                 'LinkedIn-Version' => $this->apiVersion,
                 'Content-Type' => 'application/json',
-            ])
-            ->timeout(300);
+            ]);
     }
 
     private function uploadMedia($mediaItem, string $ownerUrn): ?string
@@ -248,7 +250,7 @@ class LinkedInPagePublisher
             ]);
 
         if ($initResponse->failed()) {
-            Log::error('LinkedIn Page image init failed', ['body' => $initResponse->body()]);
+            Log::error('LinkedIn Page image init failed', ['body' => $this->redactResponseBody($initResponse->body())]);
             $this->handleApiError($initResponse);
         }
 
@@ -292,7 +294,7 @@ class LinkedInPagePublisher
             }
 
             if ($uploadResponse->failed()) {
-                Log::error('LinkedIn Page image upload failed', ['body' => $uploadResponse->body()]);
+                Log::error('LinkedIn Page image upload failed', ['body' => $this->redactResponseBody($uploadResponse->body())]);
                 $this->handleApiError($uploadResponse);
             }
 
@@ -335,7 +337,7 @@ class LinkedInPagePublisher
             ]);
 
         if ($initResponse->failed()) {
-            Log::error('LinkedIn Page video init failed', ['body' => $initResponse->body()]);
+            Log::error('LinkedIn Page video init failed', ['body' => $this->redactResponseBody($initResponse->body())]);
             $this->handleApiError($initResponse);
         }
 
@@ -373,7 +375,7 @@ class LinkedInPagePublisher
                 if ($chunkResponse->failed()) {
                     Log::error('LinkedIn Page video chunk upload failed', [
                         'index' => $index,
-                        'body' => $chunkResponse->body(),
+                        'body' => $this->redactResponseBody($chunkResponse->body()),
                     ]);
                     $this->handleApiError($chunkResponse);
                 }
@@ -399,7 +401,7 @@ class LinkedInPagePublisher
             ]);
 
         if ($finalizeResponse->failed()) {
-            Log::error('LinkedIn Page video finalize failed', ['body' => $finalizeResponse->body()]);
+            Log::error('LinkedIn Page video finalize failed', ['body' => $this->redactResponseBody($finalizeResponse->body())]);
             $this->handleApiError($finalizeResponse);
         }
 

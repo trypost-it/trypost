@@ -8,6 +8,7 @@ use App\Exceptions\Social\TikTokPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\Log;
 
 class TikTokPublisher
 {
+    use HasSocialHttpClient;
+
     private string $baseUrl = 'https://open.tiktokapis.com/v2';
 
     private string $accessToken;
@@ -53,11 +56,10 @@ class TikTokPublisher
 
     private function getHttpClient(): PendingRequest
     {
-        return Http::withToken($this->accessToken)
+        return $this->socialHttp()->withToken($this->accessToken)
             ->withHeaders([
                 'Content-Type' => 'application/json; charset=UTF-8',
-            ])
-            ->timeout(120);
+            ]);
     }
 
     private function queryCreatorInfo(): array
@@ -66,7 +68,7 @@ class TikTokPublisher
             ->post("{$this->baseUrl}/post/publish/creator_info/query/");
 
         if ($response->failed()) {
-            Log::warning('TikTok creator_info query failed', ['body' => $response->body()]);
+            Log::warning('TikTok creator_info query failed', ['body' => $this->redactResponseBody($response->body())]);
 
             return ['privacy_level' => 'SELF_ONLY'];
         }
@@ -113,7 +115,7 @@ class TikTokPublisher
         if ($response->failed()) {
             Log::error('TikTok video publish failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -168,7 +170,7 @@ class TikTokPublisher
         if ($response->failed()) {
             Log::error('TikTok photo publish failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -203,7 +205,7 @@ class TikTokPublisher
             if ($response->failed()) {
                 Log::warning('TikTok status check failed', [
                     'attempt' => $i,
-                    'body' => $response->body(),
+                    'body' => $this->redactResponseBody($response->body()),
                 ]);
 
                 continue;
@@ -254,7 +256,7 @@ class TikTokPublisher
         ]);
 
         if ($response->failed()) {
-            Log::error('TikTok token refresh failed', ['body' => $response->body()]);
+            Log::error('TikTok token refresh failed', ['body' => $this->redactResponseBody($response->body())]);
             $this->handleApiError($response);
         }
 

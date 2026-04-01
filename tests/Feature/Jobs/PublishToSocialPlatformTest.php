@@ -15,6 +15,7 @@ use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\Social\ConnectionVerifier;
 use App\Services\Social\LinkedInPublisher;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
@@ -257,6 +258,62 @@ test('publish to social platform dispatches failure notification when platform f
     $this->post->refresh();
     expect($this->post->status)->toBe(PostStatus::Failed);
     Queue::assertPushed(SendNotification::class);
+});
+
+test('it retries with token refresh when token expires during publish', function () {
+    Event::fake();
+
+    $callCount = 0;
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldReceive('publish')
+        ->twice()
+        ->andReturnUsing(function () use (&$callCount) {
+            $callCount++;
+            if ($callCount === 1) {
+                throw new TokenExpiredException('Token expired', '401');
+            }
+
+            return ['id' => 'post-123', 'url' => 'https://linkedin.com/post/123'];
+        });
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    $verifier = Mockery::mock(ConnectionVerifier::class);
+    $verifier->shouldReceive('verify')->once()->andReturn(true);
+
+    $this->app->instance(ConnectionVerifier::class, $verifier);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->postPlatform->refresh();
+    $this->socialAccount->refresh();
+
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Published);
+    expect($this->socialAccount->status)->not->toBe(AccountStatus::Disconnected);
+});
+
+test('it disconnects account when token refresh fails during publish retry', function () {
+    Event::fake();
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldReceive('publish')
+        ->once()
+        ->andThrow(new TokenExpiredException('Token expired', '401'));
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    $verifier = Mockery::mock(ConnectionVerifier::class);
+    $verifier->shouldReceive('verify')->once()->andThrow(new Exception('Refresh failed'));
+
+    $this->app->instance(ConnectionVerifier::class, $verifier);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->postPlatform->refresh();
+    $this->socialAccount->refresh();
+
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
+    expect($this->socialAccount->status)->toBe(AccountStatus::Disconnected);
 });
 
 test('publish to social platform skips if already published (idempotency)', function () {

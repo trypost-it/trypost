@@ -10,12 +10,15 @@ use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Media\MediaOptimizer;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class BlueskyPublisher
 {
+    use HasSocialHttpClient;
+
     public function publish(PostPlatform $postPlatform): array
     {
         $account = $postPlatform->socialAccount;
@@ -72,7 +75,7 @@ class BlueskyPublisher
             $record['facets'] = $facets;
         }
 
-        $response = Http::withToken($account->access_token)
+        $response = $this->socialHttp()->withToken($account->access_token)
             ->post("{$service}/xrpc/com.atproto.repo.createRecord", [
                 'repo' => $account->platform_user_id,
                 'collection' => 'app.bsky.feed.post',
@@ -82,7 +85,7 @@ class BlueskyPublisher
         if ($response->failed()) {
             Log::error('Bluesky post failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
 
             $this->handleApiError($response);
@@ -130,7 +133,7 @@ class BlueskyPublisher
 
             $stream = fopen($tempFile, 'r');
 
-            $response = Http::withToken($account->access_token)
+            $response = $this->socialHttp()->withToken($account->access_token)
                 ->withHeaders(['Content-Type' => $mimeType])
                 ->withBody($stream, $mimeType)
                 ->post("{$service}/xrpc/com.atproto.repo.uploadBlob");
@@ -142,7 +145,7 @@ class BlueskyPublisher
             if ($response->failed()) {
                 Log::error('Bluesky blob upload failed', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
+                    'body' => $this->redactResponseBody($response->body()),
                 ]);
 
                 return null;
@@ -266,7 +269,7 @@ class BlueskyPublisher
         $service = $account->meta['service'] ?? 'https://bsky.social';
 
         // Try refresh first
-        $response = Http::withToken($account->refresh_token)
+        $response = $this->socialHttp()->withToken($account->refresh_token)
             ->post("{$service}/xrpc/com.atproto.server.refreshSession");
 
         if ($response->successful()) {
@@ -282,7 +285,6 @@ class BlueskyPublisher
 
         Log::warning('Bluesky refresh token failed, trying re-authentication', [
             'status' => $response->status(),
-            'body' => $response->body(),
         ]);
 
         // If refresh fails, re-authenticate with stored credentials

@@ -117,6 +117,19 @@ enum Platform: string
         };
     }
 
+    public function queue(): string
+    {
+        return 'social-'.$this->value;
+    }
+
+    /**
+     * @return array<string>
+     */
+    public static function allQueues(): array
+    {
+        return array_map(fn (self $platform) => $platform->queue(), self::cases());
+    }
+
     public function isEnabled(): bool
     {
         return config("trypost.platforms.{$this->value}.enabled", true);

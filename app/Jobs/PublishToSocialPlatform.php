@@ -16,6 +16,7 @@ use App\Mail\PostPublishFailed;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Services\Social\BlueskyPublisher;
+use App\Services\Social\ConnectionVerifier;
 use App\Services\Social\FacebookPublisher;
 use App\Services\Social\InstagramPublisher;
 use App\Services\Social\LinkedInPagePublisher;
@@ -38,7 +39,10 @@ class PublishToSocialPlatform implements ShouldQueue
 
     public int $timeout = 600; // 10 minutes — large video uploads need time
 
-    public function __construct(public PostPlatform $postPlatform) {}
+    public function __construct(public PostPlatform $postPlatform)
+    {
+        $this->onQueue($postPlatform->platform->queue());
+    }
 
     public function handle(): void
     {
@@ -68,33 +72,53 @@ class PublishToSocialPlatform implements ShouldQueue
         $this->postPlatform->markAsPublishing();
         $this->broadcastStatus();
 
-        try {
-            $publisher = $this->getPublisher();
-            $result = $publisher->publish($this->postPlatform);
+        $maxAttempts = 2; // Original attempt + 1 retry after token refresh
 
-            $this->postPlatform->markAsPublished(data_get($result, 'id'), data_get($result, 'url'));
-        } catch (TokenExpiredException $e) {
-            Log::error('Token expired while publishing to social platform', [
-                'post_platform_id' => $this->postPlatform->id,
-                'platform' => $this->postPlatform->platform->value,
-                'error' => $e->getMessage(),
-                'platform_error_code' => $e->platformErrorCode,
-            ]);
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                $publisher = $this->getPublisher();
+                $result = $publisher->publish($this->postPlatform);
+                $this->postPlatform->markAsPublished(data_get($result, 'id'), data_get($result, 'url'));
+                break;
+            } catch (TokenExpiredException $e) {
+                if ($attempt < $maxAttempts) {
+                    try {
+                        $this->refreshAccountToken();
 
-            $this->postPlatform->markAsFailed($e->getMessage());
-            $this->postPlatform->socialAccount->markAsDisconnected($e->getMessage());
-        } catch (SocialPublishException $e) {
-            Log::error('Social publish failed: '.$e->userMessage);
+                        continue;
+                    } catch (\Throwable $refreshError) {
+                        Log::error('Token refresh failed during publish retry', [
+                            'post_platform_id' => $this->postPlatform->id,
+                            'platform' => $this->postPlatform->platform->value,
+                            'error' => $refreshError->getMessage(),
+                        ]);
+                    }
+                }
 
-            $this->postPlatform->markAsFailed($e->userMessage);
-        } catch (\Throwable $e) {
-            Log::error('Failed to publish to social platform', [
-                'post_platform_id' => $this->postPlatform->id,
-                'platform' => $this->postPlatform->platform->value,
-                'error' => $e->getMessage(),
-            ]);
+                // All attempts exhausted or refresh failed
+                Log::error('Token expired while publishing to social platform', [
+                    'post_platform_id' => $this->postPlatform->id,
+                    'platform' => $this->postPlatform->platform->value,
+                    'error' => $e->getMessage(),
+                    'platform_error_code' => $e->platformErrorCode,
+                ]);
 
-            $this->postPlatform->markAsFailed($e->getMessage());
+                $this->postPlatform->markAsFailed($e->getMessage());
+                $this->postPlatform->socialAccount->markAsDisconnected($e->getMessage());
+                break;
+            } catch (SocialPublishException $e) {
+                Log::error('Social publish failed: '.$e->userMessage);
+                $this->postPlatform->markAsFailed($e->userMessage);
+                break;
+            } catch (\Throwable $e) {
+                Log::error('Failed to publish to social platform', [
+                    'post_platform_id' => $this->postPlatform->id,
+                    'platform' => $this->postPlatform->platform->value,
+                    'error' => $e->getMessage(),
+                ]);
+                $this->postPlatform->markAsFailed($e->getMessage());
+                break;
+            }
         }
 
         // Always check and update post status after each platform finishes
@@ -102,6 +126,14 @@ class PublishToSocialPlatform implements ShouldQueue
 
         // Broadcast final status
         $this->broadcastStatus();
+    }
+
+    private function refreshAccountToken(): void
+    {
+        $account = $this->postPlatform->socialAccount;
+
+        // Delegate to ConnectionVerifier which already has per-platform refresh logic
+        app(ConnectionVerifier::class)->verify($account);
     }
 
     private function broadcastStatus(): void

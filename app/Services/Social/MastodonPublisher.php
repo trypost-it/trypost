@@ -9,12 +9,15 @@ use App\Exceptions\Social\MastodonPublishException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Media\MediaOptimizer;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class MastodonPublisher
 {
+    use HasSocialHttpClient;
+
     public function publish(PostPlatform $postPlatform): array
     {
         $account = $postPlatform->socialAccount;
@@ -41,13 +44,13 @@ class MastodonPublisher
             $payload['media_ids'] = $mediaIds;
         }
 
-        $response = Http::withToken($account->access_token)
+        $response = $this->socialHttp()->withToken($account->access_token)
             ->post("{$instance}/api/v1/statuses", $payload);
 
         if ($response->failed()) {
             Log::error('Mastodon post failed', [
                 'status' => $response->status(),
-                'body' => $response->body(),
+                'body' => $this->redactResponseBody($response->body()),
             ]);
             $this->handleApiError($response);
         }
@@ -93,7 +96,7 @@ class MastodonPublisher
 
             $stream = fopen($tempFile, 'r');
 
-            $response = Http::withToken($account->access_token)
+            $response = $this->socialHttp()->withToken($account->access_token)
                 ->attach('file', $stream, $name)
                 ->post("{$instance}/api/v1/media");
 
@@ -104,7 +107,7 @@ class MastodonPublisher
             if ($response->failed()) {
                 Log::error('Mastodon media upload failed', [
                     'status' => $response->status(),
-                    'body' => $response->body(),
+                    'body' => $this->redactResponseBody($response->body()),
                 ]);
 
                 return null;

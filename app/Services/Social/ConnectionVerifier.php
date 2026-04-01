@@ -75,7 +75,7 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: LinkedIn token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: LinkedIn token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh LinkedIn token');
         }
 
@@ -107,7 +107,7 @@ class ConnectionVerifier
             ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: X token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: X token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh X token');
         }
 
@@ -190,7 +190,7 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: YouTube token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: YouTube token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh YouTube token');
         }
 
@@ -218,7 +218,7 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: TikTok token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: TikTok token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh TikTok token');
         }
 
@@ -250,7 +250,7 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: Pinterest token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: Pinterest token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh Pinterest token');
         }
 
@@ -274,7 +274,7 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: Threads token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: Threads token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh Threads token');
         }
 
@@ -298,7 +298,7 @@ class ConnectionVerifier
         ]);
 
         if ($response->failed()) {
-            Log::error('ConnectionVerifier: Instagram token refresh failed', ['body' => $response->body()]);
+            Log::error('ConnectionVerifier: Instagram token refresh failed', ['body' => $this->redactBody($response->body())]);
             throw new TokenExpiredException('Failed to refresh Instagram token');
         }
 
@@ -501,5 +501,24 @@ class ConnectionVerifier
         }
 
         return $response->successful();
+    }
+
+    private function redactBody(string $body): string
+    {
+        return preg_replace(
+            [
+                '/access_token=([^&"\s]+)/',
+                '/"access_token"\s*:\s*"([^"]+)"/',
+                '/Bearer\s+\S+/',
+                '/"token"\s*:\s*"([^"]+)"/',
+            ],
+            [
+                'access_token=[REDACTED]',
+                '"access_token":"[REDACTED]"',
+                'Bearer [REDACTED]',
+                '"token":"[REDACTED]"',
+            ],
+            $body
+        );
     }
 }

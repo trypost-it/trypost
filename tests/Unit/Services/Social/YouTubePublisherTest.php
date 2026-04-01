@@ -163,3 +163,30 @@ test('youtube publisher throws exception with null content', function () {
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(Exception::class, 'YouTube Shorts require a title');
 });
+
+test('youtube publisher builds correct title with shorts tag', function () {
+    $publisher = new YouTubePublisher;
+    $reflection = new ReflectionClass($publisher);
+    $method = $reflection->getMethod('buildTitle');
+    $method->setAccessible(true);
+
+    // Short content: appends #Shorts
+    $title = $method->invoke($publisher, 'My awesome short video');
+    expect($title)->toBe('My awesome short video #Shorts');
+
+    // Long content: truncates to leave room for #Shorts tag (100 chars max)
+    $longContent = str_repeat('A', 200);
+    $title = $method->invoke($publisher, $longContent);
+    expect(strlen($title))->toBeLessThanOrEqual(100);
+    expect($title)->toEndWith(' #Shorts');
+
+    // Multi-line content: only uses first line before period
+    $multiLine = "First sentence. Second part.\nSecond line";
+    $title = $method->invoke($publisher, $multiLine);
+    expect($title)->toBe('First sentence #Shorts');
+
+    // Newline-separated: stops at newline
+    $newlineContent = "Title line\nMore content here";
+    $title = $method->invoke($publisher, $newlineContent);
+    expect($title)->toBe('Title line #Shorts');
+});

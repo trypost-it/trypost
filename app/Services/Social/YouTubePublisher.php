@@ -8,6 +8,7 @@ use App\Exceptions\Social\YouTubePublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Social\Concerns\HasSocialHttpClient;
 use Google\Client as GoogleClient;
 use Google\Service\YouTube;
 use Google\Service\YouTube\Video;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\Log;
 
 class YouTubePublisher
 {
+    use HasSocialHttpClient;
+
     private const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
 
     public function publish(PostPlatform $postPlatform): array
@@ -207,9 +210,9 @@ class YouTubePublisher
         ]);
 
         if ($response->failed()) {
-            Log::error('YouTube token refresh failed', ['body' => $response->body()]);
+            Log::error('YouTube token refresh failed', ['body' => $this->redactResponseBody($response->body())]);
 
-            throw new TokenExpiredException('Failed to refresh YouTube token: '.$response->body());
+            throw new TokenExpiredException('Failed to refresh YouTube token');
         }
 
         $data = $response->json();

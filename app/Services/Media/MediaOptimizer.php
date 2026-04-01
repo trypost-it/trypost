@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Media;
 
 use App\Enums\SocialAccount\Platform;
+use Illuminate\Support\Facades\Log;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 
@@ -24,6 +25,32 @@ class MediaOptimizer
     public function optimizeImage(string $filePath, Platform $platform): string
     {
         $config = $this->getImageConfig($platform);
+
+        // Check image dimensions to prevent GD memory overflow
+        $imageInfo = @getimagesize($filePath);
+        if ($imageInfo) {
+            $width = $imageInfo[0];
+            $height = $imageInfo[1];
+            $channels = $imageInfo['channels'] ?? 4;
+            $estimatedMemory = $width * $height * $channels * 1.5; // 1.5x safety margin
+
+            // If image would use more than 256MB of RAM, skip optimization and return as-is
+            if ($estimatedMemory > 256 * 1024 * 1024) {
+                Log::warning('MediaOptimizer: Image too large for GD processing', [
+                    'width' => $width,
+                    'height' => $height,
+                    'estimated_memory' => $estimatedMemory,
+                    'platform' => $platform->value,
+                ]);
+
+                // Copy original file to temp location and return
+                $tempFile = tempnam(sys_get_temp_dir(), 'media_opt_');
+                copy($filePath, $tempFile);
+
+                return $tempFile;
+            }
+        }
+
         $image = $this->manager->decodePath($filePath);
 
         $maxWidth = data_get($config, 'max_width');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\MastodonPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\Post;
 use App\Models\PostPlatform;
@@ -158,7 +159,7 @@ test('mastodon publisher throws token expired exception on auth error', function
         ->toThrow(TokenExpiredException::class);
 });
 
-test('mastodon publisher throws token expired exception on forbidden', function () {
+test('mastodon publisher throws permission exception on forbidden', function () {
     Http::fake([
         'https://mastodon.social/api/v1/statuses' => Http::response([
             'error' => 'This action is not allowed',
@@ -166,7 +167,7 @@ test('mastodon publisher throws token expired exception on forbidden', function 
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(TokenExpiredException::class);
+        ->toThrow(MastodonPublishException::class);
 });
 
 test('mastodon publisher limits media to 4', function () {

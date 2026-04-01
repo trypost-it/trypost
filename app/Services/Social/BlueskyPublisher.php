@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Exceptions\Social\BlueskyPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -327,14 +328,6 @@ class BlueskyPublisher
 
     private function handleApiError(Response $response): void
     {
-        $body = $response->json() ?? [];
-        $error = $body['error'] ?? 'Unknown error';
-        $message = $body['message'] ?? $response->body();
-
-        if ($error === 'ExpiredToken' || $error === 'InvalidToken') {
-            throw new TokenExpiredException("Bluesky: {$message}");
-        }
-
-        throw new \Exception("Bluesky API error: {$message}");
+        throw BlueskyPublishException::fromApiResponse($response);
     }
 }

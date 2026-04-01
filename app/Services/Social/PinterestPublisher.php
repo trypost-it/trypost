@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Enums\PostPlatform\ContentType;
-use App\Exceptions\TokenExpiredException;
+use App\Exceptions\Social\PinterestPublishException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use Illuminate\Http\Client\Response;
@@ -15,14 +15,6 @@ use Illuminate\Support\Facades\Log;
 class PinterestPublisher
 {
     private const API_BASE = 'https://api.pinterest.com/v5';
-
-    /**
-     * Pinterest API error codes that indicate token issues.
-     */
-    private const TOKEN_ERROR_CODES = [
-        1, // Invalid access token
-        2, // Access token has expired
-    ];
 
     public function publish(PostPlatform $postPlatform): array
     {
@@ -407,20 +399,6 @@ class PinterestPublisher
 
     private function handleApiError(Response $response, string $context): void
     {
-        $body = $response->json() ?? [];
-        $code = $body['code'] ?? $response->status();
-        $message = $body['message'] ?? $response->body();
-
-        $isTokenError = $response->status() === 401
-            || in_array($code, self::TOKEN_ERROR_CODES);
-
-        if ($isTokenError) {
-            throw new TokenExpiredException(
-                "{$context}: {$message}",
-                is_int($code) ? (string) $code : null
-            );
-        }
-
-        throw new \Exception("{$context}: {$message}");
+        throw PinterestPublishException::fromApiResponse($response);
     }
 }

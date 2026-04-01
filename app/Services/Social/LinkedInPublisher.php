@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Enums\PostPlatform\ContentType;
+use App\Exceptions\Social\LinkedInPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -15,17 +16,6 @@ use Illuminate\Support\Facades\Log;
 
 class LinkedInPublisher
 {
-    /**
-     * LinkedIn API error codes that indicate token issues.
-     *
-     * @see https://learn.microsoft.com/en-us/linkedin/shared/api-guide/concepts/error-handling
-     */
-    private const TOKEN_ERROR_CODES = [
-        'REVOKED_ACCESS_TOKEN',
-        'EXPIRED_ACCESS_TOKEN',
-        'INVALID_ACCESS_TOKEN',
-    ];
-
     private string $baseUrl = 'https://api.linkedin.com';
 
     private string $apiVersion = '202601';
@@ -473,17 +463,6 @@ class LinkedInPublisher
 
     private function handleApiError(Response $response, string $context): void
     {
-        $body = $response->json() ?? [];
-        $errorCode = $body['code'] ?? null;
-        $message = $body['message'] ?? $response->body();
-
-        if ($response->status() === 401 || in_array($errorCode, self::TOKEN_ERROR_CODES)) {
-            throw new TokenExpiredException(
-                "{$context}: {$message}",
-                $errorCode
-            );
-        }
-
-        throw new \Exception("{$context}: {$message}");
+        throw LinkedInPublishException::fromApiResponse($response);
     }
 }

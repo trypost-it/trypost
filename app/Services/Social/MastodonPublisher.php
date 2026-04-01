@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
-use App\Exceptions\TokenExpiredException;
+use App\Exceptions\Social\MastodonPublishException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use Illuminate\Http\Client\Response;
@@ -119,13 +119,6 @@ class MastodonPublisher
 
     private function handleApiError(Response $response): void
     {
-        $body = $response->json() ?? [];
-        $error = $body['error'] ?? $response->body();
-
-        if ($response->status() === 401 || $response->status() === 403) {
-            throw new TokenExpiredException("Mastodon: {$error}");
-        }
-
-        throw new \Exception("Mastodon API error: {$error}");
+        throw MastodonPublishException::fromApiResponse($response);
     }
 }

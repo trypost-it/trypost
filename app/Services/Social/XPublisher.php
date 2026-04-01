@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Exceptions\Social\XPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -14,15 +15,6 @@ use Illuminate\Support\Facades\Log;
 
 class XPublisher
 {
-    /**
-     * X/Twitter API error titles that indicate token issues.
-     *
-     * @see https://developer.twitter.com/en/support/twitter-api/error-troubleshooting
-     */
-    private const TOKEN_ERROR_TITLES = [
-        'Unauthorized',
-    ];
-
     private string $baseUrl = 'https://api.x.com';
 
     private string $accessToken;
@@ -359,17 +351,6 @@ class XPublisher
 
     private function handleApiError(Response $response, string $context): void
     {
-        $body = $response->json() ?? [];
-        $errorTitle = $body['title'] ?? null;
-        $message = $body['detail'] ?? $response->body();
-
-        if ($response->status() === 401 || in_array($errorTitle, self::TOKEN_ERROR_TITLES)) {
-            throw new TokenExpiredException(
-                "{$context}: {$message}",
-                $errorTitle
-            );
-        }
-
-        throw new \Exception("{$context}: {$message}");
+        throw XPublishException::fromApiResponse($response);
     }
 }

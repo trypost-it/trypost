@@ -47,6 +47,7 @@ class HandleInertiaRequests extends Middleware
                 'name' => $name,
             ])->values()->all(),
             'selfHosted' => config('trypost.self_hosted'),
+            'googleAuthEnabled' => config('trypost.google_auth_enabled'),
         ];
     }
 }

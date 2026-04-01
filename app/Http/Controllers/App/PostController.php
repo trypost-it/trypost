@@ -257,6 +257,6 @@ class PostController extends Controller
             }
         }
 
-        return back();
+        return redirect()->route('app.posts.index');
     }
 }

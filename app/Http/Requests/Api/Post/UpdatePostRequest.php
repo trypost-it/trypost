@@ -27,7 +27,14 @@ class UpdatePostRequest extends FormRequest
             'platforms.*.content' => ['nullable', 'string', 'max:63206'],
             'platforms.*.content_type' => ['required', 'string', Rule::in(array_column(ContentType::cases(), 'value'))],
             'platforms.*.meta' => ['nullable', 'array'],
-            'scheduled_at' => ['nullable', 'date'],
+            'scheduled_at' => [
+                'nullable',
+                'date',
+                Rule::when(
+                    in_array($this->input('status'), ['scheduled', 'publishing']),
+                    ['after:now']
+                ),
+            ],
             'label_ids' => ['sometimes', 'array'],
             'label_ids.*' => ['uuid', Rule::exists('workspace_labels', 'id')->where('workspace_id', $this->workspace->id)],
         ];

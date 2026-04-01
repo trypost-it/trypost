@@ -38,7 +38,7 @@ class StoreMediaRequest extends FormRequest
             ],
             'model_id' => [
                 'required',
-                'string',
+                'uuid',
             ],
             'collection' => [
                 'sometimes',

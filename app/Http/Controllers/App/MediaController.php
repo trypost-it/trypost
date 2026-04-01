@@ -180,7 +180,11 @@ class MediaController extends Controller
 
     private function resolveModel(string $alias, string $id): Model
     {
-        $modelClass = Relation::getMorphedModel($alias) ?? $alias;
+        $modelClass = Relation::getMorphedModel($alias);
+
+        if (! $modelClass) {
+            abort(404);
+        }
 
         return $modelClass::findOrFail($id);
     }

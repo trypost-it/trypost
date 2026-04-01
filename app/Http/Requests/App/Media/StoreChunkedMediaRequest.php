@@ -38,7 +38,7 @@ class StoreChunkedMediaRequest extends FormRequest
         return [
             'content_range' => ['required', 'string', 'regex:'.self::CONTENT_RANGE_PATTERN],
             'model' => ['required', 'string', Rule::in($this->allowedModels)],
-            'model_id' => ['required', 'string'],
+            'model_id' => ['required', 'uuid'],
             'collection' => ['sometimes', 'string', 'max:255'],
             'file_name' => [
                 'required',

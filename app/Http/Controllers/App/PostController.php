@@ -249,8 +249,12 @@ class PostController extends Controller
         session()->flash('flash.banner', __('posts.flash.deleted'));
         session()->flash('flash.bannerStyle', 'success');
 
+        $allowedRedirects = ['app.posts.index', 'app.calendar'];
+
         if ($redirect = $request->input('redirect')) {
-            return redirect()->route($redirect);
+            if (in_array($redirect, $allowedRedirects)) {
+                return redirect()->route($redirect);
+            }
         }
 
         return back();

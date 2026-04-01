@@ -19,7 +19,7 @@ class DuplicateMediaRequest extends FormRequest
         return [
             'targets' => ['required', 'array', 'max:50'],
             'targets.*.model' => ['required', 'string', Rule::in(['postPlatform', 'workspace', 'user'])],
-            'targets.*.model_id' => ['required', 'string'],
+            'targets.*.model_id' => ['required', 'uuid'],
         ];
     }
 }

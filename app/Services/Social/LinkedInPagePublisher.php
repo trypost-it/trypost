@@ -33,6 +33,10 @@ class LinkedInPagePublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $this->account = $postPlatform->socialAccount;
         $this->hasRetried = false;
 
@@ -54,16 +58,16 @@ class LinkedInPagePublisher
 
         try {
             return match ($contentType) {
-                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
-                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $content, $postPlatform->media, $this->account),
                 default => throw new \Exception("Unsupported LinkedIn Page content type: {$contentType?->value}"),
             };
         } catch (TokenExpiredException $e) {
-            return $this->retryWithRefresh($postPlatform, $e);
+            return $this->retryWithRefresh($postPlatform, $content, $e);
         }
     }
 
-    private function retryWithRefresh(PostPlatform $postPlatform, TokenExpiredException $originalException): array
+    private function retryWithRefresh(PostPlatform $postPlatform, ?string $content, TokenExpiredException $originalException): array
     {
         if ($this->hasRetried) {
             throw $originalException;
@@ -81,8 +85,8 @@ class LinkedInPagePublisher
             $contentType = $postPlatform->content_type;
 
             return match ($contentType) {
-                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
-                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $postPlatform->content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $content, $postPlatform->media, $this->account),
                 default => throw new \Exception("Unsupported LinkedIn Page content type: {$contentType?->value}"),
             };
         } catch (\Throwable $e) {

@@ -20,6 +20,10 @@ class FacebookPublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
         $pageId = $account->platform_user_id;
         $accessToken = $account->access_token;
@@ -28,9 +32,9 @@ class FacebookPublisher
         $contentType = $postPlatform->content_type;
 
         return match ($contentType) {
-            ContentType::FacebookReel => $this->publishReel($pageId, $accessToken, $postPlatform->content, $media->first()),
+            ContentType::FacebookReel => $this->publishReel($pageId, $accessToken, $content, $media->first()),
             ContentType::FacebookStory => $this->publishStory($pageId, $accessToken, $media->first()),
-            ContentType::FacebookPost => $this->publishPost($pageId, $accessToken, $postPlatform->content, $media),
+            ContentType::FacebookPost => $this->publishPost($pageId, $accessToken, $content, $media),
             default => throw new \Exception("Unsupported Facebook content type: {$contentType?->value}"),
         };
     }

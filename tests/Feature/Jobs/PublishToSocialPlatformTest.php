@@ -385,6 +385,21 @@ test('publish to social platform saves error context on social publish exception
     expect($this->postPlatform->error_context['content_length'])->toBe(11);
 });
 
+test('publish to social platform fails when scopes are missing', function () {
+    Event::fake();
+
+    $this->socialAccount->update(['scopes' => ['user.info.basic']]); // missing w_member_social
+    $this->postPlatform->refresh();
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->postPlatform->refresh();
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
+    expect($this->postPlatform->error_message)->toContain('Missing permissions');
+    expect($this->postPlatform->error_context['category'])->toBe('permission');
+    expect($this->postPlatform->error_context['missing_scopes'])->toContain('w_member_social');
+});
+
 test('publish to social platform saves error context on token expired', function () {
     Event::fake();
     Mail::fake();

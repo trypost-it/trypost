@@ -26,6 +26,8 @@ class XPublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
         $account = $postPlatform->socialAccount;
 
         // Refresh token if expired or expiring soon

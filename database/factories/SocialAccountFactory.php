@@ -41,6 +41,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::LinkedIn,
+            'scopes' => Platform::LinkedIn->requiredPublishScopes(),
         ]);
     }
 
@@ -48,6 +49,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::LinkedInPage,
+            'scopes' => Platform::LinkedInPage->requiredPublishScopes(),
         ]);
     }
 
@@ -55,6 +57,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::X,
+            'scopes' => Platform::X->requiredPublishScopes(),
         ]);
     }
 
@@ -62,6 +65,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::TikTok,
+            'scopes' => Platform::TikTok->requiredPublishScopes(),
         ]);
     }
 
@@ -69,6 +73,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::YouTube,
+            'scopes' => Platform::YouTube->requiredPublishScopes(),
         ]);
     }
 
@@ -76,6 +81,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::Facebook,
+            'scopes' => Platform::Facebook->requiredPublishScopes(),
         ]);
     }
 
@@ -83,6 +89,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::Instagram,
+            'scopes' => Platform::Instagram->requiredPublishScopes(),
         ]);
     }
 
@@ -90,6 +97,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::Threads,
+            'scopes' => Platform::Threads->requiredPublishScopes(),
         ]);
     }
 
@@ -97,6 +105,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::Pinterest,
+            'scopes' => Platform::Pinterest->requiredPublishScopes(),
         ]);
     }
 
@@ -104,6 +113,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::Bluesky,
+            'scopes' => Platform::Bluesky->requiredPublishScopes(),
             'token_expires_at' => now()->addHours(2),
             'meta' => [
                 'service' => 'https://bsky.social',
@@ -117,6 +127,7 @@ class SocialAccountFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::Mastodon,
+            'scopes' => Platform::Mastodon->requiredPublishScopes(),
             'token_expires_at' => null, // Mastodon tokens don't expire
             'meta' => [
                 'instance' => 'https://mastodon.social',

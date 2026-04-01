@@ -26,6 +26,10 @@ class YouTubePublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
@@ -45,7 +49,7 @@ class YouTubePublisher
             throw new \Exception('YouTube Shorts only supports video content.');
         }
 
-        return $this->publishShort($postPlatform, $firstMedia, $account);
+        return $this->publishShort($postPlatform, $firstMedia, $account, $content);
     }
 
     private function createGoogleClient(SocialAccount $account): GoogleClient
@@ -73,14 +77,14 @@ class YouTubePublisher
         return $client;
     }
 
-    private function publishShort(PostPlatform $postPlatform, $media, SocialAccount $account): array
+    private function publishShort(PostPlatform $postPlatform, $media, SocialAccount $account, ?string $content): array
     {
-        if (empty($postPlatform->content)) {
+        if (empty($content)) {
             throw new \Exception('YouTube Shorts require a title. Please add text to your post.');
         }
 
-        $title = $this->buildTitle($postPlatform->content);
-        $description = $postPlatform->content;
+        $title = $this->buildTitle($content);
+        $description = $content;
 
         $tempFile = tempnam(sys_get_temp_dir(), 'yt_upload_');
         $handle = null;

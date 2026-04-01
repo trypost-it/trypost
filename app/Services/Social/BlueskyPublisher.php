@@ -21,6 +21,10 @@ class BlueskyPublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
         $service = $account->meta['service'] ?? 'https://bsky.social';
 
@@ -57,7 +61,7 @@ class BlueskyPublisher
         }
 
         // Parse facets (links, mentions, hashtags) from text
-        $text = $postPlatform->content ?? '';
+        $text = $content ?? '';
         $facets = $this->parseFacets($text);
 
         // Create post record

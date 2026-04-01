@@ -101,6 +101,26 @@ enum Platform: string
         };
     }
 
+    /**
+     * @return array<string>
+     */
+    public function requiredPublishScopes(): array
+    {
+        return match ($this) {
+            self::Instagram => ['instagram_business_content_publish'],
+            self::Facebook => ['pages_manage_posts'],
+            self::TikTok => ['video.publish'],
+            self::YouTube => ['https://www.googleapis.com/auth/youtube.upload'],
+            self::LinkedIn => ['w_member_social'],
+            self::LinkedInPage => ['w_organization_social'],
+            self::X => ['tweet.write'],
+            self::Threads => ['threads_content_publish'],
+            self::Pinterest => ['pins:write'],
+            self::Bluesky => [],
+            self::Mastodon => ['write:statuses'],
+        };
+    }
+
     public function supportsTextOnly(): bool
     {
         return match ($this) {

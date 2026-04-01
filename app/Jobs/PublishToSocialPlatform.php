@@ -69,6 +69,24 @@ class PublishToSocialPlatform implements ShouldQueue
             return;
         }
 
+        $requiredScopes = $this->postPlatform->platform->requiredPublishScopes();
+        $accountScopes = $this->postPlatform->socialAccount->scopes ?? [];
+
+        if (! empty($requiredScopes)) {
+            $missingScopes = array_diff($requiredScopes, $accountScopes);
+
+            if (! empty($missingScopes)) {
+                $this->postPlatform->markAsFailed(
+                    'Missing permissions: '.implode(', ', $missingScopes).'. Please reconnect your account.',
+                    ['category' => 'permission', 'missing_scopes' => $missingScopes, 'failed_at' => now()->toIso8601String()]
+                );
+                $this->updatePostStatus();
+                $this->broadcastStatus();
+
+                return;
+            }
+        }
+
         $this->postPlatform->markAsPublishing();
         $this->broadcastStatus();
 

@@ -20,6 +20,10 @@ class ThreadsPublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
@@ -34,11 +38,11 @@ class ThreadsPublisher
 
         // Text only post
         if ($media->isEmpty()) {
-            if (empty($postPlatform->content)) {
+            if (empty($content)) {
                 throw new \Exception('Threads text posts require content. Please add text to your post.');
             }
 
-            return $this->publishTextPost($userId, $accessToken, $postPlatform->content);
+            return $this->publishTextPost($userId, $accessToken, $content);
         }
 
         $firstMedia = $media->first();
@@ -47,14 +51,14 @@ class ThreadsPublisher
         // Single media
         if ($media->count() === 1) {
             if ($isVideo) {
-                return $this->publishVideoPost($userId, $accessToken, $postPlatform->content, $firstMedia);
+                return $this->publishVideoPost($userId, $accessToken, $content, $firstMedia);
             }
 
-            return $this->publishImagePost($userId, $accessToken, $postPlatform->content, $firstMedia);
+            return $this->publishImagePost($userId, $accessToken, $content, $firstMedia);
         }
 
         // Multiple media - carousel
-        return $this->publishCarousel($userId, $accessToken, $postPlatform->content, $media);
+        return $this->publishCarousel($userId, $accessToken, $content, $media);
     }
 
     private function publishTextPost(string $userId, string $accessToken, string $content): array

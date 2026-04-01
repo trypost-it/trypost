@@ -4,11 +4,24 @@ declare(strict_types=1);
 
 namespace App\Services\Social\Concerns;
 
+use App\Models\PostPlatform;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
 trait HasSocialHttpClient
 {
+    protected function validateContentLength(PostPlatform $postPlatform): void
+    {
+        $maxLength = $postPlatform->platform->maxContentLength();
+        $contentLength = mb_strlen($postPlatform->content ?? '');
+
+        if ($contentLength > $maxLength) {
+            throw new \Exception(
+                "Content exceeds {$postPlatform->platform->label()} limit of {$maxLength} characters ({$contentLength} provided)."
+            );
+        }
+    }
+
     protected function socialHttp(): PendingRequest
     {
         return Http::retry(

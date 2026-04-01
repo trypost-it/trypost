@@ -20,6 +20,8 @@ class MastodonPublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
         $account = $postPlatform->socialAccount;
         $instance = $account->meta['instance'] ?? 'https://mastodon.social';
 

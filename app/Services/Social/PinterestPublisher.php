@@ -23,6 +23,8 @@ class PinterestPublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
         $account = $postPlatform->socialAccount;
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {

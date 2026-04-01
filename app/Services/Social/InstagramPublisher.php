@@ -22,6 +22,8 @@ class InstagramPublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
         $account = $postPlatform->socialAccount;
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
@@ -31,6 +33,8 @@ class InstagramPublisher
 
         $instagramId = $account->platform_user_id;
         $accessToken = $account->access_token;
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
 
         $media = $postPlatform->media;
 
@@ -42,9 +46,9 @@ class InstagramPublisher
         $contentType = $postPlatform->content_type;
 
         return match ($contentType) {
-            ContentType::InstagramReel => $this->publishReel($instagramId, $accessToken, $postPlatform->content, $firstMedia),
+            ContentType::InstagramReel => $this->publishReel($instagramId, $accessToken, $content, $firstMedia),
             ContentType::InstagramStory => $this->publishStory($instagramId, $accessToken, $firstMedia),
-            ContentType::InstagramFeed => $this->publishFeed($instagramId, $accessToken, $postPlatform->content, $media),
+            ContentType::InstagramFeed => $this->publishFeed($instagramId, $accessToken, $content, $media),
             default => throw new \Exception("Unsupported Instagram content type: {$contentType?->value}"),
         };
     }

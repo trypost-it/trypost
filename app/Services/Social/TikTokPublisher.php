@@ -24,6 +24,10 @@ class TikTokPublisher
 
     public function publish(PostPlatform $postPlatform): array
     {
+        $this->validateContentLength($postPlatform);
+
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
@@ -44,11 +48,11 @@ class TikTokPublisher
         $isImage = $firstMedia->isImage();
 
         if ($isVideo) {
-            return $this->publishVideo($postPlatform, $firstMedia);
+            return $this->publishVideo($postPlatform, $firstMedia, $content);
         }
 
         if ($isImage) {
-            return $this->publishPhotos($postPlatform, $media);
+            return $this->publishPhotos($postPlatform, $media, $content);
         }
 
         throw new \Exception('TikTok only supports video or image content.');
@@ -93,14 +97,14 @@ class TikTokPublisher
         ];
     }
 
-    private function publishVideo(PostPlatform $postPlatform, $media): array
+    private function publishVideo(PostPlatform $postPlatform, $media, ?string $content): array
     {
         $creatorInfo = $this->queryCreatorInfo();
 
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/video/init/", [
                 'post_info' => [
-                    'title' => $postPlatform->content ?? '',
+                    'title' => $content ?? '',
                     'privacy_level' => data_get($creatorInfo, 'privacy_level'),
                     'disable_duet' => false,
                     'disable_comment' => false,
@@ -137,7 +141,7 @@ class TikTokPublisher
         ];
     }
 
-    private function publishPhotos(PostPlatform $postPlatform, $mediaCollection): array
+    private function publishPhotos(PostPlatform $postPlatform, $mediaCollection, ?string $content): array
     {
         $photoUrls = $mediaCollection
             ->filter(fn ($m) => $m->isImage())
@@ -154,7 +158,7 @@ class TikTokPublisher
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/content/init/", [
                 'post_info' => [
-                    'title' => $postPlatform->content ?? '',
+                    'title' => $content ?? '',
                     'privacy_level' => data_get($creatorInfo, 'privacy_level'),
                     'disable_comment' => false,
                 ],

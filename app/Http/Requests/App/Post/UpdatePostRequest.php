@@ -19,7 +19,7 @@ class UpdatePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'string', Rule::in(array_column(Status::cases(), 'value'))],
+            'status' => ['required', 'string', Rule::in([Status::Draft->value, Status::Scheduled->value, Status::Publishing->value])],
             'synced' => ['required', 'boolean'],
             'scheduled_at' => [
                 'sometimes',

@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MediaController extends Controller
 {
@@ -117,6 +118,12 @@ class MediaController extends Controller
     {
         $sourceModel = $media->mediable;
         $this->authorizeModelOwnership($sourceModel, $request);
+
+        $request->validate([
+            'targets' => ['required', 'array', 'max:50'],
+            'targets.*.model' => ['required', 'string', Rule::in(['postPlatform', 'workspace', 'user'])],
+            'targets.*.model_id' => ['required', 'string'],
+        ]);
 
         $targets = $request->input('targets', []);
         $duplicates = [];

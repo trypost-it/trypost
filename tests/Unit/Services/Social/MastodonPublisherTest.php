@@ -11,6 +11,7 @@ use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\Media\MediaOptimizer;
 use App\Services\Social\MastodonPublisher;
 use Illuminate\Support\Facades\Http;
 
@@ -237,6 +238,128 @@ test('mastodon publisher uses bearer token authentication', function () {
         return $request->hasHeader('Authorization')
             && str_starts_with($request->header('Authorization')[0], 'Bearer ');
     });
+});
+
+test('mastodon publisher optimizes images before upload', function () {
+    // Create a temp file with a valid JPEG so mime_content_type() detects image/jpeg
+    $optimizedFile = tempnam(sys_get_temp_dir(), 'masto_opt_');
+    file_put_contents($optimizedFile, str_repeat('x', 1024));
+
+    // Minimal 1x1 JPEG bytes so mime_content_type() returns image/jpeg for the downloaded file
+    $minimalJpeg = "\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+        ."\xFF\xDB\x00\x43\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\x09\x09\x08\x0A\x0C"
+        ."\x14\x0D\x0C\x0B\x0B\x0C\x19\x12\x13\x0F\x14\x1D\x1A\x1F\x1E\x1D\x1A\x1C\x1C\x20"
+        ."\xFF\xC0\x00\x0B\x08\x00\x01\x00\x01\x01\x01\x11\x00\xFF\xC4\x00\x1F\x00\x00\x01"
+        ."\x05\x01\x01\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05"
+        ."\xFF\xDA\x00\x08\x01\x01\x00\x00\x3F\x00\xFB\xD3\xFF\xD9";
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/test-image.jpg',
+        'original_filename' => 'test.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 12345,
+        'order' => 0,
+        'meta' => ['width' => 1920, 'height' => 1080],
+    ]);
+
+    $this->mock(MediaOptimizer::class)
+        ->shouldReceive('optimizeImage')
+        ->once()
+        ->with(Mockery::any(), Platform::Mastodon)
+        ->andReturn($optimizedFile);
+
+    Http::fake(function ($request) use ($minimalJpeg) {
+        $url = $request->url();
+
+        if (str_contains($url, '/api/v1/media')) {
+            return Http::response([
+                'id' => 'media-optimized-123',
+                'type' => 'image',
+                'url' => 'https://mastodon.social/media/image.jpg',
+            ], 200);
+        }
+
+        if (str_contains($url, '/api/v1/statuses')) {
+            return Http::response([
+                'id' => '109876543210',
+                'url' => 'https://mastodon.social/@testuser/109876543210',
+            ], 200);
+        }
+
+        // Media download: return valid JPEG so mime_content_type() detects image/jpeg
+        return Http::response($minimalJpeg, 200, ['Content-Type' => 'image/jpeg']);
+    });
+
+    $this->publisher->publish($this->postPlatform);
+
+    @unlink($optimizedFile);
+});
+
+test('mastodon publisher publishes text-only when media upload fails', function () {
+    // Minimal valid JPEG header so mime_content_type() detects image/jpeg
+    $minimalJpeg = "\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+        ."\xFF\xDB\x00\x43\x00\x08\x06\x06\x07\x06\x05\x08\x07\x07\x07\x09\x09\x08\x0A\x0C"
+        ."\x14\x0D\x0C\x0B\x0B\x0C\x19\x12\x13\x0F\x14\x1D\x1A\x1F\x1E\x1D\x1A\x1C\x1C\x20"
+        ."\xFF\xC0\x00\x0B\x08\x00\x01\x00\x01\x01\x01\x11\x00\xFF\xC4\x00\x1F\x00\x00\x01"
+        ."\x05\x01\x01\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05"
+        ."\xFF\xDA\x00\x08\x01\x01\x00\x00\x3F\x00\xFB\xD3\xFF\xD9";
+
+    $optimizedFile = tempnam(sys_get_temp_dir(), 'masto_fail_opt_');
+    file_put_contents($optimizedFile, str_repeat('x', 512));
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/failing-upload.jpg',
+        'original_filename' => 'failing-upload.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 12345,
+        'order' => 0,
+        'meta' => ['width' => 800, 'height' => 600],
+    ]);
+
+    $this->mock(MediaOptimizer::class)
+        ->shouldReceive('optimizeImage')
+        ->once()
+        ->with(Mockery::any(), Platform::Mastodon)
+        ->andReturn($optimizedFile);
+
+    Http::fake(function ($request) use ($minimalJpeg) {
+        $url = $request->url();
+
+        // Media upload returns 500 — uploadMedia returns null
+        if (str_contains($url, '/api/v1/media')) {
+            return Http::response(['error' => 'Internal server error'], 500);
+        }
+
+        if (str_contains($url, '/api/v1/statuses')) {
+            return Http::response([
+                'id' => '999111222333',
+                'url' => 'https://mastodon.social/@testuser/999111222333',
+            ], 200);
+        }
+
+        // Media download — return valid JPEG bytes
+        return Http::response($minimalJpeg, 200, ['Content-Type' => 'image/jpeg']);
+    });
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    // Post still succeeds as text-only
+    expect($result['id'])->toBe('999111222333');
+
+    // The statuses request should NOT include media_ids
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), '/api/v1/statuses')) {
+            return false;
+        }
+
+        return ! isset($request->data()['media_ids']);
+    });
+
+    @unlink($optimizedFile);
 });
 
 test('mastodon publisher defaults to mastodon.social if no instance in meta', function () {

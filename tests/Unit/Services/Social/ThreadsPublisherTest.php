@@ -335,6 +335,34 @@ test('threads publisher can publish image with null content', function () {
     expect($result['id'])->toBe('media-123');
 });
 
+test('threads publisher throws exception when all carousel items fail', function () {
+    for ($i = 0; $i < 3; $i++) {
+        $this->postPlatform->media()->create([
+            'collection' => 'default',
+            'type' => 'image',
+            'path' => "media/2026-01/fail-image-{$i}.jpg",
+            'original_filename' => "fail-{$i}.jpg",
+            'mime_type' => 'image/jpeg',
+            'size' => 12345,
+            'order' => $i,
+            'meta' => ['width' => 1920, 'height' => 1080],
+        ]);
+    }
+
+    Http::fake([
+        'https://graph.threads.net/v1.0/123456789/threads' => Http::response([
+            'error' => [
+                'message' => 'Upload failed',
+                'type' => 'OAuthException',
+                'code' => 100,
+            ],
+        ], 400),
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(Exception::class, 'Failed to create any carousel items');
+});
+
 test('threads publisher can publish video with null content', function () {
     $this->postPlatform->update(['content' => null]);
 

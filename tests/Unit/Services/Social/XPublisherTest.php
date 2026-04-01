@@ -181,3 +181,109 @@ test('x publisher throws exception when no refresh token available', function ()
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(TokenExpiredException::class, 'No refresh token available for X account');
 });
+
+test('x publisher handles gif upload with processing', function () {
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/animated.gif',
+        'original_filename' => 'animated.gif',
+        'mime_type' => 'image/gif',
+        'size' => 1024 * 1024, // 1MB — triggers chunked upload (isGif === true)
+        'order' => 0,
+    ]);
+
+    Http::fake(function ($request) {
+        $url = $request->url();
+
+        if (str_contains($url, '/2/media/upload/initialize')) {
+            return Http::response(['data' => ['id' => 'gif_media_555']], 200);
+        }
+
+        if (str_contains($url, '/append')) {
+            return Http::response(null, 204);
+        }
+
+        if (str_contains($url, '/finalize')) {
+            // Return processing_info so waitForProcessing is triggered
+            return Http::response([
+                'data' => ['id' => 'gif_media_555'],
+                'processing_info' => ['state' => 'pending', 'check_after_secs' => 1],
+            ], 200);
+        }
+
+        if (str_contains($url, '/2/media/gif_media_555')) {
+            return Http::response(['processing_info' => ['state' => 'succeeded']], 200);
+        }
+
+        if (str_contains($url, '/2/tweets')) {
+            return Http::response(['data' => ['id' => '9999888877776666', 'text' => 'Hello from X!']], 200);
+        }
+
+        // GIF download
+        return Http::response('fake-gif-content', 200);
+    });
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('9999888877776666');
+
+    // GIF uses chunked upload (not simple upload)
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/2/media/upload/initialize'));
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/append'));
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/finalize'));
+    // waitForProcessing was called
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/2/media/gif_media_555'));
+});
+
+test('x publisher uploads video via chunked upload', function () {
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/test-video.mp4',
+        'original_filename' => 'test-video.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 2 * 1024 * 1024,
+        'order' => 0,
+        'meta' => ['duration' => 30],
+    ]);
+
+    Http::fake(function ($request) {
+        $url = $request->url();
+
+        // Order matters: more specific patterns first
+        if (str_contains($url, '/2/media/upload/initialize')) {
+            return Http::response(['data' => ['id' => 'media_id_999']], 200);
+        }
+
+        if (str_contains($url, '/append')) {
+            return Http::response(null, 204);
+        }
+
+        if (str_contains($url, '/finalize')) {
+            return Http::response(['data' => ['id' => 'media_id_999']], 200);
+        }
+
+        if (str_contains($url, '/2/media/')) {
+            // STATUS check: GET /2/media/{id}
+            return Http::response(['processing_info' => ['state' => 'succeeded']], 200);
+        }
+
+        if (str_contains($url, '/2/tweets')) {
+            return Http::response(['data' => ['id' => '9876543210987654321', 'text' => 'Hello from X!']], 200);
+        }
+
+        // Media download (any URL including relative paths in test env)
+        return Http::response('fake-video-content', 200);
+    });
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('9876543210987654321');
+    expect($result['url'])->toContain('x.com/testuser/status/9876543210987654321');
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/2/media/upload/initialize'));
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/append'));
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/finalize'));
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/2/tweets'));
+});

@@ -339,6 +339,36 @@ test('facebook publisher throws exception for text post with null content', func
         ->toThrow(Exception::class, 'Facebook text posts require content');
 });
 
+test('facebook publisher cleans up temp files after reel upload', function () {
+    $this->postPlatform->update(['content_type' => ContentType::FacebookReel]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/reel.mp4',
+        'original_filename' => 'reel.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 5120000,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        '*/page_123/video_reels' => Http::sequence()
+            ->push(['video_id' => 'reel_video_cleanup_123'], 200)
+            ->push(['id' => 'reel_cleanup_456', 'success' => true], 200),
+        '*/reel_video_cleanup_123' => Http::response(['success' => true], 200),
+        '*' => Http::response('', 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    // Assert no leftover fb_reel_ temp files exist
+    $tempDir = sys_get_temp_dir();
+    $leftoverFiles = glob("{$tempDir}/fb_reel_*") ?: [];
+
+    expect($leftoverFiles)->toBeEmpty();
+});
+
 test('facebook publisher can publish single image with null content', function () {
     $this->postPlatform->update(['content' => null]);
 

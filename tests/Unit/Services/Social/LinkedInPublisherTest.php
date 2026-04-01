@@ -165,3 +165,190 @@ test('linkedin publisher throws exception for unsupported content type', functio
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(Exception::class, 'Unsupported LinkedIn content type');
 });
+
+test('linkedin publisher can publish post with image', function () {
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/test-image.jpg',
+        'original_filename' => 'test.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 512000,
+        'order' => 0,
+        'meta' => ['width' => 1920, 'height' => 1080],
+    ]);
+
+    $uploadUrl = 'https://www.linkedin.com/dms/upload/v2/pic/0/C5622AQFake';
+
+    Http::fake(function ($request) use ($uploadUrl) {
+        $url = $request->url();
+
+        if (str_contains($url, '/rest/images')) {
+            return Http::response([
+                'value' => [
+                    'uploadUrl' => $uploadUrl,
+                    'image' => 'urn:li:image:C5622AQFakeImageUrn',
+                ],
+            ], 200);
+        }
+
+        if ($url === $uploadUrl) {
+            return Http::response(null, 201);
+        }
+
+        if (str_contains($url, '/rest/posts')) {
+            return Http::response(null, 201, ['x-restli-id' => 'urn:li:share:9876543210']);
+        }
+
+        // Media download fallback
+        return Http::response('fake-image-content', 200);
+    });
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('urn:li:share:9876543210');
+    expect($result['url'])->toContain('linkedin.com/feed/update/urn:li:share:9876543210');
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/rest/images'));
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/rest/posts')
+        && isset($request['content']['media']['id'])
+    );
+});
+
+test('linkedin publisher can publish carousel with multiple images', function () {
+    $this->postPlatform->update(['content_type' => ContentType::LinkedInCarousel]);
+
+    for ($i = 1; $i <= 3; $i++) {
+        $this->postPlatform->media()->create([
+            'collection' => 'default',
+            'type' => 'image',
+            'path' => "media/2026-01/carousel-{$i}.jpg",
+            'original_filename' => "carousel-{$i}.jpg",
+            'mime_type' => 'image/jpeg',
+            'size' => 256000,
+            'order' => $i - 1,
+            'meta' => ['width' => 1200, 'height' => 628],
+        ]);
+    }
+
+    $uploadUrls = [
+        'https://www.linkedin.com/dms/upload/v2/pic/carousel/1',
+        'https://www.linkedin.com/dms/upload/v2/pic/carousel/2',
+        'https://www.linkedin.com/dms/upload/v2/pic/carousel/3',
+    ];
+
+    $imageUrns = [
+        'urn:li:image:CarouselImageUrn1',
+        'urn:li:image:CarouselImageUrn2',
+        'urn:li:image:CarouselImageUrn3',
+    ];
+
+    $initCallCount = 0;
+
+    Http::fake(function ($request) use ($uploadUrls, $imageUrns, &$initCallCount) {
+        $url = $request->url();
+
+        if (str_contains($url, '/rest/images')) {
+            $idx = $initCallCount % 3;
+            $initCallCount++;
+
+            return Http::response([
+                'value' => [
+                    'uploadUrl' => $uploadUrls[$idx],
+                    'image' => $imageUrns[$idx],
+                ],
+            ], 200);
+        }
+
+        // Image PUT upload
+        foreach ($uploadUrls as $uploadUrl) {
+            if ($url === $uploadUrl) {
+                return Http::response(null, 201);
+            }
+        }
+
+        if (str_contains($url, '/rest/posts')) {
+            return Http::response(null, 201, ['x-restli-id' => 'urn:li:share:carousel999']);
+        }
+
+        // Media download fallback
+        return Http::response('fake-image-content', 200);
+    });
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('urn:li:share:carousel999');
+    expect($result['url'])->toContain('linkedin.com/feed/update/urn:li:share:carousel999');
+
+    // Assert the post payload contains multiImage.images with 3 items
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), '/rest/posts')) {
+            return false;
+        }
+        $images = data_get($request->data(), 'content.multiImage.images');
+
+        return is_array($images) && count($images) === 3;
+    });
+});
+
+test('linkedin publisher can publish post with video', function () {
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/test-video.mp4',
+        'original_filename' => 'test-video.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 2 * 1024 * 1024,
+        'order' => 0,
+        'meta' => ['duration' => 30],
+    ]);
+
+    $chunkUploadUrl = 'https://www.linkedin.com/dms/upload/v2/chunk/video/1';
+
+    Http::fake(function ($request) use ($chunkUploadUrl) {
+        $url = $request->url();
+
+        if (str_contains($url, 'initializeUpload') && str_contains($url, '/rest/videos')) {
+            return Http::response([
+                'value' => [
+                    'video' => 'urn:li:video:FakeVideoUrn',
+                    'uploadToken' => 'upload-token-abc',
+                    'uploadInstructions' => [
+                        [
+                            'uploadUrl' => $chunkUploadUrl,
+                            'firstByte' => 0,
+                            'lastByte' => 1023,
+                        ],
+                    ],
+                ],
+            ], 200);
+        }
+
+        if ($url === $chunkUploadUrl) {
+            return Http::response(null, 200, ['etag' => '"etag-abc123"']);
+        }
+
+        if (str_contains($url, 'finalizeUpload') && str_contains($url, '/rest/videos')) {
+            return Http::response(null, 200);
+        }
+
+        if (str_contains($url, '/rest/videos/')) {
+            return Http::response(['status' => 'AVAILABLE'], 200);
+        }
+
+        if (str_contains($url, '/rest/posts')) {
+            return Http::response(null, 201, ['x-restli-id' => 'urn:li:share:1111111111']);
+        }
+
+        // Media download fallback
+        return Http::response(str_repeat('x', 1024), 200);
+    });
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result['id'])->toBe('urn:li:share:1111111111');
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'initializeUpload'));
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'finalizeUpload'));
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/rest/posts'));
+});

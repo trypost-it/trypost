@@ -338,6 +338,68 @@ test('pinterest publisher can get boards', function () {
     expect($boards[0]['id'])->toBe('board_1');
 });
 
+test('pinterest publisher can publish video pin', function () {
+    $this->postPlatform->update(['content_type' => ContentType::PinterestVideoPin]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/video.mp4',
+        'original_filename' => 'video.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 5120000,
+        'order' => 0,
+    ]);
+
+    $s3UploadUrl = 'https://pinterest-media-upload.s3.amazonaws.com/upload';
+
+    Http::fake(function ($request) use ($s3UploadUrl) {
+        $url = $request->url();
+
+        // Step 1: Register media
+        if (str_contains($url, '/v5/media') && $request->method() === 'POST') {
+            return Http::response([
+                'media_id' => 'media_video_789',
+                'upload_url' => $s3UploadUrl,
+                'upload_parameters' => [
+                    'key' => 'uploads/video.mp4',
+                    'AWSAccessKeyId' => 'FAKE_KEY',
+                ],
+            ], 201);
+        }
+
+        // Step 2: S3 upload
+        if ($url === $s3UploadUrl) {
+            return Http::response('', 204);
+        }
+
+        // Step 3: Media status check
+        if (str_contains($url, '/v5/media/media_video_789')) {
+            return Http::response(['status' => 'succeeded'], 200);
+        }
+
+        // Step 4: Create pin
+        if (str_contains($url, '/v5/pins')) {
+            return Http::response(['id' => 'video_pin_999'], 200);
+        }
+
+        // Video download
+        return Http::response('fake-video-content', 200);
+    });
+
+    $result = $this->publisher->publish($this->postPlatform);
+
+    expect($result)->toHaveKey('id');
+    expect($result)->toHaveKey('url');
+    expect($result['id'])->toBe('video_pin_999');
+    expect($result['url'])->toBe('https://pinterest.com/pin/video_pin_999');
+
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), '/v5/pins')
+            && data_get($request->data(), 'media_source.source_type') === 'video_id';
+    });
+});
+
 test('pinterest publisher throws exception for unsupported content type', function () {
     $this->postPlatform->update(['content_type' => ContentType::InstagramFeed]);
 

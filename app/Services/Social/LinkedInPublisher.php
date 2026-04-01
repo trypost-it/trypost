@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\SocialAccount\Platform;
 use App\Exceptions\Social\LinkedInPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Media\MediaOptimizer;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -256,24 +258,40 @@ class LinkedInPublisher
 
         Log::info('LinkedIn image init success', ['imageUrn' => $imageUrn]);
 
-        // Step 2: Upload binary data
-        $imageContent = file_get_contents($mediaItem->url);
+        // Step 2: Download and optimize image
+        $tempFile = tempnam(sys_get_temp_dir(), 'li_image_');
 
-        $uploadResponse = Http::withToken($this->accessToken)
-            ->withHeaders([
-                'Content-Type' => 'application/octet-stream',
-            ])
-            ->withBody($imageContent, 'application/octet-stream')
-            ->put($uploadUrl);
+        try {
+            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
 
-        if ($uploadResponse->failed()) {
-            Log::error('LinkedIn image upload failed', ['body' => $uploadResponse->body()]);
-            $this->handleApiError($uploadResponse, 'Failed to upload LinkedIn image');
+            $detectedMime = mime_content_type($tempFile) ?: '';
+            if (str_starts_with($detectedMime, 'image/') && ! str_starts_with($detectedMime, 'image/gif')) {
+                $optimizer = app(MediaOptimizer::class);
+                $optimizedPath = $optimizer->optimizeImage($tempFile, Platform::LinkedIn);
+                @unlink($tempFile);
+                $tempFile = $optimizedPath;
+            }
+
+            $imageContent = file_get_contents($tempFile);
+
+            $uploadResponse = Http::withToken($this->accessToken)
+                ->withHeaders([
+                    'Content-Type' => 'application/octet-stream',
+                ])
+                ->withBody($imageContent, 'application/octet-stream')
+                ->put($uploadUrl);
+
+            if ($uploadResponse->failed()) {
+                Log::error('LinkedIn image upload failed', ['body' => $uploadResponse->body()]);
+                $this->handleApiError($uploadResponse, 'Failed to upload LinkedIn image');
+            }
+
+            Log::info('LinkedIn image upload success', ['imageUrn' => $imageUrn]);
+
+            return $imageUrn;
+        } finally {
+            @unlink($tempFile);
         }
-
-        Log::info('LinkedIn image upload success', ['imageUrn' => $imageUrn]);
-
-        return $imageUrn;
     }
 
     private function uploadVideo($mediaItem, string $ownerUrn): ?string

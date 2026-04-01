@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\SocialAccount\Platform;
 use App\Exceptions\Social\PinterestPublishException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Media\MediaOptimizer;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -54,11 +56,31 @@ class PinterestPublisher
             'image_url' => $media->url,
         ]);
 
+        // Download and optimize image
+        $tempFile = tempnam(sys_get_temp_dir(), 'pin_image_');
+
+        try {
+            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
+
+            $detectedMime = mime_content_type($tempFile) ?: '';
+            if (str_starts_with($detectedMime, 'image/') && ! str_starts_with($detectedMime, 'image/gif')) {
+                $optimizer = app(MediaOptimizer::class);
+                $optimizedPath = $optimizer->optimizeImage($tempFile, Platform::Pinterest);
+                @unlink($tempFile);
+                $tempFile = $optimizedPath;
+            }
+
+            $imageBase64 = base64_encode(file_get_contents($tempFile));
+        } finally {
+            @unlink($tempFile);
+        }
+
         $payload = [
             'board_id' => $boardId,
             'media_source' => [
-                'source_type' => 'image_url',
-                'url' => $media->url,
+                'source_type' => 'image_base64',
+                'content_type' => 'image/jpeg',
+                'data' => $imageBase64,
             ],
         ];
 

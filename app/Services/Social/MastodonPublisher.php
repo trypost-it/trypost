@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Enums\SocialAccount\Platform;
 use App\Exceptions\Social\MastodonPublishException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Media\MediaOptimizer;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -80,6 +82,15 @@ class MastodonPublisher
                 Log::error('Mastodon failed to download media', ['url' => $url]);
 
                 return null;
+            }
+
+            // Optimize images (skip GIFs)
+            $detectedMime = mime_content_type($tempFile) ?: '';
+            if (str_starts_with($detectedMime, 'image/') && ! str_starts_with($detectedMime, 'image/gif')) {
+                $optimizer = app(MediaOptimizer::class);
+                $optimizedPath = $optimizer->optimizeImage($tempFile, Platform::Mastodon);
+                @unlink($tempFile);
+                $tempFile = $optimizedPath;
             }
 
             $name = $filename ?? basename(parse_url($url, PHP_URL_PATH));

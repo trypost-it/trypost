@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Enums\SocialAccount\Platform;
 use App\Exceptions\Social\XPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Media\MediaOptimizer;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -110,6 +112,15 @@ class XPublisher
 
         try {
             Http::withOptions(['sink' => $tempFile])->timeout(600)->get($mediaItem->url);
+
+            // Optimize images (skip GIFs — they need special handling)
+            if (str_starts_with($mimeType, 'image/') && ! str_starts_with($mimeType, 'image/gif')) {
+                $optimizer = app(MediaOptimizer::class);
+                $optimizedPath = $optimizer->optimizeImage($tempFile, Platform::X);
+                @unlink($tempFile);
+                $tempFile = $optimizedPath;
+                $mimeType = 'image/jpeg';
+            }
 
             $fileSize = filesize($tempFile);
             $mediaCategory = $this->getMediaCategory($mimeType, $fileSize);

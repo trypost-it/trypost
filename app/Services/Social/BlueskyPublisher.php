@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Enums\SocialAccount\Platform;
 use App\Exceptions\Social\BlueskyPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Media\MediaOptimizer;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -124,12 +126,13 @@ class BlueskyPublisher
                 return null;
             }
 
-            // Bluesky has 1MB limit for images
-            if (str_starts_with($mimeType, 'image/') && $fileSize > 1000000) {
-                Log::warning('Bluesky image exceeds 1MB limit', [
-                    'size' => $fileSize,
-                    'url' => $url,
-                ]);
+            // Optimize images for Bluesky's 1MB limit
+            if (str_starts_with($mimeType, 'image/') && ! str_starts_with($mimeType, 'image/gif')) {
+                $optimizer = app(MediaOptimizer::class);
+                $optimizedPath = $optimizer->optimizeImage($tempFile, Platform::Bluesky);
+                @unlink($tempFile);
+                $tempFile = $optimizedPath;
+                $mimeType = 'image/jpeg';
             }
 
             $stream = fopen($tempFile, 'r');

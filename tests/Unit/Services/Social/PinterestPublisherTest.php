@@ -10,6 +10,7 @@ use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\Media\MediaOptimizer;
 use App\Services\Social\PinterestPublisher;
 use Illuminate\Support\Facades\Http;
 
@@ -42,6 +43,17 @@ beforeEach(function () {
     ]);
 
     $this->publisher = new PinterestPublisher;
+
+    // Mock MediaOptimizer to return the same temp file path
+    $mockOptimizer = Mockery::mock(MediaOptimizer::class);
+    $mockOptimizer->shouldReceive('optimizeImage')->andReturnUsing(function (string $tempFile) {
+        // Copy to a new temp file to simulate optimization
+        $optimized = tempnam(sys_get_temp_dir(), 'pin_opt_');
+        copy($tempFile, $optimized);
+
+        return $optimized;
+    });
+    app()->instance(MediaOptimizer::class, $mockOptimizer);
 });
 
 test('pinterest publisher can publish image pin', function () {
@@ -59,6 +71,7 @@ test('pinterest publisher can publish image pin', function () {
         '*/v5/pins' => Http::response([
             'id' => 'pin_123456',
         ], 200),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     $result = $this->publisher->publish($this->postPlatform);
@@ -113,12 +126,14 @@ test('pinterest publisher uses default board id from account', function () {
         '*/v5/pins' => Http::response([
             'id' => 'pin_123456',
         ], 200),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     $this->publisher->publish($this->postPlatform);
 
     Http::assertSent(function ($request) {
-        return $request['board_id'] === 'board_123'; // from account meta
+        return str_contains($request->url(), '/v5/pins')
+            && $request['board_id'] === 'board_123'; // from account meta
     });
 });
 
@@ -207,6 +222,7 @@ test('pinterest publisher throws exception on api error', function () {
             'code' => 400,
             'message' => 'Invalid request',
         ], 400),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -229,6 +245,7 @@ test('pinterest publisher throws token expired exception on auth error', functio
             'code' => 1,
             'message' => 'Invalid access token',
         ], 401),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -257,6 +274,7 @@ test('pinterest publisher refreshes token when expired', function () {
         '*/v5/pins' => Http::response([
             'id' => 'pin_123456',
         ], 200),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     $this->publisher->publish($this->postPlatform);
@@ -292,12 +310,14 @@ test('pinterest publisher includes title and link when provided', function () {
         '*/v5/pins' => Http::response([
             'id' => 'pin_123456',
         ], 200),
+        '*' => Http::response('fake-image-content', 200),
     ]);
 
     $this->publisher->publish($this->postPlatform);
 
     Http::assertSent(function ($request) {
-        return $request['title'] === 'My Pin Title'
+        return str_contains($request->url(), '/v5/pins')
+            && $request['title'] === 'My Pin Title'
             && $request['link'] === 'https://example.com/my-page';
     });
 });

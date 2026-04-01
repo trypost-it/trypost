@@ -126,7 +126,7 @@ class PublishToSocialPlatform implements ShouldQueue
                     'platform_error_code' => $e->platformErrorCode,
                     'failed_at' => now()->toIso8601String(),
                 ]);
-                $this->postPlatform->socialAccount->markAsDisconnected($e->getMessage());
+                $this->postPlatform->socialAccount->markAsTokenExpired($e->getMessage());
                 break;
             } catch (SocialPublishException $e) {
                 Log::error('Social publish failed: '.$e->userMessage);

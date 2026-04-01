@@ -131,6 +131,42 @@ class SocialAccount extends Model
         }
     }
 
+    public function markAsTokenExpired(string $errorMessage): void
+    {
+        $lock = Cache::lock("social_account_disconnect:{$this->id}", 10);
+
+        if ($lock->get()) {
+            try {
+                $this->refresh();
+                $wasConnected = $this->status === Status::Connected;
+
+                $this->update([
+                    'status' => Status::TokenExpired,
+                    'error_message' => $errorMessage,
+                    'disconnected_at' => now(),
+                ]);
+
+                if ($wasConnected && $this->workspace->owner) {
+                    $platformName = $this->platform->label();
+                    $accountName = $this->username ?? $this->display_name;
+
+                    SendNotification::dispatch(
+                        user: $this->workspace->owner,
+                        workspaceId: $this->workspace_id,
+                        type: Type::AccountDisconnected,
+                        channel: Channel::Both,
+                        title: "{$platformName} token expired",
+                        body: "@{$accountName} needs to be reconnected",
+                        data: ['social_account_id' => $this->id],
+                        mailable: new AccountDisconnected($this),
+                    );
+                }
+            } finally {
+                $lock->release();
+            }
+        }
+    }
+
     public function markAsConnected(): void
     {
         $this->update([

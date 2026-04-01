@@ -91,7 +91,7 @@ test('publish to social platform marks platform as failed on error', function ()
     expect($this->postPlatform->error_message)->toBe('API Error');
 });
 
-test('publish to social platform disconnects account on token expired', function () {
+test('publish to social platform marks account as token expired on auth failure', function () {
     Event::fake();
     Mail::fake();
 
@@ -106,7 +106,7 @@ test('publish to social platform disconnects account on token expired', function
     $this->socialAccount->refresh();
 
     expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
-    expect($this->socialAccount->status)->toBe(AccountStatus::Disconnected);
+    expect($this->socialAccount->status)->toBe(AccountStatus::TokenExpired);
 });
 
 test('publish to social platform updates post status when all platforms finished', function () {
@@ -294,7 +294,7 @@ test('it retries with token refresh when token expires during publish', function
     expect($this->socialAccount->status)->not->toBe(AccountStatus::Disconnected);
 });
 
-test('it disconnects account when token refresh fails during publish retry', function () {
+test('it marks account as token expired when refresh fails during publish retry', function () {
     Event::fake();
 
     $publisher = Mockery::mock(LinkedInPublisher::class);
@@ -315,7 +315,7 @@ test('it disconnects account when token refresh fails during publish retry', fun
     $this->socialAccount->refresh();
 
     expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
-    expect($this->socialAccount->status)->toBe(AccountStatus::Disconnected);
+    expect($this->socialAccount->status)->toBe(AccountStatus::TokenExpired);
 });
 
 test('publish to social platform skips if already published (idempotency)', function () {

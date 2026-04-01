@@ -9,7 +9,6 @@ use App\Exceptions\Social\FacebookPublishException;
 use App\Models\PostPlatform;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class FacebookPublisher
@@ -225,34 +224,16 @@ class FacebookPublisher
         $data = $response->json();
         $videoId = data_get($data, 'video_id');
 
-        // Upload the video file
-        $tempFile = tempnam(sys_get_temp_dir(), 'fb_reel_');
-        try {
-            $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
+        // Upload the video file (Facebook accepts URL in video_file_chunk)
+        $uploadResponse = $this->socialHttp()->post("{$this->baseUrl}/{$videoId}", [
+            'upload_phase' => 'transfer',
+            'video_file_chunk' => $media->url,
+            'access_token' => $accessToken,
+        ]);
 
-            if ($downloadResponse->failed()) {
-                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
-            }
-
-            $stream = fopen($tempFile, 'r');
-
-            $uploadResponse = Http::withToken($accessToken)
-                ->attach('video_file_chunk', $stream, 'video.mp4')
-                ->post("{$this->baseUrl}/{$videoId}", [
-                    'upload_phase' => 'transfer',
-                    'access_token' => $accessToken,
-                ]);
-
-            if (is_resource($stream)) {
-                fclose($stream);
-            }
-
-            if ($uploadResponse->failed()) {
-                Log::error('Facebook reel upload transfer failed', ['body' => $this->redactResponseBody($uploadResponse->body())]);
-                $this->handleApiError($uploadResponse);
-            }
-        } finally {
-            @unlink($tempFile);
+        if ($uploadResponse->failed()) {
+            Log::error('Facebook reel upload transfer failed', ['body' => $this->redactResponseBody($uploadResponse->body())]);
+            $this->handleApiError($uploadResponse);
         }
 
         // Finish and publish the reel
@@ -301,34 +282,16 @@ class FacebookPublisher
                 throw new \Exception('Facebook story upload failed: no video ID returned');
             }
 
-            // Transfer the video
-            $tempFile = tempnam(sys_get_temp_dir(), 'fb_story_');
-            try {
-                $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
+            // Transfer the video (Facebook accepts URL in video_file_chunk)
+            $transferResponse = $this->socialHttp()->post("{$this->baseUrl}/{$videoId}", [
+                'upload_phase' => 'transfer',
+                'video_file_chunk' => $media->url,
+                'access_token' => $accessToken,
+            ]);
 
-                if ($downloadResponse->failed()) {
-                    throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
-                }
-
-                $stream = fopen($tempFile, 'r');
-
-                $transferResponse = Http::withToken($accessToken)
-                    ->attach('video_file_chunk', $stream, 'video.mp4')
-                    ->post("{$this->baseUrl}/{$videoId}", [
-                        'upload_phase' => 'transfer',
-                        'access_token' => $accessToken,
-                    ]);
-
-                if (is_resource($stream)) {
-                    fclose($stream);
-                }
-
-                if ($transferResponse->failed()) {
-                    Log::error('Facebook video story transfer failed', ['body' => $this->redactResponseBody($transferResponse->body())]);
-                    $this->handleApiError($transferResponse);
-                }
-            } finally {
-                @unlink($tempFile);
+            if ($transferResponse->failed()) {
+                Log::error('Facebook video story transfer failed', ['body' => $this->redactResponseBody($transferResponse->body())]);
+                $this->handleApiError($transferResponse);
             }
 
             // Finish the story

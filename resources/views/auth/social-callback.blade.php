@@ -75,7 +75,7 @@
             }
 
             // Close after a short delay
-            setTimeout(closeWindow, 6000);
+            setTimeout(closeWindow, 2000);
 
             // If still open after 2 seconds, show manual close message
             setTimeout(function() {

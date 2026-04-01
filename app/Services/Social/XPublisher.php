@@ -28,6 +28,8 @@ class XPublisher
     {
         $this->validateContentLength($postPlatform);
 
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
 
         // Refresh token if expired or expiring soon
@@ -40,8 +42,8 @@ class XPublisher
 
         $data = [];
 
-        if (! empty($postPlatform->content)) {
-            $data['text'] = $postPlatform->content;
+        if (! empty($content)) {
+            $data['text'] = $content;
         }
 
         $mediaIds = [];
@@ -65,7 +67,7 @@ class XPublisher
             ];
         }
 
-        if (empty($data['text'] ?? null) && empty($mediaIds)) {
+        if (empty($content) && empty($mediaIds)) {
             throw new \Exception('X posts require either text or media. Please add content to your post.');
         }
 

@@ -19,7 +19,7 @@ class CheckSocialConnections extends Command
     {
         Workspace::query()
             ->whereHas('socialAccounts', function ($query) {
-                $query->where('status', Status::Connected);
+                $query->whereIn('status', [Status::Connected, Status::TokenExpired]);
             })
             ->with('owner')
             ->chunk(100, function ($workspaces) {

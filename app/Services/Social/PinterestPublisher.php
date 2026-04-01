@@ -32,15 +32,17 @@ class PinterestPublisher
             $account->refresh();
         }
 
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         return match ($postPlatform->content_type) {
-            ContentType::PinterestPin => $this->publishImagePin($postPlatform),
-            ContentType::PinterestVideoPin => $this->publishVideoPin($postPlatform),
-            ContentType::PinterestCarousel => $this->publishCarousel($postPlatform),
+            ContentType::PinterestPin => $this->publishImagePin($postPlatform, $content),
+            ContentType::PinterestVideoPin => $this->publishVideoPin($postPlatform, $content),
+            ContentType::PinterestCarousel => $this->publishCarousel($postPlatform, $content),
             default => throw new \Exception("Unsupported content type: {$postPlatform->content_type->value}"),
         };
     }
 
-    private function publishImagePin(PostPlatform $postPlatform): array
+    private function publishImagePin(PostPlatform $postPlatform, ?string $content): array
     {
         $account = $postPlatform->socialAccount;
         $media = $postPlatform->media->first();
@@ -87,8 +89,8 @@ class PinterestPublisher
             ],
         ];
 
-        if ($postPlatform->content) {
-            $payload['description'] = $postPlatform->content;
+        if ($content) {
+            $payload['description'] = $content;
         }
 
         if (! empty(data_get($postPlatform->meta, 'title'))) {
@@ -122,7 +124,7 @@ class PinterestPublisher
         ];
     }
 
-    private function publishVideoPin(PostPlatform $postPlatform): array
+    private function publishVideoPin(PostPlatform $postPlatform, ?string $content): array
     {
         $account = $postPlatform->socialAccount;
         $media = $postPlatform->media->first();
@@ -221,8 +223,8 @@ class PinterestPublisher
             ],
         ];
 
-        if ($postPlatform->content) {
-            $payload['description'] = $postPlatform->content;
+        if ($content) {
+            $payload['description'] = $content;
         }
 
         if (! empty(data_get($postPlatform->meta, 'title'))) {
@@ -256,7 +258,7 @@ class PinterestPublisher
         ];
     }
 
-    private function publishCarousel(PostPlatform $postPlatform): array
+    private function publishCarousel(PostPlatform $postPlatform, ?string $content): array
     {
         $account = $postPlatform->socialAccount;
         $medias = $postPlatform->media;
@@ -283,8 +285,8 @@ class PinterestPublisher
             ],
         ];
 
-        if ($postPlatform->content) {
-            $payload['description'] = $postPlatform->content;
+        if ($content) {
+            $payload['description'] = $content;
         }
 
         if (! empty(data_get($postPlatform->meta, 'title'))) {

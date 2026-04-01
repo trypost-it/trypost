@@ -7,6 +7,7 @@ namespace App\Services\Social;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
 use App\Models\SocialAccount;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -46,19 +47,32 @@ class ConnectionVerifier
      */
     private function refreshTokenIfNeeded(SocialAccount $account): void
     {
-        match ($account->platform) {
-            Platform::LinkedIn, Platform::LinkedInPage => $this->refreshLinkedInToken($account),
-            Platform::X => $this->refreshXToken($account),
-            Platform::Bluesky => $this->refreshBlueskyToken($account),
-            Platform::YouTube => $this->refreshYouTubeToken($account),
-            Platform::TikTok => $this->refreshTikTokToken($account),
-            Platform::Pinterest => $this->refreshPinterestToken($account),
-            Platform::Threads => $this->refreshThreadsToken($account),
-            Platform::Instagram => $this->refreshInstagramToken($account),
-            // Facebook uses page tokens that don't expire
-            // Mastodon tokens don't expire
-            default => null,
-        };
+        $lock = Cache::lock("token_refresh:{$account->id}", 30);
+
+        if (! $lock->get()) {
+            // Another process is already refreshing this token
+            $account->refresh();
+
+            return;
+        }
+
+        try {
+            match ($account->platform) {
+                Platform::LinkedIn, Platform::LinkedInPage => $this->refreshLinkedInToken($account),
+                Platform::X => $this->refreshXToken($account),
+                Platform::Bluesky => $this->refreshBlueskyToken($account),
+                Platform::YouTube => $this->refreshYouTubeToken($account),
+                Platform::TikTok => $this->refreshTikTokToken($account),
+                Platform::Pinterest => $this->refreshPinterestToken($account),
+                Platform::Threads => $this->refreshThreadsToken($account),
+                Platform::Instagram => $this->refreshInstagramToken($account),
+                // Facebook uses page tokens that don't expire
+                // Mastodon tokens don't expire
+                default => null,
+            };
+        } finally {
+            $lock->release();
+        }
     }
 
     private function refreshLinkedInToken(SocialAccount $account): void

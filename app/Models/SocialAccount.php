@@ -136,7 +136,6 @@ class SocialAccount extends Model
         $this->update([
             'status' => Status::TokenExpired,
             'error_message' => $errorMessage,
-            'disconnected_at' => now(),
         ]);
     }
 

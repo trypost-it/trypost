@@ -22,6 +22,8 @@ class MastodonPublisher
     {
         $this->validateContentLength($postPlatform);
 
+        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+
         $account = $postPlatform->socialAccount;
         $instance = $account->meta['instance'] ?? 'https://mastodon.social';
 
@@ -38,7 +40,7 @@ class MastodonPublisher
 
         // Create status
         $payload = [
-            'status' => $postPlatform->content ?? '',
+            'status' => $content ?? '',
             'visibility' => 'public',
         ];
 

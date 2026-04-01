@@ -123,16 +123,18 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                 </Button>
             </div>
 
-            <div
-                class="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border"
-            >
-                <span class="relative z-10 bg-background px-2 text-muted-foreground">{{ $t('auth.or_continue_with') }}</span>
-            </div>
+            <template v-if="$page.props.googleAuthEnabled">
+                <div
+                    class="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border"
+                >
+                    <span class="relative z-10 bg-background px-2 text-muted-foreground">{{ $t('auth.or_continue_with') }}</span>
+                </div>
 
-            <Button variant="outline" class="w-full" as="a" :href="googleRedirect.url()">
-                <img src="/images/social/google.svg" alt="Google" class="size-4" />
-                {{ $t('auth.google_signup') }}
-            </Button>
+                <Button variant="outline" class="w-full" as="a" :href="googleRedirect.url()">
+                    <img src="/images/social/google.svg" alt="Google" class="size-4" />
+                    {{ $t('auth.google_signup') }}
+                </Button>
+            </template>
 
             <div class="text-center text-sm text-muted-foreground">
                 {{ $t('auth.register.has_account') }}

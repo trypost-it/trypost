@@ -22,12 +22,14 @@ class StoreMediaRequest extends FormRequest
 
     public function rules(): array
     {
+        $maxSize = $this->isVideoUpload() ? 1048576 : 10240; // Videos: 1GB, Images: 10MB
+
         return [
             'media' => [
                 'required',
                 'file',
-                'max:1048576', // 1GB
-                'mimetypes:image/jpeg,image/png,image/gif,image/webp,video/mp4,video/quicktime,video/webm,application/pdf',
+                "max:{$maxSize}",
+                'mimetypes:image/jpeg,image/png,image/gif,image/webp,video/mp4',
             ],
             'model' => [
                 'required',
@@ -50,11 +52,16 @@ class StoreMediaRequest extends FormRequest
     {
         return [
             'media.required' => 'The file is required.',
-            'media.max' => 'The file must be at most 1GB.',
+            'media.max' => $this->isVideoUpload() ? 'Videos must be at most 1GB.' : 'Images must be at most 10MB.',
             'media.mimetypes' => 'File type not supported.',
             'model.required' => 'The model is required.',
             'model.in' => 'Invalid model type.',
             'model_id.required' => 'The model ID is required.',
         ];
+    }
+
+    private function isVideoUpload(): bool
+    {
+        return str_starts_with($this->file('media')?->getMimeType() ?? '', 'video/');
     }
 }

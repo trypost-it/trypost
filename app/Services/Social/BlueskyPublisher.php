@@ -312,7 +312,7 @@ class BlueskyPublisher
         throw new TokenExpiredException('Bluesky session expired');
     }
 
-    private function handleApiError(Response $response): void
+    private function handleApiError(Response $response): never
     {
         throw BlueskyPublishException::fromApiResponse($response);
     }

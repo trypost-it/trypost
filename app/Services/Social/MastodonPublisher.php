@@ -121,7 +121,7 @@ class MastodonPublisher
         }
     }
 
-    private function handleApiError(Response $response): void
+    private function handleApiError(Response $response): never
     {
         throw MastodonPublishException::fromApiResponse($response);
     }

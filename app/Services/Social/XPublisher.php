@@ -195,33 +195,35 @@ class XPublisher
         $handle = fopen($tempFile, 'r');
         $index = 0;
 
-        while (! feof($handle)) {
-            $chunk = fread($handle, $chunkSize);
+        try {
+            while (! feof($handle)) {
+                $chunk = fread($handle, $chunkSize);
 
-            if ($chunk === '' || $chunk === false) {
-                break;
+                if ($chunk === '' || $chunk === false) {
+                    break;
+                }
+
+                $appendResponse = Http::withToken($this->accessToken)
+                    ->timeout(300)
+                    ->attach('media', $chunk, 'chunk'.$index)
+                    ->post("{$this->baseUrl}/2/media/upload/{$mediaId}/append", [
+                        'segment_index' => $index,
+                    ]);
+
+                if ($appendResponse->failed()) {
+                    Log::error('X chunked upload APPEND error', [
+                        'status' => $appendResponse->status(),
+                        'body' => $appendResponse->body(),
+                        'segment' => $index,
+                    ]);
+                    $this->handleApiError($appendResponse);
+                }
+
+                $index++;
             }
-
-            $appendResponse = Http::withToken($this->accessToken)
-                ->timeout(300)
-                ->attach('media', $chunk, 'chunk'.$index)
-                ->post("{$this->baseUrl}/2/media/upload/{$mediaId}/append", [
-                    'segment_index' => $index,
-                ]);
-
-            if ($appendResponse->failed()) {
-                Log::error('X chunked upload APPEND error', [
-                    'status' => $appendResponse->status(),
-                    'body' => $appendResponse->body(),
-                    'segment' => $index,
-                ]);
-                $this->handleApiError($appendResponse);
-            }
-
-            $index++;
+        } finally {
+            fclose($handle);
         }
-
-        fclose($handle);
 
         // FINALIZE - Use the new v2 endpoint
         $finalizeResponse = Http::withToken($this->accessToken)

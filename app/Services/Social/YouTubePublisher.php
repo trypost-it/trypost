@@ -183,8 +183,8 @@ class YouTubePublisher
         $shortsTag = ' #Shorts';
         $availableLength = $maxLength - strlen($shortsTag);
 
-        $title = strtok($content, "\n");
-        $title = strtok($title, '.');
+        $firstLine = explode("\n", $content)[0];
+        $title = explode('.', $firstLine)[0];
 
         if (strlen($title) > $availableLength) {
             $title = substr($title, 0, $availableLength - 3).'...';

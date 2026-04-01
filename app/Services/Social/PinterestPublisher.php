@@ -332,7 +332,7 @@ class PinterestPublisher
         throw new \Exception("Pinterest media processing timeout after {$maxAttempts} attempts");
     }
 
-    public function refreshToken(SocialAccount $account): void
+    private function refreshToken(SocialAccount $account): void
     {
         $response = Http::asForm()
             ->withBasicAuth(

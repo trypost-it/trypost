@@ -219,17 +219,23 @@ class FacebookPublisher
         $videoId = data_get($data, 'video_id');
 
         // Upload the video file
-        $uploadResponse = Http::post("{$this->baseUrl}/{$videoId}", [
-            'upload_phase' => 'transfer',
-            'video_file_chunk' => $media->url,
-            'access_token' => $accessToken,
-        ]);
+        $tempFile = tempnam(sys_get_temp_dir(), 'fb_reel_');
+        try {
+            Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
 
-        if ($uploadResponse->failed()) {
-            Log::error('Facebook reel upload transfer failed', [
-                'body' => $uploadResponse->body(),
-            ]);
-            $this->handleApiError($uploadResponse);
+            $uploadResponse = Http::withToken($accessToken)
+                ->attach('video_file_chunk', fopen($tempFile, 'r'), 'video.mp4')
+                ->post("{$this->baseUrl}/{$videoId}", [
+                    'upload_phase' => 'transfer',
+                    'access_token' => $accessToken,
+                ]);
+
+            if ($uploadResponse->failed()) {
+                Log::error('Facebook reel upload transfer failed', ['body' => $uploadResponse->body()]);
+                $this->handleApiError($uploadResponse);
+            }
+        } finally {
+            @unlink($tempFile);
         }
 
         // Finish and publish the reel
@@ -275,11 +281,24 @@ class FacebookPublisher
             $videoId = $response->json()['video_id'];
 
             // Transfer the video
-            Http::post("{$this->baseUrl}/{$videoId}", [
-                'upload_phase' => 'transfer',
-                'video_file_chunk' => $media->url,
-                'access_token' => $accessToken,
-            ]);
+            $tempFile = tempnam(sys_get_temp_dir(), 'fb_story_');
+            try {
+                Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
+
+                $transferResponse = Http::withToken($accessToken)
+                    ->attach('video_file_chunk', fopen($tempFile, 'r'), 'video.mp4')
+                    ->post("{$this->baseUrl}/{$videoId}", [
+                        'upload_phase' => 'transfer',
+                        'access_token' => $accessToken,
+                    ]);
+
+                if ($transferResponse->failed()) {
+                    Log::error('Facebook video story transfer failed', ['body' => $transferResponse->body()]);
+                    $this->handleApiError($transferResponse);
+                }
+            } finally {
+                @unlink($tempFile);
+            }
 
             // Finish the story
             $finishResponse = Http::post("{$this->baseUrl}/{$pageId}/video_stories", [

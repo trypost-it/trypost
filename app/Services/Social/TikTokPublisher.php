@@ -127,7 +127,7 @@ class TikTokPublisher
         }
 
         // Wait for processing and get final status
-        $finalStatus = $this->waitForPublishStatus($publishId);
+        $this->waitForPublishStatus($publishId);
 
         return [
             'id' => $publishId,
@@ -182,7 +182,7 @@ class TikTokPublisher
         }
 
         // Wait for processing and get final status
-        $finalStatus = $this->waitForPublishStatus($publishId);
+        $this->waitForPublishStatus($publishId);
 
         return [
             'id' => $publishId,

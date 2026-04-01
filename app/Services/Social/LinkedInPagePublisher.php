@@ -344,39 +344,41 @@ class LinkedInPagePublisher
         $uploadedPartIds = [];
         $handle = fopen($tempFile, 'r');
 
-        foreach ($uploadInstructions as $index => $instruction) {
-            $uploadUrl = data_get($instruction, 'uploadUrl');
-            $firstByte = data_get($instruction, 'firstByte');
-            $lastByte = data_get($instruction, 'lastByte');
+        try {
+            foreach ($uploadInstructions as $index => $instruction) {
+                $uploadUrl = data_get($instruction, 'uploadUrl');
+                $firstByte = data_get($instruction, 'firstByte');
+                $lastByte = data_get($instruction, 'lastByte');
 
-            $chunkLength = $lastByte - $firstByte + 1;
-            fseek($handle, $firstByte);
-            $chunkData = fread($handle, $chunkLength);
+                $chunkLength = $lastByte - $firstByte + 1;
+                fseek($handle, $firstByte);
+                $chunkData = fread($handle, $chunkLength);
 
-            $chunkResponse = Http::withToken($this->accessToken)
-                ->withHeaders([
-                    'Content-Type' => 'application/octet-stream',
-                ])
-                ->timeout(600)
-                ->withBody($chunkData, 'application/octet-stream')
-                ->put($uploadUrl);
+                $chunkResponse = Http::withToken($this->accessToken)
+                    ->withHeaders([
+                        'Content-Type' => 'application/octet-stream',
+                    ])
+                    ->timeout(600)
+                    ->withBody($chunkData, 'application/octet-stream')
+                    ->put($uploadUrl);
 
-            if ($chunkResponse->failed()) {
-                Log::error('LinkedIn Page video chunk upload failed', [
-                    'index' => $index,
-                    'body' => $chunkResponse->body(),
-                ]);
-                $this->handleApiError($chunkResponse);
+                if ($chunkResponse->failed()) {
+                    Log::error('LinkedIn Page video chunk upload failed', [
+                        'index' => $index,
+                        'body' => $chunkResponse->body(),
+                    ]);
+                    $this->handleApiError($chunkResponse);
+                }
+
+                $etag = $chunkResponse->header('etag');
+                if ($etag) {
+                    $uploadedPartIds[] = $etag;
+                }
+
             }
-
-            $etag = $chunkResponse->header('etag');
-            if ($etag) {
-                $uploadedPartIds[] = $etag;
-            }
-
+        } finally {
+            fclose($handle);
         }
-
-        fclose($handle);
 
         // Step 3: Finalize upload
         $finalizeResponse = $this->getHttpClient()

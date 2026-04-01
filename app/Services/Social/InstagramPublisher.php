@@ -191,7 +191,13 @@ class InstagramPublisher
                 continue;
             }
 
-            $childId = $containerResponse->json()['id'];
+            $childId = $containerResponse->json()['id'] ?? null;
+
+            if (! $childId) {
+                Log::error('Instagram carousel item creation returned no ID', ['body' => $containerResponse->body()]);
+
+                continue;
+            }
 
             // Wait for video processing if needed
             if ($isVideo) {

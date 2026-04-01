@@ -174,6 +174,7 @@ test('facebook publisher can publish reel', function () {
             ->push(['video_id' => 'reel_video_123'], 200)
             ->push(['id' => 'reel_123', 'success' => true], 200),
         '*/reel_video_123' => Http::response(['success' => true], 200),
+        '*' => Http::response('', 200),
     ]);
 
     $result = $this->publisher->publish($this->postPlatform);
@@ -230,6 +231,7 @@ test('facebook publisher can publish video story', function () {
             ->push(['video_id' => 'story_video_123'], 200)
             ->push(['post_id' => 'video_story_post_123'], 200),
         '*/story_video_123' => Http::response(['success' => true], 200),
+        '*' => Http::response('', 200),
     ]);
 
     $result = $this->publisher->publish($this->postPlatform);

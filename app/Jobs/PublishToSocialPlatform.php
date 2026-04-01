@@ -103,12 +103,22 @@ class PublishToSocialPlatform implements ShouldQueue
                     'platform_error_code' => $e->platformErrorCode,
                 ]);
 
-                $this->postPlatform->markAsFailed($e->getMessage());
+                $this->postPlatform->markAsFailed($e->getMessage(), [
+                    'category' => 'token_expired',
+                    'platform_error_code' => $e->platformErrorCode,
+                    'failed_at' => now()->toIso8601String(),
+                ]);
                 $this->postPlatform->socialAccount->markAsDisconnected($e->getMessage());
                 break;
             } catch (SocialPublishException $e) {
                 Log::error('Social publish failed: '.$e->userMessage);
-                $this->postPlatform->markAsFailed($e->userMessage);
+                $this->postPlatform->markAsFailed($e->userMessage, [
+                    'category' => $e->category->value,
+                    'platform_error_code' => $e->platformErrorCode,
+                    'failed_at' => now()->toIso8601String(),
+                    'content_length' => mb_strlen($this->postPlatform->content ?? ''),
+                    'media_count' => $this->postPlatform->media->count(),
+                ]);
                 break;
             } catch (\Throwable $e) {
                 Log::error('Failed to publish to social platform', [
@@ -116,7 +126,12 @@ class PublishToSocialPlatform implements ShouldQueue
                     'platform' => $this->postPlatform->platform->value,
                     'error' => $e->getMessage(),
                 ]);
-                $this->postPlatform->markAsFailed($e->getMessage());
+                $this->postPlatform->markAsFailed($e->getMessage(), [
+                    'category' => 'unknown',
+                    'failed_at' => now()->toIso8601String(),
+                    'content_length' => mb_strlen($this->postPlatform->content ?? ''),
+                    'media_count' => $this->postPlatform->media->count(),
+                ]);
                 break;
             }
         }
@@ -224,7 +239,10 @@ class PublishToSocialPlatform implements ShouldQueue
         $this->postPlatform->refresh();
 
         if ($this->postPlatform->status !== PostPlatformStatus::Published) {
-            $this->postPlatform->markAsFailed($exception?->getMessage() ?? 'Unknown error');
+            $this->postPlatform->markAsFailed($exception?->getMessage() ?? 'Unknown error', [
+                'category' => 'job_failed',
+                'failed_at' => now()->toIso8601String(),
+            ]);
             $this->updatePostStatus();
             $this->broadcastStatus();
         }

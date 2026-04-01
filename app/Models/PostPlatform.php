@@ -30,6 +30,7 @@ class PostPlatform extends Model
         'platform_post_id',
         'platform_url',
         'error_message',
+        'error_context',
         'published_at',
         'meta',
     ];
@@ -43,6 +44,7 @@ class PostPlatform extends Model
             'status' => Status::class,
             'published_at' => 'datetime',
             'meta' => 'array',
+            'error_context' => 'array',
         ];
     }
 
@@ -71,11 +73,12 @@ class PostPlatform extends Model
         ]);
     }
 
-    public function markAsFailed(string $errorMessage): void
+    public function markAsFailed(string $errorMessage, ?array $errorContext = null): void
     {
         $this->update([
             'status' => Status::Failed,
             'error_message' => $errorMessage,
+            'error_context' => $errorContext,
         ]);
     }
 }

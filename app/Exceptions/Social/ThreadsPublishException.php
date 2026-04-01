@@ -20,7 +20,7 @@ class ThreadsPublishException extends SocialPublishException
         $errorCode = data_get($body, 'error.code');
         $errorMessage = data_get($body, 'error.message', 'An unknown Threads error occurred.');
 
-        if ($errorType === 'OAuthException' || $errorCode === 190) {
+        if ($errorCode === 190) {
             throw new TokenExpiredException(
                 message: $errorMessage,
                 platformErrorCode: $errorCode !== null ? (string) $errorCode : null,

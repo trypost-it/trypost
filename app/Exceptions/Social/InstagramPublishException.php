@@ -21,7 +21,7 @@ class InstagramPublishException extends SocialPublishException
         $errorUserMsg = data_get($body, 'error.error_user_msg');
         $errorMessage = data_get($body, 'error.message', 'An unknown Instagram error occurred.');
 
-        if ($errorType === 'OAuthException' || $errorCode === 190) {
+        if ($errorCode === 190) {
             throw new TokenExpiredException(
                 message: $errorMessage,
                 platformErrorCode: $errorCode !== null ? (string) $errorCode : null,

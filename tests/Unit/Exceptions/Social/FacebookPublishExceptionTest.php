@@ -40,19 +40,22 @@ test('code 190 throws TokenExpiredException', function () {
     FacebookPublishException::fromApiResponse($fakeResponse);
 })->throws(TokenExpiredException::class);
 
-test('OAuthException type throws TokenExpiredException', function () {
+test('OAuthException with non-190 code does not throw TokenExpiredException', function () {
     $response = Http::response([
         'error' => [
-            'message' => 'Invalid OAuth access token.',
+            'message' => 'There was a problem uploading your video file.',
             'type' => 'OAuthException',
-            'code' => 400,
+            'code' => 6000,
         ],
     ], 400);
 
     $fakeResponse = Http::fake(['*' => $response])->post('https://graph.facebook.com/test');
 
-    FacebookPublishException::fromApiResponse($fakeResponse);
-})->throws(TokenExpiredException::class);
+    $exception = FacebookPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception)->toBeInstanceOf(FacebookPublishException::class);
+    expect($exception->category)->toBe(ErrorCategory::MediaFormat);
+});
 
 test('code 4 maps to RateLimit category', function () {
     $response = Http::response([

@@ -84,13 +84,12 @@ test('known subcode 2207010 maps to ContentPolicy category', function () {
         ->and($exception->userMessage)->toBe('Caption is too long (max 2,200 characters, 30 hashtags, 20 @mentions).');
 });
 
-test('OAuthException type throws TokenExpiredException', function () {
+test('code 190 throws TokenExpiredException', function () {
     $response = Http::response([
         'error' => [
             'message' => 'Invalid OAuth access token',
             'type' => 'OAuthException',
-            'code' => 400,
-            'error_subcode' => 463,
+            'code' => 190,
         ],
     ], 400);
 

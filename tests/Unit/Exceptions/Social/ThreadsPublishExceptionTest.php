@@ -7,7 +7,7 @@ use App\Exceptions\Social\ThreadsPublishException;
 use App\Exceptions\TokenExpiredException;
 use Illuminate\Support\Facades\Http;
 
-test('OAuthException type throws TokenExpiredException', function () {
+test('code 190 throws TokenExpiredException', function () {
     $response = Http::response([
         'error' => [
             'message' => 'Invalid OAuth access token.',

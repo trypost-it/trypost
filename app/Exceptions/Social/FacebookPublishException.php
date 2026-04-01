@@ -22,7 +22,7 @@ class FacebookPublishException extends SocialPublishException
 
         $tokenSubcodes = [458, 459, 460, 463, 464, 467];
 
-        if ($errorType === 'OAuthException' || $errorCode === 190 || in_array($errorSubcode, $tokenSubcodes, true)) {
+        if ($errorCode === 190 || in_array($errorSubcode, $tokenSubcodes, true)) {
             throw new TokenExpiredException(
                 message: $errorMessage,
                 platformErrorCode: $errorCode !== null ? (string) $errorCode : null,

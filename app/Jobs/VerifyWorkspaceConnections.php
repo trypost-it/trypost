@@ -72,8 +72,13 @@ class VerifyWorkspaceConnections implements ShouldQueue
             ]);
 
             if ($account->status === Status::TokenExpired) {
-                // Second failure — escalate to Disconnected
-                $account->markAsDisconnected($e->getMessage());
+                // Second failure — escalate to Disconnected (no individual notification,
+                // the batch notification from notifyOwner() handles it)
+                $account->update([
+                    'status' => Status::Disconnected,
+                    'error_message' => $e->getMessage(),
+                    'disconnected_at' => now(),
+                ]);
             } else {
                 // First failure — mark as TokenExpired (softer state)
                 $account->markAsTokenExpired($e->getMessage());

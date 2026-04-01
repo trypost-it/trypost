@@ -40,7 +40,19 @@ class StoreChunkedMediaRequest extends FormRequest
             'model' => ['required', 'string', Rule::in($this->allowedModels)],
             'model_id' => ['required', 'string'],
             'collection' => ['sometimes', 'string', 'max:255'],
-            'file_name' => ['required', 'string', 'max:255'],
+            'file_name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/\.(jpe?g|png|gif|webp|mp4)$/i',
+            ],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'file_name.regex' => 'File type not supported. Allowed: JPEG, PNG, GIF, WebP, MP4.',
         ];
     }
 

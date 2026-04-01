@@ -9,6 +9,7 @@ use App\Enums\SocialAccount\Status;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -193,9 +194,13 @@ class FacebookController extends SocialController
             return redirect()->route('app.accounts');
         }
 
+        $pages = collect(data_get($oauthData, 'pages'))
+            ->map(fn ($page) => Arr::except($page, ['access_token']))
+            ->toArray();
+
         return Inertia::render('accounts/FacebookPageSelect', [
             'workspace' => $workspace,
-            'pages' => data_get($oauthData, 'pages'),
+            'pages' => $pages,
         ]);
     }
 

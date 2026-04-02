@@ -29,7 +29,7 @@ class ConnectionVerifier
             Platform::LinkedIn => $this->verifyLinkedIn($account),
             Platform::LinkedInPage => $this->verifyLinkedInPage($account),
             Platform::X => $this->verifyX($account),
-            Platform::Instagram => $this->verifyInstagram($account),
+            Platform::Instagram, Platform::InstagramFacebook => $this->verifyInstagram($account),
             Platform::Facebook => $this->verifyFacebook($account),
             Platform::Threads => $this->verifyThreads($account),
             Platform::TikTok => $this->verifyTikTok($account),
@@ -66,7 +66,8 @@ class ConnectionVerifier
                 Platform::Pinterest => $this->refreshPinterestToken($account),
                 Platform::Threads => $this->refreshThreadsToken($account),
                 Platform::Instagram => $this->refreshInstagramToken($account),
-                // Facebook uses page tokens that don't expire
+                // InstagramFacebook uses page tokens that don't expire (like Facebook)
+                // Mastodon tokens don't expire
                 // Mastodon tokens don't expire
                 default => null,
             };

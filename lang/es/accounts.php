@@ -12,6 +12,12 @@ return [
     'view_profile' => 'Ver perfil',
     'disconnect' => 'Desconectar',
 
+    'tooltips' => [
+        'instagram_facebook' => 'Conecta a través de tu Página de Facebook. Recomendado para cuentas business vinculadas a una Página de Facebook.',
+        'instagram_direct' => 'Conecta directamente por Instagram. Para cuentas profesionales/creadores sin Página de Facebook.',
+        'bluesky' => 'No soportamos autenticación de dos factores. Si está activada en Bluesky, necesitarás desactivarla.',
+    ],
+
     'disconnect_modal' => [
         'title' => 'Desconectar cuenta',
         'description' => '¿Estás seguro de que deseas desconectar esta cuenta? Puedes volver a conectarla en cualquier momento.',
@@ -47,6 +53,13 @@ return [
         'no_pages' => 'No se encontraron páginas',
         'no_pages_description' => 'No eres administrador de ninguna página de Facebook.',
         'page_label' => 'Página de Facebook',
+    ],
+
+    'instagram_facebook' => [
+        'title' => 'Seleccionar cuenta de Instagram',
+        'description' => 'Elige qué cuenta de Instagram deseas conectar',
+        'no_pages' => 'No se encontraron cuentas de Instagram',
+        'no_pages_description' => 'No se encontraron páginas de Facebook con cuentas Instagram Business vinculadas.',
     ],
 
     'linkedin' => [

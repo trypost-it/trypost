@@ -22,6 +22,7 @@ class ThreadsController extends SocialController
     protected array $scopes = [
         'threads_basic',
         'threads_content_publish',
+        'threads_manage_insights',
     ];
 
     public function connect(Request $request): Response|RedirectResponse

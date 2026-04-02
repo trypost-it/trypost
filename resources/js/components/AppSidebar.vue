@@ -3,6 +3,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import {
     IconAffiliate,
     IconCalendar,
+    IconChartBar,
     IconChevronRight,
     IconClock,
     IconFileCheck,
@@ -42,7 +43,7 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { accounts, calendar } from '@/routes/app';
+import { accounts, analytics, calendar } from '@/routes/app';
 import { index as hashtags } from '@/routes/app/hashtags';
 import { index as labels } from '@/routes/app/labels';
 import { edit as editProfile } from '@/routes/app/profile';
@@ -62,12 +63,20 @@ const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Wor
 
 const { state: sidebarState } = useSidebar();
 
-const postsNavItems = computed<NavItem[]>(() => [
+const mainNavItems = computed<NavItem[]>(() => [
     {
         title: trans('sidebar.posts.calendar'),
         href: calendar.url(),
         icon: IconCalendar,
     },
+    {
+        title: trans('sidebar.analytics'),
+        href: analytics.url(),
+        icon: IconChartBar,
+    },
+]);
+
+const postsNavItems = computed<NavItem[]>(() => [
     {
         title: trans('sidebar.posts.all'),
         href: postsIndex.url(),
@@ -189,6 +198,7 @@ const switchWorkspace = (workspaceId: string) => {
                 </Link>
             </div>
 
+            <NavMain v-if="currentWorkspace" :items="mainNavItems" />
             <NavMain v-if="currentWorkspace" :items="postsNavItems" :label="$t('sidebar.groups.posts')" />
             <NavMain v-if="currentWorkspace" :items="configNavItems" :label="$t('sidebar.groups.configuration')" />
         </SidebarContent>

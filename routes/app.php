@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\App\AnalyticsController;
 use App\Http\Controllers\App\ApiKeyController;
 use App\Http\Controllers\App\BillingController;
 use App\Http\Controllers\App\MediaController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\App\WorkspaceLabelController;
 use App\Http\Controllers\Auth\BlueskyController;
 use App\Http\Controllers\Auth\FacebookController;
 use App\Http\Controllers\Auth\InstagramController;
+use App\Http\Controllers\Auth\InstagramFacebookController;
 use App\Http\Controllers\Auth\LinkedInController;
 use App\Http\Controllers\Auth\LinkedInPageController;
 use App\Http\Controllers\Auth\MastodonController;
@@ -82,6 +84,11 @@ Route::middleware(['auth', 'verified', 'throttle:6,1'])->group(function () {
     Route::get('accounts/instagram/select', [InstagramController::class, 'selectAccount'])->name('app.social.instagram.select-account');
     Route::post('accounts/instagram/select', [InstagramController::class, 'select'])->name('app.social.instagram.select');
 
+    Route::get('connect/instagram-facebook', [InstagramFacebookController::class, 'connect'])->name('app.social.instagram-facebook.connect');
+    Route::get('accounts/instagram-facebook/callback', [InstagramFacebookController::class, 'callback'])->name('app.social.instagram-facebook.callback');
+    Route::get('accounts/instagram-facebook/select-page', [InstagramFacebookController::class, 'selectPage'])->name('app.social.instagram-facebook.select-page');
+    Route::post('accounts/instagram-facebook/select', [InstagramFacebookController::class, 'select'])->name('app.social.instagram-facebook.select');
+
     Route::get('connect/threads', [ThreadsController::class, 'connect'])->name('app.social.threads.connect');
     Route::get('accounts/threads/callback', [ThreadsController::class, 'callback'])->name('app.social.threads.callback');
 
@@ -115,6 +122,10 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::get('accounts', [SocialController::class, 'index'])->name('app.accounts');
     Route::delete('accounts/{account}', [SocialController::class, 'disconnect'])->name('app.accounts.disconnect');
     Route::put('accounts/{account}/toggle', [SocialController::class, 'toggleActive'])->name('app.accounts.toggle');
+
+    // Analytics
+    Route::get('analytics', [AnalyticsController::class, 'index'])->name('app.analytics');
+    Route::get('analytics/{account}', [AnalyticsController::class, 'show'])->name('app.analytics.show');
 
     // Calendar
     Route::get('calendar', [PostController::class, 'calendar'])->name('app.calendar');

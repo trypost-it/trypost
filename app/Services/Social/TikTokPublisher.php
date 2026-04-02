@@ -97,19 +97,43 @@ class TikTokPublisher
         ];
     }
 
+    private function buildPostInfo(PostPlatform $postPlatform, ?string $content, array $creatorInfo): array
+    {
+        $meta = $postPlatform->meta ?? [];
+
+        $privacyLevel = data_get($meta, 'privacy_level')
+            ?: data_get($creatorInfo, 'privacy_level', 'SELF_ONLY');
+
+        $postInfo = [
+            'title' => $content ?? '',
+            'privacy_level' => $privacyLevel,
+            'disable_duet' => ! data_get($meta, 'allow_duet', false),
+            'disable_comment' => ! data_get($meta, 'allow_comments', true),
+            'disable_stitch' => ! data_get($meta, 'allow_stitch', false),
+        ];
+
+        if (data_get($meta, 'is_aigc', false)) {
+            $postInfo['is_aigc'] = true;
+        }
+
+        if (data_get($meta, 'brand_content_toggle', false)) {
+            $postInfo['brand_content_toggle'] = true;
+        }
+
+        if (data_get($meta, 'brand_organic_toggle', false)) {
+            $postInfo['brand_organic_toggle'] = true;
+        }
+
+        return $postInfo;
+    }
+
     private function publishVideo(PostPlatform $postPlatform, $media, ?string $content): array
     {
         $creatorInfo = $this->queryCreatorInfo();
 
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/video/init/", [
-                'post_info' => [
-                    'title' => $content ?? '',
-                    'privacy_level' => data_get($creatorInfo, 'privacy_level'),
-                    'disable_duet' => false,
-                    'disable_comment' => false,
-                    'disable_stitch' => false,
-                ],
+                'post_info' => $this->buildPostInfo($postPlatform, $content, $creatorInfo),
                 'source_info' => [
                     'source' => 'PULL_FROM_URL',
                     'video_url' => $media->url,
@@ -155,13 +179,19 @@ class TikTokPublisher
 
         $creatorInfo = $this->queryCreatorInfo();
 
+        $postInfo = $this->buildPostInfo($postPlatform, $content, $creatorInfo);
+        // Photos don't support duet/stitch/is_aigc
+        unset($postInfo['disable_duet'], $postInfo['disable_stitch'], $postInfo['is_aigc']);
+
+        // Auto add music is only for photos
+        $meta = $postPlatform->meta ?? [];
+        if (data_get($meta, 'auto_add_music', false)) {
+            $postInfo['auto_add_music'] = true;
+        }
+
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/content/init/", [
-                'post_info' => [
-                    'title' => $content ?? '',
-                    'privacy_level' => data_get($creatorInfo, 'privacy_level'),
-                    'disable_comment' => false,
-                ],
+                'post_info' => $postInfo,
                 'source_info' => [
                     'source' => 'PULL_FROM_URL',
                     'photo_cover_index' => 0,

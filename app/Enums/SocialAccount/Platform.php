@@ -15,6 +15,7 @@ enum Platform: string
     case YouTube = 'youtube';
     case Facebook = 'facebook';
     case Instagram = 'instagram';
+    case InstagramFacebook = 'instagram-facebook';
     case Threads = 'threads';
     case Pinterest = 'pinterest';
     case Bluesky = 'bluesky';
@@ -29,7 +30,8 @@ enum Platform: string
             self::TikTok => 'TikTok',
             self::YouTube => 'YouTube Shorts',
             self::Facebook => 'Facebook Page',
-            self::Instagram => 'Instagram',
+            self::Instagram => 'Instagram (Standalone)',
+            self::InstagramFacebook => 'Instagram (Facebook Business)',
             self::Threads => 'Threads',
             self::Pinterest => 'Pinterest',
             self::Bluesky => 'Bluesky',
@@ -46,6 +48,7 @@ enum Platform: string
             self::YouTube => '#FF0000',
             self::Facebook => '#1877F2',
             self::Instagram => '#E4405F',
+            self::InstagramFacebook => '#E4405F',
             self::Threads => '#000000',
             self::Pinterest => '#E60023',
             self::Bluesky => '#0085FF',
@@ -61,7 +64,7 @@ enum Platform: string
             self::TikTok => [MediaType::Video],
             self::YouTube => [MediaType::Video],
             self::Facebook => [MediaType::Image, MediaType::Video],
-            self::Instagram => [MediaType::Image, MediaType::Video],
+            self::Instagram, self::InstagramFacebook => [MediaType::Image, MediaType::Video],
             self::Threads => [MediaType::Image, MediaType::Video],
             self::Pinterest => [MediaType::Image, MediaType::Video],
             self::Bluesky => [MediaType::Image, MediaType::Video],
@@ -77,7 +80,7 @@ enum Platform: string
             self::TikTok => 0,
             self::YouTube => 0,
             self::Facebook => 10,
-            self::Instagram => 10,
+            self::Instagram, self::InstagramFacebook => 10,
             self::Threads => 10,
             self::Pinterest => 5,
             self::Bluesky => 4,
@@ -93,7 +96,7 @@ enum Platform: string
             self::TikTok => 2200,
             self::YouTube => 5000,
             self::Facebook => 63206,
-            self::Instagram => 2200,
+            self::Instagram, self::InstagramFacebook => 2200,
             self::Threads => 500,
             self::Pinterest => 800,
             self::Bluesky => 300,
@@ -108,6 +111,7 @@ enum Platform: string
     {
         return match ($this) {
             self::Instagram => ['instagram_business_content_publish'],
+            self::InstagramFacebook => ['instagram_content_publish'],
             self::Facebook => ['pages_manage_posts'],
             self::TikTok => ['video.publish'],
             self::YouTube => ['https://www.googleapis.com/auth/youtube.upload'],
@@ -129,7 +133,7 @@ enum Platform: string
             self::TikTok => false,
             self::YouTube => false,
             self::Facebook => true,
-            self::Instagram => false,
+            self::Instagram, self::InstagramFacebook => false,
             self::Threads => true,
             self::Pinterest => false,
             self::Bluesky => true,
@@ -156,6 +160,15 @@ enum Platform: string
     public static function allQueues(): array
     {
         return array_map(fn (self $platform) => $platform->queue(), self::cases());
+    }
+
+    public function instagramGraphBaseUrl(): string
+    {
+        return match ($this) {
+            self::InstagramFacebook => 'https://graph.facebook.com/v20.0',
+            self::Instagram => 'https://graph.instagram.com/v24.0',
+            default => 'https://graph.instagram.com/v24.0',
+        };
     }
 
     public function isEnabled(): bool

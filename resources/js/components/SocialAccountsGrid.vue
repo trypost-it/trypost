@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { IconAlertCircle, IconCheck, IconExternalLink, IconRefresh, IconTrash } from '@tabler/icons-vue';
+import { IconAlertCircle, IconCheck, IconExternalLink, IconInfoCircle, IconRefresh, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted, onUnmounted } from 'vue';
 
@@ -108,6 +108,7 @@ const getPlatformLogo = (platform: string): string => {
         'x': '/images/accounts/x.png',
         'tiktok': '/images/accounts/tiktok.png',
         'instagram': '/images/accounts/instagram.png',
+        'instagram-facebook': '/images/accounts/instagram.png',
         'facebook': '/images/accounts/facebook.png',
         'youtube': '/images/accounts/youtube.png',
         'threads': '/images/accounts/threads.png',
@@ -132,12 +133,22 @@ const getProfileUrl = (platform: string, username: string | null, platformUserId
         'x': `https://x.com/${username}`,
         'tiktok': `https://tiktok.com/@${username}`,
         'instagram': `https://instagram.com/${username}`,
+        'instagram-facebook': `https://instagram.com/${username}`,
         'youtube': `https://youtube.com/@${username}`,
         'threads': `https://threads.net/@${username}`,
         'bluesky': `https://bsky.app/profile/${username}`,
         'pinterest': `https://pinterest.com/${username}`,
     };
     return urls[platform] || null;
+};
+
+const getPlatformTooltip = (platform: string): string | null => {
+    const tooltips: Record<string, string> = {
+        'instagram-facebook': trans('accounts.tooltips.instagram_facebook'),
+        'instagram': trans('accounts.tooltips.instagram_direct'),
+        'bluesky': trans('accounts.tooltips.bluesky'),
+    };
+    return tooltips[platform] || null;
 };
 
 const isDisconnected = (account: SocialAccount | null): boolean => {
@@ -157,24 +168,41 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
             <div class="flex items-center gap-3 p-4">
                 <div class="relative">
                     <img :src="getPlatformLogo(platform.value)" :alt="platform.label"
-                        class="h-12 w-12 rounded-lg object-contain" :class="{ 'opacity-40': platform.connected && platform.account && !platform.account.is_active }" />
+                        class="h-10 w-10 rounded-full object-contain"
+                        :class="{ 'opacity-40': platform.connected && platform.account && !platform.account.is_active }" />
                     <div v-if="platform.connected && !isDisconnected(platform.account)"
-                        class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white ring-2 ring-white dark:ring-neutral-900">
-                        <IconCheck class="h-3 w-3" />
+                        class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-white ring-2 ring-white dark:ring-neutral-900">
+                        <IconCheck class="h-2 w-2" />
                     </div>
                     <div v-else-if="platform.connected && isDisconnected(platform.account)"
-                        class="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white ring-2 ring-white dark:ring-neutral-900">
-                        <IconAlertCircle class="h-3 w-3" />
+                        class="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white ring-2 ring-white dark:ring-neutral-900">
+                        <IconAlertCircle class="h-2 w-2" />
                     </div>
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between gap-2">
-                        <h3 class="font-semibold truncate">{{ platform.label }}</h3>
-                        <Switch
-                            v-if="platform.connected && platform.account"
-                            :model-value="platform.account.is_active"
-                            @update:model-value="handleToggle(platform.account.id)"
-                        />
+                        <div class="flex items-center gap-1 min-w-0">
+                            <h3 class="font-semibold leading-tight">
+                                <template v-if="platform.label.includes('(')">
+                                    {{ platform.label.split('(')[0].trim() }}<br />
+                                    <span class="text-xs font-normal text-muted-foreground">({{
+                                        platform.label.split('(')[1] }}</span>
+                                </template>
+                                <template v-else>{{ platform.label }}</template>
+                            </h3>
+                            <TooltipProvider v-if="getPlatformTooltip(platform.value)">
+                                <Tooltip>
+                                    <TooltipTrigger as-child>
+                                        <IconInfoCircle class="h-4 w-4 shrink-0 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" class="max-w-[250px]">
+                                        <p>{{ getPlatformTooltip(platform.value) }}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                        <Switch v-if="platform.connected && platform.account" :model-value="platform.account.is_active"
+                            @update:model-value="handleToggle(platform.account.id)" />
                     </div>
                     <p v-if="platform.connected && platform.account" class="text-sm text-muted-foreground truncate">
                         @{{ platform.account.username || platform.account.display_name }}
@@ -216,7 +244,9 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                         <TooltipProvider v-if="showReconnect && isDisconnected(platform.account)">
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <Button variant="ghost" size="icon" class="size-8 text-amber-600 hover:text-amber-700" @click="openOAuthPopup(platform.value)">
+                                    <Button variant="ghost" size="icon"
+                                        class="size-8 text-amber-600 hover:text-amber-700"
+                                        @click="openOAuthPopup(platform.value)">
                                         <IconRefresh class="size-4" />
                                     </Button>
                                 </TooltipTrigger>
@@ -230,7 +260,8 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                             <Tooltip>
                                 <TooltipTrigger as-child>
                                     <Button variant="ghost" size="icon" class="size-8" as-child>
-                                        <a :href="getProfileUrl(platform.value, platform.account.username, platform.account.platform_user_id)!" target="_blank">
+                                        <a :href="getProfileUrl(platform.value, platform.account.username, platform.account.platform_user_id)!"
+                                            target="_blank">
                                             <IconExternalLink class="size-4" />
                                         </a>
                                     </Button>
@@ -243,7 +274,8 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                         <TooltipProvider v-if="showDisconnect">
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <Button variant="ghost" size="icon" class="size-8" @click="emit('disconnect', platform.account.id)">
+                                    <Button variant="ghost" size="icon" class="size-8"
+                                        @click="emit('disconnect', platform.account.id)">
                                         <IconTrash class="size-4" />
                                     </Button>
                                 </TooltipTrigger>

@@ -12,6 +12,12 @@ return [
     'view_profile' => 'View profile',
     'disconnect' => 'Disconnect',
 
+    'tooltips' => [
+        'instagram_facebook' => 'Connects via your Facebook Page. Recommended for business accounts linked to a Facebook Page.',
+        'instagram_direct' => 'Connects directly through Instagram. For professional/creator accounts without a Facebook Page.',
+        'bluesky' => "We don't currently support two-factor authentication. If it's enabled on Bluesky, you'll need to disable it.",
+    ],
+
     'disconnect_modal' => [
         'title' => 'Disconnect Account',
         'description' => 'Are you sure you want to disconnect this account? You can reconnect it at any time.',
@@ -47,6 +53,13 @@ return [
         'no_pages' => 'No pages found',
         'no_pages_description' => 'You are not an admin of any Facebook page.',
         'page_label' => 'Facebook Page',
+    ],
+
+    'instagram_facebook' => [
+        'title' => 'Select Instagram Account',
+        'description' => 'Choose which Instagram account you want to connect',
+        'no_pages' => 'No Instagram accounts found',
+        'no_pages_description' => 'No Facebook Pages with linked Instagram Business accounts were found.',
     ],
 
     'linkedin' => [

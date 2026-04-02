@@ -10,10 +10,12 @@ import {
     IconCheck,
     IconChevronDown,
     IconSearch,
+    IconChevronUp,
 } from '@tabler/icons-vue';
 import { FocusScope } from 'reka-ui';
 import { computed, ref } from 'vue';
 
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Combobox,
     ComboboxAnchor,
@@ -26,6 +28,7 @@ import {
     ComboboxTrigger,
 } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useMediaRules } from '@/composables/useMediaRules';
 
@@ -110,6 +113,66 @@ const selectedBoard = computed({
     get: () => boardOptions.value.find(b => b.value === props.meta?.board_id),
     set: (board: BoardOption | undefined) => {
         emit('update:meta', { ...props.meta, board_id: board?.value || null });
+    },
+});
+
+// TikTok settings
+const isTikTok = computed(() => props.platform === 'tiktok');
+const tiktokSettingsOpen = ref(true);
+
+const tiktokPrivacyLevel = computed({
+    get: () => props.meta?.privacy_level || 'SELF_ONLY',
+    set: (value: string) => {
+        emit('update:meta', { ...props.meta, privacy_level: value });
+    },
+});
+
+const tiktokAllowComments = computed({
+    get: () => props.meta?.allow_comments ?? true,
+    set: (value: boolean) => {
+        emit('update:meta', { ...props.meta, allow_comments: value });
+    },
+});
+
+const tiktokAllowDuet = computed({
+    get: () => props.meta?.allow_duet ?? false,
+    set: (value: boolean) => {
+        emit('update:meta', { ...props.meta, allow_duet: value });
+    },
+});
+
+const tiktokAllowStitch = computed({
+    get: () => props.meta?.allow_stitch ?? false,
+    set: (value: boolean) => {
+        emit('update:meta', { ...props.meta, allow_stitch: value });
+    },
+});
+
+const tiktokAutoAddMusic = computed({
+    get: () => props.meta?.auto_add_music ?? false,
+    set: (value: boolean) => {
+        emit('update:meta', { ...props.meta, auto_add_music: value });
+    },
+});
+
+const tiktokIsAigc = computed({
+    get: () => props.meta?.is_aigc ?? false,
+    set: (value: boolean) => {
+        emit('update:meta', { ...props.meta, is_aigc: value });
+    },
+});
+
+const tiktokBrandContentToggle = computed({
+    get: () => props.meta?.brand_content_toggle ?? false,
+    set: (value: boolean) => {
+        emit('update:meta', { ...props.meta, brand_content_toggle: value });
+    },
+});
+
+const tiktokBrandOrganicToggle = computed({
+    get: () => props.meta?.brand_organic_toggle ?? false,
+    set: (value: boolean) => {
+        emit('update:meta', { ...props.meta, brand_organic_toggle: value });
     },
 });
 
@@ -405,6 +468,94 @@ const handleDropOnItem = (e: DragEvent, targetId: string) => {
             </div>
             <Textarea :model-value="content" @update:model-value="emit('update:content', $event as string)"
                 :placeholder="$t('posts.form.write_caption')" class="min-h-[120px] resize-none" :disabled="props.disabled" />
+        </div>
+
+        <!-- TikTok Settings -->
+        <div v-if="isTikTok" class="rounded-lg border">
+            <button type="button"
+                class="flex w-full items-center justify-between p-4 text-sm font-medium"
+                @click="tiktokSettingsOpen = !tiktokSettingsOpen">
+                {{ $t('posts.form.tiktok.settings') }}
+                <IconChevronUp v-if="tiktokSettingsOpen" class="h-4 w-4 text-muted-foreground" />
+                <IconChevronDown v-else class="h-4 w-4 text-muted-foreground" />
+            </button>
+
+            <div v-if="tiktokSettingsOpen" class="space-y-5 border-t px-4 pb-4 pt-4">
+                <!-- Privacy Level -->
+                <div class="space-y-2">
+                    <Label class="text-sm font-medium">{{ $t('posts.form.tiktok.privacy_level') }}</Label>
+                    <Select v-model="tiktokPrivacyLevel" :disabled="props.disabled">
+                        <SelectTrigger class="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="PUBLIC_TO_EVERYONE">{{ $t('posts.form.tiktok.privacy.public') }}</SelectItem>
+                            <SelectItem value="MUTUAL_FOLLOW_FRIENDS">{{ $t('posts.form.tiktok.privacy.friends') }}</SelectItem>
+                            <SelectItem value="FOLLOWER_OF_CREATOR">{{ $t('posts.form.tiktok.privacy.followers') }}</SelectItem>
+                            <SelectItem value="SELF_ONLY">{{ $t('posts.form.tiktok.privacy.private') }}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p class="text-xs text-muted-foreground">{{ $t('posts.form.tiktok.privacy_hint') }}</p>
+                </div>
+
+                <!-- Auto Add Music (photos only) -->
+                <div class="space-y-2">
+                    <Label class="text-sm font-medium">{{ $t('posts.form.tiktok.auto_add_music') }}</Label>
+                    <Select :model-value="tiktokAutoAddMusic ? 'yes' : 'no'" @update:model-value="tiktokAutoAddMusic = $event === 'yes'" :disabled="props.disabled">
+                        <SelectTrigger class="w-full">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="yes">{{ $t('posts.form.tiktok.yes') }}</SelectItem>
+                            <SelectItem value="no">{{ $t('posts.form.tiktok.no') }}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <p class="text-xs text-muted-foreground">{{ $t('posts.form.tiktok.auto_add_music_hint') }}</p>
+                </div>
+
+                <!-- Allow User To -->
+                <div class="space-y-2">
+                    <Label class="text-sm font-medium">{{ $t('posts.form.tiktok.allow_users') }}</Label>
+                    <div class="flex items-center gap-6">
+                        <label class="flex items-center gap-2 text-sm">
+                            <Checkbox :checked="tiktokAllowComments" @update:checked="tiktokAllowComments = $event" :disabled="props.disabled" />
+                            {{ $t('posts.form.tiktok.comments') }}
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <Checkbox :checked="tiktokAllowDuet" @update:checked="tiktokAllowDuet = $event" :disabled="props.disabled" />
+                            {{ $t('posts.form.tiktok.duet') }}
+                        </label>
+                        <label class="flex items-center gap-2 text-sm">
+                            <Checkbox :checked="tiktokAllowStitch" @update:checked="tiktokAllowStitch = $event" :disabled="props.disabled" />
+                            {{ $t('posts.form.tiktok.stitch') }}
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Content Disclosure -->
+                <div class="space-y-3">
+                    <div>
+                        <label class="flex items-center gap-2 text-sm">
+                            <Checkbox :checked="tiktokIsAigc" @update:checked="tiktokIsAigc = $event" :disabled="props.disabled" />
+                            {{ $t('posts.form.tiktok.is_aigc') }}
+                        </label>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-sm">
+                            <Checkbox :checked="tiktokBrandContentToggle" @update:checked="tiktokBrandContentToggle = $event" :disabled="props.disabled" />
+                            {{ $t('posts.form.tiktok.brand_content') }}
+                        </label>
+                        <p v-if="tiktokBrandContentToggle" class="text-xs text-muted-foreground ml-6">{{ $t('posts.form.tiktok.brand_content_hint') }}</p>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-sm">
+                            <Checkbox :checked="tiktokBrandOrganicToggle" @update:checked="tiktokBrandOrganicToggle = $event" :disabled="props.disabled" />
+                            {{ $t('posts.form.tiktok.brand_organic') }}
+                        </label>
+                        <p v-if="tiktokBrandOrganicToggle" class="text-xs text-muted-foreground ml-6">{{ $t('posts.form.tiktok.brand_organic_hint') }}</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>

@@ -28,6 +28,7 @@ class FacebookController extends SocialController
         'pages_show_list',
         'pages_read_engagement',
         'pages_manage_posts',
+        'read_insights',
     ];
 
     public function connect(Request $request): Response|RedirectResponse
@@ -61,6 +62,7 @@ class FacebookController extends SocialController
 
         return Inertia::location(
             Socialite::driver($this->driver)
+                ->usingGraphVersion('v25.0')
                 ->setScopes($this->scopes)
                 ->redirect()
                 ->getTargetUrl()
@@ -90,7 +92,7 @@ class FacebookController extends SocialController
         }
 
         try {
-            $socialUser = Socialite::driver($this->driver)->user();
+            $socialUser = Socialite::driver($this->driver)->usingGraphVersion('v25.0')->user();
 
             // Fetch pages the user manages
             $pages = $this->fetchPages($socialUser->token);

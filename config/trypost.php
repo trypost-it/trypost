@@ -49,6 +49,9 @@ return [
         'instagram' => [
             'enabled' => env('TRYPOST_INSTAGRAM_ENABLED', true),
         ],
+        'instagram-facebook' => [
+            'enabled' => env('TRYPOST_INSTAGRAM_FACEBOOK_ENABLED', true),
+        ],
         'threads' => [
             'enabled' => env('TRYPOST_THREADS_ENABLED', true),
         ],

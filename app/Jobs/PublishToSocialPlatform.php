@@ -184,7 +184,7 @@ class PublishToSocialPlatform implements ShouldQueue
             SocialPlatform::TikTok => app(TikTokPublisher::class),
             SocialPlatform::YouTube => app(YouTubePublisher::class),
             SocialPlatform::Facebook => app(FacebookPublisher::class),
-            SocialPlatform::Instagram => app(InstagramPublisher::class),
+            SocialPlatform::Instagram, SocialPlatform::InstagramFacebook => app(InstagramPublisher::class),
             SocialPlatform::Threads => app(ThreadsPublisher::class),
             SocialPlatform::Pinterest => app(PinterestPublisher::class),
             SocialPlatform::Bluesky => app(BlueskyPublisher::class),

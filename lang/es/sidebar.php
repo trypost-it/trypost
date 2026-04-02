@@ -26,6 +26,8 @@ return [
         'support' => 'Soporte',
     ],
 
+    'analytics' => 'Analytics',
+
     'posts' => [
         'calendar' => 'Calendario',
         'all' => 'Todos',

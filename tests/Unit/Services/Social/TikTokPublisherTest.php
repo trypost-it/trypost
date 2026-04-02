@@ -355,3 +355,195 @@ test('tiktok publisher throws exception when publish fails', function () {
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(TikTokPublishException::class);
 });
+
+test('tiktok publisher sends meta settings in video publish request', function () {
+    $this->postPlatform->update([
+        'meta' => [
+            'privacy_level' => 'PUBLIC_TO_EVERYONE',
+            'allow_comments' => true,
+            'allow_duet' => false,
+            'allow_stitch' => true,
+            'is_aigc' => true,
+            'brand_content_toggle' => true,
+            'brand_organic_toggle' => false,
+        ],
+    ]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/test-video.mp4',
+        'original_filename' => 'test-video.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 1024000,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        'https://open.tiktokapis.com/v2/post/publish/creator_info/query/' => Http::response([
+            'data' => [
+                'privacy_level_options' => ['PUBLIC_TO_EVERYONE', 'SELF_ONLY'],
+            ],
+        ], 200),
+        'https://open.tiktokapis.com/v2/post/publish/video/init/' => Http::response([
+            'data' => ['publish_id' => 'pub_meta_123'],
+        ], 200),
+        'https://open.tiktokapis.com/v2/post/publish/status/fetch/' => Http::response([
+            'data' => ['status' => 'PUBLISH_COMPLETE'],
+        ], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), '/post/publish/video/init/')) {
+            return false;
+        }
+        $body = json_decode($request->body(), true);
+        $postInfo = data_get($body, 'post_info');
+
+        return $postInfo['privacy_level'] === 'PUBLIC_TO_EVERYONE'
+            && $postInfo['disable_comment'] === false
+            && $postInfo['disable_duet'] === true
+            && $postInfo['disable_stitch'] === false
+            && $postInfo['is_aigc'] === true
+            && $postInfo['brand_content_toggle'] === true
+            && ! isset($postInfo['brand_organic_toggle']);
+    });
+});
+
+test('tiktok publisher sends auto_add_music for photo posts', function () {
+    $this->postPlatform->update([
+        'meta' => [
+            'privacy_level' => 'SELF_ONLY',
+            'allow_comments' => true,
+            'auto_add_music' => true,
+        ],
+    ]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'image',
+        'path' => 'media/2026-01/photo.jpg',
+        'original_filename' => 'photo.jpg',
+        'mime_type' => 'image/jpeg',
+        'size' => 512000,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        'https://open.tiktokapis.com/v2/post/publish/creator_info/query/' => Http::response([
+            'data' => ['privacy_level_options' => ['SELF_ONLY']],
+        ], 200),
+        'https://open.tiktokapis.com/v2/post/publish/content/init/' => Http::response([
+            'data' => ['publish_id' => 'pub_music_123'],
+        ], 200),
+        'https://open.tiktokapis.com/v2/post/publish/status/fetch/' => Http::response([
+            'data' => ['status' => 'PUBLISH_COMPLETE'],
+        ], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), '/post/publish/content/init/')) {
+            return false;
+        }
+        $body = json_decode($request->body(), true);
+        $postInfo = data_get($body, 'post_info');
+
+        return $postInfo['auto_add_music'] === true
+            && ! isset($postInfo['disable_duet'])
+            && ! isset($postInfo['disable_stitch'])
+            && ! isset($postInfo['is_aigc']);
+    });
+});
+
+test('tiktok publisher does not send auto_add_music for video posts', function () {
+    $this->postPlatform->update([
+        'meta' => [
+            'privacy_level' => 'SELF_ONLY',
+            'auto_add_music' => true,
+        ],
+    ]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/video.mp4',
+        'original_filename' => 'video.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 1024000,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        'https://open.tiktokapis.com/v2/post/publish/creator_info/query/' => Http::response([
+            'data' => ['privacy_level_options' => ['SELF_ONLY']],
+        ], 200),
+        'https://open.tiktokapis.com/v2/post/publish/video/init/' => Http::response([
+            'data' => ['publish_id' => 'pub_vid_123'],
+        ], 200),
+        'https://open.tiktokapis.com/v2/post/publish/status/fetch/' => Http::response([
+            'data' => ['status' => 'PUBLISH_COMPLETE'],
+        ], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), '/post/publish/video/init/')) {
+            return false;
+        }
+        $body = json_decode($request->body(), true);
+        $postInfo = data_get($body, 'post_info');
+
+        return ! isset($postInfo['auto_add_music']);
+    });
+});
+
+test('tiktok publisher uses default settings when meta is empty', function () {
+    $this->postPlatform->update(['meta' => null]);
+
+    $this->postPlatform->media()->create([
+        'collection' => 'default',
+        'type' => 'video',
+        'path' => 'media/2026-01/test-video.mp4',
+        'original_filename' => 'test-video.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 1024000,
+        'order' => 0,
+    ]);
+
+    Http::fake([
+        'https://open.tiktokapis.com/v2/post/publish/creator_info/query/' => Http::response([
+            'data' => [
+                'privacy_level_options' => ['PUBLIC_TO_EVERYONE', 'FOLLOWER_OF_CREATOR', 'SELF_ONLY'],
+            ],
+        ], 200),
+        'https://open.tiktokapis.com/v2/post/publish/video/init/' => Http::response([
+            'data' => ['publish_id' => 'pub_default_123'],
+        ], 200),
+        'https://open.tiktokapis.com/v2/post/publish/status/fetch/' => Http::response([
+            'data' => ['status' => 'PUBLISH_COMPLETE'],
+        ], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), '/post/publish/video/init/')) {
+            return false;
+        }
+        $body = json_decode($request->body(), true);
+        $postInfo = data_get($body, 'post_info');
+
+        // When meta is empty, uses creator_info privacy and defaults
+        return $postInfo['privacy_level'] === 'PUBLIC_TO_EVERYONE'
+            && $postInfo['disable_comment'] === false
+            && $postInfo['disable_duet'] === true
+            && $postInfo['disable_stitch'] === true
+            && ! isset($postInfo['is_aigc'])
+            && ! isset($postInfo['brand_content_toggle']);
+    });
+});

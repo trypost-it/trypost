@@ -1,0 +1,134 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Social;
+
+use App\Exceptions\TokenExpiredException;
+use App\Models\SocialAccount;
+use App\Services\Social\Concerns\HasSocialHttpClient;
+use Carbon\CarbonInterface;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class PinterestAnalytics
+{
+    use HasSocialHttpClient;
+
+    private string $baseUrl = 'https://api.pinterest.com/v5';
+
+    private string $accessToken;
+
+    public function getMetrics(SocialAccount $account, ?CarbonInterface $since = null, ?CarbonInterface $until = null): array
+    {
+        $since ??= now()->subDays(7);
+        $until ??= now();
+
+        $cacheKey = "analytics:pinterest:{$account->id}:{$since->format('Y-m-d')}:{$until->format('Y-m-d')}";
+        $cacheTtl = app()->isProduction() ? 3600 : 1;
+
+        return Cache::remember($cacheKey, $cacheTtl, function () use ($account, $since, $until) {
+            return $this->fetchMetricsFromApi($account, $since, $until);
+        });
+    }
+
+    private function fetchMetricsFromApi(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array
+    {
+        if ($account->is_token_expired || $account->is_token_expiring_soon) {
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
+            $account->refresh();
+        }
+
+        $this->accessToken = $account->access_token;
+
+        $response = $this->getHttpClient()
+            ->get("{$this->baseUrl}/user_account/analytics", [
+                'start_date' => $since->format('Y-m-d'),
+                'end_date' => $until->format('Y-m-d'),
+            ]);
+
+        if ($response->failed()) {
+            Log::warning('Pinterest analytics fetch failed', [
+                'body' => $this->redactResponseBody($response->body()),
+            ]);
+
+            return [];
+        }
+
+        $dailyMetrics = data_get($response->json(), 'all.daily_metrics', []);
+
+        if (empty($dailyMetrics)) {
+            return [];
+        }
+
+        $totals = [
+            'PIN_CLICK_RATE' => 0,
+            'IMPRESSION' => 0,
+            'PIN_CLICK' => 0,
+            'ENGAGEMENT' => 0,
+            'SAVE' => 0,
+        ];
+
+        $count = 0;
+
+        foreach ($dailyMetrics as $day) {
+            $metrics = data_get($day, 'metrics', []);
+
+            if (! isset($metrics['PIN_CLICK_RATE'])) {
+                continue;
+            }
+
+            $count++;
+            $totals['PIN_CLICK_RATE'] += $metrics['PIN_CLICK_RATE'];
+            $totals['IMPRESSION'] += $metrics['IMPRESSION'] ?? 0;
+            $totals['PIN_CLICK'] += $metrics['PIN_CLICK'] ?? 0;
+            $totals['ENGAGEMENT'] += $metrics['ENGAGEMENT'] ?? 0;
+            $totals['SAVE'] += $metrics['SAVE'] ?? 0;
+        }
+
+        $avgClickRate = $count > 0 ? round($totals['PIN_CLICK_RATE'] / $count, 4) : 0;
+
+        return [
+            ['label' => 'Impressions', 'value' => $totals['IMPRESSION']],
+            ['label' => 'Pin Clicks', 'value' => $totals['PIN_CLICK']],
+            ['label' => 'Engagement', 'value' => $totals['ENGAGEMENT']],
+            ['label' => 'Saves', 'value' => $totals['SAVE']],
+            ['label' => 'Pin Click Rate', 'value' => $avgClickRate],
+        ];
+    }
+
+    private function getHttpClient(): PendingRequest
+    {
+        return $this->socialHttp()->withToken($this->accessToken);
+    }
+
+    private function refreshToken(SocialAccount $account): void
+    {
+        if (! $account->refresh_token) {
+            throw new TokenExpiredException('No refresh token available for Pinterest account');
+        }
+
+        $response = Http::withBasicAuth(
+            config('services.pinterest.client_id'),
+            config('services.pinterest.client_secret'),
+        )->asForm()->post('https://api.pinterest.com/v5/oauth/token', [
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $account->refresh_token,
+        ]);
+
+        if ($response->failed()) {
+            Log::error('Pinterest token refresh failed', ['body' => $this->redactResponseBody($response->body())]);
+            throw new TokenExpiredException('Pinterest token refresh failed');
+        }
+
+        $data = $response->json();
+
+        $account->update([
+            'access_token' => data_get($data, 'access_token'),
+            'refresh_token' => data_get($data, 'refresh_token', $account->refresh_token),
+            'token_expires_at' => data_get($data, 'expires_in') ? now()->addSeconds(data_get($data, 'expires_in')) : null,
+        ]);
+    }
+}

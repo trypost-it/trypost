@@ -268,6 +268,7 @@ const getPlatformLogo = (platform: string): string => {
         'youtube': '/images/accounts/youtube.png',
         'facebook': '/images/accounts/facebook.png',
         'instagram': '/images/accounts/instagram.png',
+        'instagram-facebook': '/images/accounts/instagram.png',
         'threads': '/images/accounts/threads.png',
         'pinterest': '/images/accounts/pinterest.png',
         'bluesky': '/images/accounts/bluesky.png',
@@ -289,6 +290,7 @@ const getPlatformIcon = (platform: string): Component => {
         'youtube': IconBrandYoutube,
         'facebook': IconBrandFacebook,
         'instagram': IconBrandInstagram,
+        'instagram-facebook': IconBrandInstagram,
         'threads': IconBrandThreads,
         'pinterest': IconBrandPinterest,
         'bluesky': IconBrandBluesky,
@@ -321,6 +323,7 @@ const formatDateTime = (date: string | null): string => {
 // Content type options per platform
 const contentTypeKeys: Record<string, string[]> = {
     'instagram': ['instagram_feed', 'instagram_reel', 'instagram_story'],
+    'instagram-facebook': ['instagram_feed', 'instagram_reel', 'instagram_story'],
     'linkedin': ['linkedin_post', 'linkedin_carousel'],
     'linkedin-page': ['linkedin_page_post', 'linkedin_page_carousel'],
     'facebook': ['facebook_post', 'facebook_reel', 'facebook_story'],
@@ -336,6 +339,7 @@ const contentTypeKeys: Record<string, string[]> = {
 const getDefaultContentType = (platform: string): string => {
     const defaults: Record<string, string> = {
         'instagram': 'instagram_feed',
+        'instagram-facebook': 'instagram_feed',
         'linkedin': 'linkedin_post',
         'linkedin-page': 'linkedin_page_post',
         'facebook': 'facebook_post',

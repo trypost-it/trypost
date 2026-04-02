@@ -152,10 +152,7 @@ class TikTokAnalytics
 
     private function getHttpClient(): PendingRequest
     {
-        return $this->socialHttp()->withToken($this->accessToken)
-            ->withHeaders([
-                'Content-Type' => 'application/json; charset=UTF-8',
-            ]);
+        return $this->socialHttp()->asJson()->withToken($this->accessToken);
     }
 
     private function refreshToken(SocialAccount $account): void

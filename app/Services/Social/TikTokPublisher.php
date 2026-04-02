@@ -154,11 +154,12 @@ class TikTokPublisher
         }
 
         // Wait for processing and get final status
-        $this->waitForPublishStatus($publishId);
+        $statusData = $this->waitForPublishStatus($publishId);
+        $postId = data_get($statusData, 'publicaly_available_post_id.0');
 
         return [
-            'id' => $publishId,
-            'url' => $this->buildTikTokUrl($postPlatform->socialAccount),
+            'id' => $postId ?? $publishId,
+            'url' => $this->buildTikTokUrl($postPlatform->socialAccount, $postId),
         ];
     }
 
@@ -215,11 +216,12 @@ class TikTokPublisher
         }
 
         // Wait for processing and get final status
-        $this->waitForPublishStatus($publishId);
+        $statusData = $this->waitForPublishStatus($publishId);
+        $postId = data_get($statusData, 'publicaly_available_post_id.0');
 
         return [
-            'id' => $publishId,
-            'url' => $this->buildTikTokUrl($postPlatform->socialAccount),
+            'id' => $postId ?? $publishId,
+            'url' => $this->buildTikTokUrl($postPlatform->socialAccount, $postId),
         ];
     }
 
@@ -262,9 +264,13 @@ class TikTokPublisher
         return ['publish_id' => $publishId];
     }
 
-    private function buildTikTokUrl(SocialAccount $account): ?string
+    private function buildTikTokUrl(SocialAccount $account, ?string $postId = null): ?string
     {
         $username = $account->username;
+
+        if ($username && $postId) {
+            return "https://www.tiktok.com/@{$username}/video/{$postId}";
+        }
 
         if ($username) {
             return "https://www.tiktok.com/@{$username}";

@@ -37,7 +37,7 @@ class InstagramAnalytics
 
     private function fetchMetricsFromApi(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array
     {
-        $this->baseUrl = str_replace('/v24.0', '', $account->platform->instagramGraphBaseUrl());
+        $this->baseUrl = preg_replace('#/v[\d.]+$#', '', $account->platform->instagramGraphBaseUrl());
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
             $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));

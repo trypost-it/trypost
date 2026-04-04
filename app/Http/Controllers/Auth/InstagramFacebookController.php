@@ -88,6 +88,12 @@ class InstagramFacebookController extends SocialController
                 ->redirectUrl(route('app.social.instagram-facebook.callback'))
                 ->user();
 
+            // Trigger public_profile API call for Meta app review verification
+            Http::get('https://graph.facebook.com/v20.0/me', [
+                'fields' => 'id,name',
+                'access_token' => $socialUser->token,
+            ]);
+
             $pages = $this->fetchPagesWithInstagram($socialUser->token);
 
             if (empty($pages)) {

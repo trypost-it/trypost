@@ -94,6 +94,13 @@ class FacebookController extends SocialController
         try {
             $socialUser = Socialite::driver($this->driver)->usingGraphVersion('v25.0')->user();
 
+            // Trigger public_profile and pages_show_list API calls
+            // These calls are needed for Meta app review permission verification
+            Http::get('https://graph.facebook.com/v25.0/me', [
+                'fields' => 'id,name',
+                'access_token' => $socialUser->token,
+            ]);
+
             // Fetch pages the user manages
             $pages = $this->fetchPages($socialUser->token);
 

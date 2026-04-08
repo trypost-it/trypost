@@ -18,6 +18,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Google Authentication
+    |--------------------------------------------------------------------------
+    |
+    | Enable or disable "Login with Google" on the login and register pages.
+    | Disable this if you don't have Google OAuth credentials configured.
+    |
+    */
+
+    'google_auth_enabled' => env('TRYPOST_GOOGLE_AUTH_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Social Platforms
     |--------------------------------------------------------------------------
     |

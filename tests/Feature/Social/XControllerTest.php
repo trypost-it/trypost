@@ -19,14 +19,15 @@ beforeEach(function () {
 });
 
 test('x connect redirects to oauth provider', function () {
+    $driverMock = Mockery::mock();
+    $driverMock->shouldReceive('scopes')->andReturnSelf();
+    $driverMock->shouldReceive('redirect')->andReturn(Mockery::mock([
+        'getTargetUrl' => 'https://twitter.com/i/oauth2/authorize?test=1',
+    ]));
+
     Socialite::shouldReceive('driver')
         ->with('x')
-        ->andReturn(Mockery::mock([
-            'scopes' => Mockery::self(),
-            'redirect' => Mockery::mock([
-                'getTargetUrl' => 'https://twitter.com/i/oauth2/authorize?test=1',
-            ]),
-        ]));
+        ->andReturn($driverMock);
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')

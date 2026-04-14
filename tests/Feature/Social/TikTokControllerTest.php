@@ -19,14 +19,15 @@ beforeEach(function () {
 });
 
 test('tiktok connect redirects to oauth provider', function () {
+    $driverMock = Mockery::mock();
+    $driverMock->shouldReceive('scopes')->andReturnSelf();
+    $driverMock->shouldReceive('redirect')->andReturn(Mockery::mock([
+        'getTargetUrl' => 'https://www.tiktok.com/v2/auth/authorize?test=1',
+    ]));
+
     Socialite::shouldReceive('driver')
         ->with('tiktok')
-        ->andReturn(Mockery::mock([
-            'scopes' => Mockery::self(),
-            'redirect' => Mockery::mock([
-                'getTargetUrl' => 'https://www.tiktok.com/v2/auth/authorize?test=1',
-            ]),
-        ]));
+        ->andReturn($driverMock);
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')

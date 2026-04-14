@@ -19,14 +19,15 @@ beforeEach(function () {
 });
 
 test('instagram connect redirects to oauth provider', function () {
+    $driverMock = Mockery::mock();
+    $driverMock->shouldReceive('scopes')->andReturnSelf();
+    $driverMock->shouldReceive('redirect')->andReturn(Mockery::mock([
+        'getTargetUrl' => 'https://www.instagram.com/oauth/authorize?test=1',
+    ]));
+
     Socialite::shouldReceive('driver')
         ->with('instagram')
-        ->andReturn(Mockery::mock([
-            'scopes' => Mockery::self(),
-            'redirect' => Mockery::mock([
-                'getTargetUrl' => 'https://www.instagram.com/oauth/authorize?test=1',
-            ]),
-        ]));
+        ->andReturn($driverMock);
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')

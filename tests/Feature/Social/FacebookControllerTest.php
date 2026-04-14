@@ -20,14 +20,16 @@ beforeEach(function () {
 });
 
 test('facebook connect redirects to oauth provider', function () {
+    $driverMock = Mockery::mock();
+    $driverMock->shouldReceive('usingGraphVersion')->andReturnSelf();
+    $driverMock->shouldReceive('setScopes')->andReturnSelf();
+    $driverMock->shouldReceive('redirect')->andReturn(Mockery::mock([
+        'getTargetUrl' => 'https://www.facebook.com/v25.0/dialog/oauth?test=1',
+    ]));
+
     Socialite::shouldReceive('driver')
         ->with('facebook')
-        ->andReturn(Mockery::mock([
-            'scopes' => Mockery::self(),
-            'redirect' => Mockery::mock([
-                'getTargetUrl' => 'https://www.facebook.com/v21.0/dialog/oauth?test=1',
-            ]),
-        ]));
+        ->andReturn($driverMock);
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')

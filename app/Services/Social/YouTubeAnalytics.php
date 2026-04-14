@@ -60,13 +60,14 @@ class YouTubeAnalytics
             return [];
         }
 
-        $rows = data_get($response->json(), 'rows', []);
+        $json = $response->json();
+        $rows = data_get($json, 'rows', []);
 
         if (empty($rows)) {
             return [];
         }
 
-        $columnHeaders = data_get($response->json(), 'columnHeaders', []);
+        $columnHeaders = data_get($json, 'columnHeaders', []);
         $metricNames = collect($columnHeaders)->pluck('name')->toArray();
         $values = data_get($rows, '0', []);
 

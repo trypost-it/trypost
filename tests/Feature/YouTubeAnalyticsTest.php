@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\SocialAccount\Platform;
 use App\Enums\SocialAccount\Status as AccountStatus;
 use App\Enums\User\Setup;
+use App\Exceptions\TokenExpiredException;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -165,6 +166,27 @@ test('youtube analytics refreshes expired token', function () {
     $this->youtubeAccount->refresh();
     expect($this->youtubeAccount->access_token)->toBe('new_access_token');
 });
+
+test('youtube analytics throws exception when no refresh token', function () {
+    $this->youtubeAccount->update([
+        'token_expires_at' => now()->subMinutes(5),
+        'refresh_token' => null,
+    ]);
+
+    $analytics = app(YouTubeAnalytics::class);
+    $analytics->getMetrics($this->youtubeAccount);
+})->throws(TokenExpiredException::class);
+
+test('youtube analytics throws exception on token refresh failure', function () {
+    $this->youtubeAccount->update(['token_expires_at' => now()->subMinutes(5)]);
+
+    Http::fake([
+        'https://oauth2.googleapis.com/token' => Http::response(['error' => 'invalid_grant'], 400),
+    ]);
+
+    $analytics = app(YouTubeAnalytics::class);
+    $analytics->getMetrics($this->youtubeAccount);
+})->throws(TokenExpiredException::class);
 
 test('youtube is in supported analytics platforms', function () {
     config(['trypost.self_hosted' => true]);

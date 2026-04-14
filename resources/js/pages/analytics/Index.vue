@@ -11,6 +11,7 @@ import PinterestAnalytics from '@/components/analytics/PinterestAnalytics.vue';
 import ThreadsAnalytics from '@/components/analytics/ThreadsAnalytics.vue';
 import TikTokAnalytics from '@/components/analytics/TikTokAnalytics.vue';
 import XAnalytics from '@/components/analytics/XAnalytics.vue';
+import YouTubeAnalytics from '@/components/analytics/YouTubeAnalytics.vue';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -100,6 +101,12 @@ const platformSupportsDateRange = computed(() => {
 
                     <PinterestAnalytics
                         v-else-if="selectedAccount?.platform === 'pinterest'"
+                        :account-id="selectedAccountId"
+                        :date-range="dateRange"
+                    />
+
+                    <YouTubeAnalytics
+                        v-else-if="selectedAccount?.platform === 'youtube'"
                         :account-id="selectedAccountId"
                         :date-range="dateRange"
                     />

@@ -65,7 +65,7 @@ class WorkspaceInviteController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('manageTeam', $workspace);
+        $this->authorize('inviteMember', $workspace);
 
         $existingInvite = $workspace->invites()
             ->where('email', $request->email)

@@ -49,7 +49,7 @@ class BrandController extends Controller
             'name' => data_get($request->validated(), 'name'),
         ]);
 
-        session()->flash('flash.banner', __('Brand created successfully.'));
+        session()->flash('flash.banner', __('brands.flash.created'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('app.brands.index');
@@ -69,7 +69,7 @@ class BrandController extends Controller
             'name' => data_get($request->validated(), 'name'),
         ]);
 
-        session()->flash('flash.banner', __('Brand updated successfully.'));
+        session()->flash('flash.banner', __('brands.flash.updated'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('app.brands.index');
@@ -87,7 +87,7 @@ class BrandController extends Controller
 
         $brand->delete();
 
-        session()->flash('flash.banner', __('Brand deleted successfully.'));
+        session()->flash('flash.banner', __('brands.flash.deleted'));
         session()->flash('flash.bannerStyle', 'success');
 
         return redirect()->route('app.brands.index');

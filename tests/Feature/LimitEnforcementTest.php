@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\Brand;
 use App\Models\Plan;
@@ -17,7 +18,7 @@ beforeEach(function () {
         'member_limit' => 5,
     ]);
 
-    $this->user = User::factory()->create();
+    $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create([
         'user_id' => $this->user->id,
         'plan_id' => $this->plan->id,

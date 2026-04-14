@@ -60,7 +60,7 @@ defineExpose({ supportsDateRange: true });
 <template>
     <!-- Loading -->
     <div v-if="isLoading" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card v-for="i in 7" :key="i">
+        <Card v-for="i in 8" :key="i">
             <CardContent class="p-6">
                 <Skeleton class="mb-3 h-4 w-24" />
                 <Skeleton class="h-8 w-32" />

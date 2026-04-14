@@ -41,6 +41,7 @@ use Laravel\Cashier\Cashier;
 use Laravel\Cashier\Events\WebhookReceived;
 use Laravel\Nightwatch\Facades\Nightwatch;
 use Laravel\Nightwatch\Records\CacheEvent;
+use Laravel\Pennant\Feature;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
 use PostHog\PostHog;
@@ -78,6 +79,10 @@ class AppServiceProvider extends ServiceProvider
         Cashier::useCustomerModel(Workspace::class);
         Cashier::useSubscriptionModel(Subscription::class);
         Cashier::useSubscriptionItemModel(SubscriptionItem::class);
+
+        Feature::resolveScopeUsing(fn () => auth()->user()?->currentWorkspace);
+        Feature::useMorphMap();
+        Feature::discover();
     }
 
     protected function configureMorphMap(): void

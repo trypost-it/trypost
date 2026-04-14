@@ -5,6 +5,8 @@ return [
     'page_title' => 'Cuentas conectadas',
     'description' => 'Conecta tus redes sociales para programar y publicar posts',
 
+    'limit_reached' => 'Has alcanzado el límite de cuentas sociales de tu plan.',
+
     'not_connected' => 'No conectado',
     'connect' => 'Conectar',
     'connection_lost' => 'Conexión perdida',

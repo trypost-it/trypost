@@ -12,16 +12,17 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - php - 8.4
 - inertiajs/inertia-laravel (INERTIA_LARAVEL) - v3
 - laravel/ai (AI) - v0
-- laravel/boost (BOOST) - v2
 - laravel/cashier (CASHIER) - v16
 - laravel/framework (LARAVEL) - v13
 - laravel/horizon (HORIZON) - v5
 - laravel/mcp (MCP) - v0
 - laravel/nightwatch (NIGHTWATCH) - v1
+- laravel/pennant (PENNANT) - v1
 - laravel/prompts (PROMPTS) - v0
 - laravel/reverb (REVERB) - v1
 - laravel/socialite (SOCIALITE) - v5
 - laravel/wayfinder (WAYFINDER) - v0
+- laravel/boost (BOOST) - v2
 - laravel/pail (PAIL) - v1
 - laravel/pint (PINT) - v1
 - laravel/sail (SAIL) - v1
@@ -44,13 +45,15 @@ This project has domain-specific skills available. You MUST activate the relevan
 - `cashier-stripe-development` — Handles Laravel Cashier Stripe integration including subscriptions, webhooks, Stripe Checkout, invoices, charges, refunds, trials, coupons, metered billing, and payment failure handling. Triggered when a user mentions Cashier, Billable, IncompletePayment, stripe_id, newSubscription, Stripe subscriptions, or billing. Also applies when setting up webhooks, handling SCA/3DS payment failures, testing with Stripe test cards, or troubleshooting incomplete subscriptions, CSRF webhook errors, or migration publish issues.
 - `laravel-best-practices` — Apply this skill whenever writing, reviewing, or refactoring Laravel PHP code. This includes creating or modifying controllers, models, migrations, form requests, policies, jobs, scheduled commands, service classes, and Eloquent queries. Triggers for N+1 and query performance issues, caching strategies, authorization and security patterns, validation, error handling, queue and job configuration, route definitions, and architectural decisions. Also use for Laravel code reviews and refactoring existing Laravel code to follow best practices. Covers any task involving Laravel backend PHP code patterns.
 - `configuring-horizon` — Use this skill whenever the user mentions Horizon by name in a Laravel context. Covers the full Horizon lifecycle: installing Horizon (horizon:install, Sail setup), configuring config/horizon.php (supervisor blocks, queue assignments, balancing strategies, minProcesses/maxProcesses), fixing the dashboard (authorization via Gate::define viewHorizon, blank metrics, horizon:snapshot scheduling), and troubleshooting production issues (worker crashes, timeout chain ordering, LongWaitDetected notifications, waits config). Also covers job tagging and silencing. Do not use for generic Laravel queues without Horizon, SQS or database drivers, standalone Redis setup, Linux supervisord, Telescope, or job batching.
-- `mcp-development` — Use this skill for Laravel MCP development only. Trigger when creating or editing MCP tools, resources, prompts, or servers in Laravel projects. Covers: artisan make:mcp-* generators, mcp:inspector, routes/ai.php, Tool/Resource/Prompt classes, schema validation, shouldRegister(), OAuth setup, URI templates, read-only attributes, and MCP debugging. Do not use for non-Laravel MCP projects or generic AI features without MCP.
+- `mcp-development` — Use this skill for Laravel MCP development only. Trigger when creating or editing MCP tools, resources, prompts, or servers in Laravel projects. Covers: artisan make:mcp-\* generators, mcp:inspector, routes/ai.php, Tool/Resource/Prompt classes, schema validation, shouldRegister(), OAuth setup, URI templates, read-only attributes, and MCP debugging. Do not use for non-Laravel MCP projects or generic AI features without MCP.
+- `pennant-development` — Use when working with Laravel Pennant the official Laravel feature flag package. Trigger whenever the query mentions Pennant by name or involves feature flags or feature toggles in a Laravel project. Tasks include defining feature flags checking whether features are active creating class based features in `app/Features` using Blade `@feature` directives scoping flags to users or teams building custom Pennant storage drivers protecting routes with feature flags testing feature flags with Pest or PHPUnit and implementing A B testing or gradual rollouts with feature flags. Do not trigger for generic Laravel configuration authorization policies authentication or non Pennant feature management systems.
 - `socialite-development` — Manages OAuth social authentication with Laravel Socialite. Activate when adding social login providers; configuring OAuth redirect/callback flows; retrieving authenticated user details; customizing scopes or parameters; setting up community providers; testing with Socialite fakes; or when the user mentions social login, OAuth, Socialite, or third-party authentication.
 - `wayfinder-development` — Use this skill for Laravel Wayfinder which auto-generates typed functions for Laravel controllers and routes. ALWAYS use this skill when frontend code needs to call backend routes or controller actions. Trigger when: connecting any React/Vue/Svelte/Inertia frontend to Laravel controllers, routes, building end-to-end features with both frontend and backend, wiring up forms or links to backend endpoints, fixing route-related TypeScript errors, importing from @/actions or @/routes, or running wayfinder:generate. Use Wayfinder route functions instead of hardcoded URLs. Covers: wayfinder() vite plugin, .url()/.get()/.post()/.form(), query params, route model binding, tree-shaking. Do not use for backend-only task
 - `pest-testing` — Use this skill for Pest PHP testing in Laravel projects only. Trigger whenever any test is being written, edited, fixed, or refactored — including fixing tests that broke after a code change, adding assertions, converting PHPUnit to Pest, adding datasets, and TDD workflows. Always activate when the user asks how to write something in Pest, mentions test files or directories (tests/Feature, tests/Unit, tests/Browser), or needs browser testing, smoke testing multiple pages for JS errors, or architecture tests. Covers: it()/expect() syntax, datasets, mocking, browser testing (visit/click/fill), smoke testing, arch(), Livewire component tests, RefreshDatabase, and all Pest 4 features. Do not use for factories, seeders, migrations, controllers, models, or non-test PHP code.
 - `inertia-vue-development` — Develops Inertia.js v3 Vue client-side applications. Activates when creating Vue pages, forms, or navigation; using <Link>, <Form>, useForm, useHttp, setLayoutProps, or router; working with deferred props, prefetching, optimistic updates, instant visits, or polling; or when user mentions Vue with Inertia, Vue pages, Vue forms, or Vue navigation.
 - `tailwindcss-development` — Always invoke when the user's message includes 'tailwind' in any form. Also invoke for: building responsive grid layouts (multi-column card grids, product grids), flex/grid page structures (dashboards with sidebars, fixed topbars, mobile-toggle navs), styling UI components (cards, tables, navbars, pricing sections, forms, inputs, badges), adding dark mode variants, fixing spacing or typography, and Tailwind v3/v4 work. The core use case: writing or fixing Tailwind utility classes in HTML templates (Blade, JSX, Vue). Skip for backend PHP logic, database queries, API routes, JavaScript with no HTML/CSS component, CSS file audits, build tool configuration, and vanilla CSS.
-- `ai-sdk-development` — TRIGGER when working with ai-sdk which is Laravel official first-party AI SDK. Activate when building, editing AI agents, chatbots, text generation, image generation, audio/TTS, transcription/STT, embeddings, RAG, vector stores, reranking, structured output, streaming, conversation memory, tools, queueing, broadcasting, and provider failover across OpenAI, Anthropic, Gemini, Azure, Groq, xAI, DeepSeek, Mistral, Ollama, ElevenLabs, Cohere, Jina, and VoyageAI. Invoke when the user references ai-sdk, the `Laravel\Ai\` namespace, or this project's AI features — not for Prism PHP or other AI packages used directly.
+- `ai-sdk-development` — Builds AI agents, generates text and chat responses, produces images, synthesizes audio, transcribes speech, generates vector embeddings, reranks documents, and manages files and vector stores using the Laravel AI SDK (laravel/ai). Supports structured output, streaming, tools, conversation memory, middleware, queueing, broadcasting, and provider failover. Use when building, editing, updating, debugging, or testing any AI functionality, including agents, LLMs, chatbots, text generation, image generation, audio, transcription, embeddings, RAG, similarity search, vector stores, prompting, structured output, or any AI provider (OpenAI, Anthropic, Gemini, Cohere, Groq, xAI, ElevenLabs, Jina, OpenRouter).
+- `medialibrary-development` — Build and work with spatie/laravel-medialibrary features including associating files with Eloquent models, defining media collections and conversions, generating responsive images, and retrieving media URLs and paths.
 
 ## Conventions
 
@@ -116,12 +119,13 @@ This project has domain-specific skills available. You MUST activate the relevan
 
 - Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
-  - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
+    - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
 === php rules ===
 
 # PHP
 
+- Always declare `declare(strict_types=1);` at the top of every `.php` file.
 - Always use curly braces for control structures, even for single-line bodies.
 - Use PHP 8 constructor property promotion: `public function __construct(public GitHub $github) { }`. Do not leave empty zero-parameter `__construct()` methods unless the constructor is private.
 - Use explicit return type declarations and type hints for all method parameters: `function isAccessible(User $user, ?string $path = null): bool`
@@ -215,6 +219,7 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 
 - This project uses Pest for testing. Create tests: `php artisan make:test --pest {name}`.
 - Run tests: `php artisan test --compact` or filter: `php artisan test --compact --filter=testName`.
+- When running locally, always pass `--parallel` to speed up the suite (e.g. `php artisan test --parallel --compact`). Combine with `--filter` or specific paths when iterating on a small set of tests.
 - Do NOT delete tests without approval.
 
 === inertia-vue/core rules ===
@@ -222,7 +227,22 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 # Inertia + Vue
 
 Vue components must have a single root element.
+
 - IMPORTANT: Activate `inertia-vue-development` when working with Inertia Vue client-side patterns.
+
+=== laravel/ai rules ===
+
+## Laravel AI SDK
+
+- This application uses the Laravel AI SDK (`laravel/ai`) for all AI functionality.
+- Activate the `developing-with-ai-sdk` skill when building, editing, updating, debugging, or testing AI agents, text generation, chat, streaming, structured output, tools, image generation, audio, transcription, embeddings, reranking, vector stores, files, conversation memory, or any AI provider integration (OpenAI, Anthropic, Gemini, Cohere, Groq, xAI, ElevenLabs, Jina, OpenRouter).
+
+=== spatie/laravel-medialibrary rules ===
+
+## Media Library
+
+- `spatie/laravel-medialibrary` associates files with Eloquent models, with support for collections, conversions, and responsive images.
+- Always activate the `medialibrary-development` skill when working with media uploads, conversions, collections, responsive images, or any code that uses the `HasMedia` interface or `InteractsWithMedia` trait.
 
 </laravel-boost-guidelines>
 
@@ -238,8 +258,6 @@ Vue components must have a single root element.
 - All Tabler icons are prefixed with `Icon`, e.g. `IconCheck`, `IconChevronRight`, `IconMail`.
 - Import icons from `@tabler/icons-vue`: `import { IconCheck, IconX } from '@tabler/icons-vue'`.
 - Browse available icons at https://tabler.io/icons
-- Button never use icon + text, it's icon or text, never together
-- dropdown lists always use icon + text, and both have the same color
 
 ## Dates
 
@@ -277,6 +295,12 @@ Vue components must have a single root element.
     - Example: `data_get($data, 'name')` instead of `$data['name']`.
     - Use the third parameter for fallback values: `data_get($data, 'username', $sender->username)` instead of `$data['username'] ?? $sender->username`.
 
+## Imports
+
+- NEVER use inline class references (e.g., `\DB::listen`, `\Str::uuid()`). ALWAYS import classes at the top of the file with a `use` statement.
+    - PHP: `use Illuminate\Support\Facades\DB;` then `DB::listen(...)`
+    - TypeScript/Vue: `import { ref } from 'vue'` then `ref(...)`
+
 ## API Response Status Codes
 
 - When returning JSON responses with explicit status codes, always use `Symfony\Component\HttpFoundation\Response` constants instead of magic numbers.
@@ -284,83 +308,7 @@ Vue components must have a single root element.
 
 ## Sendkit Documentation
 
-- All our documentation to final user it's under https://sendkit.dev/docs
-
-## Social Platform API References
-
-Always verify against official docs before making changes to publishers, media handling, or content formatting.
-
-### Content Format
-
-| Platform | Content field | Format | Official docs |
-|---|---|---|---|
-| Instagram | `caption` | Plain text | [IG Media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media) |
-| Facebook | `message` | Plain text | [Page Feed](https://developers.facebook.com/docs/graph-api/reference/page/feed/) |
-| X/Twitter | `text` | Plain text | [Post creation](https://docs.x.com/x-api/posts/creation-of-a-post) |
-| TikTok | `title` | Plain text | [Content Posting](https://developers.tiktok.com/doc/content-posting-api-reference-direct-post) |
-| YouTube | `title`, `description` | Plain text | [Videos.insert](https://developers.google.com/youtube/v3/docs/videos/insert) |
-| Threads | `text` | Plain text | Same as Instagram |
-| Pinterest | `description` | Plain text | [Pin creation](https://developers.pinterest.com/docs/api/v5/pins-create/) |
-| LinkedIn | `commentary` | Plain text (Unicode bold/underline works visually) | [Posts API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api) |
-| Bluesky | `text` + facets | Plain text + facets for links/mentions | [AT Protocol posts](https://docs.bsky.app/docs/advanced-guides/posts) |
-| Mastodon | `status` | HTML subset (p, strong, em, a, br, span) | [Statuses API](https://docs.joinmastodon.org/methods/statuses/) |
-
-### Image Specs
-
-| Platform | Max size | Formats | Max resolution | Official docs |
-|---|---|---|---|---|
-| Instagram | 8 MB | JPEG only | 1440px width | [IG Media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media) |
-| Facebook | 4 MB | JPEG, PNG, BMP, GIF, TIFF | Auto-resized | [Page Photos](https://developers.facebook.com/docs/graph-api/reference/page/photos/) |
-| X/Twitter | 5 MB | JPG, PNG, GIF, WEBP | No hard limit | [Media best practices](https://docs.x.com/x-api/media/quickstart/best-practices) |
-| TikTok | 20 MB | JPEG, WebP | 1080px max | [Media transfer](https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide) |
-| LinkedIn | < 36M pixels | JPG, GIF, PNG | < 36,152,320 pixels | [Images API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/images-api) |
-| Pinterest | 20 MB | PNG, JPEG | 1000x1500 recommended | [Product specs](https://help.pinterest.com/en/business/article/pinterest-product-specs) |
-| Bluesky | 1 MB | Any | No hard limit | [AT Protocol](https://docs.bsky.app/docs/advanced-guides/posts) |
-| Mastodon | ~10 MB | JPG, PNG, GIF, WebP | No hard limit | [Statuses API](https://docs.joinmastodon.org/methods/statuses/) |
-
-### Video Specs
-
-| Platform | Max size | Formats | Duration | Official docs |
-|---|---|---|---|---|
-| Instagram Reel | 300 MB | MP4, MOV | 3s-15min | [IG Media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media) |
-| Instagram Story | 100 MB | MP4, MOV | 3-60s | [IG Media](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/ig-user/media) |
-| Facebook | 2 GB | MP4 | 1s-40min | [Video API errors](https://developers.facebook.com/docs/video-api/reference/error-codes/) |
-| X/Twitter | 512 MB | MP4 | 0.5-140s | [Media best practices](https://docs.x.com/x-api/media/quickstart/best-practices) |
-| TikTok | 4 GB | MP4, WebM, MOV | Up to 10min | [Media transfer](https://developers.tiktok.com/doc/content-posting-api-media-transfer-guide) |
-| YouTube Shorts | 128 GB | MP4, MOV, AVI, WebM | Up to 60s | [Videos.insert](https://developers.google.com/youtube/v3/docs/videos/insert) |
-| LinkedIn | 500 MB | MP4 | 3s-30min | [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/videos-api) |
-| Pinterest | 2 GB | MP4, MOV, M4V | 4s-15min | [Product specs](https://help.pinterest.com/en/business/article/pinterest-product-specs) |
-| Bluesky | 50 MB | MP4 | Up to 60s | [AT Protocol](https://docs.bsky.app/docs/advanced-guides/posts) |
-| Mastodon | ~40 MB | MP4, WebM | No limit | [Statuses API](https://docs.joinmastodon.org/methods/statuses/) |
-
-### Error Codes
-
-| Platform | Error docs |
-|---|---|
-| Instagram | [Error codes](https://developers.facebook.com/docs/instagram-platform/instagram-graph-api/reference/error-codes/) |
-| Facebook | [Graph API errors](https://developers.facebook.com/docs/graph-api/guides/error-handling/) + [Video API errors](https://developers.facebook.com/docs/video-api/reference/error-codes/) |
-| X/Twitter | [Response codes](https://docs.x.com/x-api/fundamentals/response-codes-and-errors) |
-| TikTok | [Error handling](https://developers.tiktok.com/doc/tiktok-api-v2-error-handling) + [Publish status](https://developers.tiktok.com/doc/content-posting-api-reference-get-video-status) |
-| YouTube | [Videos.insert errors](https://developers.google.com/youtube/v3/docs/videos/insert) |
-| LinkedIn | [Posts API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api) + [Videos API](https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/videos-api) |
-| Pinterest | [API v5](https://developers.pinterest.com/docs/api/v5/) |
-| Bluesky | [AT Protocol](https://docs.bsky.app/docs/advanced-guides/posts) |
-| Mastodon | [Statuses API](https://docs.joinmastodon.org/methods/statuses/) |
-
-### Upload Method Per Platform
-
-| Platform | Method | Notes |
-|---|---|---|
-| Instagram | URL pull (`image_url`/`video_url`) | Platform downloads from our CDN |
-| Facebook | URL pull (`url`/`file_url`) for posts; binary upload for reels/stories | |
-| X/Twitter | Binary upload (chunked for video/GIF) | |
-| TikTok | URL pull (`PULL_FROM_URL`) | |
-| YouTube | Google SDK chunked upload | Uses `google/apiclient` PHP SDK |
-| Threads | URL pull (`image_url`/`video_url`) | |
-| LinkedIn | Binary upload (image PUT, video chunked) | |
-| Pinterest | Base64 for images, multipart for video | |
-| Bluesky | Binary blob upload | 1MB hard limit per blob |
-| Mastodon | Binary upload via multipart | |
+- All our documentation to final user it's under https://docs.sendkit.dev
 
 ## Git
 

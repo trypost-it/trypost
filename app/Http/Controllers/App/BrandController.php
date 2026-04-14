@@ -65,10 +65,6 @@ class BrandController extends Controller
 
         $this->authorize('update', $brand);
 
-        if ($brand->workspace_id !== $workspace->id) {
-            abort(403);
-        }
-
         $brand->update([
             'name' => data_get($request->validated(), 'name'),
         ]);
@@ -79,19 +75,15 @@ class BrandController extends Controller
         return redirect()->route('app.brands.index');
     }
 
-    public function destroy(Brand $brand): RedirectResponse
+    public function destroy(Request $request, Brand $brand): RedirectResponse
     {
-        $workspace = request()->user()->currentWorkspace;
+        $workspace = $request->user()->currentWorkspace;
 
         if (! $workspace) {
             return redirect()->route('app.workspaces.create');
         }
 
         $this->authorize('delete', $brand);
-
-        if ($brand->workspace_id !== $workspace->id) {
-            abort(403);
-        }
 
         $brand->delete();
 

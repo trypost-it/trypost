@@ -92,7 +92,7 @@ class OnboardingController extends Controller
 
         $user->update(['setup' => Setup::Subscription]);
 
-        $defaultPlan = Plan::where('slug', PlanSlug::Starter)->first();
+        $defaultPlan = Plan::where('slug', PlanSlug::Starter)->firstOrFail();
 
         $workspace->createOrGetStripeCustomer([
             'email' => $workspace->stripeEmail(),

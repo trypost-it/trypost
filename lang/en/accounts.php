@@ -5,6 +5,8 @@ return [
     'page_title' => 'Connected Accounts',
     'description' => 'Connect your social networks to schedule and publish posts',
 
+    'limit_reached' => 'You have reached your plan limit for social accounts.',
+
     'not_connected' => 'Not connected',
     'connect' => 'Connect',
     'connection_lost' => 'Connection lost',

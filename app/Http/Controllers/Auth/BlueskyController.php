@@ -29,6 +29,7 @@ class BlueskyController extends SocialController
         }
 
         $this->authorize('manageAccounts', $workspace);
+        $this->ensureSocialAccountLimit($workspace);
 
         return Inertia::render('accounts/BlueskyConnect', [
             'errors' => session('errors')?->getBag('default')?->toArray() ?? [],

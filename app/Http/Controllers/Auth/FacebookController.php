@@ -42,6 +42,7 @@ class FacebookController extends SocialController
         }
 
         $this->authorize('manageAccounts', $workspace);
+        $this->ensureSocialAccountLimit($workspace);
 
         $existingAccount = $workspace->socialAccounts()
             ->where('platform', $this->platform->value)

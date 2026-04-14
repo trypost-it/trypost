@@ -14,6 +14,7 @@ use App\Services\Social\PinterestAnalytics;
 use App\Services\Social\ThreadsAnalytics;
 use App\Services\Social\TikTokAnalytics;
 use App\Services\Social\XAnalytics;
+use App\Services\Social\YouTubeAnalytics;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -32,6 +33,7 @@ class AnalyticsController extends Controller
         Platform::X,
         Platform::LinkedInPage,
         Platform::Pinterest,
+        Platform::YouTube,
     ];
 
     public function index(Request $request): Response
@@ -74,6 +76,7 @@ class AnalyticsController extends Controller
             Platform::X => app(XAnalytics::class)->getMetrics($account, $since, $until),
             Platform::LinkedInPage => app(LinkedInPageAnalytics::class)->getMetrics($account, $since, $until),
             Platform::Pinterest => app(PinterestAnalytics::class)->getMetrics($account, $since, $until),
+            Platform::YouTube => app(YouTubeAnalytics::class)->getMetrics($account, $since, $until),
             default => [],
         };
 

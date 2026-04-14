@@ -18,6 +18,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Google Authentication
+    |--------------------------------------------------------------------------
+    |
+    | Enable or disable "Login with Google" on the login and register pages.
+    | Disable this if you don't have Google OAuth credentials configured.
+    |
+    */
+
+    'google_auth_enabled' => env('GOOGLE_AUTH_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Social Platforms
     |--------------------------------------------------------------------------
     |
@@ -29,40 +41,40 @@ return [
 
     'platforms' => [
         'linkedin' => [
-            'enabled' => env('TRYPOST_LINKEDIN_ENABLED', true),
+            'enabled' => env('LINKEDIN_ENABLED', true),
         ],
         'linkedin-page' => [
-            'enabled' => env('TRYPOST_LINKEDIN_PAGE_ENABLED', true),
+            'enabled' => env('LINKEDIN_PAGE_ENABLED', true),
         ],
         'x' => [
-            'enabled' => env('TRYPOST_X_ENABLED', true),
+            'enabled' => env('X_ENABLED', true),
         ],
         'tiktok' => [
-            'enabled' => env('TRYPOST_TIKTOK_ENABLED', true),
+            'enabled' => env('TIKTOK_ENABLED', true),
         ],
         'youtube' => [
-            'enabled' => env('TRYPOST_YOUTUBE_ENABLED', true),
+            'enabled' => env('YOUTUBE_ENABLED', true),
         ],
         'facebook' => [
-            'enabled' => env('TRYPOST_FACEBOOK_ENABLED', true),
+            'enabled' => env('FACEBOOK_ENABLED', true),
         ],
         'instagram' => [
-            'enabled' => env('TRYPOST_INSTAGRAM_ENABLED', true),
+            'enabled' => env('INSTAGRAM_ENABLED', true),
         ],
         'instagram-facebook' => [
-            'enabled' => env('TRYPOST_INSTAGRAM_FACEBOOK_ENABLED', true),
+            'enabled' => env('INSTAGRAM_FACEBOOK_ENABLED', true),
         ],
         'threads' => [
-            'enabled' => env('TRYPOST_THREADS_ENABLED', true),
+            'enabled' => env('THREADS_ENABLED', true),
         ],
         'pinterest' => [
-            'enabled' => env('TRYPOST_PINTEREST_ENABLED', true),
+            'enabled' => env('PINTEREST_ENABLED', true),
         ],
         'bluesky' => [
-            'enabled' => env('TRYPOST_BLUESKY_ENABLED', true),
+            'enabled' => env('BLUESKY_ENABLED', true),
         ],
         'mastodon' => [
-            'enabled' => env('TRYPOST_MASTODON_ENABLED', true),
+            'enabled' => env('MASTODON_ENABLED', true),
         ],
     ],
 

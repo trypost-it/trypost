@@ -20,15 +20,16 @@ beforeEach(function () {
 });
 
 test('youtube connect redirects to oauth provider', function () {
+    $driverMock = Mockery::mock();
+    $driverMock->shouldReceive('scopes')->andReturnSelf();
+    $driverMock->shouldReceive('with')->andReturnSelf();
+    $driverMock->shouldReceive('redirect')->andReturn(Mockery::mock([
+        'getTargetUrl' => 'https://accounts.google.com/o/oauth2/v2/auth?test=1',
+    ]));
+
     Socialite::shouldReceive('driver')
         ->with('google')
-        ->andReturn(Mockery::mock([
-            'scopes' => Mockery::self(),
-            'with' => Mockery::self(),
-            'redirect' => Mockery::mock([
-                'getTargetUrl' => 'https://accounts.google.com/o/oauth2/v2/auth?test=1',
-            ]),
-        ]));
+        ->andReturn($driverMock);
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')

@@ -20,15 +20,16 @@ beforeEach(function () {
 });
 
 test('linkedin page connect redirects to oauth provider', function () {
+    $driverMock = Mockery::mock();
+    $driverMock->shouldReceive('scopes')->andReturnSelf();
+    $driverMock->shouldReceive('with')->andReturnSelf();
+    $driverMock->shouldReceive('redirect')->andReturn(Mockery::mock([
+        'getTargetUrl' => 'https://www.linkedin.com/oauth/v2/authorization?test=1',
+    ]));
+
     Socialite::shouldReceive('driver')
         ->with('linkedin-openid')
-        ->andReturn(Mockery::mock([
-            'scopes' => Mockery::self(),
-            'with' => Mockery::self(),
-            'redirect' => Mockery::mock([
-                'getTargetUrl' => 'https://www.linkedin.com/oauth/v2/authorization?test=1',
-            ]),
-        ]));
+        ->andReturn($driverMock);
 
     $response = $this->actingAs($this->user)
         ->withHeader('X-Inertia', 'true')

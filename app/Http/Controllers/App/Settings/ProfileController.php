@@ -8,7 +8,7 @@ use App\Enums\UserWorkspace\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Settings\ProfileDeleteRequest;
 use App\Http\Requests\App\Settings\ProfileUpdateRequest;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -91,15 +91,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         DB::transaction(function () use ($user) {
-            if ($user->subscribed(User::SUBSCRIPTION_NAME)) {
-                $user->subscription(User::SUBSCRIPTION_NAME)->cancelNow();
-            }
-            $user->subscriptions()->delete();
             $user->update(['current_workspace_id' => null]);
 
             $ownedWorkspaces = $user->workspaces()->wherePivot('role', Role::Owner->value)->get();
 
             foreach ($ownedWorkspaces as $workspace) {
+                if ($workspace->subscribed(Workspace::SUBSCRIPTION_NAME)) {
+                    $workspace->subscription(Workspace::SUBSCRIPTION_NAME)->cancelNow();
+                }
+                $workspace->subscriptions()->delete();
+
                 foreach ($workspace->members as $member) {
                     if ($member->id !== $user->id && $member->current_workspace_id === $workspace->id) {
                         $otherWorkspace = $member->workspaces()

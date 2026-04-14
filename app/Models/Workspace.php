@@ -12,15 +12,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Cashier\Billable;
 
 class Workspace extends Model
 {
     /** @use HasFactory<WorkspaceFactory> */
-    use HasFactory, HasMedia, HasUuids;
+    use Billable, HasFactory, HasMedia, HasUuids;
+
+    public const SUBSCRIPTION_NAME = 'default';
 
     protected $fillable = [
         'user_id',
         'plan_id',
+        'stripe_id',
+        'pm_type',
+        'pm_last_four',
+        'trial_ends_at',
         'name',
         'timezone',
     ];
@@ -102,5 +109,42 @@ class Workspace extends Model
     public function getSocialAccount(string $platform): ?SocialAccount
     {
         return $this->socialAccounts()->where('platform', $platform)->first();
+    }
+
+    /**
+     * Check if the workspace has an active subscription.
+     * In self-hosted mode, always returns true.
+     */
+    public function hasActiveSubscription(): bool
+    {
+        if (config('trypost.self_hosted')) {
+            return true;
+        }
+
+        return $this->subscribed(self::SUBSCRIPTION_NAME);
+    }
+
+    /**
+     * Check if the workspace is on a trial period.
+     */
+    public function isOnTrial(): bool
+    {
+        return $this->subscription(self::SUBSCRIPTION_NAME)?->onTrial() ?? false;
+    }
+
+    /**
+     * Get the email address for Stripe.
+     */
+    public function stripeEmail(): string
+    {
+        return $this->owner?->email ?? '';
+    }
+
+    /**
+     * Get the name for Stripe.
+     */
+    public function stripeName(): string
+    {
+        return $this->name;
     }
 }

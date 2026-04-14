@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
+use App\Enums\Plan\Slug as PlanSlug;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\User\Persona;
 use App\Enums\User\Setup;
+use App\Models\Plan;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -76,11 +79,10 @@ class OnboardingController extends Controller
     public function storeConnect(Request $request): SymfonyResponse|RedirectResponse
     {
         $user = $request->user();
+        $workspace = $user->currentWorkspace;
 
         if (config('trypost.self_hosted')) {
-            $user->update([
-                'setup' => Setup::Completed,
-            ]);
+            $user->update(['setup' => Setup::Completed]);
 
             session()->flash('flash.banner', __('auth.flash.welcome'));
             session()->flash('flash.bannerStyle', 'success');
@@ -88,19 +90,25 @@ class OnboardingController extends Controller
             return redirect()->route('app.calendar');
         }
 
-        $user->update([
-            'setup' => Setup::Subscription,
+        $user->update(['setup' => Setup::Subscription]);
+
+        $defaultPlan = Plan::where('slug', PlanSlug::Starter)->first();
+
+        $workspace->createOrGetStripeCustomer([
+            'email' => $workspace->stripeEmail(),
+            'name' => $workspace->stripeName(),
         ]);
 
-        $subscription = $user->newSubscription(User::SUBSCRIPTION_NAME, config('cashier.plans.monthly.price_id'))
+        $subscription = $workspace->newSubscription(Workspace::SUBSCRIPTION_NAME, $defaultPlan->stripe_monthly_price_id)
             ->allowPromotionCodes()
-            ->trialDays(config('cashier.trial_days'))
-            ->quantity(1);
+            ->trialDays(config('cashier.trial_days'));
 
         $checkoutSession = $subscription->checkout([
             'success_url' => route('app.onboarding.complete').'?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('app.onboarding.connect'),
         ]);
+
+        $workspace->update(['plan_id' => $defaultPlan->id]);
 
         return Inertia::location($checkoutSession->url);
     }

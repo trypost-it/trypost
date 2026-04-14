@@ -128,30 +128,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Subscription Plans
-    |--------------------------------------------------------------------------
-    |
-    | Define the available subscription plans with their Stripe price IDs.
-    | The 'monthly' plan bills at $25/workspace/month.
-    | The 'yearly' plan bills at $20/workspace/month (20% discount).
-    |
-    */
-
-    'plans' => [
-        'monthly' => [
-            'price_id' => env('STRIPE_PRICE_MONTHLY'),
-            'price' => 20,
-            'interval' => 'month',
-        ],
-        'yearly' => [
-            'price_id' => env('STRIPE_PRICE_YEARLY'),
-            'price' => 16,
-            'interval' => 'year',
-        ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Trial Period
     |--------------------------------------------------------------------------
     |

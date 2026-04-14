@@ -17,14 +17,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Cashier\Billable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use Billable, HasFactory, HasMedia, HasUuids, HasWorkspace, Notifiable;
-
-    public const SUBSCRIPTION_NAME = 'default';
+    use HasFactory, HasMedia, HasUuids, HasWorkspace, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -111,26 +108,5 @@ class User extends Authenticatable implements MustVerifyEmail
             NotificationType::AccountDisconnected => $preference->account_disconnected,
             default => true,
         };
-    }
-
-    /**
-     * Check if user has an active subscription.
-     * In self-hosted mode, always returns true (no subscription required).
-     */
-    public function hasActiveSubscription(): bool
-    {
-        if (config('trypost.self_hosted')) {
-            return true;
-        }
-
-        return $this->subscribed(self::SUBSCRIPTION_NAME);
-    }
-
-    /**
-     * Check if user has ever had a subscription (for trial eligibility).
-     */
-    public function hasEverSubscribed(): bool
-    {
-        return $this->subscriptions()->exists();
     }
 }

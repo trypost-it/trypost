@@ -4,21 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware\App;
 
-use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureSubscribed
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        // Skip subscription check for self-hosted mode
         if (config('trypost.self_hosted')) {
             return $next($request);
         }
@@ -29,23 +22,12 @@ class EnsureSubscribed
             return redirect()->route('login');
         }
 
-        // Allow access if user has active subscription or is on trial
-        if ($user->subscribed(User::SUBSCRIPTION_NAME) || $user->onTrial(User::SUBSCRIPTION_NAME)) {
+        $workspace = $user->currentWorkspace;
+
+        if ($workspace && $workspace->hasActiveSubscription()) {
             return $next($request);
         }
 
-        // Allow access if user belongs to a workspace owned by a subscribed user
-        $currentWorkspace = $user->currentWorkspace;
-
-        if ($currentWorkspace && $currentWorkspace->owner && $currentWorkspace->owner->id !== $user->id) {
-            $owner = $currentWorkspace->owner;
-
-            if ($owner->subscribed(User::SUBSCRIPTION_NAME) || $owner->onTrial(User::SUBSCRIPTION_NAME)) {
-                return $next($request);
-            }
-        }
-
-        // Redirect to subscription page
         return redirect()->route('app.subscribe');
     }
 }

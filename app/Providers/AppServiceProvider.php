@@ -75,6 +75,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureSocialite();
         $this->configureStripeWebhooks();
 
+        Cashier::useCustomerModel(Workspace::class);
         Cashier::useSubscriptionModel(Subscription::class);
         Cashier::useSubscriptionItemModel(SubscriptionItem::class);
     }

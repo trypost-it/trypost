@@ -40,7 +40,7 @@ Route::get('/', function () {
 // Subscription selection (requires auth but not subscription)
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('subscribe', [BillingController::class, 'subscribe'])->name('app.subscribe');
-    Route::post('billing/checkout', [BillingController::class, 'checkout'])->name('app.billing.checkout');
+    Route::post('billing/checkout/{plan}', [BillingController::class, 'checkout'])->name('app.billing.checkout');
     Route::get('billing/processing', [BillingController::class, 'processing'])->name('app.billing.processing');
 });
 
@@ -178,6 +178,7 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     // Billing
     Route::get('settings/billing', [BillingController::class, 'index'])->name('app.billing.index');
     Route::get('settings/billing/portal', [BillingController::class, 'portal'])->name('app.billing.portal');
+    Route::post('settings/billing/swap/{plan}', [BillingController::class, 'swap'])->name('app.billing.swap');
 
 });
 

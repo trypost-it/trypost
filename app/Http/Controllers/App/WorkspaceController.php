@@ -37,7 +37,9 @@ class WorkspaceController extends Controller
     {
         $user = $request->user();
 
-        if ($user->ownedWorkspacesCount() > 0 && ! $user->hasActiveSubscription()) {
+        $workspace = $user->currentWorkspace;
+
+        if ($user->ownedWorkspacesCount() > 0 && (! $workspace || ! $workspace->hasActiveSubscription())) {
             return redirect()->route('app.billing.index')
                 ->with('message', 'Subscribe to create more workspaces.');
         }
@@ -49,7 +51,9 @@ class WorkspaceController extends Controller
     {
         $user = $request->user();
 
-        if ($user->ownedWorkspacesCount() > 0 && ! $user->hasActiveSubscription()) {
+        $workspace = $user->currentWorkspace;
+
+        if ($user->ownedWorkspacesCount() > 0 && (! $workspace || ! $workspace->hasActiveSubscription())) {
             return redirect()->route('app.billing.index')
                 ->with('message', 'Subscribe to create more workspaces.');
         }

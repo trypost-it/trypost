@@ -35,7 +35,7 @@ test('user with active subscription can access protected route', function () {
     $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
-    $user->subscriptions()->create([
+    $workspace->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_123',
         'stripe_status' => 'active',
@@ -56,7 +56,7 @@ test('user on trial subscription can access protected route', function () {
     $user->update(['current_workspace_id' => $workspace->id]);
 
     // Create a subscription with trial
-    $user->subscriptions()->create([
+    $workspace->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_trial_123',
         'stripe_status' => 'trialing',
@@ -91,7 +91,7 @@ test('user with expired trial subscription is redirected to subscribe page', fun
     $user->update(['current_workspace_id' => $workspace->id]);
 
     // Create an expired trial subscription
-    $user->subscriptions()->create([
+    $workspace->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_expired_trial',
         'stripe_status' => 'canceled',
@@ -113,7 +113,7 @@ test('user with cancelled subscription is redirected to subscribe page', functio
     $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
-    $user->subscriptions()->create([
+    $workspace->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_123',
         'stripe_status' => 'canceled',
@@ -133,7 +133,7 @@ test('invited member can access workspace when owner has active subscription', f
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
     $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
 
-    $owner->subscriptions()->create([
+    $workspace->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_owner_123',
         'stripe_status' => 'active',
@@ -172,7 +172,7 @@ test('invited member on own workspace without subscription is redirected to subs
     $ownerWorkspace = Workspace::factory()->create(['user_id' => $owner->id]);
     $ownerWorkspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
 
-    $owner->subscriptions()->create([
+    $ownerWorkspace->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_owner_123',
         'stripe_status' => 'active',

@@ -14,9 +14,5 @@ class DeleteWorkspace
         User::where('current_workspace_id', $workspace->id)->update(['current_workspace_id' => null]);
 
         $workspace->delete();
-
-        if ($user->hasActiveSubscription()) {
-            $user->decrementWorkspaceQuantity();
-        }
     }
 }

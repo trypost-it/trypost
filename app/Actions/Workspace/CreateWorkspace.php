@@ -21,10 +21,6 @@ class CreateWorkspace
         $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
         $user->switchWorkspace($workspace);
 
-        if ($user->hasActiveSubscription()) {
-            $user->incrementWorkspaceQuantity();
-        }
-
         return $workspace;
     }
 }

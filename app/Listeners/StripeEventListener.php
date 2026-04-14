@@ -6,15 +6,12 @@ namespace App\Listeners;
 
 use App\Enums\User\Setup;
 use App\Events\SubscriptionCreated;
-use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Events\WebhookReceived;
 
 class StripeEventListener
 {
-    /**
-     * Handle received Stripe webhooks.
-     */
     public function handle(WebhookReceived $event): void
     {
         try {
@@ -25,16 +22,16 @@ class StripeEventListener
                 return;
             }
 
-            $user = User::where('stripe_id', $stripeCustomerId)->first();
+            $workspace = Workspace::where('stripe_id', $stripeCustomerId)->first();
 
-            if (! $user) {
+            if (! $workspace) {
                 return;
             }
 
             match ($type) {
-                'customer.subscription.created' => $this->handleSubscriptionCreated($user, $event->payload),
-                'customer.subscription.updated' => $this->handleSubscriptionUpdated($user, $event->payload),
-                'customer.subscription.deleted' => $this->handleSubscriptionDeleted($user, $event->payload),
+                'customer.subscription.created' => $this->handleSubscriptionCreated($workspace, $event->payload),
+                'customer.subscription.updated' => $this->handleSubscriptionUpdated($workspace, $event->payload),
+                'customer.subscription.deleted' => $this->handleSubscriptionDeleted($workspace, $event->payload),
                 default => null,
             };
         } catch (\Exception $e) {
@@ -45,22 +42,24 @@ class StripeEventListener
         }
     }
 
-    protected function handleSubscriptionCreated(User $user, array $payload): void
+    protected function handleSubscriptionCreated(Workspace $workspace, array $payload): void
     {
-        if ($user->setup === Setup::Subscription) {
-            $user->update(['setup' => Setup::Completed]);
+        $owner = $workspace->owner;
+
+        if ($owner && $owner->setup === Setup::Subscription) {
+            $owner->update(['setup' => Setup::Completed]);
         }
 
-        SubscriptionCreated::dispatch($user);
+        SubscriptionCreated::dispatch($workspace);
     }
 
-    protected function handleSubscriptionUpdated(User $user, array $payload): void
+    protected function handleSubscriptionUpdated(Workspace $workspace, array $payload): void
     {
-        // Future: dispatch SubscriptionUpdated event if needed
+        //
     }
 
-    protected function handleSubscriptionDeleted(User $user, array $payload): void
+    protected function handleSubscriptionDeleted(Workspace $workspace, array $payload): void
     {
-        // Future: dispatch SubscriptionDeleted event if needed
+        //
     }
 }

@@ -134,13 +134,12 @@ test('returns 402 when workspace owner has no subscription', function () {
     $response->assertJson(['message' => 'Active subscription required.']);
 });
 
-test('allows access when workspace owner has active subscription', function () {
+test('allows access when workspace has active subscription', function () {
     config(['trypost.self_hosted' => false]);
 
     $result = createApiToken();
-    $owner = $result['workspace']->owner;
 
-    $owner->subscriptions()->create([
+    $result['workspace']->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_test_123',
         'stripe_status' => 'active',
@@ -157,13 +156,12 @@ test('allows access when workspace owner has active subscription', function () {
     $response->assertOk();
 });
 
-test('allows access when workspace owner is on trial', function () {
+test('allows access when workspace is on trial', function () {
     config(['trypost.self_hosted' => false]);
 
     $result = createApiToken();
-    $owner = $result['workspace']->owner;
 
-    $owner->subscriptions()->create([
+    $result['workspace']->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_trial_123',
         'stripe_status' => 'trialing',

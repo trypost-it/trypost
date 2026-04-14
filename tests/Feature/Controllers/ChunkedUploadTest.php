@@ -13,14 +13,13 @@ beforeEach(function () {
     $this->user = User::factory()->create([
         'setup' => Setup::Completed,
     ]);
-    $this->user->subscriptions()->create([
+    $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->workspace->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_123',
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',
-        'quantity' => 1,
     ]);
-    $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 

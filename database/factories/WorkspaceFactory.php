@@ -22,6 +22,7 @@ class WorkspaceFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'plan_id' => null,
             'name' => fake()->company(),
             'timezone' => fake()->timezone(),
         ];

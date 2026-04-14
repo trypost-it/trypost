@@ -139,8 +139,8 @@ test('allows access when owner has active subscription', function () {
     config(['trypost.self_hosted' => false]);
     $result = createMcpToken();
 
-    $result['user']->subscriptions()->create([
-        'type' => User::SUBSCRIPTION_NAME,
+    $result['workspace']->subscriptions()->create([
+        'type' => Workspace::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_test',
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',
@@ -155,8 +155,8 @@ test('allows access when owner is on trial', function () {
     config(['trypost.self_hosted' => false]);
     $result = createMcpToken();
 
-    $result['user']->subscriptions()->create([
-        'type' => User::SUBSCRIPTION_NAME,
+    $result['workspace']->subscriptions()->create([
+        'type' => Workspace::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_trial',
         'stripe_status' => 'trialing',
         'stripe_price' => 'price_123',

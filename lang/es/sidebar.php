@@ -38,6 +38,7 @@ return [
 
     'config' => [
         'connections' => 'Conexiones',
+        'brands' => 'Marcas',
         'hashtags' => 'Hashtags',
         'labels' => 'Etiquetas',
         'settings' => 'Configuración',

@@ -8,6 +8,7 @@ import {
     IconClock,
     IconFileCheck,
     IconFileText,
+    IconBuildingStore,
     IconHash,
     IconLifebuoy,
     IconMessageCircle,
@@ -44,6 +45,7 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { accounts, analytics, calendar } from '@/routes/app';
+import { index as brands } from '@/routes/app/brands';
 import { index as hashtags } from '@/routes/app/hashtags';
 import { index as labels } from '@/routes/app/labels';
 import { edit as editProfile } from '@/routes/app/profile';
@@ -108,6 +110,11 @@ const configNavItems = computed(() => {
             title: trans('sidebar.config.connections'),
             href: accounts.url(),
             icon: IconAffiliate,
+        },
+        {
+            title: trans('sidebar.config.brands'),
+            href: brands.url(),
+            icon: IconBuildingStore,
         },
         {
             title: trans('sidebar.config.hashtags'),

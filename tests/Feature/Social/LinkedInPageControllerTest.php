@@ -180,22 +180,8 @@ test('linkedin page select fails with expired session', function () {
     $response->assertViewHas('message', 'Session expired. Please try again.');
 });
 
-test('user cannot connect linkedin page if already connected via connect route', function () {
+test('user can connect multiple linkedin pages', function () {
     SocialAccount::factory()->linkedinPage()->create([
-        'workspace_id' => $this->workspace->id,
-        'platform_user_id' => '123456',
-    ]);
-
-    // The "already connected" check happens in the connect method, not callback
-    $response = $this->actingAs($this->user)->get(route('app.social.linkedin-page.connect'));
-
-    $response->assertRedirect();
-    $response->assertSessionHas('flash.banner', __('accounts.flash.already_connected'));
-    $response->assertSessionHas('flash.bannerStyle', 'danger');
-});
-
-test('user can reconnect disconnected linkedin page account', function () {
-    $existingAccount = SocialAccount::factory()->linkedinPage()->disconnected()->create([
         'workspace_id' => $this->workspace->id,
         'platform_user_id' => '123456',
     ]);
@@ -210,25 +196,22 @@ test('user can reconnect disconnected linkedin page account', function () {
             'refresh_token' => 'new-refresh-token',
             'expires_in' => 5184000,
             'organizations' => [
-                ['id' => 123456, 'name' => 'Test Company', 'vanity_name' => 'testcompany', 'logo' => null],
+                ['id' => 789012, 'name' => 'Another Company', 'vanity_name' => 'anothercompany', 'logo' => null],
             ],
-            'reconnect_id' => $existingAccount->id,
         ],
     ]);
 
     $response = $this->actingAs($this->user)->post(route('app.social.linkedin-page.select'), [
-        'organization_id' => 123456,
-        'organization_name' => 'Test Company',
-        'organization_vanity_name' => 'testcompany',
+        'organization_id' => 789012,
+        'organization_name' => 'Another Company',
+        'organization_vanity_name' => 'anothercompany',
         'organization_logo' => null,
     ]);
 
     $response->assertOk();
     $response->assertViewHas('success', true);
 
-    $existingAccount->refresh();
-    expect($existingAccount->status)->toBe(Status::Connected);
-    expect($existingAccount->access_token)->toBe('new-access-token');
+    expect($this->workspace->socialAccounts()->where('platform', Platform::LinkedInPage)->count())->toBe(2);
 });
 
 test('linkedin page callback handles oauth errors gracefully', function () {

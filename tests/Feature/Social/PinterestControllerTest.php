@@ -84,7 +84,7 @@ test('pinterest callback fails with expired session', function () {
     $response->assertViewHas('message', 'Session expired. Please try again.');
 });
 
-test('user cannot connect pinterest if already connected', function () {
+test('user can connect multiple pinterest accounts', function () {
     SocialAccount::factory()->pinterest()->create([
         'workspace_id' => $this->workspace->id,
         'platform_user_id' => 'pinterest_user_123',
@@ -102,38 +102,6 @@ test('user cannot connect pinterest if already connected', function () {
     $socialiteUser->token = 'new-access-token';
     $socialiteUser->refreshToken = 'new-refresh-token';
     $socialiteUser->expiresIn = 2592000;
-
-    Socialite::shouldReceive('driver')
-        ->with('pinterest')
-        ->andReturn(Mockery::mock([
-            'user' => $socialiteUser,
-        ]));
-
-    $response = $this->actingAs($this->user)->get(route('app.social.pinterest.callback'));
-
-    $response->assertOk();
-    $response->assertViewHas('success', false);
-    $response->assertViewHas('message', 'This platform is already connected.');
-});
-
-test('user can reconnect disconnected pinterest account', function () {
-    $existingAccount = SocialAccount::factory()->pinterest()->disconnected()->create([
-        'workspace_id' => $this->workspace->id,
-        'platform_user_id' => 'pinterest_user_123',
-    ]);
-
-    session([
-        'social_connect_workspace' => $this->workspace->id,
-    ]);
-
-    $socialiteUser = Mockery::mock(SocialiteUser::class);
-    $socialiteUser->shouldReceive('getId')->andReturn('pinterest_user_123');
-    $socialiteUser->shouldReceive('getNickname')->andReturn('pinner');
-    $socialiteUser->shouldReceive('getName')->andReturn('Pinterest User');
-    $socialiteUser->shouldReceive('getAvatar')->andReturn(null);
-    $socialiteUser->token = 'new-access-token';
-    $socialiteUser->refreshToken = 'new-refresh-token';
-    $socialiteUser->expiresIn = 2592000;
     $socialiteUser->approvedScopes = ['boards:read', 'boards:write', 'pins:read', 'pins:write', 'user_accounts:read'];
 
     Socialite::shouldReceive('driver')
@@ -147,9 +115,7 @@ test('user can reconnect disconnected pinterest account', function () {
     $response->assertOk();
     $response->assertViewHas('success', true);
 
-    $existingAccount->refresh();
-    expect($existingAccount->status)->toBe(Status::Connected);
-    expect($existingAccount->access_token)->toBe('new-access-token');
+    expect($this->workspace->socialAccounts()->where('platform', Platform::Pinterest)->count())->toBe(2);
 });
 
 test('pinterest callback handles oauth errors gracefully', function () {

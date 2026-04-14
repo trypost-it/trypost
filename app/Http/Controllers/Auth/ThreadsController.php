@@ -38,20 +38,9 @@ class ThreadsController extends SocialController
         $this->authorize('manageAccounts', $workspace);
         $this->ensureSocialAccountLimit($workspace);
 
-        $existingAccount = $workspace->socialAccounts()
-            ->where('platform', $this->platform->value)
-            ->first();
-
-        if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            session()->flash('flash.banner', __('accounts.flash.already_connected'));
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return back();
-        }
-
         session([
             'social_connect_workspace' => $workspace->id,
-            'social_reconnect_id' => $existingAccount?->id,
+            'social_reconnect_id' => null,
         ]);
 
         $state = bin2hex(random_bytes(16));
@@ -91,16 +80,6 @@ class ThreadsController extends SocialController
             session()->forget(['threads_oauth_state', 'social_reconnect_id']);
 
             return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
-        }
-
-        $reconnectId = session('social_reconnect_id');
-        $existingAccount = $reconnectId ? $workspace->socialAccounts()->find($reconnectId) : null;
-
-        // If account exists and is connected, don't allow duplicate
-        if (! $existingAccount && $workspace->hasConnectedPlatform($this->platform->value)) {
-            session()->forget(['threads_oauth_state', 'social_reconnect_id']);
-
-            return $this->popupCallback(false, 'This platform is already connected.', $this->platform->value);
         }
 
         try {
@@ -156,25 +135,6 @@ class ThreadsController extends SocialController
 
             $profile = $profileResponse->json();
             $avatarPath = uploadFromUrl(data_get($profile, 'threads_profile_picture_url', null));
-
-            if ($existingAccount) {
-                // Reconnect existing account
-                $existingAccount->update([
-                    'platform_user_id' => data_get($profile, 'id'),
-                    'username' => data_get($profile, 'username'),
-                    'display_name' => data_get($profile, 'name', data_get($profile, 'username')),
-                    'avatar_url' => $avatarPath,
-                    'access_token' => $longLivedToken,
-                    'refresh_token' => $longLivedToken,
-                    'token_expires_at' => $expiresIn ? now()->addSeconds($expiresIn) : null,
-                    'scopes' => $this->scopes,
-                ]);
-                $existingAccount->markAsConnected();
-
-                session()->forget(['threads_oauth_state', 'social_reconnect_id']);
-
-                return $this->popupCallback(true, 'Threads account reconnected!', $this->platform->value);
-            }
 
             // Create new account
             $workspace->socialAccounts()->create([

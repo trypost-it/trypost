@@ -44,20 +44,9 @@ class FacebookController extends SocialController
         $this->authorize('manageAccounts', $workspace);
         $this->ensureSocialAccountLimit($workspace);
 
-        $existingAccount = $workspace->socialAccounts()
-            ->where('platform', $this->platform->value)
-            ->first();
-
-        if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            session()->flash('flash.banner', __('accounts.flash.already_connected'));
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return back();
-        }
-
         session([
             'social_connect_workspace' => $workspace->id,
-            'social_reconnect_id' => $existingAccount?->id,
+            'social_reconnect_id' => null,
             'social_connect_onboarding' => $request->boolean('onboarding'),
         ]);
 
@@ -84,14 +73,6 @@ class FacebookController extends SocialController
             return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
         }
 
-        $reconnectId = session('social_reconnect_id');
-        $existingAccount = $reconnectId ? $workspace->socialAccounts()->find($reconnectId) : null;
-
-        // If account exists and is connected, don't allow duplicate
-        if (! $existingAccount && $workspace->hasConnectedPlatform($this->platform->value)) {
-            return $this->popupCallback(false, 'This platform is already connected.', $this->platform->value);
-        }
-
         try {
             $socialUser = Socialite::driver($this->driver)->usingGraphVersion('v25.0')->user();
 
@@ -114,30 +95,6 @@ class FacebookController extends SocialController
                 $page = $pages[0];
                 $avatarPath = uploadFromUrl(data_get($page, 'picture'));
 
-                if ($existingAccount) {
-                    // Reconnect existing account
-                    $existingAccount->update([
-                        'platform_user_id' => data_get($page, 'id'),
-                        'username' => data_get($page, 'username', null),
-                        'display_name' => data_get($page, 'name'),
-                        'avatar_url' => $avatarPath,
-                        'access_token' => data_get($page, 'access_token'),
-                        'refresh_token' => null,
-                        'token_expires_at' => null,
-                        'scopes' => $this->scopes,
-                        'meta' => [
-                            'page_id' => data_get($page, 'id'),
-                            'user_id' => $socialUser->getId(),
-                            'user_token' => $socialUser->token,
-                        ],
-                    ]);
-                    $existingAccount->markAsConnected();
-
-                    session()->forget('social_reconnect_id');
-
-                    return $this->popupCallback(true, 'Facebook Page reconnected!', $this->platform->value);
-                }
-
                 // Create new account
                 $workspace->socialAccounts()->create([
                     'platform' => $this->platform->value,
@@ -157,8 +114,6 @@ class FacebookController extends SocialController
                     ],
                 ]);
 
-                session()->forget('social_reconnect_id');
-
                 return $this->popupCallback(true, 'Facebook Page connected!', $this->platform->value);
             }
 
@@ -168,7 +123,6 @@ class FacebookController extends SocialController
                     'user_token' => $socialUser->token,
                     'user_id' => $socialUser->getId(),
                     'pages' => $pages,
-                    'reconnect_id' => $reconnectId,
                 ],
             ]);
 

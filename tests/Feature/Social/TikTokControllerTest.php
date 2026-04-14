@@ -86,7 +86,7 @@ test('tiktok callback fails with expired session', function () {
     $response->assertViewHas('message', 'Session expired. Please try again.');
 });
 
-test('user cannot connect tiktok if already connected', function () {
+test('user can connect multiple tiktok accounts', function () {
     SocialAccount::factory()->tiktok()->create([
         'workspace_id' => $this->workspace->id,
         'platform_user_id' => 'tiktok123',
@@ -100,41 +100,6 @@ test('user cannot connect tiktok if already connected', function () {
     $socialiteUser->shouldReceive('getId')->andReturn('tiktok456');
     $socialiteUser->shouldReceive('getNickname')->andReturn('anothertiktoker');
     $socialiteUser->shouldReceive('getName')->andReturn('Another TikTok User');
-    $socialiteUser->shouldReceive('getAvatar')->andReturn(null);
-    $socialiteUser->token = 'new-access-token';
-    $socialiteUser->refreshToken = 'new-refresh-token';
-    $socialiteUser->expiresIn = 86400;
-
-    $socialiteMock = Mockery::mock();
-    $socialiteMock->shouldReceive('scopes')->andReturn($socialiteMock);
-    $socialiteMock->shouldReceive('user')->andReturn($socialiteUser);
-
-    Socialite::shouldReceive('driver')
-        ->with('tiktok')
-        ->andReturn($socialiteMock);
-
-    $response = $this->actingAs($this->user)->get(route('app.social.tiktok.callback'));
-
-    $response->assertOk();
-    $response->assertViewHas('success', false);
-    $response->assertViewHas('message', 'This platform is already connected.');
-});
-
-test('user can reconnect disconnected tiktok account', function () {
-    $existingAccount = SocialAccount::factory()->tiktok()->disconnected()->create([
-        'workspace_id' => $this->workspace->id,
-        'platform_user_id' => 'tiktok123',
-    ]);
-
-    session([
-        'social_connect_workspace' => $this->workspace->id,
-        'social_reconnect_id' => $existingAccount->id,
-    ]);
-
-    $socialiteUser = Mockery::mock(SocialiteUser::class);
-    $socialiteUser->shouldReceive('getId')->andReturn('tiktok123');
-    $socialiteUser->shouldReceive('getNickname')->andReturn('tiktoker');
-    $socialiteUser->shouldReceive('getName')->andReturn('TikTok User');
     $socialiteUser->shouldReceive('getAvatar')->andReturn(null);
     $socialiteUser->token = 'new-access-token';
     $socialiteUser->refreshToken = 'new-refresh-token';
@@ -154,9 +119,7 @@ test('user can reconnect disconnected tiktok account', function () {
     $response->assertOk();
     $response->assertViewHas('success', true);
 
-    $existingAccount->refresh();
-    expect($existingAccount->status)->toBe(Status::Connected);
-    expect($existingAccount->access_token)->toBe('new-access-token');
+    expect($this->workspace->socialAccounts()->where('platform', Platform::TikTok)->count())->toBe(2);
 });
 
 test('tiktok callback handles oauth errors gracefully', function () {

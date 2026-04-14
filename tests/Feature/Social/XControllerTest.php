@@ -84,7 +84,7 @@ test('x callback fails with expired session', function () {
     $response->assertViewHas('message', 'Session expired. Please try again.');
 });
 
-test('user cannot connect x if already connected', function () {
+test('user can connect multiple x accounts', function () {
     SocialAccount::factory()->x()->create([
         'workspace_id' => $this->workspace->id,
         'platform_user_id' => '123456789',
@@ -102,38 +102,6 @@ test('user cannot connect x if already connected', function () {
     $socialiteUser->token = 'new-access-token';
     $socialiteUser->refreshToken = 'new-refresh-token';
     $socialiteUser->expiresIn = 7200;
-
-    Socialite::shouldReceive('driver')
-        ->with('x')
-        ->andReturn(Mockery::mock([
-            'user' => $socialiteUser,
-        ]));
-
-    $response = $this->actingAs($this->user)->get(route('app.social.x.callback'));
-
-    $response->assertOk();
-    $response->assertViewHas('success', false);
-    $response->assertViewHas('message', 'This platform is already connected.');
-});
-
-test('user can reconnect disconnected x account', function () {
-    $existingAccount = SocialAccount::factory()->x()->disconnected()->create([
-        'workspace_id' => $this->workspace->id,
-        'platform_user_id' => '123456789',
-    ]);
-
-    session([
-        'social_connect_workspace' => $this->workspace->id,
-    ]);
-
-    $socialiteUser = Mockery::mock(SocialiteUser::class);
-    $socialiteUser->shouldReceive('getId')->andReturn('123456789');
-    $socialiteUser->shouldReceive('getNickname')->andReturn('testuser');
-    $socialiteUser->shouldReceive('getName')->andReturn('Test User');
-    $socialiteUser->shouldReceive('getAvatar')->andReturn(null);
-    $socialiteUser->token = 'new-access-token';
-    $socialiteUser->refreshToken = 'new-refresh-token';
-    $socialiteUser->expiresIn = 7200;
     $socialiteUser->approvedScopes = ['tweet.read', 'tweet.write'];
 
     Socialite::shouldReceive('driver')
@@ -147,9 +115,7 @@ test('user can reconnect disconnected x account', function () {
     $response->assertOk();
     $response->assertViewHas('success', true);
 
-    $existingAccount->refresh();
-    expect($existingAccount->status)->toBe(Status::Connected);
-    expect($existingAccount->access_token)->toBe('new-access-token');
+    expect($this->workspace->socialAccounts()->where('platform', Platform::X)->count())->toBe(2);
 });
 
 test('x callback handles oauth errors gracefully', function () {

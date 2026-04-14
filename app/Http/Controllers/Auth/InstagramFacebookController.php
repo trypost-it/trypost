@@ -46,13 +46,9 @@ class InstagramFacebookController extends SocialController
         $this->authorize('manageAccounts', $workspace);
         $this->ensureSocialAccountLimit($workspace);
 
-        $existingAccount = $workspace->socialAccounts()
-            ->where('platform', $this->platform->value)
-            ->first();
-
         session([
             'social_connect_workspace' => $workspace->id,
-            'social_reconnect_id' => $existingAccount?->id,
+            'social_reconnect_id' => null,
             'social_connect_onboarding' => $request->boolean('onboarding'),
         ]);
 

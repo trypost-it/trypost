@@ -36,17 +36,6 @@ class XController extends SocialController
 
         $this->authorize('manageAccounts', $workspace);
 
-        $existingAccount = $workspace->socialAccounts()
-            ->where('platform', $this->platform->value)
-            ->first();
-
-        if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            session()->flash('flash.banner', __('accounts.flash.already_connected'));
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return back();
-        }
-
         return $this->redirectToProvider($request, $this->driver, $this->scopes);
     }
 

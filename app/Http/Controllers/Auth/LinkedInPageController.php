@@ -47,20 +47,9 @@ class LinkedInPageController extends SocialController
         $this->authorize('manageAccounts', $workspace);
         $this->ensureSocialAccountLimit($workspace);
 
-        $existingAccount = $workspace->socialAccounts()
-            ->where('platform', $this->platform->value)
-            ->first();
-
-        if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            session()->flash('flash.banner', __('accounts.flash.already_connected'));
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return back();
-        }
-
         session([
             'social_connect_workspace' => $workspace->id,
-            'linkedin_page_reconnect_id' => $existingAccount?->id,
+            'linkedin_page_reconnect_id' => null,
             'social_connect_onboarding' => $request->boolean('onboarding'),
         ]);
 

@@ -159,7 +159,7 @@ test('facebook callback fails with expired session', function () {
     $response->assertViewHas('message', 'Session expired. Please try again.');
 });
 
-test('user cannot connect facebook if already connected', function () {
+test('user can connect multiple facebook accounts', function () {
     SocialAccount::factory()->facebook()->create([
         'workspace_id' => $this->workspace->id,
         'platform_user_id' => 'page_existing',
@@ -193,52 +193,9 @@ test('user cannot connect facebook if already connected', function () {
     $response = $this->actingAs($this->user)->get(route('app.social.facebook.callback'));
 
     $response->assertOk();
-    $response->assertViewHas('success', false);
-    $response->assertViewHas('message', 'This platform is already connected.');
-});
-
-test('user can reconnect disconnected facebook account', function () {
-    $existingAccount = SocialAccount::factory()->facebook()->disconnected()->create([
-        'workspace_id' => $this->workspace->id,
-        'platform_user_id' => 'page_123',
-        'meta' => ['page_id' => 'page_123'],
-    ]);
-
-    session([
-        'social_connect_workspace' => $this->workspace->id,
-        'social_reconnect_id' => $existingAccount->id,
-    ]);
-
-    $socialiteUser = Mockery::mock(SocialiteUser::class);
-    $socialiteUser->shouldReceive('getId')->andReturn('facebook_user_123');
-    $socialiteUser->token = 'new-user-token';
-
-    Socialite::shouldReceive('driver')
-        ->with('facebook')
-        ->andReturn(Mockery::mock()->shouldReceive('usingGraphVersion')->andReturnSelf()->shouldReceive('user')->andReturn($socialiteUser)->getMock());
-
-    Http::fake([
-        'https://graph.facebook.com/*/me/accounts*' => Http::response([
-            'data' => [
-                [
-                    'id' => 'page_123',
-                    'name' => 'My Facebook Page',
-                    'username' => 'myfbpage',
-                    'picture' => ['data' => ['url' => null]],
-                    'access_token' => 'new-page-token',
-                ],
-            ],
-        ], 200),
-    ]);
-
-    $response = $this->actingAs($this->user)->get(route('app.social.facebook.callback'));
-
-    $response->assertOk();
     $response->assertViewHas('success', true);
 
-    $existingAccount->refresh();
-    expect($existingAccount->status)->toBe(Status::Connected);
-    expect($existingAccount->access_token)->toBe('new-page-token');
+    expect($this->workspace->socialAccounts()->where('platform', Platform::Facebook)->count())->toBe(2);
 });
 
 test('facebook callback handles oauth errors gracefully', function () {

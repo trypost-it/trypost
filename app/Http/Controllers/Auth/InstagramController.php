@@ -40,20 +40,9 @@ class InstagramController extends SocialController
         $this->authorize('manageAccounts', $workspace);
         $this->ensureSocialAccountLimit($workspace);
 
-        $existingAccount = $workspace->socialAccounts()
-            ->where('platform', $this->platform->value)
-            ->first();
-
-        if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            session()->flash('flash.banner', __('accounts.flash.already_connected'));
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return back();
-        }
-
         session([
             'social_connect_workspace' => $workspace->id,
-            'social_reconnect_id' => $existingAccount?->id,
+            'social_reconnect_id' => null,
             'social_connect_onboarding' => $request->boolean('onboarding'),
         ]);
 
@@ -79,14 +68,6 @@ class InstagramController extends SocialController
             return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
         }
 
-        $reconnectId = session('social_reconnect_id');
-        $existingAccount = $reconnectId ? $workspace->socialAccounts()->find($reconnectId) : null;
-
-        // If account exists and is connected, don't allow duplicate
-        if (! $existingAccount && $workspace->hasConnectedPlatform($this->platform->value)) {
-            return $this->popupCallback(false, 'This platform is already connected.', $this->platform->value);
-        }
-
         try {
             $socialUser = Socialite::driver($this->driver)->user();
 
@@ -96,28 +77,6 @@ class InstagramController extends SocialController
             // Calculate token expiration (long-lived tokens last 60 days)
             $expiresIn = $socialUser->expiresIn ?? 5184000; // 60 days in seconds
             $tokenExpiresAt = now()->addSeconds($expiresIn);
-
-            if ($existingAccount) {
-                // Reconnect existing account
-                $existingAccount->update([
-                    'platform_user_id' => $socialUser->getId(),
-                    'username' => $socialUser->getNickname(),
-                    'display_name' => $socialUser->getName() ?? $socialUser->getNickname(),
-                    'avatar_url' => $avatarPath,
-                    'access_token' => $socialUser->token,
-                    'refresh_token' => $socialUser->refreshToken,
-                    'token_expires_at' => $tokenExpiresAt,
-                    'scopes' => $this->scopes,
-                    'meta' => [
-                        'account_type' => $socialUser->user['account_type'] ?? null,
-                    ],
-                ]);
-                $existingAccount->markAsConnected();
-
-                session()->forget('social_reconnect_id');
-
-                return $this->popupCallback(true, 'Instagram account reconnected!', $this->platform->value);
-            }
 
             // Create new account
             $workspace->socialAccounts()->create([
@@ -135,8 +94,6 @@ class InstagramController extends SocialController
                     'account_type' => $socialUser->user['account_type'] ?? null,
                 ],
             ]);
-
-            session()->forget('social_reconnect_id');
 
             return $this->popupCallback(true, 'Instagram account connected!', $this->platform->value);
         } catch (\Exception $e) {

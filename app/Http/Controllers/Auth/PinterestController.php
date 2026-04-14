@@ -40,17 +40,6 @@ class PinterestController extends SocialController
 
         $this->authorize('manageAccounts', $workspace);
 
-        $existingAccount = $workspace->socialAccounts()
-            ->where('platform', $this->platform->value)
-            ->first();
-
-        if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            session()->flash('flash.banner', __('accounts.flash.already_connected'));
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return back();
-        }
-
         return $this->redirectToProvider($request, $this->driver, $this->scopes);
     }
 
@@ -70,14 +59,6 @@ class PinterestController extends SocialController
 
         try {
             $socialUser = Socialite::driver($this->driver)->user();
-            $existingAccount = $workspace->socialAccounts()
-                ->where('platform', $this->platform->value)
-                ->first();
-
-            // If account exists and is connected, don't allow duplicate
-            if ($existingAccount && ! $existingAccount->isDisconnected()) {
-                return $this->popupCallback(false, 'This platform is already connected.', $this->platform->value);
-            }
 
             Log::info('Pinterest OAuth User Data', [
                 'id' => $socialUser->getId(),
@@ -87,23 +68,6 @@ class PinterestController extends SocialController
             ]);
 
             $avatarPath = uploadFromUrl($socialUser->getAvatar());
-
-            if ($existingAccount) {
-                // Reconnect existing account
-                $existingAccount->update([
-                    'platform_user_id' => $socialUser->getId(),
-                    'username' => $socialUser->getNickname(),
-                    'display_name' => $socialUser->getName() ?? $socialUser->getNickname(),
-                    'avatar_url' => $avatarPath,
-                    'access_token' => $socialUser->token,
-                    'refresh_token' => $socialUser->refreshToken,
-                    'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : now()->addDays(30),
-                    'scopes' => $socialUser->approvedScopes ?? $this->scopes,
-                ]);
-                $existingAccount->markAsConnected();
-
-                return $this->popupCallback(true, 'Pinterest account reconnected!', $this->platform->value);
-            }
 
             // Create new account
             $workspace->socialAccounts()->create([

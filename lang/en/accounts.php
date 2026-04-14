@@ -2,8 +2,14 @@
 
 return [
     'title' => 'Connections',
-    'page_title' => 'Connected Accounts',
-    'description' => 'Connect your social networks to schedule and publish posts',
+    'page_title' => 'Social Accounts',
+    'description' => 'Overview of all your connected social accounts',
+    'add_social' => 'Add Social',
+    'add_social_title' => 'Connect a Social Account',
+    'add_social_description' => 'Choose a platform to connect',
+    'no_accounts' => 'No accounts connected yet',
+    'no_accounts_description' => 'Connect your social networks to start scheduling and publishing posts',
+    'added' => 'Added :date',
 
     'limit_reached' => 'You have reached your plan limit for social accounts.',
 

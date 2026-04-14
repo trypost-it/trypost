@@ -105,7 +105,7 @@ test('threads callback fails with expired session', function () {
     $response->assertViewHas('message', 'Session expired. Please try again.');
 });
 
-test('user cannot connect threads if already connected', function () {
+test('user can connect multiple threads accounts', function () {
     SocialAccount::factory()->threads()->create([
         'workspace_id' => $this->workspace->id,
         'platform_user_id' => '123456789',
@@ -140,51 +140,9 @@ test('user cannot connect threads if already connected', function () {
     ]));
 
     $response->assertOk();
-    $response->assertViewHas('success', false);
-    $response->assertViewHas('message', 'This platform is already connected.');
-});
-
-test('user can reconnect disconnected threads account', function () {
-    $existingAccount = SocialAccount::factory()->threads()->disconnected()->create([
-        'workspace_id' => $this->workspace->id,
-        'platform_user_id' => '123456789',
-    ]);
-
-    $state = bin2hex(random_bytes(16));
-
-    session([
-        'social_connect_workspace' => $this->workspace->id,
-        'threads_oauth_state' => $state,
-        'social_reconnect_id' => $existingAccount->id,
-    ]);
-
-    Http::fake([
-        'https://graph.threads.net/oauth/access_token' => Http::response([
-            'access_token' => 'new-short-token',
-            'user_id' => '123456789',
-        ], 200),
-        'https://graph.threads.net/access_token*' => Http::response([
-            'access_token' => 'new-long-lived-token',
-            'expires_in' => 5184000,
-        ], 200),
-        'https://graph.threads.net/v1.0/123456789*' => Http::response([
-            'id' => '123456789',
-            'username' => 'testuser',
-            'name' => 'Test User',
-        ], 200),
-    ]);
-
-    $response = $this->actingAs($this->user)->get(route('app.social.threads.callback', [
-        'code' => 'test-auth-code',
-        'state' => $state,
-    ]));
-
-    $response->assertOk();
     $response->assertViewHas('success', true);
 
-    $existingAccount->refresh();
-    expect($existingAccount->status)->toBe(Status::Connected);
-    expect($existingAccount->access_token)->toBe('new-long-lived-token');
+    expect($this->workspace->socialAccounts()->where('platform', Platform::Threads)->count())->toBe(2);
 });
 
 test('threads callback handles token exchange failure', function () {

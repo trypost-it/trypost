@@ -82,7 +82,7 @@ test('instagram callback fails with expired session', function () {
     $response->assertViewHas('message', 'Session expired. Please try again.');
 });
 
-test('user cannot connect instagram if already connected', function () {
+test('user can connect multiple instagram accounts', function () {
     SocialAccount::factory()->create([
         'workspace_id' => $this->workspace->id,
         'platform' => Platform::Instagram,
@@ -113,46 +113,9 @@ test('user cannot connect instagram if already connected', function () {
     $response = $this->actingAs($this->user)->get(route('app.social.instagram.callback'));
 
     $response->assertOk();
-    $response->assertViewHas('success', false);
-    $response->assertViewHas('message', 'This platform is already connected.');
-});
-
-test('user can reconnect disconnected instagram account', function () {
-    $existingAccount = SocialAccount::factory()->disconnected()->create([
-        'workspace_id' => $this->workspace->id,
-        'platform' => Platform::Instagram,
-        'platform_user_id' => '12345678',
-    ]);
-
-    session([
-        'social_connect_workspace' => $this->workspace->id,
-        'social_reconnect_id' => $existingAccount->id,
-    ]);
-
-    $socialiteUser = Mockery::mock(SocialiteUser::class);
-    $socialiteUser->shouldReceive('getId')->andReturn('12345678');
-    $socialiteUser->shouldReceive('getNickname')->andReturn('testuser');
-    $socialiteUser->shouldReceive('getName')->andReturn('Test User');
-    $socialiteUser->shouldReceive('getAvatar')->andReturn(null);
-    $socialiteUser->token = 'new-access-token';
-    $socialiteUser->refreshToken = 'new-refresh-token';
-    $socialiteUser->expiresIn = 5184000;
-    $socialiteUser->user = ['account_type' => 'BUSINESS'];
-
-    Socialite::shouldReceive('driver')
-        ->with('instagram')
-        ->andReturn(Mockery::mock([
-            'user' => $socialiteUser,
-        ]));
-
-    $response = $this->actingAs($this->user)->get(route('app.social.instagram.callback'));
-
-    $response->assertOk();
     $response->assertViewHas('success', true);
 
-    $existingAccount->refresh();
-    expect($existingAccount->status)->toBe(Status::Connected);
-    expect($existingAccount->access_token)->toBe('new-access-token');
+    expect($this->workspace->socialAccounts()->where('platform', Platform::Instagram)->count())->toBe(2);
 });
 
 test('instagram callback handles oauth errors gracefully', function () {

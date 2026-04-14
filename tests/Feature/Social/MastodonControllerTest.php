@@ -140,7 +140,7 @@ test('mastodon callback fails with expired session', function () {
     $response->assertViewHas('message', 'Session expired. Please try again.');
 });
 
-test('user cannot connect mastodon if already connected', function () {
+test('user can connect multiple mastodon accounts', function () {
     SocialAccount::factory()->mastodon()->create([
         'workspace_id' => $this->workspace->id,
         'platform_user_id' => '123456789',
@@ -173,48 +173,9 @@ test('user cannot connect mastodon if already connected', function () {
     ]));
 
     $response->assertOk();
-    $response->assertViewHas('success', false);
-    $response->assertViewHas('message', 'Mastodon is already connected.');
-});
-
-test('user can reconnect disconnected mastodon account', function () {
-    $existingAccount = SocialAccount::factory()->mastodon()->disconnected()->create([
-        'workspace_id' => $this->workspace->id,
-        'platform_user_id' => '123456789',
-    ]);
-
-    session([
-        'mastodon_instance' => 'https://mastodon.social',
-        'mastodon_client_id' => 'test-client-id',
-        'mastodon_client_secret' => 'test-client-secret',
-        'mastodon_oauth_state' => 'test-state',
-        'social_connect_workspace' => $this->workspace->id,
-    ]);
-
-    Http::fake([
-        'https://mastodon.social/oauth/token' => Http::response([
-            'access_token' => 'new-access-token',
-            'token_type' => 'Bearer',
-        ], 200),
-        'https://mastodon.social/api/v1/accounts/verify_credentials' => Http::response([
-            'id' => '123456789',
-            'username' => 'testuser',
-            'acct' => 'testuser',
-            'display_name' => 'Test User',
-        ], 200),
-    ]);
-
-    $response = $this->actingAs($this->user)->get(route('app.social.mastodon.callback', [
-        'code' => 'test-auth-code',
-        'state' => 'test-state',
-    ]));
-
-    $response->assertOk();
     $response->assertViewHas('success', true);
 
-    $existingAccount->refresh();
-    expect($existingAccount->status)->toBe(Status::Connected);
-    expect($existingAccount->access_token)->toBe('new-access-token');
+    expect($this->workspace->socialAccounts()->where('platform', Platform::Mastodon)->count())->toBe(2);
 });
 
 test('mastodon connection validates instance url', function () {

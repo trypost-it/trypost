@@ -2,8 +2,14 @@
 
 return [
     'title' => 'Conexiones',
-    'page_title' => 'Cuentas conectadas',
-    'description' => 'Conecta tus redes sociales para programar y publicar posts',
+    'page_title' => 'Cuentas Sociales',
+    'description' => 'Resumen de todas tus cuentas sociales conectadas',
+    'add_social' => 'Agregar Red Social',
+    'add_social_title' => 'Conectar una Cuenta Social',
+    'add_social_description' => 'Elige una plataforma para conectar',
+    'no_accounts' => 'No hay cuentas conectadas todavía',
+    'no_accounts_description' => 'Conecta tus redes sociales para empezar a programar y publicar posts',
+    'added' => 'Agregada :date',
 
     'limit_reached' => 'Has alcanzado el límite de cuentas sociales de tu plan.',
 

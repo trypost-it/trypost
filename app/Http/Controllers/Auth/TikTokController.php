@@ -41,18 +41,7 @@ class TikTokController extends SocialController
 
         $this->authorize('manageAccounts', $workspace);
 
-        $existingAccount = $workspace->socialAccounts()
-            ->where('platform', $this->platform->value)
-            ->first();
-
-        if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            session()->flash('flash.banner', __('accounts.flash.already_connected'));
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return back();
-        }
-
-        session(['social_reconnect_id' => $existingAccount?->id]);
+        session(['social_reconnect_id' => null]);
 
         return $this->redirectToProvider($request, $this->driver, $this->scopes);
     }
@@ -71,14 +60,6 @@ class TikTokController extends SocialController
             return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
         }
 
-        $reconnectId = session('social_reconnect_id');
-        $existingAccount = $reconnectId ? $workspace->socialAccounts()->find($reconnectId) : null;
-
-        // If account exists and is connected, don't allow duplicate
-        if (! $existingAccount && $workspace->hasConnectedPlatform($this->platform->value)) {
-            return $this->popupCallback(false, 'This platform is already connected.', $this->platform->value);
-        }
-
         try {
             $socialUser = Socialite::driver($this->driver)
                 ->scopes($this->scopes)
@@ -93,25 +74,6 @@ class TikTokController extends SocialController
             // TikTok returns username via getNickname() when user.info.profile scope is included
             $username = $socialUser->getNickname();
             $avatarPath = uploadFromUrl($socialUser->getAvatar());
-
-            if ($existingAccount) {
-                // Reconnect existing account
-                $existingAccount->update([
-                    'platform_user_id' => $socialUser->getId(),
-                    'username' => $username,
-                    'display_name' => $socialUser->getName(),
-                    'avatar_url' => $avatarPath,
-                    'access_token' => $socialUser->token,
-                    'refresh_token' => $socialUser->refreshToken,
-                    'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
-                    'scopes' => $socialUser->approvedScopes ?? null,
-                ]);
-                $existingAccount->markAsConnected();
-
-                session()->forget('social_reconnect_id');
-
-                return $this->popupCallback(true, 'TikTok account reconnected!', $this->platform->value);
-            }
 
             // Create new account
             $workspace->socialAccounts()->create([

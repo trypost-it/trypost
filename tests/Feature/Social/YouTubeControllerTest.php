@@ -182,7 +182,7 @@ test('youtube callback fails with expired session', function () {
     $response->assertViewHas('message', 'Session expired. Please try again.');
 });
 
-test('user cannot connect youtube if already connected', function () {
+test('user can connect multiple youtube accounts', function () {
     SocialAccount::factory()->youtube()->create([
         'workspace_id' => $this->workspace->id,
         'platform_user_id' => 'UC_channel_123',
@@ -223,58 +223,9 @@ test('user cannot connect youtube if already connected', function () {
     $response = $this->actingAs($this->user)->get(route('app.social.youtube.callback'));
 
     $response->assertOk();
-    $response->assertViewHas('success', false);
-    $response->assertViewHas('message', 'This platform is already connected.');
-});
-
-test('user can reconnect disconnected youtube account', function () {
-    $existingAccount = SocialAccount::factory()->youtube()->disconnected()->create([
-        'workspace_id' => $this->workspace->id,
-        'platform_user_id' => 'UC_channel_123',
-        'meta' => ['channel_id' => 'UC_channel_123'],
-    ]);
-
-    session([
-        'social_connect_workspace' => $this->workspace->id,
-        'social_reconnect_id' => $existingAccount->id,
-    ]);
-
-    $socialiteUser = Mockery::mock(SocialiteUser::class);
-    $socialiteUser->shouldReceive('getId')->andReturn('google_user_123');
-    $socialiteUser->token = 'new-access-token';
-    $socialiteUser->refreshToken = 'new-refresh-token';
-    $socialiteUser->expiresIn = 3600;
-
-    Socialite::shouldReceive('driver')
-        ->with('google')
-        ->andReturn(Mockery::mock([
-            'user' => $socialiteUser,
-        ]));
-
-    Http::fake([
-        'https://www.googleapis.com/youtube/v3/channels*' => Http::response([
-            'items' => [
-                [
-                    'id' => 'UC_channel_123',
-                    'snippet' => [
-                        'title' => 'My YouTube Channel',
-                        'customUrl' => '@mychannel',
-                        'thumbnails' => ['default' => ['url' => null]],
-                    ],
-                    'statistics' => ['subscriberCount' => 1000],
-                ],
-            ],
-        ], 200),
-    ]);
-
-    $response = $this->actingAs($this->user)->get(route('app.social.youtube.callback'));
-
-    $response->assertOk();
     $response->assertViewHas('success', true);
 
-    $existingAccount->refresh();
-    expect($existingAccount->status)->toBe(Status::Connected);
-    expect($existingAccount->access_token)->toBe('new-access-token');
+    expect($this->workspace->socialAccounts()->where('platform', Platform::YouTube)->count())->toBe(2);
 });
 
 test('youtube callback handles oauth errors gracefully', function () {

@@ -94,7 +94,7 @@ test('linkedin callback fails with expired session', function () {
     $response->assertViewHas('message', 'Session expired. Please try again.');
 });
 
-test('user cannot connect linkedin if already connected', function () {
+test('user can connect multiple linkedin accounts', function () {
     SocialAccount::factory()->linkedin()->create([
         'workspace_id' => $this->workspace->id,
         'platform_user_id' => 'abc123xyz',
@@ -112,38 +112,6 @@ test('user cannot connect linkedin if already connected', function () {
     $socialiteUser->token = 'new-access-token';
     $socialiteUser->refreshToken = 'new-refresh-token';
     $socialiteUser->expiresIn = 5184000;
-
-    Socialite::shouldReceive('driver')
-        ->with('linkedin')
-        ->andReturn(Mockery::mock([
-            'user' => $socialiteUser,
-        ]));
-
-    $response = $this->actingAs($this->user)->get(route('app.social.linkedin.callback'));
-
-    $response->assertOk();
-    $response->assertViewHas('success', false);
-    $response->assertViewHas('message', 'This platform is already connected.');
-});
-
-test('user can reconnect disconnected linkedin account', function () {
-    $existingAccount = SocialAccount::factory()->linkedin()->disconnected()->create([
-        'workspace_id' => $this->workspace->id,
-        'platform_user_id' => 'abc123xyz',
-    ]);
-
-    session([
-        'social_connect_workspace' => $this->workspace->id,
-    ]);
-
-    $socialiteUser = Mockery::mock(SocialiteUser::class);
-    $socialiteUser->shouldReceive('getId')->andReturn('abc123xyz');
-    $socialiteUser->shouldReceive('getNickname')->andReturn(null);
-    $socialiteUser->shouldReceive('getName')->andReturn('John Doe');
-    $socialiteUser->shouldReceive('getAvatar')->andReturn(null);
-    $socialiteUser->token = 'new-access-token';
-    $socialiteUser->refreshToken = 'new-refresh-token';
-    $socialiteUser->expiresIn = 5184000;
     $socialiteUser->approvedScopes = ['openid', 'profile', 'email', 'w_member_social'];
 
     Socialite::shouldReceive('driver')
@@ -154,7 +122,7 @@ test('user can reconnect disconnected linkedin account', function () {
 
     Http::fake([
         'https://api.linkedin.com/v2/me*' => Http::response([
-            'vanityName' => 'johndoe',
+            'vanityName' => 'janedoe',
         ], 200),
     ]);
 
@@ -163,9 +131,7 @@ test('user can reconnect disconnected linkedin account', function () {
     $response->assertOk();
     $response->assertViewHas('success', true);
 
-    $existingAccount->refresh();
-    expect($existingAccount->status)->toBe(Status::Connected);
-    expect($existingAccount->access_token)->toBe('new-access-token');
+    expect($this->workspace->socialAccounts()->where('platform', Platform::LinkedIn)->count())->toBe(2);
 });
 
 test('linkedin callback handles oauth errors gracefully', function () {

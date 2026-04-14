@@ -55,22 +55,19 @@ class SocialController extends Controller
 
         $this->authorize('view', $workspace);
 
-        $connectedAccounts = $workspace->socialAccounts;
+        $connectedAccounts = $workspace->socialAccounts()
+            ->with('brand')
+            ->get();
 
-        $platforms = collect(SocialPlatform::enabled())->map(function ($platform) use ($connectedAccounts) {
-            $connected = $connectedAccounts->firstWhere('platform', $platform);
-
-            return [
-                'value' => $platform->value,
-                'label' => $platform->label(),
-                'color' => $platform->color(),
-                'connected' => $connected !== null,
-                'account' => $connected,
-            ];
-        })->values();
+        $platforms = collect(SocialPlatform::enabled())->map(fn ($platform) => [
+            'value' => $platform->value,
+            'label' => $platform->label(),
+            'color' => $platform->color(),
+        ])->values();
 
         return Inertia::render('accounts/Index', [
             'workspace' => $workspace,
+            'accounts' => $connectedAccounts,
             'platforms' => $platforms,
         ]);
     }
@@ -160,33 +157,8 @@ class SocialController extends Controller
 
         try {
             $socialUser = Socialite::driver($driver)->user();
-            $existingAccount = $workspace->socialAccounts()
-                ->where('platform', $platform->value)
-                ->first();
-
-            // If account exists and is connected, don't allow duplicate
-            if ($existingAccount && ! $existingAccount->isDisconnected()) {
-                return $this->popupCallback(false, 'This platform is already connected.', $platform->value);
-            }
 
             $avatarPath = uploadFromUrl($socialUser->getAvatar());
-
-            if ($existingAccount) {
-                // Reconnect existing account
-                $existingAccount->update([
-                    'platform_user_id' => $socialUser->getId(),
-                    'username' => $socialUser->getNickname(),
-                    'display_name' => $socialUser->getName(),
-                    'avatar_url' => $avatarPath,
-                    'access_token' => $socialUser->token,
-                    'refresh_token' => $socialUser->refreshToken,
-                    'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
-                    'scopes' => $socialUser->approvedScopes ?? null,
-                ]);
-                $existingAccount->markAsConnected();
-
-                return $this->popupCallback(true, 'Account reconnected!', $platform->value);
-            }
 
             // Create new account
             $workspace->socialAccounts()->create([

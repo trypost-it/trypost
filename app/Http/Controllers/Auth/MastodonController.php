@@ -181,20 +181,10 @@ class MastodonController extends SocialController
 
             $profile = $profileResponse->json();
 
-            // Check existing
-            $existingAccount = $workspace->socialAccounts()
-                ->where('platform', $this->platform->value)
-                ->first();
-
-            if ($existingAccount && ! $existingAccount->isDisconnected()) {
-                $this->clearMastodonSession();
-
-                return $this->popupCallback(false, 'Mastodon is already connected.', $this->platform->value);
-            }
-
             $avatarPath = data_get($profile, 'avatar') ? uploadFromUrl(data_get($profile, 'avatar')) : null;
 
-            $accountData = [
+            // Create new account
+            $workspace->socialAccounts()->create([
                 'platform' => $this->platform->value,
                 'platform_user_id' => data_get($profile, 'id'),
                 'username' => data_get($profile, 'acct'),
@@ -203,23 +193,13 @@ class MastodonController extends SocialController
                 'access_token' => $accessToken,
                 'refresh_token' => null, // Mastodon tokens don't expire
                 'token_expires_at' => null,
+                'status' => Status::Connected,
                 'meta' => [
                     'instance' => $instance,
                     'client_id' => $clientId,
                     'client_secret' => $clientSecret,
                 ],
-            ];
-
-            if ($existingAccount) {
-                $existingAccount->update($accountData);
-                $existingAccount->markAsConnected();
-                $this->clearMastodonSession();
-
-                return $this->popupCallback(true, 'Mastodon account reconnected!', $this->platform->value);
-            }
-
-            $accountData['status'] = Status::Connected;
-            $workspace->socialAccounts()->create($accountData);
+            ]);
 
             $this->clearMastodonSession();
 

@@ -87,18 +87,10 @@ class BlueskyController extends SocialController
 
             $profile = $profileResponse->successful() ? $profileResponse->json() : [];
 
-            // Check existing
-            $existingAccount = $workspace->socialAccounts()
-                ->where('platform', $this->platform->value)
-                ->first();
-
-            if ($existingAccount && ! $existingAccount->isDisconnected()) {
-                return back()->withErrors(['identifier' => 'Bluesky is already connected.']);
-            }
-
             $avatarPath = data_get($profile, 'avatar') ? uploadFromUrl(data_get($profile, 'avatar')) : null;
 
-            $accountData = [
+            // Create new account
+            $workspace->socialAccounts()->create([
                 'platform' => $this->platform->value,
                 'platform_user_id' => data_get($data, 'did'),
                 'username' => data_get($data, 'handle'),
@@ -107,22 +99,13 @@ class BlueskyController extends SocialController
                 'access_token' => data_get($data, 'accessJwt'),
                 'refresh_token' => data_get($data, 'refreshJwt'),
                 'token_expires_at' => now()->addHours(2),
+                'status' => Status::Connected,
                 'meta' => [
                     'service' => $service,
                     'identifier' => $request->identifier,
                     'password' => encrypt($request->password),
                 ],
-            ];
-
-            if ($existingAccount) {
-                $existingAccount->update($accountData);
-                $existingAccount->markAsConnected();
-
-                return $this->popupCallback(true, 'Bluesky account reconnected!', $this->platform->value);
-            }
-
-            $accountData['status'] = Status::Connected;
-            $workspace->socialAccounts()->create($accountData);
+            ]);
 
             return $this->popupCallback(true, 'Bluesky account connected!', $this->platform->value);
         } catch (\Exception $e) {

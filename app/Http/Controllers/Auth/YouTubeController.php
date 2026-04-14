@@ -42,20 +42,9 @@ class YouTubeController extends SocialController
         $this->authorize('manageAccounts', $workspace);
         $this->ensureSocialAccountLimit($workspace);
 
-        $existingAccount = $workspace->socialAccounts()
-            ->where('platform', $this->platform->value)
-            ->first();
-
-        if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            session()->flash('flash.banner', __('accounts.flash.already_connected'));
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return back();
-        }
-
         session([
             'social_connect_workspace' => $workspace->id,
-            'social_reconnect_id' => $existingAccount?->id,
+            'social_reconnect_id' => null,
             'social_connect_onboarding' => $request->boolean('onboarding'),
         ]);
 
@@ -76,14 +65,6 @@ class YouTubeController extends SocialController
             return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
         }
 
-        $reconnectId = session('social_reconnect_id');
-        $existingAccount = $reconnectId ? $workspace->socialAccounts()->find($reconnectId) : null;
-
-        // If account exists and is connected, don't allow duplicate
-        if (! $existingAccount && $workspace->hasConnectedPlatform($this->platform->value)) {
-            return $this->popupCallback(false, 'This platform is already connected.', $this->platform->value);
-        }
-
         try {
             $socialUser = Socialite::driver($this->driver)->user();
 
@@ -98,29 +79,6 @@ class YouTubeController extends SocialController
             if (count($channels) === 1) {
                 $channel = $channels[0];
                 $avatarPath = uploadFromUrl(data_get($channel, 'thumbnail'));
-
-                if ($existingAccount) {
-                    // Reconnect existing account
-                    $existingAccount->update([
-                        'platform_user_id' => data_get($channel, 'id'),
-                        'username' => ltrim(data_get($channel, 'custom_url', data_get($channel, 'id')), '@'),
-                        'display_name' => data_get($channel, 'title'),
-                        'avatar_url' => $avatarPath,
-                        'access_token' => $socialUser->token,
-                        'refresh_token' => $socialUser->refreshToken,
-                        'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
-                        'scopes' => $this->scopes,
-                        'meta' => [
-                            'channel_id' => data_get($channel, 'id'),
-                            'google_user_id' => $socialUser->getId(),
-                        ],
-                    ]);
-                    $existingAccount->markAsConnected();
-
-                    session()->forget('social_reconnect_id');
-
-                    return $this->popupCallback(true, 'YouTube channel reconnected!', $this->platform->value);
-                }
 
                 // Create new account
                 $workspace->socialAccounts()->create([
@@ -140,8 +98,6 @@ class YouTubeController extends SocialController
                     ],
                 ]);
 
-                session()->forget('social_reconnect_id');
-
                 return $this->popupCallback(true, 'YouTube channel connected!', $this->platform->value);
             }
 
@@ -152,7 +108,6 @@ class YouTubeController extends SocialController
                     'refresh_token' => $socialUser->refreshToken,
                     'expires_in' => $socialUser->expiresIn,
                     'user_id' => $socialUser->getId(),
-                    'reconnect_id' => $reconnectId,
                 ],
             ]);
 

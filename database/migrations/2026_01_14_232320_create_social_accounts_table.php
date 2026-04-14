@@ -33,8 +33,6 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('workspace_id')->references('id')->on('workspaces')->cascadeOnDelete();
-
-            $table->unique(['workspace_id', 'platform']);
         });
     }
 

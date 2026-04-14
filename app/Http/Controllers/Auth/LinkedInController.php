@@ -41,17 +41,6 @@ class LinkedInController extends SocialController
 
         $this->authorize('manageAccounts', $workspace);
 
-        $existingAccount = $workspace->socialAccounts()
-            ->where('platform', $this->platform->value)
-            ->first();
-
-        if ($existingAccount && ! $existingAccount->isDisconnected()) {
-            session()->flash('flash.banner', __('accounts.flash.already_connected'));
-            session()->flash('flash.bannerStyle', 'danger');
-
-            return back();
-        }
-
         return $this->redirectToProvider($request, $this->driver, $this->scopes);
     }
 
@@ -71,14 +60,6 @@ class LinkedInController extends SocialController
 
         try {
             $socialUser = Socialite::driver($this->driver)->user();
-            $existingAccount = $workspace->socialAccounts()
-                ->where('platform', $this->platform->value)
-                ->first();
-
-            // If account exists and is connected, don't allow duplicate
-            if ($existingAccount && ! $existingAccount->isDisconnected()) {
-                return $this->popupCallback(false, 'This platform is already connected.', $this->platform->value);
-            }
 
             // Fetch vanityName from LinkedIn API (not available via OpenID)
             $username = $this->fetchVanityName($socialUser->token);
@@ -90,26 +71,6 @@ class LinkedInController extends SocialController
             ]);
 
             $avatarPath = uploadFromUrl($socialUser->getAvatar());
-
-            if ($existingAccount) {
-                // Reconnect existing account
-                $existingAccount->update([
-                    'platform_user_id' => $socialUser->getId(),
-                    'username' => $username,
-                    'display_name' => $socialUser->getName(),
-                    'avatar_url' => $avatarPath,
-                    'access_token' => $socialUser->token,
-                    'refresh_token' => $socialUser->refreshToken,
-                    'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
-                    'scopes' => $socialUser->approvedScopes ?? null,
-                ]);
-                $existingAccount->markAsConnected();
-
-                // Sync tokens to LinkedIn Page if it exists
-                app(LinkedInTokenSynchronizer::class)->syncTokens($existingAccount);
-
-                return $this->popupCallback(true, 'LinkedIn account reconnected!', $this->platform->value);
-            }
 
             // Create new account
             $account = $workspace->socialAccounts()->create([

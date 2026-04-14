@@ -6,6 +6,8 @@ use App\Enums\Plan\Slug;
 use App\Models\Plan;
 
 test('plan can be created with factory', function () {
+    Plan::where('slug', Slug::Pro)->delete();
+
     $plan = Plan::factory()->create([
         'slug' => Slug::Pro,
         'name' => 'Pro',
@@ -22,7 +24,7 @@ test('plan can be created with factory', function () {
 });
 
 test('plan slug is cast to enum', function () {
-    $plan = Plan::factory()->create(['slug' => Slug::Starter]);
+    $plan = Plan::where('slug', Slug::Starter)->first();
 
     expect($plan->slug)->toBeInstanceOf(Slug::class)
         ->and($plan->slug)->toBe(Slug::Starter)
@@ -30,37 +32,28 @@ test('plan slug is cast to enum', function () {
 });
 
 test('active scope excludes archived plans', function () {
-    Plan::factory()->create(['slug' => Slug::Starter, 'is_archived' => false]);
-    Plan::factory()->create(['slug' => Slug::Plus, 'is_archived' => false]);
-    Plan::factory()->archived()->create(['slug' => Slug::Pro]);
+    $activeBefore = Plan::active()->count();
 
-    $activePlans = Plan::active()->get();
+    $plan = Plan::where('slug', Slug::Pro)->first();
+    $plan->update(['is_archived' => true]);
 
-    expect($activePlans)->toHaveCount(2);
+    expect(Plan::active()->count())->toBe($activeBefore - 1);
 });
 
 test('formatted monthly price returns dollar format', function () {
-    $plan = Plan::factory()->create(['monthly_price' => 1900]);
+    $plan = Plan::where('slug', Slug::Starter)->first();
 
     expect($plan->formattedMonthlyPrice())->toBe('$19');
 });
 
 test('formatted yearly price returns dollar format', function () {
-    $plan = Plan::factory()->create(['yearly_price' => 19000]);
+    $plan = Plan::where('slug', Slug::Starter)->first();
 
     expect($plan->formattedYearlyPrice())->toBe('$190');
 });
 
 test('integer fields are cast correctly', function () {
-    $plan = Plan::factory()->create([
-        'social_account_limit' => 10,
-        'member_limit' => 3,
-        'brand_limit' => 5,
-        'ai_images_limit' => 50,
-        'ai_videos_limit' => 25,
-        'data_retention_days' => 365,
-        'sort' => 2,
-    ]);
+    $plan = Plan::where('slug', Slug::Starter)->first();
 
     expect($plan->social_account_limit)->toBeInt()
         ->and($plan->member_limit)->toBeInt()

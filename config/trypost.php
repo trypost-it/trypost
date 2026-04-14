@@ -26,7 +26,7 @@ return [
     |
     */
 
-    'google_auth_enabled' => env('TRYPOST_GOOGLE_AUTH_ENABLED', false),
+    'google_auth_enabled' => env('GOOGLE_AUTH_ENABLED', false),
 
     /*
     |--------------------------------------------------------------------------

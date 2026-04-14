@@ -12,7 +12,8 @@ test('platform has correct labels', function () {
     expect(Platform::TikTok->label())->toBe('TikTok');
     expect(Platform::YouTube->label())->toBe('YouTube Shorts');
     expect(Platform::Facebook->label())->toBe('Facebook Page');
-    expect(Platform::Instagram->label())->toBe('Instagram');
+    expect(Platform::Instagram->label())->toBe('Instagram (Standalone)');
+    expect(Platform::InstagramFacebook->label())->toBe('Instagram (Facebook Business)');
     expect(Platform::Threads->label())->toBe('Threads');
     expect(Platform::Pinterest->label())->toBe('Pinterest');
     expect(Platform::Bluesky->label())->toBe('Bluesky');

@@ -24,6 +24,7 @@ class InstagramController extends SocialController
     protected array $scopes = [
         'instagram_business_basic',
         'instagram_business_content_publish',
+        'instagram_business_manage_insights',
     ];
 
     public function connect(Request $request): Response|RedirectResponse

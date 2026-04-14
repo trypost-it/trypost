@@ -47,6 +47,7 @@ const previewComponent = computed(() => {
         case 'facebook':
             return FacebookPreview;
         case 'instagram':
+        case 'instagram-facebook':
             return InstagramPreview;
         case 'threads':
             return ThreadsPreview;

@@ -84,7 +84,7 @@ class MediaOptimizer
     private function getImageConfig(Platform $platform): array
     {
         return match ($platform) {
-            Platform::Instagram, Platform::Threads => [
+            Platform::Instagram, Platform::InstagramFacebook, Platform::Threads => [
                 'max_width' => 1440,
                 'max_size' => 8 * 1024 * 1024,
                 'format' => 'image/jpeg',

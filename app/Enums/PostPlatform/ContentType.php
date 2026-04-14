@@ -205,7 +205,7 @@ enum ContentType: string
     public static function defaultFor(SocialPlatform $platform): self
     {
         return match ($platform) {
-            SocialPlatform::Instagram => self::InstagramFeed,
+            SocialPlatform::Instagram, SocialPlatform::InstagramFacebook => self::InstagramFeed,
             SocialPlatform::LinkedIn => self::LinkedInPost,
             SocialPlatform::LinkedInPage => self::LinkedInPagePost,
             SocialPlatform::Facebook => self::FacebookPost,

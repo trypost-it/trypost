@@ -49,12 +49,10 @@ test('facebook oauth callback creates account with single page', function () {
 
     Socialite::shouldReceive('driver')
         ->with('facebook')
-        ->andReturn(Mockery::mock([
-            'user' => $socialiteUser,
-        ]));
+        ->andReturn(Mockery::mock()->shouldReceive('usingGraphVersion')->andReturnSelf()->shouldReceive('user')->andReturn($socialiteUser)->getMock());
 
     Http::fake([
-        'https://graph.facebook.com/v24.0/me/accounts*' => Http::response([
+        'https://graph.facebook.com/*/me/accounts*' => Http::response([
             'data' => [
                 [
                     'id' => 'page_123',
@@ -94,12 +92,10 @@ test('facebook callback redirects to page selection when multiple pages', functi
 
     Socialite::shouldReceive('driver')
         ->with('facebook')
-        ->andReturn(Mockery::mock([
-            'user' => $socialiteUser,
-        ]));
+        ->andReturn(Mockery::mock()->shouldReceive('usingGraphVersion')->andReturnSelf()->shouldReceive('user')->andReturn($socialiteUser)->getMock());
 
     Http::fake([
-        'https://graph.facebook.com/v24.0/me/accounts*' => Http::response([
+        'https://graph.facebook.com/*/me/accounts*' => Http::response([
             'data' => [
                 [
                     'id' => 'page_1',
@@ -136,12 +132,10 @@ test('facebook callback fails when no pages found', function () {
 
     Socialite::shouldReceive('driver')
         ->with('facebook')
-        ->andReturn(Mockery::mock([
-            'user' => $socialiteUser,
-        ]));
+        ->andReturn(Mockery::mock()->shouldReceive('usingGraphVersion')->andReturnSelf()->shouldReceive('user')->andReturn($socialiteUser)->getMock());
 
     Http::fake([
-        'https://graph.facebook.com/v24.0/me/accounts*' => Http::response([
+        'https://graph.facebook.com/*/me/accounts*' => Http::response([
             'data' => [],
         ], 200),
     ]);
@@ -179,12 +173,10 @@ test('user cannot connect facebook if already connected', function () {
 
     Socialite::shouldReceive('driver')
         ->with('facebook')
-        ->andReturn(Mockery::mock([
-            'user' => $socialiteUser,
-        ]));
+        ->andReturn(Mockery::mock()->shouldReceive('usingGraphVersion')->andReturnSelf()->shouldReceive('user')->andReturn($socialiteUser)->getMock());
 
     Http::fake([
-        'https://graph.facebook.com/v24.0/me/accounts*' => Http::response([
+        'https://graph.facebook.com/*/me/accounts*' => Http::response([
             'data' => [
                 [
                     'id' => 'page_new',
@@ -221,12 +213,10 @@ test('user can reconnect disconnected facebook account', function () {
 
     Socialite::shouldReceive('driver')
         ->with('facebook')
-        ->andReturn(Mockery::mock([
-            'user' => $socialiteUser,
-        ]));
+        ->andReturn(Mockery::mock()->shouldReceive('usingGraphVersion')->andReturnSelf()->shouldReceive('user')->andReturn($socialiteUser)->getMock());
 
     Http::fake([
-        'https://graph.facebook.com/v24.0/me/accounts*' => Http::response([
+        'https://graph.facebook.com/*/me/accounts*' => Http::response([
             'data' => [
                 [
                     'id' => 'page_123',

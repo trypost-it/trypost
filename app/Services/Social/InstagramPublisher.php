@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\SocialAccount\Platform;
 use App\Exceptions\Social\InstagramPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
@@ -18,13 +19,14 @@ class InstagramPublisher
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://graph.instagram.com/v24.0';
+    private string $baseUrl;
 
     public function publish(PostPlatform $postPlatform): array
     {
         $this->validateContentLength($postPlatform);
 
         $account = $postPlatform->socialAccount;
+        $this->baseUrl = $account->platform->instagramGraphBaseUrl();
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
             $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
@@ -313,6 +315,11 @@ class InstagramPublisher
 
     private function refreshToken(SocialAccount $account): void
     {
+        // Instagram via Facebook uses page tokens that don't expire
+        if ($account->platform === Platform::InstagramFacebook) {
+            return;
+        }
+
         $response = Http::get('https://graph.instagram.com/refresh_access_token', [
             'grant_type' => 'ig_refresh_token',
             'access_token' => $account->access_token,

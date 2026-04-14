@@ -61,6 +61,9 @@ return [
         'instagram' => [
             'enabled' => env('INSTAGRAM_ENABLED', true),
         ],
+        'instagram-facebook' => [
+            'enabled' => env('TRYPOST_INSTAGRAM_FACEBOOK_ENABLED', true),
+        ],
         'threads' => [
             'enabled' => env('THREADS_ENABLED', true),
         ],

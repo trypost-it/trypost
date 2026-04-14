@@ -8,6 +8,7 @@ use App\Listeners\StripeEventListener;
 use App\Models\Media;
 use App\Models\Notification;
 use App\Models\NotificationPreference;
+use App\Models\Plan;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -82,6 +83,7 @@ class AppServiceProvider extends ServiceProvider
         Relation::enforceMorphMap([
             'media' => Media::class,
             'notification' => Notification::class,
+            'plan' => Plan::class,
             'notificationPreference' => NotificationPreference::class,
             'post' => Post::class,
             'postPlatform' => PostPlatform::class,

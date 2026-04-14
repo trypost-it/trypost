@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Listeners\StripeEventListener;
+use App\Models\Brand;
 use App\Models\Media;
 use App\Models\Notification;
 use App\Models\NotificationPreference;
@@ -81,6 +82,7 @@ class AppServiceProvider extends ServiceProvider
     protected function configureMorphMap(): void
     {
         Relation::enforceMorphMap([
+            'brand' => Brand::class,
             'media' => Media::class,
             'notification' => Notification::class,
             'plan' => Plan::class,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\App\AnalyticsController;
 use App\Http\Controllers\App\ApiKeyController;
 use App\Http\Controllers\App\BillingController;
+use App\Http\Controllers\App\BrandController;
 use App\Http\Controllers\App\MediaController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\OnboardingController;
@@ -162,6 +163,12 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::post('labels', [WorkspaceLabelController::class, 'store'])->name('app.labels.store');
     Route::put('labels/{label}', [WorkspaceLabelController::class, 'update'])->name('app.labels.update');
     Route::delete('labels/{label}', [WorkspaceLabelController::class, 'destroy'])->name('app.labels.destroy');
+
+    // Brands
+    Route::get('brands', [BrandController::class, 'index'])->name('app.brands.index');
+    Route::post('brands', [BrandController::class, 'store'])->name('app.brands.store');
+    Route::put('brands/{brand}', [BrandController::class, 'update'])->name('app.brands.update');
+    Route::delete('brands/{brand}', [BrandController::class, 'destroy'])->name('app.brands.destroy');
 
     // API Keys
     Route::get('api-keys', [ApiKeyController::class, 'index'])->name('app.api-keys.index');

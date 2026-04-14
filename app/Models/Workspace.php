@@ -20,6 +20,7 @@ class Workspace extends Model
 
     protected $fillable = [
         'user_id',
+        'plan_id',
         'name',
         'timezone',
     ];
@@ -39,6 +40,11 @@ class Workspace extends Model
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
     }
 
     public function members(): BelongsToMany
@@ -71,6 +77,11 @@ class Workspace extends Model
     public function labels(): HasMany
     {
         return $this->hasMany(WorkspaceLabel::class);
+    }
+
+    public function brands(): HasMany
+    {
+        return $this->hasMany(Brand::class);
     }
 
     public function apiTokens(): HasMany

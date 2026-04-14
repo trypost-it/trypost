@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { formatDate } from '@/date';
+import date from '@/date';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { accounts } from '@/routes/app';
 import { disconnect as disconnectAccount, toggle as toggleAccount } from '@/routes/app/accounts';
@@ -187,7 +187,7 @@ const handleDisconnect = (accountId: string) => {
 
                             <!-- Added date -->
                             <p class="mt-2 text-xs text-muted-foreground">
-                                {{ $t('accounts.added', { date: formatDate(account.created_at) }) }}
+                                {{ $t('accounts.added', { date: date.diffForHumans(account.created_at) }) }}
                             </p>
 
                             <!-- Disconnected warning -->

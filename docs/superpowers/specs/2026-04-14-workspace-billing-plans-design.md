@@ -206,6 +206,60 @@ Add ability to assign/unassign a social account to a brand.
 
 ---
 
+## Pennant Features (app/Features/)
+
+Use Laravel Pennant to resolve plan limits per workspace. Each feature class resolves the limit value from the workspace's plan, with a sensible fallback for self-hosted mode (unlimited).
+
+### SocialAccountLimit
+
+Returns `$workspace->plan->social_account_limit` (fallback: `PHP_INT_MAX` for self-hosted).
+
+### MemberLimit
+
+Returns `$workspace->plan->member_limit` (fallback: `PHP_INT_MAX`).
+
+### BrandLimit
+
+Returns `$workspace->plan->brand_limit` (fallback: `PHP_INT_MAX`).
+
+### AiImagesLimit
+
+Returns `$workspace->plan->ai_images_limit` (fallback: `PHP_INT_MAX`).
+
+### AiVideosLimit
+
+Returns `$workspace->plan->ai_videos_limit` (fallback: `PHP_INT_MAX`).
+
+### DataRetentionDays
+
+Returns `$workspace->plan->data_retention_days` (fallback: `PHP_INT_MAX` for unlimited).
+
+### Pennant Configuration
+
+In `AppServiceProvider`:
+
+```php
+Feature::resolveScopeUsing(fn () => auth()->user()?->currentWorkspace);
+Feature::discover();
+```
+
+### Usage in Policies
+
+Policies use Pennant to resolve limits:
+
+```php
+use Laravel\Pennant\Feature;
+use App\Features\BrandLimit;
+
+// In BrandPolicy::create()
+$limit = Feature::for($workspace)->value(BrandLimit::class);
+return $workspace->brands()->count() < $limit;
+```
+
+This decouples limit enforcement from direct plan access, making it testable and overridable per workspace if needed.
+
+---
+
 ## Routes
 
 ### Billing routes (modified)

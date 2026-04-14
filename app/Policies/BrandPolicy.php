@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Enums\UserWorkspace\Role;
+use App\Features\BrandLimit;
 use App\Models\Brand;
 use App\Models\User;
 use App\Models\Workspace;
+use Laravel\Pennant\Feature;
 
 class BrandPolicy
 {
@@ -26,13 +28,9 @@ class BrandPolicy
             return true;
         }
 
-        $plan = $workspace->plan;
+        $limit = Feature::for($workspace)->value(BrandLimit::class);
 
-        if (! $plan) {
-            return false;
-        }
-
-        return $workspace->brands()->count() < $plan->brand_limit;
+        return $workspace->brands()->count() < $limit;
     }
 
     public function update(User $user, Brand $brand): bool

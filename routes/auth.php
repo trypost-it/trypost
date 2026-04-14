@@ -29,10 +29,8 @@ Route::middleware(['guest'])->group(function () {
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 
-    if (config('trypost.google_auth_enabled')) {
-        Route::get('/auth/google/redirect', [SocialLoginController::class, 'redirect'])->name('auth.google.redirect');
-        Route::get('/auth/google/callback', [SocialLoginController::class, 'callback'])->name('auth.google.callback');
-    }
+    Route::get('/auth/google/redirect', [SocialLoginController::class, 'redirect'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [SocialLoginController::class, 'callback'])->name('auth.google.callback');
 });
 
 Route::middleware(['auth'])->group(function () {

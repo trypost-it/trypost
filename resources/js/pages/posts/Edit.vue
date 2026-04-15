@@ -90,6 +90,7 @@ const props = defineProps<{
     pinterestBoards: any[];
     labels: { id: string; name: string; color: string }[];
     hashtags: { id: string; name: string; hashtags: string }[];
+    authUserId: string;
 }>();
 
 const post = computed(() => props.post);
@@ -120,6 +121,7 @@ const isSaving = ref(false);
 const showSaved = ref(false);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const hashtagsModal = ref<InstanceType<typeof HashtagsModal> | null>(null);
+const commentsTabRef = ref<InstanceType<typeof CommentsTab> | null>(null);
 
 const timezoneAbbr = computed(() => dayjs().tz(props.workspace.timezone).format('z'));
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -306,6 +308,11 @@ useEcho(`post.${post.value.id}`, '.PostPlatformStatusUpdated', () => {
     router.reload({ only: ['post'], preserveScroll: true });
 });
 
+// Echo: listen for real-time comments
+useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
+    commentsTabRef.value?.addCommentFromBroadcast(e.comment);
+});
+
 const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -433,8 +440,8 @@ const formatFileSize = (bytes: number): string => {
                                 <ScheduleTab :post-platforms="post.post_platforms" :selected-platform-ids="selectedPlatformIds" @toggle-platform="togglePlatform" />
                             </TabsContent>
 
-                            <TabsContent value="comments" class="flex-1 overflow-y-auto p-4">
-                                <CommentsTab />
+                            <TabsContent value="comments" class="flex-1 overflow-hidden">
+                                <CommentsTab ref="commentsTabRef" :post-id="post.id" :current-user-id="authUserId" />
                             </TabsContent>
 
                             <TabsContent value="assistant" class="flex-1 overflow-y-auto p-4">

@@ -187,6 +187,7 @@ class PostController extends Controller
             'pinterestBoards' => $pinterestBoards,
             'labels' => $labels,
             'hashtags' => $hashtags,
+            'authUserId' => $request->user()->id,
         ]);
     }
 

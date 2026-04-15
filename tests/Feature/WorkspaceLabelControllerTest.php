@@ -11,7 +11,7 @@ use App\Models\WorkspaceLabel;
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
@@ -181,7 +181,7 @@ test('labels index returns all when no search query', function () {
 
 // Member authorization tests
 test('member can create label', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create(['setup' => Setup::Completed, 'account_id' => $this->workspace->account_id]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
     $member->update(['current_workspace_id' => $this->workspace->id]);
 

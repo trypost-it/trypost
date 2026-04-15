@@ -11,7 +11,7 @@ use Illuminate\Http\UploadedFile;
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
@@ -25,7 +25,7 @@ test('workspaces index requires authentication', function () {
 test('workspaces index shows all workspaces for user', function () {
     $workspaces = Workspace::factory()->count(2)->create(['user_id' => $this->user->id]);
     foreach ($workspaces as $workspace) {
-        $workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+        $workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     }
 
     $response = $this->actingAs($this->user)->get(route('app.workspaces.index'));
@@ -140,7 +140,7 @@ test('switch workspace requires authentication', function () {
 
 test('switch workspace changes current workspace', function () {
     $otherWorkspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $otherWorkspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $otherWorkspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
 
     $response = $this->actingAs($this->user)->post(route('app.workspaces.switch', $otherWorkspace));
 

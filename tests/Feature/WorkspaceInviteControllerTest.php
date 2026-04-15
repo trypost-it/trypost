@@ -5,16 +5,27 @@ declare(strict_types=1);
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use App\Mail\WorkspaceInvite as WorkspaceInviteMail;
+use App\Models\Account;
+use App\Models\Invite;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Models\WorkspaceInvite;
 use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
     Mail::fake();
-    $this->user = User::factory()->create(['setup' => Setup::Completed]);
-    $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => WorkspaceRole::Owner->value]);
+    config(['trypost.self_hosted' => true]);
+
+    $this->account = Account::factory()->create();
+    $this->user = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
+    $this->account->update(['owner_id' => $this->user->id]);
+    $this->workspace = Workspace::factory()->create([
+        'user_id' => $this->user->id,
+        'account_id' => $this->account->id,
+    ]);
+    $this->workspace->members()->attach($this->user->id, ['role' => WorkspaceRole::Admin->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
@@ -25,15 +36,11 @@ test('members index requires authentication', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('members index redirects to workspace settings', function () {
-    $response = $this->actingAs($this->user)->get(route('app.members'));
-
-    $response->assertRedirect(route('app.workspace.settings'));
-});
-
 test('workspace settings shows members and invites', function () {
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->user->id,
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->actingAs($this->user)->get(route('app.workspace.settings'));
@@ -66,8 +73,8 @@ test('store invite creates invite and sends email', function () {
 
     $response->assertRedirect();
 
-    $this->assertDatabaseHas('workspace_invites', [
-        'workspace_id' => $this->workspace->id,
+    $this->assertDatabaseHas('invites', [
+        'account_id' => $this->account->id,
         'email' => 'newmember@example.com',
     ]);
 
@@ -75,9 +82,11 @@ test('store invite creates invite and sends email', function () {
 });
 
 test('store invite fails if invite already exists', function () {
-    WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->user->id,
         'email' => 'existing@example.com',
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->actingAs($this->user)->post(route('app.invites.store'), [
@@ -89,7 +98,10 @@ test('store invite fails if invite already exists', function () {
 });
 
 test('store invite fails if user is already member', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
     $response = $this->actingAs($this->user)->post(route('app.invites.store'), [
@@ -102,8 +114,10 @@ test('store invite fails if user is already member', function () {
 
 // Destroy invite tests
 test('destroy invite requires authentication', function () {
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->user->id,
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->delete(route('app.invites.destroy', $invite));
@@ -112,20 +126,23 @@ test('destroy invite requires authentication', function () {
 });
 
 test('destroy invite deletes invite', function () {
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->user->id,
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->actingAs($this->user)->delete(route('app.invites.destroy', $invite));
 
     $response->assertRedirect();
-    expect(WorkspaceInvite::find($invite->id))->toBeNull();
+    expect(Invite::find($invite->id))->toBeNull();
 });
 
-test('destroy invite returns 404 for other workspace invite', function () {
-    $otherWorkspace = Workspace::factory()->create();
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $otherWorkspace->id,
+test('destroy invite returns 404 for other account invite', function () {
+    $otherAccount = Account::factory()->create();
+    $invite = Invite::factory()->create([
+        'account_id' => $otherAccount->id,
+        'workspaces' => [],
     ]);
 
     $response = $this->actingAs($this->user)->delete(route('app.invites.destroy', $invite));
@@ -135,7 +152,10 @@ test('destroy invite returns 404 for other workspace invite', function () {
 
 // Remove member tests
 test('remove member requires authentication', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
     $response = $this->delete(route('app.members.remove', $member));
@@ -144,7 +164,10 @@ test('remove member requires authentication', function () {
 });
 
 test('remove member removes user from workspace', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
     $response = $this->actingAs($this->user)->delete(route('app.members.remove', $member));
@@ -161,7 +184,10 @@ test('remove member fails for owner', function () {
 
 // Update role tests
 test('update role requires authentication', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
     $response = $this->put(route('app.members.update-role', $member), [
@@ -172,7 +198,10 @@ test('update role requires authentication', function () {
 });
 
 test('update role changes member to admin', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
     $response = $this->actingAs($this->user)->put(route('app.members.update-role', $member), [
@@ -184,7 +213,10 @@ test('update role changes member to admin', function () {
 });
 
 test('update role changes admin to member', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Admin->value]);
 
     $response = $this->actingAs($this->user)->put(route('app.members.update-role', $member), [
@@ -204,7 +236,10 @@ test('update role fails for workspace owner', function () {
 });
 
 test('update role fails with invalid role', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
     $response = $this->actingAs($this->user)->put(route('app.members.update-role', $member), [
@@ -215,10 +250,16 @@ test('update role fails with invalid role', function () {
 });
 
 test('update role requires authorization', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
-    $nonAdmin = User::factory()->create(['setup' => Setup::Completed]);
+    $nonAdmin = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($nonAdmin->id, ['role' => WorkspaceRole::Member->value]);
     $nonAdmin->update(['current_workspace_id' => $this->workspace->id]);
 

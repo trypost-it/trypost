@@ -11,7 +11,7 @@ use App\Models\Workspace;
 test('post channel allows workspace member to join', function () {
     $user = User::factory()->create();
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+    $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
     $post = Post::factory()->create(['workspace_id' => $workspace->id]);
 
     $channel = new PostChannel;

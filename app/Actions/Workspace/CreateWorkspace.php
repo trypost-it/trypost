@@ -13,12 +13,13 @@ class CreateWorkspace
     public static function execute(User $user, array $data): Workspace
     {
         $workspace = Workspace::create([
+            'account_id' => $user->account_id,
             'user_id' => $user->id,
             ...$data,
             'timezone' => config('app.timezone', 'UTC'),
         ]);
 
-        $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+        $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
         $user->switchWorkspace($workspace);
 
         return $workspace;

@@ -125,7 +125,7 @@ test('deleting account updates members current_workspace_id when their workspace
 
     // Create a workspace owned by the owner
     $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $owner->workspaces()->attach($workspace->id, ['role' => Role::Owner->value]);
+    $owner->workspaces()->attach($workspace->id, ['role' => Role::Member->value]);
     $owner->update(['current_workspace_id' => $workspace->id]);
 
     // Add member to the workspace and set it as their current
@@ -153,12 +153,12 @@ test('deleting account updates members current_workspace_id to another workspace
 
     // Create workspace owned by the owner being deleted
     $workspaceToDelete = Workspace::factory()->create(['user_id' => $owner->id]);
-    $owner->workspaces()->attach($workspaceToDelete->id, ['role' => Role::Owner->value]);
+    $owner->workspaces()->attach($workspaceToDelete->id, ['role' => Role::Member->value]);
     $owner->update(['current_workspace_id' => $workspaceToDelete->id]);
 
     // Create another workspace owned by a different user
     $otherWorkspace = Workspace::factory()->create(['user_id' => $otherOwner->id]);
-    $otherOwner->workspaces()->attach($otherWorkspace->id, ['role' => Role::Owner->value]);
+    $otherOwner->workspaces()->attach($otherWorkspace->id, ['role' => Role::Member->value]);
 
     // Add member to both workspaces
     $member->workspaces()->attach($workspaceToDelete->id, ['role' => Role::Member->value]);

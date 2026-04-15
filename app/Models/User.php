@@ -13,6 +13,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -24,8 +25,6 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasFactory, HasMedia, HasUuids, HasWorkspace, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
      * @var list<string>
      */
     protected $fillable = [
@@ -34,13 +33,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'setup',
         'persona',
+        'account_id',
         'current_workspace_id',
         'email_verified_at',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
      * @var list<string>
      */
     protected $hidden = [
@@ -65,11 +63,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->getFirstMediaUrl('avatar');
     }
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -81,9 +74,6 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    /**
-     * @return HasMany<Notification, $this>
-     */
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);
@@ -94,12 +84,22 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(NotificationPreference::class);
     }
 
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
+    }
+
+    public function isAccountOwner(): bool
+    {
+        return $this->id === $this->account?->owner_id;
+    }
+
     public function wantsEmailFor(NotificationType $type): bool
     {
         $preference = $this->notificationPreference;
 
         if (! $preference) {
-            return true; // Default: all enabled
+            return true;
         }
 
         return match ($type) {

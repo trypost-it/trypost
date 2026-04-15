@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Listeners\StripeEventListener;
-use App\Models\Brand;
+use App\Models\Account;
+use App\Models\Invite;
 use App\Models\Media;
 use App\Models\Notification;
 use App\Models\NotificationPreference;
@@ -18,7 +19,6 @@ use App\Models\SubscriptionItem;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceHashtag;
-use App\Models\WorkspaceInvite;
 use App\Models\WorkspaceLabel;
 use App\Socialite\InstagramProvider;
 use App\Socialite\LinkedInPageExtendSocialite;
@@ -76,11 +76,11 @@ class AppServiceProvider extends ServiceProvider
         $this->configureSocialite();
         $this->configureStripeWebhooks();
 
-        Cashier::useCustomerModel(Workspace::class);
+        Cashier::useCustomerModel(Account::class);
         Cashier::useSubscriptionModel(Subscription::class);
         Cashier::useSubscriptionItemModel(SubscriptionItem::class);
 
-        Feature::resolveScopeUsing(fn () => auth()->user()?->currentWorkspace);
+        Feature::resolveScopeUsing(fn () => auth()->user()?->account);
         Feature::useMorphMap();
         Feature::discover();
     }
@@ -88,7 +88,8 @@ class AppServiceProvider extends ServiceProvider
     protected function configureMorphMap(): void
     {
         Relation::enforceMorphMap([
-            'brand' => Brand::class,
+            'account' => Account::class,
+            'invite' => Invite::class,
             'media' => Media::class,
             'notification' => Notification::class,
             'plan' => Plan::class,
@@ -101,7 +102,6 @@ class AppServiceProvider extends ServiceProvider
             'user' => User::class,
             'workspace' => Workspace::class,
             'workspaceHashtag' => WorkspaceHashtag::class,
-            'workspaceInvite' => WorkspaceInvite::class,
             'workspaceLabel' => WorkspaceLabel::class,
         ]);
     }

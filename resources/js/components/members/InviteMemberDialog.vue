@@ -3,6 +3,7 @@ import { Form } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
+import { WorkspaceRole } from '@/enums/workspace-role';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,10 +27,10 @@ import { store as storeInvite } from '@/routes/app/invites';
 
 const open = defineModel<boolean>('open', { default: false });
 
-const inviteRole = ref('member');
+const inviteRole = ref(WorkspaceRole.Member);
 
 const onSuccess = () => {
-    inviteRole.value = 'member';
+    inviteRole.value = WorkspaceRole.Member;
     open.value = false;
 };
 </script>
@@ -67,8 +68,9 @@ const onSuccess = () => {
                             <SelectValue :placeholder="trans('settings.members.invite.role_placeholder')" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="member">{{ $t('settings.members.roles.member') }}</SelectItem>
-                            <SelectItem value="admin">{{ $t('settings.members.roles.admin') }}</SelectItem>
+                            <SelectItem :value="WorkspaceRole.Member">{{ $t('settings.members.roles.member') }}</SelectItem>
+                            <SelectItem :value="WorkspaceRole.Admin">{{ $t('settings.members.roles.admin') }}</SelectItem>
+                            <SelectItem :value="WorkspaceRole.Viewer">{{ $t('settings.members.roles.viewer') }}</SelectItem>
                         </SelectContent>
                     </Select>
                     <input type="hidden" name="role" :value="inviteRole" />

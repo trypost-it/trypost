@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserWorkspace\Role;
 use App\Http\Controllers\Controller;
-use App\Models\WorkspaceInvite;
+use App\Models\Invite;
+use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,22 +18,19 @@ class AcceptInviteController extends Controller
     /**
      * Display the invite view.
      */
-    public function show(WorkspaceInvite $invite): Response
+    public function show(Invite $invite): Response
     {
-        $invite->load('workspace');
+        $invite->load('account');
 
         return Inertia::render('auth/AcceptInvite', [
             'invite' => [
                 'id' => $invite->id,
                 'email' => $invite->email,
-                'role' => [
-                    'value' => $invite->role->value,
-                    'label' => $invite->role->label(),
+                'account' => [
+                    'id' => $invite->account->id,
+                    'name' => $invite->account->name,
                 ],
-                'workspace' => [
-                    'id' => $invite->workspace->id,
-                    'name' => $invite->workspace->name,
-                ],
+                'workspaces' => $invite->workspaces,
             ],
         ]);
     }
@@ -39,7 +38,7 @@ class AcceptInviteController extends Controller
     /**
      * Accept the invite.
      */
-    public function accept(Request $request, WorkspaceInvite $invite): RedirectResponse
+    public function accept(Request $request, Invite $invite): RedirectResponse
     {
         $user = $request->user();
 
@@ -51,9 +50,9 @@ class AcceptInviteController extends Controller
             return redirect()->route('app.calendar');
         }
 
-        // Check if already a member
-        if ($invite->workspace->hasMember($user)) {
-            $invite->delete();
+        // Check if already a member of the account
+        if ($user->account_id === $invite->account_id) {
+            $invite->update(['accepted_at' => now()]);
 
             session()->flash('flash.banner', __('settings.members.flash.already_member'));
             session()->flash('flash.bannerStyle', 'info');
@@ -61,10 +60,28 @@ class AcceptInviteController extends Controller
             return redirect()->route('app.calendar');
         }
 
-        // Accept the invite
-        $workspaceId = $invite->workspace_id;
-        $invite->accept($user);
-        $user->update(['current_workspace_id' => $workspaceId]);
+        // Add user to the account
+        $user->update(['account_id' => $invite->account_id]);
+
+        // Attach user to the invited workspaces
+        if ($invite->workspaces) {
+            foreach ($invite->workspaces as $workspaceId) {
+                $workspace = Workspace::find($workspaceId);
+
+                if ($workspace && $workspace->account_id === $invite->account_id) {
+                    $workspace->members()->syncWithoutDetaching([
+                        $user->id => ['role' => Role::Member->value],
+                    ]);
+
+                    // Set first workspace as current
+                    if (! $user->current_workspace_id) {
+                        $user->update(['current_workspace_id' => $workspace->id]);
+                    }
+                }
+            }
+        }
+
+        $invite->update(['accepted_at' => now()]);
 
         session()->flash('flash.banner', __('settings.members.flash.invite_accepted'));
         session()->flash('flash.bannerStyle', 'success');
@@ -75,7 +92,7 @@ class AcceptInviteController extends Controller
     /**
      * Decline the invite.
      */
-    public function decline(Request $request, WorkspaceInvite $invite): RedirectResponse
+    public function decline(Request $request, Invite $invite): RedirectResponse
     {
         $user = $request->user();
 

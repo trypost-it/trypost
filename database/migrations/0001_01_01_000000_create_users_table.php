@@ -32,6 +32,7 @@ return new class extends Migration
             $table->rememberToken();
             $table->string('setup')->nullable();
             $table->string('persona')->nullable();
+            $table->uuid('account_id')->nullable();
             $table->uuid('current_workspace_id')->nullable();
             $table->uuid('language_id')->nullable();
             $table->timestamps();

@@ -38,7 +38,7 @@ test('attaches user as workspace owner', function () {
     ]);
 
     $pivot = $user->workspaces->first()->pivot;
-    expect($pivot->role)->toBe(Role::Owner->value);
+    expect($pivot->role)->toBe(Role::Member->value);
 });
 
 test('sets current workspace on user', function () {

@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Mail;
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 
     $this->socialAccount = SocialAccount::factory()->create([
@@ -520,7 +520,10 @@ test('update post validates label_ids exist', function () {
 
 // Member authorization tests
 test('member can view posts index', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->workspace->account_id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
     $member->update(['current_workspace_id' => $this->workspace->id]);
 
@@ -530,7 +533,10 @@ test('member can view posts index', function () {
 });
 
 test('member can create post', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->workspace->account_id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
     $member->update(['current_workspace_id' => $this->workspace->id]);
 

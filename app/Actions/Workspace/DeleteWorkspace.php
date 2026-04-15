@@ -13,10 +13,6 @@ class DeleteWorkspace
     {
         User::where('current_workspace_id', $workspace->id)->update(['current_workspace_id' => null]);
 
-        if (! config('trypost.self_hosted') && $workspace->subscribed(Workspace::SUBSCRIPTION_NAME)) {
-            $workspace->subscription(Workspace::SUBSCRIPTION_NAME)->cancel();
-        }
-
         $workspace->delete();
     }
 }

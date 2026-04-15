@@ -20,7 +20,7 @@ return new class extends Migration
             $table->integer('yearly_price');
             $table->integer('social_account_limit');
             $table->integer('member_limit');
-            $table->integer('brand_limit');
+            $table->integer('workspace_limit');
             $table->integer('ai_images_limit');
             $table->integer('ai_videos_limit');
             $table->integer('data_retention_days');

@@ -139,7 +139,7 @@ test('allows access when workspace has active subscription', function () {
 
     $result = createApiToken();
 
-    $result['workspace']->subscriptions()->create([
+    $result['workspace']->account->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_test_123',
         'stripe_status' => 'active',
@@ -161,7 +161,7 @@ test('allows access when workspace is on trial', function () {
 
     $result = createApiToken();
 
-    $result['workspace']->subscriptions()->create([
+    $result['workspace']->account->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_trial_123',
         'stripe_status' => 'trialing',

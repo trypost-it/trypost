@@ -58,6 +58,6 @@ class AuthenticateMcpToken
 
     private function hasActiveSubscription(Workspace $workspace): bool
     {
-        return $workspace->hasActiveSubscription();
+        return $workspace->account?->hasActiveSubscription() ?? false;
     }
 }

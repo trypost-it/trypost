@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Plan\Slug as PlanSlug;
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
+use App\Models\Account;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\Workspace;
@@ -12,29 +13,37 @@ use App\Models\Workspace;
 beforeEach(function () {
     config(['trypost.self_hosted' => true]);
 
-    $this->user = User::factory()->create(['setup' => Setup::Completed]);
-    $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $this->account = Account::factory()->create();
+    $this->user = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
+    $this->account->update(['owner_id' => $this->user->id]);
+    $this->workspace = Workspace::factory()->create([
+        'account_id' => $this->account->id,
+        'user_id' => $this->user->id,
+    ]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
-test('workspace has active subscription in self hosted mode', function () {
+test('account has active subscription in self hosted mode', function () {
     config(['trypost.self_hosted' => true]);
 
-    expect($this->workspace->hasActiveSubscription())->toBeTrue();
+    expect($this->account->hasActiveSubscription())->toBeTrue();
 });
 
-test('workspace without subscription is not active in saas mode', function () {
+test('account without subscription is not active in saas mode', function () {
     config(['trypost.self_hosted' => false]);
 
-    expect($this->workspace->hasActiveSubscription())->toBeFalse();
+    expect($this->account->hasActiveSubscription())->toBeFalse();
 });
 
-test('workspace belongs to plan', function () {
+test('account belongs to plan', function () {
     $plan = Plan::where('slug', PlanSlug::Starter)->first();
-    $this->workspace->update(['plan_id' => $plan->id]);
+    $this->account->update(['plan_id' => $plan->id]);
 
-    expect($this->workspace->fresh()->plan->id)->toBe($plan->id);
+    expect($this->account->fresh()->plan->id)->toBe($plan->id);
 });
 
 test('ensure subscribed middleware passes in self hosted mode', function () {
@@ -53,11 +62,11 @@ test('ensure subscribed middleware redirects without subscription in saas mode',
     $response->assertRedirect(route('app.subscribe'));
 });
 
-test('billing page is accessible by workspace owner', function () {
+test('billing page is accessible by account owner', function () {
     config(['trypost.self_hosted' => false]);
 
-    $this->workspace->subscriptions()->create([
-        'type' => Workspace::SUBSCRIPTION_NAME,
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_test_'.fake()->uuid(),
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',
@@ -68,15 +77,18 @@ test('billing page is accessible by workspace owner', function () {
     $response->assertOk();
 });
 
-test('billing page is not accessible by workspace member', function () {
+test('billing page is not accessible by non-owner member', function () {
     config(['trypost.self_hosted' => false]);
 
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
     $member->update(['current_workspace_id' => $this->workspace->id]);
 
-    $this->workspace->subscriptions()->create([
-        'type' => Workspace::SUBSCRIPTION_NAME,
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_test_'.fake()->uuid(),
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',
@@ -102,10 +114,10 @@ test('subscribe page shows plans', function () {
     );
 });
 
-test('stripe email returns workspace owner email', function () {
-    expect($this->workspace->stripeEmail())->toBe($this->user->email);
+test('stripe email returns account owner email', function () {
+    expect($this->account->stripeEmail())->toBe($this->user->email);
 });
 
-test('stripe name returns workspace name', function () {
-    expect($this->workspace->stripeName())->toBe($this->workspace->name);
+test('stripe name returns account name', function () {
+    expect($this->account->stripeName())->toBe($this->account->name);
 });

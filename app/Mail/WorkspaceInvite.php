@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
-use App\Models\WorkspaceInvite as WorkspaceInviteModel;
+use App\Models\Invite;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -17,13 +17,13 @@ class WorkspaceInvite extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public function __construct(
-        public WorkspaceInviteModel $invite
+        public Invite $invite
     ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "You've been invited to join {$this->invite->workspace->name}",
+            subject: "You've been invited to join {$this->invite->account->name}",
         );
     }
 
@@ -32,8 +32,8 @@ class WorkspaceInvite extends Mailable implements ShouldQueue
         return new Content(
             view: 'mail.workspace-invite',
             with: [
-                'title' => "You've been invited to join {$this->invite->workspace->name}",
-                'previewText' => "You've been invited to join {$this->invite->workspace->name}",
+                'title' => "You've been invited to join {$this->invite->account->name}",
+                'previewText' => "You've been invited to join {$this->invite->account->name}",
                 'invite' => $this->invite,
                 'url' => route('app.invites.show', $this->invite),
             ],

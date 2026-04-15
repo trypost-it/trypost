@@ -1,8 +1,35 @@
-# Workspace Billing, Plans & Brands
+# Account Billing, Plans & Workspaces
 
 ## Overview
 
-Move billing from User to Workspace. Each workspace has its own subscription tied to a plan. Introduce a `plans` table with 4 tiers (Starter, Plus, Pro, Max) that enforce limits on social accounts, members, brands, AI generation, and data retention. Introduce `brands` as a way to group social accounts within a workspace.
+Introduce an Account entity as the central billing and organizational unit. Account holds the Stripe subscription, plan, and limits. Workspaces group social accounts within an Account. Users belong to one Account with an account-level role (admin/user) and can be assigned to specific workspaces with workspace-level roles (member/viewer). The Account owner has full access to everything.
+
+## Data Model
+
+```
+Account (Billable, plan_id, owner_id)
+  ├── Users (account_id, account_role: admin/user)
+  └── Workspaces
+       ├── Members (user_id, workspace_role: member/viewer)
+       ├── Invites
+       └── Social Accounts
+```
+
+## Roles
+
+### Account-level
+
+Owner is determined by `accounts.owner_id`. No account-level role column on users. Only the owner can manage billing, create workspaces, and delete the account. The owner has full access to all workspaces automatically.
+
+### Workspace-level roles (`user_workspace.role`)
+
+| Role | Permissions |
+|---|---|
+| Admin | Everything in the workspace: manage members, connect accounts, settings |
+| Member | Create posts, schedule |
+| Viewer | View only (future: comments) |
+
+The Account owner has full access to all workspaces without needing a workspace pivot record.
 
 ## Plans
 
@@ -10,12 +37,16 @@ Move billing from User to Workspace. Each workspace has its own subscription tie
 |---|---|---|---|---|
 | Social accounts | 5 | 10 | 30 | 100 |
 | Members | 1 | 5 | 15 | 20 |
-| Brands | 0 | 5 | 15 | 50 |
+| Workspaces | 1 | 5 | 15 | 50 |
 | AI Images/month | 50 | 150 | 500 | 2000 |
 | AI Videos/month | 10 | 30 | 100 | 500 |
 | Data retention (days) | 30 | 60 | 90 | 730 |
 | Monthly price | $19 | $29 | $49 | $99 |
 | Yearly price | $190 | $290 | $490 | $990 |
+
+All limits are at the **Account level** (totals across all workspaces).
+
+Starter plan: 1 member (owner only), 1 workspace (default, UI hides workspace management).
 
 Trial period: 8 days (configurable via `CASHIER_TRIAL_DAYS`).
 
@@ -23,103 +54,134 @@ Trial period: 8 days (configurable via `CASHIER_TRIAL_DAYS`).
 
 ## Database Changes
 
-### New table: `plans`
+### New table: `accounts`
 
 | Column | Type | Notes |
 |---|---|---|
 | id | uuid, PK | |
-| slug | string, unique | "starter", "plus", "pro", "max" |
-| name | string | "Starter", "Plus", "Pro", "Max" |
-| stripe_monthly_price_id | string, nullable | Stripe price ID for monthly billing |
-| stripe_yearly_price_id | string, nullable | Stripe price ID for yearly billing |
-| monthly_price | integer | In cents (1900, 2900, 4900, 9900) |
-| yearly_price | integer | In cents (19000, 29000, 49000, 99000) |
-| social_account_limit | integer | 5, 10, 30, 100 |
-| member_limit | integer | 1, 5, 15, 20 |
-| brand_limit | integer | 0, 5, 15, 50 |
-| ai_images_limit | integer | 50, 150, 500, 2000 |
-| ai_videos_limit | integer | 10, 30, 100, 500 |
-| data_retention_days | integer | 30, 60, 90, 730 |
-| sort | integer | Display order |
-| is_archived | boolean, default false | Hide from selection without deleting |
-| timestamps | | |
-
-### New table: `brands`
-
-| Column | Type | Notes |
-|---|---|---|
-| id | uuid, PK | |
-| workspace_id | FK -> workspaces, cascade delete | |
-| name | string | |
-| timestamps | | |
-
-### Modify table: `social_accounts`
-
-Add `brand_id` (FK -> brands, nullable, set null on delete). Social accounts can optionally belong to a brand for grouping.
-
-### Modify table: `workspaces`
-
-Add columns (Cashier Billable fields + plan reference):
-
-| Column | Type | Notes |
-|---|---|---|
-| plan_id | FK -> plans, nullable, constrained | Current plan |
+| owner_id | FK -> users, nullable initially | Set after user creation (chicken-egg) |
+| plan_id | FK -> plans, nullable | Current plan |
+| name | string | Account/company name |
 | stripe_id | string, nullable, indexed | Stripe customer ID |
 | pm_type | string, nullable | Payment method type |
 | pm_last_four | string, nullable | Last 4 digits |
 | trial_ends_at | timestamp, nullable | |
+| timestamps | | |
 
-### Modify table: `subscriptions`
+Note: `owner_id` is nullable because during signup the user and account are created in the same transaction. Set `owner_id` after user creation.
 
-Change FK from `user_id` to `workspace_id` (uuid, FK -> workspaces, cascade delete). Drop the old `user_id` column.
+### New table: `plans` (unchanged from current)
 
-### Modify table: `subscription_items`
-
-No changes needed (references `subscription_id` which remains the same).
+Already implemented. slug, name, stripe price IDs, all limits, sort, is_archived.
 
 ### Modify table: `users`
 
-Remove billing columns: `stripe_id`, `pm_type`, `pm_last_four`, `trial_ends_at`.
+Add columns:
+- `account_id` (FK -> accounts, nullable, constrained)
+- `account_role` (string, default 'user') — enum: admin, user
+
+Remove columns:
+- `stripe_id`, `pm_type`, `pm_last_four`, `trial_ends_at` (already removed)
+
+### Modify table: `workspaces`
+
+Remove columns:
+- `plan_id` (moves to Account)
+- `stripe_id`, `pm_type`, `pm_last_four`, `trial_ends_at` (moves to Account)
+
+Add columns:
+- `account_id` (FK -> accounts, constrained, cascade delete)
+
+Keep: `user_id` (original creator, not necessarily the owner), `name`, `timezone`
+
+### Modify table: `user_workspace`
+
+Change `role` values from `owner/admin/member` to `member/viewer`. Owner is determined by Account, not workspace pivot.
+
+### Modify table: `subscriptions`
+
+Change FK from `workspace_id` to `account_id`.
+
+### Modify table: `invites` (rename from `workspace_invites`)
+
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| account_id | FK -> accounts, cascade delete | |
+| email | string | Invited email |
+| workspaces | json | Array of {workspace_id, role} |
+| invited_by | FK -> users, nullable | Who sent the invite |
+| accepted_at | timestamp, nullable | |
+| timestamps | | |
+
+### Remove table: `brands`
+
+Brands concept is replaced by Workspaces. Remove brands table, remove `brand_id` from social_accounts.
 
 ---
 
 ## Models
 
-### Plan (new)
+### Account (new)
 
 - UUID primary key
-- Fillable: slug, name, prices, all limits, sort, is_archived
-- Casts: is_archived (boolean), monthly_price (integer), yearly_price (integer)
-- Scopes: `active()` (where is_archived = false)
-- Relationship: `workspaces()` hasMany
-- Method: `formattedMonthlyPrice()`, `formattedYearlyPrice()`
-
-### Brand (new)
-
-- UUID primary key
-- Fillable: workspace_id, name
-- Relationship: `workspace()` belongsTo, `socialAccounts()` hasMany
-
-### Workspace (modified)
-
-- Add `Billable` trait from Laravel Cashier
-- Add to fillable: `plan_id`, `stripe_id`, `pm_type`, `pm_last_four`, `trial_ends_at`
-- New relationships: `plan()` belongsTo, `brands()` hasMany
-- New constant: `SUBSCRIPTION_NAME = 'default'`
-- Methods: `hasActiveSubscription()`, `isOnTrial()`, `stripeEmail()` (returns owner's email), `stripeName()` (returns workspace name)
+- `Billable` trait from Cashier
+- Constant: `SUBSCRIPTION_NAME = 'default'`
+- Fillable: name, owner_id, plan_id
+- Relationships: `owner()` belongsTo User, `plan()` belongsTo Plan, `users()` hasMany User, `workspaces()` hasMany Workspace, `invites()` hasMany Invite
+- Methods: `hasActiveSubscription()`, `isOnTrial()`, `stripeEmail()` (owner email), `stripeName()` (account name)
 
 ### User (modified)
 
+- Remove `Billable` trait (already removed)
+- Add `account_id` and `account_role` to fillable
+- Add cast: `account_role` to `AccountRole` enum
+- Add relationship: `account()` belongsTo Account
+- Remove: `HasWorkspace` trait methods related to billing
+- Keep: `currentWorkspace()`, `switchWorkspace()`, workspace navigation methods
+- Add: `isAccountOwner()` — `$this->id === $this->account?->owner_id`
+- Add: `isAccountAdmin()` — `$this->account_role === AccountRole::Admin || $this->isAccountOwner()`
+
+### Workspace (modified)
+
 - Remove `Billable` trait
-- Remove `SUBSCRIPTION_NAME` constant
-- Remove `hasActiveSubscription()`, `hasEverSubscribed()` methods
-- Remove billing fields from fillable
-- Simplify `HasWorkspace` trait: remove `canCreateWorkspace()`, `incrementWorkspaceQuantity()`, `decrementWorkspaceQuantity()`, `syncWorkspaceQuantity()`
+- Remove billing fields from fillable (stripe_id, pm_type, pm_last_four, trial_ends_at, plan_id)
+- Add `account_id` to fillable
+- Add relationship: `account()` belongsTo Account
+- Keep: members(), socialAccounts(), posts(), invites is now on Account
 
-### SocialAccount (modified)
+### Invite (modified from WorkspaceInvite)
 
-- Add `brand_id` to fillable
-- New relationship: `brand()` belongsTo (nullable)
+- Rename model from WorkspaceInvite to Invite
+- Add: `account_id`, `workspaces` (json), `invited_by`
+- Add cast: `workspaces` to array
+- Relationship: `account()` belongsTo Account, `invitedBy()` belongsTo User
+
+---
+
+## Enums
+
+### AccountRole (new)
+
+```php
+enum AccountRole: string
+{
+    case Admin = 'admin';
+    case User = 'user';
+}
+```
+
+### WorkspaceRole (modify existing)
+
+```php
+enum WorkspaceRole: string
+{
+    case Member = 'member';
+    case Viewer = 'viewer';
+}
+```
+
+Remove `Owner` and `Admin` cases.
 
 ---
 
@@ -128,303 +190,133 @@ Remove billing columns: `stripe_id`, `pm_type`, `pm_last_four`, `trial_ends_at`.
 ### AppServiceProvider
 
 ```php
-Cashier::useCustomerModel(Workspace::class);
+Cashier::useCustomerModel(Account::class);
 ```
-
-### config/cashier.php
-
-Remove the `plans` section (plans come from the database now). Keep Stripe keys, webhook, currency, trial_days, invoice settings.
 
 ---
 
 ## Middleware: EnsureSubscribed
 
-Simplified logic:
-
-1. If `config('trypost.self_hosted')` is true -> pass through
-2. Get `$user->currentWorkspace`
-3. If workspace has active subscription or is on trial -> pass through
+1. If `config('trypost.self_hosted')` → pass
+2. Get `$user->account`
+3. If account has active subscription or trial → pass
 4. Redirect to `/subscribe`
 
-No more checking the workspace owner's subscription — the workspace IS the subscriber.
+---
+
+## Pennant Features
+
+Scope changes from Workspace to Account:
+
+```php
+Feature::resolveScopeUsing(fn () => auth()->user()?->account);
+```
+
+All 6 feature classes receive `Account $scope` instead of `Workspace $scope`:
+- `SocialAccountLimit` — `$scope->plan?->social_account_limit ?? 5`
+- `MemberLimit` — `$scope->plan?->member_limit ?? 1`
+- `WorkspaceLimit` — `$scope->plan?->workspace_limit ?? 1` (replaces BrandLimit)
+- `AiImagesLimit` — `$scope->plan?->ai_images_limit ?? 50`
+- `AiVideosLimit` — `$scope->plan?->ai_videos_limit ?? 10`
+- `DataRetentionDays` — `$scope->plan?->data_retention_days ?? 30`
+
+---
+
+## Limit Enforcement
+
+All limits checked at Account level:
+
+- **Social accounts**: total across all workspaces in the account
+- **Members**: unique users in the account (excluding owner) — `$account->users()->where('id', '!=', $account->owner_id)->count()`
+- **Workspaces**: `$account->workspaces()->count()`
+- **AI images/videos**: monthly usage tracked per account
+- **Data retention**: applied per account
 
 ---
 
 ## Controllers
 
-### BillingController (modified)
+### BillingController
 
-All billing operations change from `$user` to `$workspace`:
+All operations on `$user->account`:
+- `$account->subscribed()`, `$account->subscription()`, `$account->invoices()`
 
-- `subscribe()` — show plan selection page with all active plans
-- `checkout(Plan $plan)` — create Stripe Checkout for workspace with selected plan's price ID
-- `processing()` — check `$workspace->subscribed()` instead of `$user->subscribed()`
-- `index()` — show workspace subscription, invoices, payment method, current plan details with limits and usage
-- `portal()` — `$workspace->redirectToBillingPortal()`
-- `swap(Plan $plan)` — swap workspace subscription to a different plan
+### OnboardingController
 
-### OnboardingController (modified)
+Signup flow:
+1. Create Account
+2. Create User with `account_id` and `account_role = admin` (owner)
+3. Set `account.owner_id`
+4. Create default Workspace with `account_id`
+5. Stripe checkout on Account
 
-`storeConnect()` changes from `$user->newSubscription(...)` to `$workspace->newSubscription(...)`. The plan selection needs to happen during onboarding — default to Starter plan or let user choose.
+### StripeEventListener
 
-### StripeEventListener (modified)
+Find `Account::where('stripe_id', $stripeCustomerId)` instead of Workspace.
 
-Change `User::where('stripe_id', ...)` to `Workspace::where('stripe_id', ...)`. Update `handleSubscriptionCreated` to work with workspace context (still updates user setup to Completed).
+### InviteController (replaces WorkspaceInviteController)
 
-### BrandController (new)
-
-Full CRUD:
-
-- `index()` — list brands for current workspace with social account counts
-- `store(StoreBrandRequest)` — create brand (enforce plan limit via policy)
-- `update(UpdateBrandRequest, Brand)` — rename brand
-- `destroy(Brand)` — delete brand (social accounts get `brand_id = null`, not deleted)
-
-### SocialAccountController (modified if exists)
-
-Add ability to assign/unassign a social account to a brand.
+- `store()`: create invite on Account with workspaces + roles array
+- On accept: set user's `account_id`, create workspace pivot records
 
 ---
 
-## Policies
+## Signup Flow
 
-### BrandPolicy
+1. User registers (name, email, password)
+2. `CreateUser` action:
+   - Creates Account (name = user's name)
+   - Creates User with `account_id`, `account_role = admin`
+   - Sets `account.owner_id = user.id`
+   - Creates default Workspace within Account
+   - Sets `user.current_workspace_id`
+3. Onboarding: role → connect accounts → Stripe checkout (on Account)
 
-- `viewAny(User, Workspace)` — user belongs to workspace
-- `create(User, Workspace)` — user can manage accounts AND `$workspace->brands()->count() < $workspace->plan->brand_limit`
-- `update(User, Workspace, Brand)` — user can manage accounts AND brand belongs to workspace
-- `delete(User, Workspace, Brand)` — same as update
+## Invite Flow
 
-### WorkspacePolicy (modified)
-
-- `manageBilling(User, Workspace)` — only owner (unchanged)
-- `inviteMember(User, Workspace)` — enforce member limit: `$workspace->members()->count() < $workspace->plan->member_limit`
-
-### SocialAccountPolicy (new or modified)
-
-- Enforce social account limit on connect: `$workspace->socialAccounts()->count() < $workspace->plan->social_account_limit`
-
----
-
-## Pennant Features (app/Features/)
-
-Use Laravel Pennant to resolve plan limits per workspace. Each feature class resolves the limit value from the workspace's plan, with a sensible fallback for self-hosted mode (unlimited).
-
-### SocialAccountLimit
-
-Returns `$workspace->plan->social_account_limit` (fallback: `PHP_INT_MAX` for self-hosted).
-
-### MemberLimit
-
-Returns `$workspace->plan->member_limit` (fallback: `PHP_INT_MAX`).
-
-### BrandLimit
-
-Returns `$workspace->plan->brand_limit` (fallback: `PHP_INT_MAX`).
-
-### AiImagesLimit
-
-Returns `$workspace->plan->ai_images_limit` (fallback: `PHP_INT_MAX`).
-
-### AiVideosLimit
-
-Returns `$workspace->plan->ai_videos_limit` (fallback: `PHP_INT_MAX`).
-
-### DataRetentionDays
-
-Returns `$workspace->plan->data_retention_days` (fallback: `PHP_INT_MAX` for unlimited).
-
-### Pennant Configuration
-
-In `AppServiceProvider`:
-
-```php
-Feature::resolveScopeUsing(fn () => auth()->user()?->currentWorkspace);
-Feature::discover();
-```
-
-### Usage in Policies
-
-Policies use Pennant to resolve limits:
-
-```php
-use Laravel\Pennant\Feature;
-use App\Features\BrandLimit;
-
-// In BrandPolicy::create()
-$limit = Feature::for($workspace)->value(BrandLimit::class);
-return $workspace->brands()->count() < $limit;
-```
-
-This decouples limit enforcement from direct plan access, making it testable and overridable per workspace if needed.
+1. Owner/Admin creates invite: email + [{workspace_id, role}]
+2. Email sent with invite link
+3. Person clicks link:
+   - If no TryPost account: register with `account_id` pre-set, `account_role = user`
+   - If has TryPost account with same Account: add workspace assignments
+   - If has TryPost account with different Account: error — must use different email
+4. Workspace pivot records created per the invite's workspaces array
 
 ---
 
-## Routes
+## UI Behavior by Plan
 
-### Billing routes (modified)
+### Starter (1 workspace, 1 member)
+- Workspace switcher hidden
+- "Create workspace" hidden
+- Invite members hidden
+- Simple single-workspace experience
 
-```
-GET    /subscribe                    BillingController@subscribe
-POST   /billing/checkout/{plan}      BillingController@checkout
-GET    /billing/processing           BillingController@processing
-GET    /settings/billing             BillingController@index
-GET    /settings/billing/portal      BillingController@portal
-POST   /settings/billing/swap/{plan} BillingController@swap
-```
-
-### Brand routes (new)
-
-```
-GET    /brands                       BrandController@index
-POST   /brands                       BrandController@store
-PUT    /brands/{brand}               BrandController@update
-DELETE /brands/{brand}               BrandController@destroy
-```
+### Plus and above
+- Workspace switcher visible
+- Create workspace button visible
+- Invite members visible
+- Full multi-workspace experience
 
 ---
 
-## Frontend (Vue)
+## Plans table: workspace_limit replaces brand_limit
 
-### Subscribe page (modified)
-
-Show plan selection cards (4 plans) with monthly/yearly toggle instead of a single checkout button. Each card shows limits and price. User selects plan -> goes to Stripe Checkout.
-
-### Billing settings page (modified)
-
-Show current plan name, limits with usage bars (e.g., "3/5 social accounts"), subscription status, invoices, payment method. Add "Change Plan" button that shows plan comparison.
-
-### Brands pages (new)
-
-- **Brands list** — cards/list showing brands with social account count per brand. Create button (disabled if at limit with tooltip explaining).
-- **Brand create/edit** — simple form with name field.
-- **Social account assignment** — in the accounts page, ability to assign accounts to brands (dropdown or drag).
-
-### Sidebar (modified)
-
-Add "Brands" link in the sidebar navigation (only visible if plan allows brands, i.e., brand_limit > 0).
-
----
-
-## Seeder: PlanSeeder
-
-Creates the 4 plans:
-
-```php
-[
-    [
-        'slug' => 'starter',
-        'name' => 'Starter',
-        'stripe_monthly_price_id' => env('STRIPE_STARTER_MONTHLY'),
-        'stripe_yearly_price_id' => env('STRIPE_STARTER_YEARLY'),
-        'monthly_price' => 1900,
-        'yearly_price' => 19000,
-        'social_account_limit' => 5,
-        'member_limit' => 1,
-        'brand_limit' => 0,
-        'ai_images_limit' => 50,
-        'ai_videos_limit' => 10,
-        'data_retention_days' => 30,
-        'sort' => 1,
-    ],
-    [
-        'slug' => 'plus',
-        'name' => 'Plus',
-        'monthly_price' => 2900,
-        'yearly_price' => 29000,
-        'social_account_limit' => 10,
-        'member_limit' => 5,
-        'brand_limit' => 5,
-        'ai_images_limit' => 150,
-        'ai_videos_limit' => 30,
-        'data_retention_days' => 60,
-        'sort' => 2,
-    ],
-    [
-        'slug' => 'pro',
-        'name' => 'Pro',
-        'monthly_price' => 4900,
-        'yearly_price' => 49000,
-        'social_account_limit' => 30,
-        'member_limit' => 15,
-        'brand_limit' => 15,
-        'ai_images_limit' => 500,
-        'ai_videos_limit' => 100,
-        'data_retention_days' => 90,
-        'sort' => 3,
-    ],
-    [
-        'slug' => 'max',
-        'name' => 'Max',
-        'monthly_price' => 9900,
-        'yearly_price' => 99000,
-        'social_account_limit' => 100,
-        'member_limit' => 20,
-        'brand_limit' => 50,
-        'ai_images_limit' => 2000,
-        'ai_videos_limit' => 500,
-        'data_retention_days' => 730,
-        'sort' => 4,
-    ],
-]
-```
-
----
-
-## Tests
-
-### Plan tests
-- Plan seeder creates 4 plans with correct limits
-- Plan `active()` scope excludes archived plans
-- Plan formatted prices return correct values
-
-### Brand CRUD tests
-- Create brand (success + limit enforcement)
-- List brands for workspace
-- Update brand name
-- Delete brand (social accounts get null brand_id)
-- Cannot create brand on Starter plan (limit = 0)
-- Cannot create brand beyond plan limit
-- Cannot access brands from another workspace
-
-### Billing tests
-- Workspace checkout creates Stripe session
-- Workspace subscription grants access via middleware
-- No subscription redirects to /subscribe
-- Self-hosted mode bypasses subscription check
-- Plan swap updates workspace plan_id
-- Invoices returned for workspace
-- Only owner can manage billing
-
-### Limit enforcement tests
-- Cannot connect social account beyond plan limit
-- Cannot invite member beyond plan limit
-- Cannot create brand beyond plan limit
-
-### Migration tests
-- Workspace has billing columns after migration
-- User no longer has billing columns
-- Subscriptions reference workspace_id
+| Column change | Old | New |
+|---|---|---|
+| brand_limit | 0, 5, 15, 50 | renamed to workspace_limit: 1, 5, 15, 50 |
 
 ---
 
 ## Self-hosted mode
 
-All plan limits and subscription checks are bypassed when `config('trypost.self_hosted')` is true. In self-hosted mode:
-
-- No plans table interaction needed
-- No subscription checks
-- Unlimited social accounts, members, brands
-- Unlimited data retention
-- Brand feature is still available (just no limit)
+All limits bypassed. Account still exists but no billing. Unlimited workspaces, members, social accounts.
 
 ---
 
 ## What does NOT change
 
-- Onboarding flow steps (Role -> Connect -> Payment -> Complete)
-- Social account OAuth flows
+- Social account OAuth flows (connect/disconnect)
 - Post creation and publishing
 - Analytics
-- Workspace creation flow
-- User authentication
+- Multi-account social connections (multiple accounts per platform)

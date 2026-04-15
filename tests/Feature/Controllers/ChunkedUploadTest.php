@@ -14,7 +14,7 @@ beforeEach(function () {
         'setup' => Setup::Completed,
     ]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->subscriptions()->create([
+    $this->user->account->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_123',
         'stripe_status' => 'active',

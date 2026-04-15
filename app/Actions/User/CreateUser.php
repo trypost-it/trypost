@@ -6,6 +6,7 @@ namespace App\Actions\User;
 
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
+use App\Models\Account;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
@@ -20,21 +21,29 @@ class CreateUser
         return DB::transaction(function () use ($data): User {
             $isInviteRegistration = data_get($data, 'is_invite', false);
 
+            $account = Account::create([
+                'name' => data_get($data, 'name')."'s Account",
+            ]);
+
             $user = User::create([
                 'name' => data_get($data, 'name'),
                 'email' => data_get($data, 'email'),
                 'password' => data_get($data, 'password'),
                 'setup' => data_get($data, 'setup', $isInviteRegistration ? Setup::Completed : Setup::Role),
                 'email_verified_at' => data_get($data, 'email_verified_at', $isInviteRegistration ? now() : null),
+                'account_id' => $account->id,
             ]);
 
+            $account->update(['owner_id' => $user->id]);
+
             $workspace = Workspace::create([
+                'account_id' => $account->id,
                 'user_id' => $user->id,
                 'name' => $user->name."'s Workspace",
                 'timezone' => data_get($data, 'timezone', 'UTC'),
             ]);
 
-            $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+            $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
 
             $user->update(['current_workspace_id' => $workspace->id]);
 

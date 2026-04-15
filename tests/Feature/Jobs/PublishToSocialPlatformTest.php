@@ -237,7 +237,7 @@ test('publish to social platform dispatches success notification when all platfo
 
     $this->app->instance(LinkedInPublisher::class, $publisher);
 
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
 
     (new PublishToSocialPlatform($this->postPlatform))->handle();
 
@@ -255,7 +255,7 @@ test('publish to social platform dispatches failure notification when platform f
 
     $this->app->instance(LinkedInPublisher::class, $publisher);
 
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
 
     (new PublishToSocialPlatform($this->postPlatform))->handle();
 

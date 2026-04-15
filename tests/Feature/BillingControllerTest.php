@@ -4,14 +4,23 @@ declare(strict_types=1);
 
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
+use App\Models\Account;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\Workspace;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['setup' => Setup::Completed]);
-    $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $this->account = Account::factory()->create();
+    $this->user = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
+    $this->account->update(['owner_id' => $this->user->id]);
+    $this->workspace = Workspace::factory()->create([
+        'account_id' => $this->account->id,
+        'user_id' => $this->user->id,
+    ]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
@@ -35,9 +44,9 @@ test('subscribe shows subscription page', function () {
     );
 });
 
-test('subscribe redirects to billing index when workspace has active subscription', function () {
-    $this->workspace->subscriptions()->create([
-        'type' => Workspace::SUBSCRIPTION_NAME,
+test('subscribe redirects to billing index when account has active subscription', function () {
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_test_'.fake()->uuid(),
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',
@@ -56,8 +65,8 @@ test('billing index requires authentication', function () {
 });
 
 test('billing index shows billing dashboard', function () {
-    $this->workspace->subscriptions()->create([
-        'type' => Workspace::SUBSCRIPTION_NAME,
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_test_'.fake()->uuid(),
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',
@@ -87,7 +96,7 @@ test('billing processing shows processing page', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('billing/Processing', false)
-        ->has('workspaceId')
+        ->has('accountId')
         ->has('status')
     );
 });
@@ -126,13 +135,16 @@ test('portal requires authentication', function () {
 });
 
 // Authorization tests
-test('admin cannot access billing index', function () {
-    $admin = User::factory()->create(['setup' => Setup::Completed]);
+test('non-owner admin cannot access billing index', function () {
+    $admin = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
     $admin->update(['current_workspace_id' => $this->workspace->id]);
 
-    $this->workspace->subscriptions()->create([
-        'type' => Workspace::SUBSCRIPTION_NAME,
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_test_'.fake()->uuid(),
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',
@@ -142,12 +154,15 @@ test('admin cannot access billing index', function () {
 });
 
 test('member cannot access billing index', function () {
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
     $member->update(['current_workspace_id' => $this->workspace->id]);
 
-    $this->workspace->subscriptions()->create([
-        'type' => Workspace::SUBSCRIPTION_NAME,
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_test_'.fake()->uuid(),
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',

@@ -3,21 +3,30 @@
 declare(strict_types=1);
 
 use App\Enums\User\Setup;
-use App\Enums\UserWorkspace\Role as WorkspaceRole;
+use App\Models\Account;
+use App\Models\Invite;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Models\WorkspaceInvite;
 
 beforeEach(function () {
-    $this->owner = User::factory()->create(['setup' => Setup::Completed]);
-    $this->workspace = Workspace::factory()->create(['user_id' => $this->owner->id]);
+    $this->account = Account::factory()->create();
+    $this->owner = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
+    ]);
+    $this->account->update(['owner_id' => $this->owner->id]);
+    $this->workspace = Workspace::factory()->create([
+        'account_id' => $this->account->id,
+        'user_id' => $this->owner->id,
+    ]);
 });
 
 test('show invite displays invite details for guest', function () {
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->owner->id,
         'email' => 'newuser@example.com',
-        'role' => WorkspaceRole::Member,
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->get(route('app.invites.show', $invite));
@@ -28,8 +37,7 @@ test('show invite displays invite details for guest', function () {
         ->has('invite')
         ->where('invite.id', $invite->id)
         ->where('invite.email', 'newuser@example.com')
-        ->where('invite.role.value', WorkspaceRole::Member->value)
-        ->where('invite.workspace.name', $this->workspace->name)
+        ->where('invite.account.name', $this->account->name)
     );
 });
 
@@ -39,10 +47,11 @@ test('show invite displays invite details for authenticated user', function () {
         'setup' => Setup::Completed,
     ]);
 
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->owner->id,
         'email' => 'invitee@example.com',
-        'role' => WorkspaceRole::Member,
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->actingAs($user)->get(route('app.invites.show', $invite));
@@ -61,8 +70,9 @@ test('show invite returns 404 for non-existent invite', function () {
 });
 
 test('accept invite requires authentication', function () {
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->owner->id,
     ]);
 
     $response = $this->post(route('app.invites.accept', $invite));
@@ -70,31 +80,36 @@ test('accept invite requires authentication', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('accept invite adds user to workspace', function () {
+test('accept invite adds user to account and workspaces', function () {
     $user = User::factory()->create([
         'email' => 'invitee@example.com',
         'setup' => Setup::Completed,
     ]);
 
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->owner->id,
         'email' => 'invitee@example.com',
-        'role' => WorkspaceRole::Admin,
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->actingAs($user)->post(route('app.invites.accept', $invite));
 
     $response->assertRedirect(route('app.calendar'));
 
-    // User should be member of workspace
-    expect($this->workspace->hasMember($user))->toBeTrue();
+    // User should be added to the account
+    $user->refresh();
+    expect($user->account_id)->toBe($this->account->id);
 
-    // Invite should be deleted
-    expect(WorkspaceInvite::find($invite->id))->toBeNull();
+    // User should be member of workspace
+    expect($this->workspace->members()->where('user_id', $user->id)->exists())->toBeTrue();
 
     // User's current workspace should be updated
-    $user->refresh();
     expect($user->current_workspace_id)->toBe($this->workspace->id);
+
+    // Invite should be marked as accepted
+    $invite->refresh();
+    expect($invite->accepted_at)->not->toBeNull();
 });
 
 test('accept invite fails for wrong email', function () {
@@ -103,10 +118,11 @@ test('accept invite fails for wrong email', function () {
         'setup' => Setup::Completed,
     ]);
 
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->owner->id,
         'email' => 'invitee@example.com',
-        'role' => WorkspaceRole::Member,
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->actingAs($user)->post(route('app.invites.accept', $invite));
@@ -114,22 +130,23 @@ test('accept invite fails for wrong email', function () {
     $response->assertRedirect(route('app.calendar'));
     $response->assertSessionHas('flash.bannerStyle', 'danger');
 
-    // Invite should NOT be deleted
-    expect(WorkspaceInvite::find($invite->id))->not->toBeNull();
+    // Invite should NOT be accepted
+    $invite->refresh();
+    expect($invite->accepted_at)->toBeNull();
 });
 
-test('accept invite handles already member', function () {
+test('accept invite handles already member of account', function () {
     $user = User::factory()->create([
         'email' => 'invitee@example.com',
         'setup' => Setup::Completed,
+        'account_id' => $this->account->id,
     ]);
 
-    $this->workspace->members()->attach($user->id, ['role' => WorkspaceRole::Member->value]);
-
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->owner->id,
         'email' => 'invitee@example.com',
-        'role' => WorkspaceRole::Admin,
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->actingAs($user)->post(route('app.invites.accept', $invite));
@@ -137,13 +154,15 @@ test('accept invite handles already member', function () {
     $response->assertRedirect(route('app.calendar'));
     $response->assertSessionHas('flash.bannerStyle', 'info');
 
-    // Invite should be deleted
-    expect(WorkspaceInvite::find($invite->id))->toBeNull();
+    // Invite should be marked as accepted
+    $invite->refresh();
+    expect($invite->accepted_at)->not->toBeNull();
 });
 
 test('decline invite requires authentication', function () {
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->owner->id,
     ]);
 
     $response = $this->post(route('app.invites.decline', $invite));
@@ -157,10 +176,11 @@ test('decline invite deletes the invite', function () {
         'setup' => Setup::Completed,
     ]);
 
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->owner->id,
         'email' => 'invitee@example.com',
-        'role' => WorkspaceRole::Member,
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->actingAs($user)->post(route('app.invites.decline', $invite));
@@ -169,10 +189,7 @@ test('decline invite deletes the invite', function () {
     $response->assertSessionHas('flash.bannerStyle', 'info');
 
     // Invite should be deleted
-    expect(WorkspaceInvite::find($invite->id))->toBeNull();
-
-    // User should NOT be member of workspace
-    expect($this->workspace->hasMember($user))->toBeFalse();
+    expect(Invite::find($invite->id))->toBeNull();
 });
 
 test('decline invite fails for wrong email', function () {
@@ -181,10 +198,11 @@ test('decline invite fails for wrong email', function () {
         'setup' => Setup::Completed,
     ]);
 
-    $invite = WorkspaceInvite::factory()->create([
-        'workspace_id' => $this->workspace->id,
+    $invite = Invite::factory()->create([
+        'account_id' => $this->account->id,
+        'invited_by' => $this->owner->id,
         'email' => 'invitee@example.com',
-        'role' => WorkspaceRole::Member,
+        'workspaces' => [$this->workspace->id],
     ]);
 
     $response = $this->actingAs($user)->post(route('app.invites.decline', $invite));
@@ -193,5 +211,5 @@ test('decline invite fails for wrong email', function () {
     $response->assertSessionHas('flash.bannerStyle', 'danger');
 
     // Invite should NOT be deleted
-    expect(WorkspaceInvite::find($invite->id))->not->toBeNull();
+    expect(Invite::find($invite->id))->not->toBeNull();
 });

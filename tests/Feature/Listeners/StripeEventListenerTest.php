@@ -5,18 +5,18 @@ declare(strict_types=1);
 use App\Enums\User\Setup;
 use App\Events\SubscriptionCreated;
 use App\Listeners\StripeEventListener;
+use App\Models\Account;
 use App\Models\User;
-use App\Models\Workspace;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Events\WebhookReceived;
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
-    $this->workspace = Workspace::factory()->create([
-        'user_id' => $this->user->id,
-        'stripe_id' => 'cus_test123',
+    $this->account = Account::factory()->create(['stripe_id' => 'cus_test123']);
+    $this->user = User::factory()->create([
+        'account_id' => $this->account->id,
     ]);
+    $this->account->update(['owner_id' => $this->user->id]);
 
     $this->listener = new StripeEventListener;
 });
@@ -33,7 +33,7 @@ test('subscription created dispatches event', function () {
         'data' => ['object' => ['customer' => 'cus_test123', 'id' => 'sub_123']],
     ]));
 
-    Event::assertDispatched(SubscriptionCreated::class, fn ($e) => $e->workspace->id === $this->workspace->id);
+    Event::assertDispatched(SubscriptionCreated::class, fn ($e) => $e->account->id === $this->account->id);
 });
 
 test('subscription created marks setup as completed when on subscription step', function () {

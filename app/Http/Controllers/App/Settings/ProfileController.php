@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App\Settings;
 
-use App\Enums\UserWorkspace\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\App\Settings\ProfileDeleteRequest;
 use App\Http\Requests\App\Settings\ProfileUpdateRequest;
+use App\Models\Account;
 use App\Models\Workspace;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -93,14 +93,20 @@ class ProfileController extends Controller
         DB::transaction(function () use ($user) {
             $user->update(['current_workspace_id' => null]);
 
-            $ownedWorkspaces = $user->workspaces()->wherePivot('role', Role::Owner->value)->get();
+            $account = $user->account;
+
+            // Cancel account subscription if exists
+            if ($account && $account->subscribed(Account::SUBSCRIPTION_NAME)) {
+                $account->subscription(Account::SUBSCRIPTION_NAME)->cancelNow();
+            }
+
+            if ($account) {
+                $account->subscriptions()->delete();
+            }
+
+            $ownedWorkspaces = Workspace::where('user_id', $user->id)->get();
 
             foreach ($ownedWorkspaces as $workspace) {
-                if ($workspace->subscribed(Workspace::SUBSCRIPTION_NAME)) {
-                    $workspace->subscription(Workspace::SUBSCRIPTION_NAME)->cancelNow();
-                }
-                $workspace->subscriptions()->delete();
-
                 foreach ($workspace->members as $member) {
                     if ($member->id !== $user->id && $member->current_workspace_id === $workspace->id) {
                         $otherWorkspace = $member->workspaces()
@@ -114,12 +120,15 @@ class ProfileController extends Controller
                 $workspace->socialAccounts()->delete();
                 $workspace->hashtags()->delete();
                 $workspace->labels()->delete();
-                $workspace->invites()->delete();
                 $workspace->members()->detach();
                 $workspace->delete();
             }
 
             $user->workspaces()->detach();
+
+            if ($account) {
+                $account->delete();
+            }
         });
 
         Auth::logout();

@@ -4,6 +4,7 @@ import { IconUserPlus, IconUsers, IconMail, IconTrash, IconCrown, IconUser, Icon
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
+import { WorkspaceRole } from '@/enums/workspace-role';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -58,7 +59,7 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
 
 const form = useForm({
     email: '',
-    role: 'member',
+    role: WorkspaceRole.Member,
 });
 
 const submitInvite = () => {
@@ -91,7 +92,7 @@ const getRoleLabel = (role: string): string => {
 };
 
 const getRoleIcon = (role: string) => {
-    if (role === 'admin') return IconShield;
+    if (role === WorkspaceRole.Admin) return IconShield;
     return IconUser;
 };
 </script>

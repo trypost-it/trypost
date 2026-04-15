@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\UserWorkspace\Role;
+use App\Models\Account;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Policies\WorkspacePolicy;
@@ -18,119 +19,214 @@ test('any user can view any workspaces', function () {
 });
 
 test('owner can view workspace', function () {
-    $user = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+    $account = Account::factory()->create();
+    $user = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $user->id]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $user->id,
+    ]);
+    $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
 
     expect($this->policy->view($user, $workspace))->toBeTrue();
 });
 
 test('member can view workspace', function () {
-    $owner = User::factory()->create();
-    $member = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $member = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
     $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
     expect($this->policy->view($member, $workspace))->toBeTrue();
 });
 
 test('non member cannot view workspace', function () {
-    $owner = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $otherUser = User::factory()->create(); // different account
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
 
     expect($this->policy->view($otherUser, $workspace))->toBeFalse();
 });
 
-test('any user can create workspace', function () {
-    $user = User::factory()->create();
+test('account owner can create workspace', function () {
+    $account = Account::factory()->create();
+    $user = User::factory()->create(['account_id' => $account->id]);
+    $account->update(['owner_id' => $user->id]);
 
     expect($this->policy->create($user))->toBeTrue();
 });
 
-test('owner can update workspace', function () {
-    $user = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+test('non owner cannot create workspace', function () {
+    $account = Account::factory()->create();
+    $owner = User::factory()->create(['account_id' => $account->id]);
+    $account->update(['owner_id' => $owner->id]);
+    $member = User::factory()->create(['account_id' => $account->id]);
+
+    expect($this->policy->create($member))->toBeFalse();
+});
+
+test('account owner can update workspace', function () {
+    $account = Account::factory()->create();
+    $user = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $user->id]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $user->id,
+    ]);
 
     expect($this->policy->update($user, $workspace))->toBeTrue();
 });
 
-test('admin can update workspace', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
+test('workspace admin can update workspace', function () {
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $admin = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
     $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
 
     expect($this->policy->update($admin, $workspace))->toBeTrue();
 });
 
-test('member cannot update workspace', function () {
-    $owner = User::factory()->create();
-    $member = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
+test('regular member cannot update workspace', function () {
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $member = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
     $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
     expect($this->policy->update($member, $workspace))->toBeFalse();
 });
 
-test('only owner can delete workspace', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
-    $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
+test('only account owner can delete workspace', function () {
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $admin = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
 
     expect($this->policy->delete($owner, $workspace))->toBeTrue();
     expect($this->policy->delete($admin, $workspace))->toBeFalse();
 });
 
-test('only owner can restore workspace', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
-    $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
+test('only account owner can restore workspace', function () {
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $admin = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
 
     expect($this->policy->restore($owner, $workspace))->toBeTrue();
     expect($this->policy->restore($admin, $workspace))->toBeFalse();
 });
 
-test('only owner can force delete workspace', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
-    $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
+test('only account owner can force delete workspace', function () {
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $admin = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
 
     expect($this->policy->forceDelete($owner, $workspace))->toBeTrue();
     expect($this->policy->forceDelete($admin, $workspace))->toBeFalse();
 });
 
-test('owner and admin can manage team', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    $member = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
+test('account owner and admin can manage team', function () {
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $admin = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $regularUser = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
     $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
-    $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $workspace->members()->attach($regularUser->id, ['role' => Role::Member->value]);
 
     expect($this->policy->manageTeam($owner, $workspace))->toBeTrue();
     expect($this->policy->manageTeam($admin, $workspace))->toBeTrue();
-    expect($this->policy->manageTeam($member, $workspace))->toBeFalse();
+    expect($this->policy->manageTeam($regularUser, $workspace))->toBeFalse();
 });
 
-test('owner and admin can manage accounts', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    $member = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
+test('account owner and workspace admin can manage accounts', function () {
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $admin = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $member = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
     $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
     $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
@@ -139,12 +235,20 @@ test('owner and admin can manage accounts', function () {
     expect($this->policy->manageAccounts($member, $workspace))->toBeFalse();
 });
 
-test('owner and member can create post', function () {
-    $owner = User::factory()->create();
-    $member = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
+test('account owner and workspace member can create post', function () {
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $member = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $otherUser = User::factory()->create(); // different account
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
     $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
 
     expect($this->policy->createPost($owner, $workspace))->toBeTrue();
@@ -152,14 +256,22 @@ test('owner and member can create post', function () {
     expect($this->policy->createPost($otherUser, $workspace))->toBeFalse();
 });
 
-test('only owner can manage billing', function () {
-    $owner = User::factory()->create();
-    $admin = User::factory()->create();
-    $member = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
-    $workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
-    $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+test('only account owner can manage billing', function () {
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $admin = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $member = User::factory()->create([
+        'account_id' => $account->id,
+    ]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
 
     expect($this->policy->manageBilling($owner, $workspace))->toBeTrue();
     expect($this->policy->manageBilling($admin, $workspace))->toBeFalse();

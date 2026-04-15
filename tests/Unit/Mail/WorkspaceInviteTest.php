@@ -3,25 +3,25 @@
 declare(strict_types=1);
 
 use App\Mail\WorkspaceInvite;
-use App\Models\Workspace;
-use App\Models\WorkspaceInvite as WorkspaceInviteModel;
+use App\Models\Account;
+use App\Models\Invite;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 test('workspace invite mail has correct subject', function () {
-    $workspace = Workspace::factory()->create(['name' => 'Test Workspace']);
-    $invite = WorkspaceInviteModel::factory()->create([
-        'workspace_id' => $workspace->id,
+    $account = Account::factory()->create(['name' => 'Test Account']);
+    $invite = Invite::factory()->create([
+        'account_id' => $account->id,
     ]);
 
     $mail = new WorkspaceInvite($invite);
 
-    expect($mail->envelope()->subject)->toBe("You've been invited to join Test Workspace");
+    expect($mail->envelope()->subject)->toBe("You've been invited to join Test Account");
 });
 
 test('workspace invite mail has correct content', function () {
-    $workspace = Workspace::factory()->create(['name' => 'My Team']);
-    $invite = WorkspaceInviteModel::factory()->create([
-        'workspace_id' => $workspace->id,
+    $account = Account::factory()->create(['name' => 'My Team']);
+    $invite = Invite::factory()->create([
+        'account_id' => $account->id,
     ]);
 
     $mail = new WorkspaceInvite($invite);
@@ -35,7 +35,7 @@ test('workspace invite mail has correct content', function () {
 });
 
 test('workspace invite mail has no attachments', function () {
-    $invite = WorkspaceInviteModel::factory()->create();
+    $invite = Invite::factory()->create();
 
     $mail = new WorkspaceInvite($invite);
 
@@ -43,7 +43,7 @@ test('workspace invite mail has no attachments', function () {
 });
 
 test('workspace invite mail is queueable', function () {
-    $invite = WorkspaceInviteModel::factory()->create();
+    $invite = Invite::factory()->create();
 
     $mail = new WorkspaceInvite($invite);
 

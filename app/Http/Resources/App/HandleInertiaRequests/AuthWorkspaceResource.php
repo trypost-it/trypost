@@ -38,6 +38,10 @@ class AuthWorkspaceResource
 
     private static function resolveRole(Workspace $workspace, User $user): ?string
     {
+        if ($user->isAccountOwner() && $workspace->account_id === $user->account_id) {
+            return 'owner';
+        }
+
         return $workspace->members()
             ->where('users.id', $user->id)
             ->first()

@@ -19,57 +19,56 @@ class WorkspacePolicy
 
     public function view(User $user, Workspace $workspace): bool
     {
-        return $this->isMember($user, $workspace);
+        return $this->canAccess($user, $workspace);
     }
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->isAccountOwner();
     }
 
     public function update(User $user, Workspace $workspace): bool
     {
-        return $this->hasRole($user, $workspace, [Role::Owner, Role::Admin]);
+        return $this->isOwnerOrWorkspaceAdmin($user, $workspace);
     }
 
     public function delete(User $user, Workspace $workspace): bool
     {
-        return $this->hasRole($user, $workspace, [Role::Owner]);
+        return $this->isOwner($user, $workspace);
     }
 
     public function restore(User $user, Workspace $workspace): bool
     {
-        return $this->hasRole($user, $workspace, [Role::Owner]);
+        return $this->isOwner($user, $workspace);
     }
 
     public function forceDelete(User $user, Workspace $workspace): bool
     {
-        return $this->hasRole($user, $workspace, [Role::Owner]);
+        return $this->isOwner($user, $workspace);
     }
 
     public function manageTeam(User $user, Workspace $workspace): bool
     {
-        return $this->hasRole($user, $workspace, [Role::Owner, Role::Admin]);
+        return $this->isOwnerOrWorkspaceAdmin($user, $workspace);
     }
 
     public function manageAccounts(User $user, Workspace $workspace): bool
     {
-        return $this->hasRole($user, $workspace, [Role::Owner, Role::Admin]);
+        return $this->isOwnerOrWorkspaceAdmin($user, $workspace);
     }
 
     public function createPost(User $user, Workspace $workspace): bool
     {
-        return $this->isMember($user, $workspace);
-    }
+        if ($this->isOwner($user, $workspace)) {
+            return true;
+        }
 
-    public function manageBilling(User $user, Workspace $workspace): bool
-    {
-        return $this->hasRole($user, $workspace, [Role::Owner]);
+        return $this->hasRole($user, $workspace, [Role::Admin, Role::Member]);
     }
 
     public function inviteMember(User $user, Workspace $workspace): bool
     {
-        if (! $this->hasRole($user, $workspace, [Role::Owner, Role::Admin])) {
+        if (! $this->isOwnerOrWorkspaceAdmin($user, $workspace)) {
             return false;
         }
 
@@ -77,16 +76,49 @@ class WorkspacePolicy
             return true;
         }
 
-        $limit = Feature::for($workspace)->value(MemberLimit::class);
+        $limit = Feature::for($user->account)->value(MemberLimit::class);
 
         return $workspace->members()->count() < $limit;
     }
 
-    /**
-     * @param  Role[]  $roles
-     */
+    public function manageBilling(User $user, Workspace $workspace): bool
+    {
+        return $this->isOwner($user, $workspace);
+    }
+
+    private function isOwner(User $user, Workspace $workspace): bool
+    {
+        return $workspace->account_id === $user->account_id && $user->isAccountOwner();
+    }
+
+    private function isOwnerOrWorkspaceAdmin(User $user, Workspace $workspace): bool
+    {
+        if ($this->isOwner($user, $workspace)) {
+            return true;
+        }
+
+        return $this->hasRole($user, $workspace, [Role::Admin]);
+    }
+
+    private function canAccess(User $user, Workspace $workspace): bool
+    {
+        if ($workspace->account_id !== $user->account_id) {
+            return false;
+        }
+
+        if ($user->isAccountOwner()) {
+            return true;
+        }
+
+        return $workspace->members()->where('user_id', $user->id)->exists();
+    }
+
     private function hasRole(User $user, Workspace $workspace, array $roles): bool
     {
+        if ($workspace->account_id !== $user->account_id) {
+            return false;
+        }
+
         $member = $workspace->members()->where('user_id', $user->id)->first();
 
         if (! $member) {
@@ -94,10 +126,5 @@ class WorkspacePolicy
         }
 
         return in_array(Role::tryFrom($member->pivot->role), $roles);
-    }
-
-    private function isMember(User $user, Workspace $workspace): bool
-    {
-        return $workspace->members()->where('user_id', $user->id)->exists();
     }
 }

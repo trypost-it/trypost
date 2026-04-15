@@ -6,7 +6,7 @@ return [
     'description' => 'Overview of all your connected social accounts',
     'add_social' => 'Add Social',
     'add_social_title' => 'Connect a Social Account',
-    'add_social_description' => 'Choose a platform to connect',
+    'add_social_description' => 'Connect a social account to TryPost to start posting',
     'no_accounts' => 'No accounts connected yet',
     'no_accounts_description' => 'Connect your social networks to start scheduling and publishing posts',
     'added' => 'Added :date',
@@ -20,10 +20,19 @@ return [
     'view_profile' => 'View profile',
     'disconnect' => 'Disconnect',
 
-    'tooltips' => [
-        'instagram_facebook' => 'Connects via your Facebook Page. Recommended for business accounts linked to a Facebook Page.',
-        'instagram_direct' => 'Connects directly through Instagram. For professional/creator accounts without a Facebook Page.',
-        'bluesky' => "We don't currently support two-factor authentication. If it's enabled on Bluesky, you'll need to disable it.",
+    'descriptions' => [
+        'linkedin' => 'Connect your LinkedIn personal profile',
+        'linkedin-page' => 'Connect a LinkedIn company page',
+        'x' => 'Connect your X (Twitter) account',
+        'tiktok' => 'Connect your TikTok account',
+        'youtube' => 'Connect a YouTube channel',
+        'facebook' => 'Connect a Facebook page',
+        'instagram' => 'Connect an Instagram professional account',
+        'instagram-facebook' => 'Connect Instagram via Facebook page',
+        'threads' => 'Connect your Threads account',
+        'pinterest' => 'Connect your Pinterest account',
+        'bluesky' => 'Connect your Bluesky account',
+        'mastodon' => 'Connect your Mastodon account',
     ],
 
     'disconnect_modal' => [

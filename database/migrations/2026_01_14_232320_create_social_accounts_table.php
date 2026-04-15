@@ -16,7 +16,6 @@ return new class extends Migration
         Schema::create('social_accounts', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('workspace_id');
-            $table->foreignUuid('brand_id')->nullable()->constrained()->nullOnDelete();
             $table->string('platform');
             $table->string('platform_user_id');
             $table->string('username')->nullable();

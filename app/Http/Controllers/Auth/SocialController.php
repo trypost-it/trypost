@@ -38,7 +38,7 @@ class SocialController extends Controller
             return;
         }
 
-        $limit = Feature::for($workspace)->value(SocialAccountLimit::class);
+        $limit = Feature::for($workspace->account)->value(SocialAccountLimit::class);
 
         if ($workspace->socialAccounts()->count() >= $limit) {
             abort(SymfonyResponse::HTTP_FORBIDDEN, __('accounts.limit_reached'));
@@ -56,7 +56,6 @@ class SocialController extends Controller
         $this->authorize('view', $workspace);
 
         $connectedAccounts = $workspace->socialAccounts()
-            ->with('brand')
             ->get();
 
         $platforms = collect(SocialPlatform::enabled())->map(fn ($platform) => [

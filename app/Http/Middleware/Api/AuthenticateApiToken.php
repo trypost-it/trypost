@@ -54,6 +54,6 @@ class AuthenticateApiToken
 
     private function hasActiveSubscription(Workspace $workspace): bool
     {
-        return $workspace->hasActiveSubscription();
+        return $workspace->account?->hasActiveSubscription() ?? false;
     }
 }

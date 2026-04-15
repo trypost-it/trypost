@@ -6,7 +6,6 @@ namespace App\Http\Controllers\App;
 
 use App\Actions\Workspace\CreateWorkspace;
 use App\Actions\Workspace\DeleteWorkspace;
-use App\Enums\UserWorkspace\Role;
 use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
 use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
 use App\Models\Workspace;
@@ -39,7 +38,7 @@ class WorkspaceController extends Controller
 
         $workspace = $user->currentWorkspace;
 
-        if ($user->ownedWorkspacesCount() > 0 && (! $workspace || ! $workspace->hasActiveSubscription())) {
+        if ($user->ownedWorkspacesCount() > 0 && ! $user->account?->hasActiveSubscription()) {
             return redirect()->route('app.billing.index')
                 ->with('message', 'Subscribe to create more workspaces.');
         }
@@ -51,9 +50,7 @@ class WorkspaceController extends Controller
     {
         $user = $request->user();
 
-        $workspace = $user->currentWorkspace;
-
-        if ($user->ownedWorkspacesCount() > 0 && (! $workspace || ! $workspace->hasActiveSubscription())) {
+        if ($user->ownedWorkspacesCount() > 0 && ! $user->account?->hasActiveSubscription()) {
             return redirect()->route('app.billing.index')
                 ->with('message', 'Subscribe to create more workspaces.');
         }
@@ -99,11 +96,11 @@ class WorkspaceController extends Controller
                 'name' => $member->name,
                 'email' => $member->email,
                 'role' => $member->pivot->role,
-                'is_owner' => $member->pivot->role === Role::Owner->value,
+                'is_owner' => $member->id === $workspace->account?->owner_id,
             ]);
 
         $invitations = $workspace->invites()
-            ->select('id', 'email', 'role')
+            ->select('id', 'email')
             ->latest()
             ->get();
 

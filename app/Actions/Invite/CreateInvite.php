@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Actions\Invite;
 
-use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use App\Mail\WorkspaceInvite as WorkspaceInviteMail;
+use App\Models\Invite;
 use App\Models\Workspace;
-use App\Models\WorkspaceInvite;
 use Illuminate\Support\Facades\Mail;
 
 class CreateInvite
 {
-    public static function execute(Workspace $workspace, array $data): WorkspaceInvite
+    public static function execute(Workspace $workspace, array $data): Invite
     {
-        $invite = $workspace->invites()->create([
+        $invite = Invite::create([
+            'account_id' => $workspace->account_id,
+            'invited_by' => auth()->id(),
             'email' => data_get($data, 'email'),
-            'role' => data_get($data, 'role', WorkspaceRole::Member),
+            'workspaces' => [$workspace->id],
         ]);
 
         Mail::to($invite->email)->send(new WorkspaceInviteMail($invite));

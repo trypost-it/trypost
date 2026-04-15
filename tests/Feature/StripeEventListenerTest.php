@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Listeners\StripeEventListener;
+use App\Models\Account;
 use App\Models\User;
 use App\Models\Workspace;
 use Laravel\Cashier\Events\WebhookReceived;
@@ -12,12 +13,19 @@ use Laravel\Cashier\Events\WebhookReceived;
 beforeEach(function () {
     config(['trypost.self_hosted' => true]);
 
-    $this->user = User::factory()->create(['setup' => Setup::Subscription]);
-    $this->workspace = Workspace::factory()->create([
-        'user_id' => $this->user->id,
+    $this->account = Account::factory()->create([
         'stripe_id' => 'cus_test_'.fake()->uuid(),
     ]);
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $this->user = User::factory()->create([
+        'setup' => Setup::Subscription,
+        'account_id' => $this->account->id,
+    ]);
+    $this->account->update(['owner_id' => $this->user->id]);
+    $this->workspace = Workspace::factory()->create([
+        'user_id' => $this->user->id,
+        'account_id' => $this->account->id,
+    ]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
@@ -26,7 +34,7 @@ test('webhook creates subscription and completes setup', function () {
         'type' => 'customer.subscription.created',
         'data' => [
             'object' => [
-                'customer' => $this->workspace->stripe_id,
+                'customer' => $this->account->stripe_id,
                 'id' => 'sub_test_'.fake()->uuid(),
                 'status' => 'active',
             ],

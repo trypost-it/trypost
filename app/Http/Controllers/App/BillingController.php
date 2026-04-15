@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
+use App\Models\Account;
 use App\Models\Plan;
-use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -16,9 +16,9 @@ class BillingController extends Controller
 {
     public function subscribe(Request $request): Response|RedirectResponse
     {
-        $workspace = $request->user()->currentWorkspace;
+        $account = $request->user()->account;
 
-        if ($workspace && $workspace->hasActiveSubscription()) {
+        if ($account && $account->hasActiveSubscription()) {
             return redirect()->route('app.billing.index');
         }
 
@@ -30,9 +30,9 @@ class BillingController extends Controller
 
     public function checkout(Request $request, Plan $plan): SymfonyResponse
     {
-        $workspace = $request->user()->currentWorkspace;
+        $account = $request->user()->account;
 
-        $this->authorize('manageBilling', $workspace);
+        abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
 
         $priceId = $request->input('interval', 'monthly') === 'yearly'
             ? $plan->stripe_yearly_price_id
@@ -40,12 +40,12 @@ class BillingController extends Controller
 
         abort_if(! $priceId, 422, 'Plan price not configured');
 
-        $workspace->createOrGetStripeCustomer([
-            'email' => $workspace->stripeEmail(),
-            'name' => $workspace->stripeName(),
+        $account->createOrGetStripeCustomer([
+            'email' => $account->stripeEmail(),
+            'name' => $account->stripeName(),
         ]);
 
-        $subscription = $workspace->newSubscription(Workspace::SUBSCRIPTION_NAME, $priceId)
+        $subscription = $account->newSubscription(Account::SUBSCRIPTION_NAME, $priceId)
             ->allowPromotionCodes()
             ->trialDays(config('cashier.trial_days'));
 
@@ -54,17 +54,17 @@ class BillingController extends Controller
             'cancel_url' => route('app.billing.processing').'?status=cancelled',
         ]);
 
-        $workspace->update(['plan_id' => $plan->id]);
+        $account->update(['plan_id' => $plan->id]);
 
         return Inertia::location($checkoutSession->url);
     }
 
     public function processing(Request $request): Response|RedirectResponse
     {
-        $workspace = $request->user()->currentWorkspace;
+        $account = $request->user()->account;
         $status = $request->query('status', 'processing');
 
-        if ($workspace && $workspace->subscribed(Workspace::SUBSCRIPTION_NAME)) {
+        if ($account && $account->subscribed(Account::SUBSCRIPTION_NAME)) {
             return redirect()->route('app.calendar');
         }
 
@@ -73,37 +73,37 @@ class BillingController extends Controller
         }
 
         return Inertia::render('billing/Processing', [
-            'workspaceId' => $workspace?->id,
+            'accountId' => $account?->id,
             'status' => $status,
         ]);
     }
 
     public function index(Request $request): Response
     {
-        $workspace = $request->user()->currentWorkspace;
+        $account = $request->user()->account;
 
-        $this->authorize('manageBilling', $workspace);
+        abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
 
-        $subscription = $workspace->subscription(Workspace::SUBSCRIPTION_NAME);
+        $subscription = $account->subscription(Account::SUBSCRIPTION_NAME);
 
         return Inertia::render('billing/Index', [
-            'hasSubscription' => $workspace->subscribed(Workspace::SUBSCRIPTION_NAME),
+            'hasSubscription' => $account->subscribed(Account::SUBSCRIPTION_NAME),
             'onTrial' => $subscription?->onTrial() ?? false,
             'trialEndsAt' => $subscription?->trial_ends_at?->toFormattedDateString(),
             'subscription' => $subscription?->only([
                 'stripe_status',
                 'ends_at',
             ]),
-            'plan' => $workspace->plan,
+            'plan' => $account->plan,
             'plans' => Plan::active()->orderBy('sort')->get(),
-            'invoices' => $workspace->invoices()->map(fn ($invoice) => [
+            'invoices' => $account->invoices()->map(fn ($invoice) => [
                 'id' => $invoice->id,
                 'date' => $invoice->date()->toFormattedDateString(),
                 'total' => $invoice->total(),
                 'status' => $invoice->status,
                 'invoice_pdf' => $invoice->invoice_pdf,
             ]),
-            'defaultPaymentMethod' => $workspace->defaultPaymentMethod()?->card?->only([
+            'defaultPaymentMethod' => $account->defaultPaymentMethod()?->card?->only([
                 'brand',
                 'last4',
                 'exp_month',
@@ -114,11 +114,10 @@ class BillingController extends Controller
 
     public function swap(Request $request, Plan $plan): RedirectResponse
     {
-        $workspace = $request->user()->currentWorkspace;
+        $account = $request->user()->account;
 
-        $this->authorize('manageBilling', $workspace);
-
-        abort_unless($workspace->subscribed(Workspace::SUBSCRIPTION_NAME), 422, 'No active subscription');
+        abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
+        abort_unless($account->subscribed(Account::SUBSCRIPTION_NAME), 422, 'No active subscription');
 
         $priceId = $request->input('interval', 'monthly') === 'yearly'
             ? $plan->stripe_yearly_price_id
@@ -126,19 +125,19 @@ class BillingController extends Controller
 
         abort_if(! $priceId, 422, 'Plan price not configured');
 
-        $workspace->subscription(Workspace::SUBSCRIPTION_NAME)->swap($priceId);
-        $workspace->update(['plan_id' => $plan->id]);
+        $account->subscription(Account::SUBSCRIPTION_NAME)->swap($priceId);
+        $account->update(['plan_id' => $plan->id]);
 
         return redirect()->route('app.billing.index');
     }
 
     public function portal(Request $request): RedirectResponse
     {
-        $workspace = $request->user()->currentWorkspace;
+        $account = $request->user()->account;
 
-        $this->authorize('manageBilling', $workspace);
+        abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
 
-        return $workspace->redirectToBillingPortal(
+        return $account->redirectToBillingPortal(
             route('app.billing.index')
         );
     }

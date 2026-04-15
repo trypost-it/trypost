@@ -9,7 +9,7 @@ use App\Actions\Invite\DeleteInvite;
 use App\Actions\Invite\RemoveMember;
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use App\Http\Requests\App\Invite\StoreWorkspaceInviteRequest;
-use App\Models\WorkspaceInvite;
+use App\Models\Invite;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -34,7 +34,6 @@ class WorkspaceInviteController extends Controller
                 ->latest()
                 ->get(),
             'members' => $workspace->members()
-                ->wherePivot('role', '!=', WorkspaceRole::Owner->value)
                 ->get()
                 ->map(fn ($member) => [
                     'id' => $member->id,
@@ -43,13 +42,11 @@ class WorkspaceInviteController extends Controller
                     'role' => $member->pivot->role,
                 ]),
             'owner' => [
-                'id' => $workspace->owner->id,
-                'name' => $workspace->owner->name,
-                'email' => $workspace->owner->email,
-                'role' => WorkspaceRole::Owner->value,
+                'id' => $workspace->account?->owner?->id,
+                'name' => $workspace->account?->owner?->name,
+                'email' => $workspace->account?->owner?->email,
             ],
             'roles' => collect(WorkspaceRole::cases())
-                ->filter(fn ($role) => $role !== WorkspaceRole::Owner)
                 ->map(fn ($role) => [
                     'value' => $role->value,
                     'label' => $role->label(),
@@ -91,7 +88,7 @@ class WorkspaceInviteController extends Controller
         return back();
     }
 
-    public function destroy(Request $request, WorkspaceInvite $invite): RedirectResponse
+    public function destroy(Request $request, Invite $invite): RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -101,7 +98,7 @@ class WorkspaceInviteController extends Controller
 
         $this->authorize('manageTeam', $workspace);
 
-        if ($invite->workspace_id !== $workspace->id) {
+        if ($invite->account_id !== $workspace->account_id) {
             abort(404);
         }
 
@@ -123,10 +120,9 @@ class WorkspaceInviteController extends Controller
 
         $this->authorize('manageTeam', $workspace);
 
-        $memberPivot = $workspace->members()->where('user_id', $userId)->first()?->pivot;
-
-        if ($memberPivot && $memberPivot->role === WorkspaceRole::Owner->value) {
-            return back()->withErrors(['member' => 'Cannot remove the workspace owner.']);
+        // Account owner cannot be removed
+        if ($userId === $workspace->account?->owner_id) {
+            return back()->withErrors(['member' => 'Cannot remove the account owner.']);
         }
 
         RemoveMember::execute($workspace, $userId);
@@ -147,14 +143,13 @@ class WorkspaceInviteController extends Controller
 
         $this->authorize('manageTeam', $workspace);
 
-        $memberPivot = $workspace->members()->where('user_id', $userId)->first()?->pivot;
-
-        if ($memberPivot && $memberPivot->role === WorkspaceRole::Owner->value) {
-            return back()->withErrors(['role' => 'Cannot change the workspace owner role.']);
+        // Account owner's role cannot be changed
+        if ($userId === $workspace->account?->owner_id) {
+            return back()->withErrors(['role' => 'Cannot change the account owner role.']);
         }
 
         $validated = $request->validate([
-            'role' => ['required', Rule::in([WorkspaceRole::Admin->value, WorkspaceRole::Member->value])],
+            'role' => ['required', Rule::in(array_column(WorkspaceRole::cases(), 'value'))],
         ]);
 
         $workspace->members()->updateExistingPivot($userId, [

@@ -15,7 +15,7 @@ beforeEach(function () {
     $this->user = User::factory()->create();
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
 });
 
 test('instagram connect redirects to oauth provider', function () {

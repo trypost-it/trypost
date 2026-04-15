@@ -6,7 +6,7 @@ namespace App\Listeners;
 
 use App\Enums\User\Setup;
 use App\Events\SubscriptionCreated;
-use App\Models\Workspace;
+use App\Models\Account;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Events\WebhookReceived;
 
@@ -22,7 +22,7 @@ class StripeEventListener
                 return;
             }
 
-            $workspace = Workspace::where('stripe_id', $stripeCustomerId)->first();
+            $workspace = Account::where('stripe_id', $stripeCustomerId)->first();
 
             if (! $workspace) {
                 return;
@@ -42,7 +42,7 @@ class StripeEventListener
         }
     }
 
-    protected function handleSubscriptionCreated(Workspace $workspace, array $payload): void
+    protected function handleSubscriptionCreated(Account $workspace, array $payload): void
     {
         $owner = $workspace->owner;
 
@@ -53,12 +53,12 @@ class StripeEventListener
         SubscriptionCreated::dispatch($workspace);
     }
 
-    protected function handleSubscriptionUpdated(Workspace $workspace, array $payload): void
+    protected function handleSubscriptionUpdated(Account $workspace, array $payload): void
     {
         //
     }
 
-    protected function handleSubscriptionDeleted(Workspace $workspace, array $payload): void
+    protected function handleSubscriptionDeleted(Account $workspace, array $payload): void
     {
         //
     }

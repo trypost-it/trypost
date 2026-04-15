@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Owner->value]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
 
     $plainToken = 'tp_'.Str::random(48);
     $this->plainToken = $plainToken;

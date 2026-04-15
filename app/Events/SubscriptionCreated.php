@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Events;
 
-use App\Models\Workspace;
+use App\Models\Account;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -15,12 +15,12 @@ class SubscriptionCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public Workspace $workspace) {}
+    public function __construct(public Account $account) {}
 
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('users.'.$this->workspace->user_id),
+            new PrivateChannel('users.'.$this->account->owner_id),
         ];
     }
 

@@ -28,7 +28,6 @@ class SocialAccount extends Model
 
     protected $fillable = [
         'workspace_id',
-        'brand_id',
         'platform',
         'platform_user_id',
         'username',
@@ -68,11 +67,6 @@ class SocialAccount extends Model
     public function workspace(): BelongsTo
     {
         return $this->belongsTo(Workspace::class);
-    }
-
-    public function brand(): BelongsTo
-    {
-        return $this->belongsTo(Brand::class);
     }
 
     public function postPlatforms(): HasMany

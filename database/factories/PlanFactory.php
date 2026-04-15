@@ -29,7 +29,7 @@ class PlanFactory extends Factory
             'yearly_price' => fake()->randomElement([9000, 19000, 39000, 79000]),
             'social_account_limit' => fake()->randomElement([3, 10, 25, 100]),
             'member_limit' => fake()->randomElement([1, 3, 10, 50]),
-            'brand_limit' => fake()->randomElement([1, 3, 10, 50]),
+            'workspace_limit' => fake()->randomElement([1, 3, 10, 50]),
             'ai_images_limit' => fake()->randomElement([10, 50, 200, 1000]),
             'ai_videos_limit' => fake()->randomElement([5, 25, 100, 500]),
             'data_retention_days' => fake()->randomElement([30, 90, 365, 730]),

@@ -3,14 +3,14 @@
 declare(strict_types=1);
 
 use App\Events\SubscriptionCreated;
+use App\Models\Account;
 use App\Models\User;
-use App\Models\Workspace;
 use Illuminate\Broadcasting\PrivateChannel;
 
 test('event broadcasts on correct channel', function () {
     $user = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $event = new SubscriptionCreated($workspace);
+    $account = Account::factory()->create(['owner_id' => $user->id]);
+    $event = new SubscriptionCreated($account);
     $channels = $event->broadcastOn();
 
     expect($channels)->toHaveCount(1);
@@ -20,8 +20,8 @@ test('event broadcasts on correct channel', function () {
 
 test('event broadcasts with correct data', function () {
     $user = User::factory()->create();
-    $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $event = new SubscriptionCreated($workspace);
+    $account = Account::factory()->create(['owner_id' => $user->id]);
+    $event = new SubscriptionCreated($account);
     $data = $event->broadcastWith();
 
     expect($data)->toHaveKey('status');

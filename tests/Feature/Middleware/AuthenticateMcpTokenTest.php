@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\UserWorkspace\Role;
 use App\Http\Middleware\Mcp\AuthenticateMcpToken;
+use App\Models\Account;
 use App\Models\ApiToken;
 use App\Models\User;
 use App\Models\Workspace;
@@ -23,7 +24,7 @@ function createMcpToken(array $overrides = []): array
 
     $user = data_get($overrides, 'user') ?? User::factory()->create();
     $workspace = data_get($overrides, 'workspace') ?? Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->syncWithoutDetaching([$user->id => ['role' => Role::Owner->value]]);
+    $workspace->members()->syncWithoutDetaching([$user->id => ['role' => Role::Member->value]]);
 
     $apiToken = ApiToken::factory()->create([
         'workspace_id' => $workspace->id,
@@ -139,8 +140,8 @@ test('allows access when owner has active subscription', function () {
     config(['trypost.self_hosted' => false]);
     $result = createMcpToken();
 
-    $result['workspace']->subscriptions()->create([
-        'type' => Workspace::SUBSCRIPTION_NAME,
+    $result['workspace']->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_test',
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',
@@ -155,8 +156,8 @@ test('allows access when owner is on trial', function () {
     config(['trypost.self_hosted' => false]);
     $result = createMcpToken();
 
-    $result['workspace']->subscriptions()->create([
-        'type' => Workspace::SUBSCRIPTION_NAME,
+    $result['workspace']->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_trial',
         'stripe_status' => 'trialing',
         'stripe_price' => 'price_123',

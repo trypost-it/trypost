@@ -8,7 +8,6 @@ import {
     IconClock,
     IconFileCheck,
     IconFileText,
-    IconBuildingStore,
     IconHash,
     IconLifebuoy,
     IconMessageCircle,
@@ -22,6 +21,7 @@ import { computed } from 'vue';
 
 import { store as storePost } from '@/actions/App/Http/Controllers/App/PostController';
 import { index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
+import { WorkspaceRole } from '@/enums/workspace-role';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Avatar } from '@/components/ui/avatar';
@@ -45,7 +45,6 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { accounts, analytics, calendar } from '@/routes/app';
-import { index as brands } from '@/routes/app/brands';
 import { index as hashtags } from '@/routes/app/hashtags';
 import { index as labels } from '@/routes/app/labels';
 import { edit as editProfile } from '@/routes/app/profile';
@@ -102,7 +101,10 @@ const postsNavItems = computed<NavItem[]>(() => [
     },
 ]);
 
-const canManageWorkspace = computed(() => auth.value.currentWorkspace?.role !== 'member');
+const canManageWorkspace = computed(() => {
+    const role = auth.value.currentWorkspace?.role;
+    return role === WorkspaceRole.Owner || role === WorkspaceRole.Admin;
+});
 
 const configNavItems = computed(() => {
     const items: NavItem[] = [
@@ -110,11 +112,6 @@ const configNavItems = computed(() => {
             title: trans('sidebar.config.connections'),
             href: accounts.url(),
             icon: IconAffiliate,
-        },
-        {
-            title: trans('sidebar.config.brands'),
-            href: brands.url(),
-            icon: IconBuildingStore,
         },
         {
             title: trans('sidebar.config.hashtags'),

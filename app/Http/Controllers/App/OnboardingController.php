@@ -8,9 +8,9 @@ use App\Enums\Plan\Slug as PlanSlug;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\User\Persona;
 use App\Enums\User\Setup;
+use App\Models\Account;
 use App\Models\Plan;
 use App\Models\User;
-use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -92,14 +92,15 @@ class OnboardingController extends Controller
 
         $user->update(['setup' => Setup::Subscription]);
 
+        $account = $user->account;
         $defaultPlan = Plan::where('slug', PlanSlug::Starter)->firstOrFail();
 
-        $workspace->createOrGetStripeCustomer([
-            'email' => $workspace->stripeEmail(),
-            'name' => $workspace->stripeName(),
+        $account->createOrGetStripeCustomer([
+            'email' => $account->stripeEmail(),
+            'name' => $account->stripeName(),
         ]);
 
-        $subscription = $workspace->newSubscription(Workspace::SUBSCRIPTION_NAME, $defaultPlan->stripe_monthly_price_id)
+        $subscription = $account->newSubscription(Account::SUBSCRIPTION_NAME, $defaultPlan->stripe_monthly_price_id)
             ->allowPromotionCodes()
             ->trialDays(config('cashier.trial_days'));
 
@@ -108,7 +109,7 @@ class OnboardingController extends Controller
             'cancel_url' => route('app.onboarding.connect'),
         ]);
 
-        $workspace->update(['plan_id' => $defaultPlan->id]);
+        $account->update(['plan_id' => $defaultPlan->id]);
 
         return Inertia::location($checkoutSession->url);
     }

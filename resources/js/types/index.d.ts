@@ -1,18 +1,20 @@
 import { InertiaLinkProps } from '@inertiajs/vue3';
 import type { Component } from 'vue';
 
+export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'viewer';
+
 export interface Workspace {
     id: string;
     name: string;
     logo_url: string | null;
     timezone: string;
-    role?: 'owner' | 'admin' | 'member' | null;
+    role?: WorkspaceRole | null;
     [key: string]: unknown;
 }
 
 export interface Auth {
     user: User;
-    role: 'owner' | 'admin' | 'member' | null;
+    role: WorkspaceRole | null;
     currentWorkspace: Workspace | null;
     workspaces: Workspace[];
 }

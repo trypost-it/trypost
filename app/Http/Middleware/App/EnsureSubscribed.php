@@ -22,9 +22,9 @@ class EnsureSubscribed
             return redirect()->route('login');
         }
 
-        $workspace = $user->currentWorkspace;
+        $account = $user->account;
 
-        if ($workspace && $workspace->hasActiveSubscription()) {
+        if ($account && $account->hasActiveSubscription()) {
             return $next($request);
         }
 

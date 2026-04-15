@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
+use App\Models\Account;
 use App\Models\User;
 use App\Models\Workspace;
 
@@ -12,7 +13,7 @@ test('self hosted mode bypasses subscription check', function () {
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+    $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
@@ -32,10 +33,10 @@ test('user with active subscription can access protected route', function () {
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+    $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
-    $workspace->subscriptions()->create([
+    $user->account->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_123',
         'stripe_status' => 'active',
@@ -52,11 +53,10 @@ test('user on trial subscription can access protected route', function () {
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+    $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
-    // Create a subscription with trial
-    $workspace->subscriptions()->create([
+    $user->account->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_trial_123',
         'stripe_status' => 'trialing',
@@ -74,7 +74,7 @@ test('user without subscription is redirected to subscribe page', function () {
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+    $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($user)
@@ -87,11 +87,10 @@ test('user with expired trial subscription is redirected to subscribe page', fun
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+    $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
-    // Create an expired trial subscription
-    $workspace->subscriptions()->create([
+    $user->account->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_expired_trial',
         'stripe_status' => 'canceled',
@@ -110,10 +109,10 @@ test('user with cancelled subscription is redirected to subscribe page', functio
 
     $user = User::factory()->create(['setup' => Setup::Completed]);
     $workspace = Workspace::factory()->create(['user_id' => $user->id]);
-    $workspace->members()->attach($user->id, ['role' => Role::Owner->value]);
+    $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
-    $workspace->subscriptions()->create([
+    $user->account->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_123',
         'stripe_status' => 'canceled',
@@ -126,21 +125,32 @@ test('user with cancelled subscription is redirected to subscribe page', functio
         ->assertRedirect(route('app.subscribe'));
 });
 
-test('invited member can access workspace when owner has active subscription', function () {
+test('member can access workspace when account has active subscription', function () {
     config(['trypost.self_hosted' => false]);
 
-    $owner = User::factory()->create(['setup' => Setup::Completed]);
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
+    ]);
+    $workspace->members()->attach($owner->id, ['role' => Role::Member->value]);
 
-    $workspace->subscriptions()->create([
+    $account->subscriptions()->create([
         'type' => 'default',
         'stripe_id' => 'sub_owner_123',
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',
     ]);
 
-    $member = User::factory()->create(['setup' => Setup::Completed]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $account->id,
+    ]);
     $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
     $member->update(['current_workspace_id' => $workspace->id]);
 
@@ -149,42 +159,26 @@ test('invited member can access workspace when owner has active subscription', f
         ->assertOk();
 });
 
-test('invited member is redirected to subscribe when owner has no subscription', function () {
+test('member is redirected to subscribe when account has no subscription', function () {
     config(['trypost.self_hosted' => false]);
 
-    $owner = User::factory()->create(['setup' => Setup::Completed]);
-    $workspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $workspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
-
-    $member = User::factory()->create(['setup' => Setup::Completed]);
-    $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
-    $member->update(['current_workspace_id' => $workspace->id]);
-
-    $this->actingAs($member)
-        ->get(route('app.calendar'))
-        ->assertRedirect(route('app.subscribe'));
-});
-
-test('invited member on own workspace without subscription is redirected to subscribe', function () {
-    config(['trypost.self_hosted' => false]);
-
-    $owner = User::factory()->create(['setup' => Setup::Completed]);
-    $ownerWorkspace = Workspace::factory()->create(['user_id' => $owner->id]);
-    $ownerWorkspace->members()->attach($owner->id, ['role' => Role::Owner->value]);
-
-    $ownerWorkspace->subscriptions()->create([
-        'type' => 'default',
-        'stripe_id' => 'sub_owner_123',
-        'stripe_status' => 'active',
-        'stripe_price' => 'price_123',
+    $account = Account::factory()->create();
+    $owner = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $account->id,
+    ]);
+    $account->update(['owner_id' => $owner->id]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $account->id,
+        'user_id' => $owner->id,
     ]);
 
-    $member = User::factory()->create(['setup' => Setup::Completed]);
-    $ownerWorkspace->members()->attach($member->id, ['role' => Role::Member->value]);
-
-    $memberWorkspace = Workspace::factory()->create(['user_id' => $member->id]);
-    $memberWorkspace->members()->attach($member->id, ['role' => Role::Owner->value]);
-    $member->update(['current_workspace_id' => $memberWorkspace->id]);
+    $member = User::factory()->create([
+        'setup' => Setup::Completed,
+        'account_id' => $account->id,
+    ]);
+    $workspace->members()->attach($member->id, ['role' => Role::Member->value]);
+    $member->update(['current_workspace_id' => $workspace->id]);
 
     $this->actingAs($member)
         ->get(route('app.calendar'))

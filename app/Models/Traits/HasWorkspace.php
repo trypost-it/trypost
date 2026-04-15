@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models\Traits;
 
-use App\Enums\UserWorkspace\Role;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -50,6 +49,6 @@ trait HasWorkspace
      */
     public function ownedWorkspacesCount(): int
     {
-        return $this->workspaces()->wherePivot('role', Role::Owner->value)->count();
+        return Workspace::where('user_id', $this->id)->count();
     }
 }

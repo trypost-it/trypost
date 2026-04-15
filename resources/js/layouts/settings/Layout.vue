@@ -4,6 +4,7 @@ import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 import { useActiveUrl } from '@/composables/useActiveUrl';
+import { WorkspaceRole } from '@/enums/workspace-role';
 import { toUrl } from '@/lib/utils';
 import { index as apiKeys } from '@/routes/app/api-keys';
 import { index as billing } from '@/routes/app/billing';
@@ -15,7 +16,10 @@ import { type NavItem, type SharedData } from '@/types';
 
 const page = usePage<SharedData>();
 const auth = computed(() => page.props.auth);
-const canManageWorkspace = computed(() => auth.value.currentWorkspace?.role !== 'member');
+const canManageWorkspace = computed(() => {
+    const role = auth.value.currentWorkspace?.role;
+    return role === WorkspaceRole.Owner || role === WorkspaceRole.Admin;
+});
 
 const navItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [

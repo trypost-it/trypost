@@ -5,6 +5,7 @@ import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
 import WorkspaceController from '@/actions/App/Http/Controllers/App/WorkspaceController';
+import { WorkspaceRole } from '@/enums/workspace-role';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
@@ -50,7 +51,6 @@ interface Member {
     name: string;
     email: string;
     role: string;
-    is_owner: boolean;
 }
 
 interface Invitation {
@@ -175,12 +175,12 @@ const changeRole = (member: Member, role: string) => {
                                     {{ member.email }}
                                 </TableCell>
                                 <TableCell>
-                                    <Badge :variant="member.is_owner ? 'default' : 'secondary'">
+                                    <Badge :variant="member.role === WorkspaceRole.Admin ? 'default' : 'secondary'">
                                         {{ member.role }}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
-                                    <DropdownMenu v-if="!member.is_owner">
+                                    <DropdownMenu>
                                         <DropdownMenuTrigger as-child>
                                             <Button variant="ghost" size="icon" class="h-8 w-8">
                                                 <IconDots class="size-3.5" />
@@ -188,15 +188,15 @@ const changeRole = (member: Member, role: string) => {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem
-                                                v-if="member.role === 'member'"
-                                                @click="changeRole(member, 'admin')"
+                                                v-if="member.role === WorkspaceRole.Member"
+                                                @click="changeRole(member, WorkspaceRole.Admin)"
                                             >
                                                 <IconShield class="size-3.5" />
                                                 {{ $t('settings.members.make_admin') }}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem
-                                                v-if="member.role === 'admin'"
-                                                @click="changeRole(member, 'member')"
+                                                v-if="member.role === WorkspaceRole.Admin"
+                                                @click="changeRole(member, WorkspaceRole.Member)"
                                             >
                                                 <IconUser class="size-3.5" />
                                                 {{ $t('settings.members.make_member') }}

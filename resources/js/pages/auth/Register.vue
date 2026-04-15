@@ -3,6 +3,7 @@ import { Form, Head } from '@inertiajs/vue3';
 import { IconEye, IconEyeOff } from '@tabler/icons-vue';
 import { ref } from 'vue';
 
+import GoogleAuthButton from '@/components/auth/GoogleAuthButton.vue';
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,6 @@ import {
 } from '@/components/ui/tooltip';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { login } from '@/routes';
-import { redirect as googleRedirect } from '@/routes/auth/google';
 import { store } from '@/routes/register';
 
 defineProps<{
@@ -27,7 +27,6 @@ defineProps<{
 
 const showPassword = ref(false);
 
-// Get user's timezone from browser
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 </script>
 
@@ -40,18 +39,7 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         <Head :title="$t('auth.register.page_title')" />
 
         <div class="flex flex-col gap-6">
-            <template v-if="$page.props.googleAuthEnabled">
-                <Button variant="outline" class="w-full" as="a" :href="googleRedirect.url()">
-                    <img src="/images/social/google.svg" alt="Google" class="size-4" />
-                    {{ $t('auth.google_signup') }}
-                </Button>
-
-                <div
-                    class="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border"
-                >
-                    <span class="relative z-10 bg-background px-2 text-muted-foreground">{{ $t('auth.or_continue_with') }}</span>
-                </div>
-            </template>
+            <GoogleAuthButton :label="$t('auth.google_signup')" />
 
             <Form
                 v-bind="store.form()"

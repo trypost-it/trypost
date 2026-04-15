@@ -6,7 +6,7 @@ return [
     'description' => 'Resumen de todas tus cuentas sociales conectadas',
     'add_social' => 'Agregar Red Social',
     'add_social_title' => 'Conectar una Cuenta Social',
-    'add_social_description' => 'Elige una plataforma para conectar',
+    'add_social_description' => 'Conecta una cuenta social a TryPost para empezar a publicar',
     'no_accounts' => 'No hay cuentas conectadas todavía',
     'no_accounts_description' => 'Conecta tus redes sociales para empezar a programar y publicar posts',
     'added' => 'Agregada :date',
@@ -20,10 +20,19 @@ return [
     'view_profile' => 'Ver perfil',
     'disconnect' => 'Desconectar',
 
-    'tooltips' => [
-        'instagram_facebook' => 'Conecta a través de tu Página de Facebook. Recomendado para cuentas business vinculadas a una Página de Facebook.',
-        'instagram_direct' => 'Conecta directamente por Instagram. Para cuentas profesionales/creadores sin Página de Facebook.',
-        'bluesky' => 'No soportamos autenticación de dos factores. Si está activada en Bluesky, necesitarás desactivarla.',
+    'descriptions' => [
+        'linkedin' => 'Conecta tu perfil personal de LinkedIn',
+        'linkedin-page' => 'Conecta una página de empresa de LinkedIn',
+        'x' => 'Conecta tu cuenta de X (Twitter)',
+        'tiktok' => 'Conecta tu cuenta de TikTok',
+        'youtube' => 'Conecta un canal de YouTube',
+        'facebook' => 'Conecta una página de Facebook',
+        'instagram' => 'Conecta una cuenta profesional de Instagram',
+        'instagram-facebook' => 'Conecta Instagram vía página de Facebook',
+        'threads' => 'Conecta tu cuenta de Threads',
+        'pinterest' => 'Conecta tu cuenta de Pinterest',
+        'bluesky' => 'Conecta tu cuenta de Bluesky',
+        'mastodon' => 'Conecta tu cuenta de Mastodon',
     ],
 
     'disconnect_modal' => [

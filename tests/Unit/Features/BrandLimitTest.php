@@ -2,21 +2,21 @@
 
 declare(strict_types=1);
 
-use App\Features\BrandLimit;
+use App\Features\WorkspaceLimit;
+use App\Models\Account;
 use App\Models\Plan;
-use App\Models\Workspace;
 
-test('returns plan brand limit', function () {
-    $plan = new Plan(['brand_limit' => 5]);
-    $workspace = new Workspace;
-    $workspace->setRelation('plan', $plan);
+test('returns plan workspace limit', function () {
+    $plan = new Plan(['workspace_limit' => 5]);
+    $account = new Account;
+    $account->setRelation('plan', $plan);
 
-    expect((new BrandLimit)->resolve($workspace))->toBe(5);
+    expect((new WorkspaceLimit)->resolve($account))->toBe(5);
 });
 
-test('falls back to 0 when no plan', function () {
-    $workspace = new Workspace;
-    $workspace->setRelation('plan', null);
+test('falls back to 1 when no plan', function () {
+    $account = new Account;
+    $account->setRelation('plan', null);
 
-    expect((new BrandLimit)->resolve($workspace))->toBe(0);
+    expect((new WorkspaceLimit)->resolve($account))->toBe(1);
 });

@@ -29,7 +29,6 @@ interface SocialAccount {
     is_active: boolean;
     error_message: string | null;
     created_at: string;
-    brand: { id: string; name: string } | null;
 }
 
 interface Props {
@@ -178,11 +177,6 @@ const handleDisconnect = (accountId: string) => {
                             <p class="font-semibold truncate max-w-full">{{ account.display_name }}</p>
                             <p class="text-sm text-muted-foreground truncate max-w-full">
                                 @{{ account.username || account.display_name }}
-                            </p>
-
-                            <!-- Brand badge -->
-                            <p v-if="account.brand" class="mt-1 text-xs text-muted-foreground">
-                                {{ account.brand.name }}
                             </p>
 
                             <!-- Added date -->

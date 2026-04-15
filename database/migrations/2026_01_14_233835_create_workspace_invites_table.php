@@ -8,27 +8,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('workspace_invites', function (Blueprint $table) {
+        Schema::create('invites', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->foreignUuid('account_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('invited_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('email');
-            $table->string('role')->default('member');
-            $table->foreignUuid('workspace_id')->constrained()->cascadeOnDelete();
+            $table->json('workspaces');
+            $table->timestamp('accepted_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['email', 'workspace_id']);
+            $table->unique(['email', 'account_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('workspace_invites');
+        Schema::dropIfExists('invites');
     }
 };

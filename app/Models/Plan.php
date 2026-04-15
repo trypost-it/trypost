@@ -26,7 +26,7 @@ class Plan extends Model
         'yearly_price',
         'social_account_limit',
         'member_limit',
-        'brand_limit',
+        'workspace_limit',
         'ai_images_limit',
         'ai_videos_limit',
         'data_retention_days',
@@ -43,7 +43,7 @@ class Plan extends Model
             'yearly_price' => 'integer',
             'social_account_limit' => 'integer',
             'member_limit' => 'integer',
-            'brand_limit' => 'integer',
+            'workspace_limit' => 'integer',
             'ai_images_limit' => 'integer',
             'ai_videos_limit' => 'integer',
             'data_retention_days' => 'integer',
@@ -51,9 +51,9 @@ class Plan extends Model
         ];
     }
 
-    public function workspaces(): HasMany
+    public function accounts(): HasMany
     {
-        return $this->hasMany(Workspace::class);
+        return $this->hasMany(Account::class);
     }
 
     public function scopeActive(Builder $query): Builder

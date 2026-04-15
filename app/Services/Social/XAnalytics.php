@@ -160,11 +160,13 @@ class XAnalytics
             throw new TokenExpiredException('No refresh token available for X account');
         }
 
-        $response = $this->socialHttp()->asForm()->post('https://api.x.com/2/oauth2/token', [
-            'grant_type' => 'refresh_token',
-            'refresh_token' => $account->refresh_token,
-            'client_id' => config('services.x.client_id'),
-        ]);
+        $response = $this->socialHttp()
+            ->withBasicAuth(config('services.x.client_id'), config('services.x.client_secret'))
+            ->asForm()
+            ->post('https://api.x.com/2/oauth2/token', [
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $account->refresh_token,
+            ]);
 
         if ($response->failed()) {
             Log::error('X token refresh failed', ['body' => $this->redactResponseBody($response->body())]);

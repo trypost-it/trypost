@@ -199,23 +199,28 @@ class LinkedInPageController extends SocialController
                 }
             }
 
-            // Create new account
-            $account = $workspace->socialAccounts()->create([
-                'platform' => $this->platform->value,
-                'platform_user_id' => $request->organization_id,
-                'username' => $request->organization_vanity_name,
-                'display_name' => $request->organization_name,
-                'avatar_url' => $avatarPath,
-                'access_token' => $pendingData['token'],
-                'refresh_token' => $pendingData['refresh_token'],
-                'token_expires_at' => $pendingData['expires_in'] ? now()->addSeconds($pendingData['expires_in']) : null,
-                'status' => Status::Connected,
-                'meta' => [
-                    'organization_id' => $request->organization_id,
-                    'admin_user_id' => $pendingData['user_id'],
-                    'admin_name' => $pendingData['name'],
+            $account = $workspace->socialAccounts()->updateOrCreate(
+                [
+                    'platform' => $this->platform->value,
+                    'platform_user_id' => $request->organization_id,
                 ],
-            ]);
+                [
+                    'username' => $request->organization_vanity_name,
+                    'display_name' => $request->organization_name,
+                    'avatar_url' => $avatarPath,
+                    'access_token' => $pendingData['token'],
+                    'refresh_token' => $pendingData['refresh_token'],
+                    'token_expires_at' => $pendingData['expires_in'] ? now()->addSeconds($pendingData['expires_in']) : null,
+                    'status' => Status::Connected,
+                    'error_message' => null,
+                    'disconnected_at' => null,
+                    'meta' => [
+                        'organization_id' => $request->organization_id,
+                        'admin_user_id' => $pendingData['user_id'],
+                        'admin_name' => $pendingData['name'],
+                    ],
+                ],
+            );
 
             // Sync tokens to LinkedIn personal if it exists
             app(LinkedInTokenSynchronizer::class)->syncTokens($account);

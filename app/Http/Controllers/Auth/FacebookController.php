@@ -95,24 +95,29 @@ class FacebookController extends SocialController
                 $page = $pages[0];
                 $avatarPath = uploadFromUrl(data_get($page, 'picture'));
 
-                // Create new account
-                $workspace->socialAccounts()->create([
-                    'platform' => $this->platform->value,
-                    'platform_user_id' => data_get($page, 'id'),
-                    'username' => data_get($page, 'username', null),
-                    'display_name' => data_get($page, 'name'),
-                    'avatar_url' => $avatarPath,
-                    'access_token' => data_get($page, 'access_token'),
-                    'refresh_token' => null, // Page tokens don't expire if user token is long-lived
-                    'token_expires_at' => null,
-                    'scopes' => $this->scopes,
-                    'status' => Status::Connected,
-                    'meta' => [
-                        'page_id' => data_get($page, 'id'),
-                        'user_id' => $socialUser->getId(),
-                        'user_token' => $socialUser->token,
+                $workspace->socialAccounts()->updateOrCreate(
+                    [
+                        'platform' => $this->platform->value,
+                        'platform_user_id' => data_get($page, 'id'),
                     ],
-                ]);
+                    [
+                        'username' => data_get($page, 'username', null),
+                        'display_name' => data_get($page, 'name'),
+                        'avatar_url' => $avatarPath,
+                        'access_token' => data_get($page, 'access_token'),
+                        'refresh_token' => null,
+                        'token_expires_at' => null,
+                        'scopes' => $this->scopes,
+                        'status' => Status::Connected,
+                        'error_message' => null,
+                        'disconnected_at' => null,
+                        'meta' => [
+                            'page_id' => data_get($page, 'id'),
+                            'user_id' => $socialUser->getId(),
+                            'user_token' => $socialUser->token,
+                        ],
+                    ],
+                );
 
                 return $this->popupCallback(true, 'Facebook Page connected!', $this->platform->value);
             }
@@ -225,24 +230,29 @@ class FacebookController extends SocialController
                 }
             }
 
-            // Create new account
-            $workspace->socialAccounts()->create([
-                'platform' => $this->platform->value,
-                'platform_user_id' => data_get($selectedPage, 'id'),
-                'username' => data_get($selectedPage, 'username') ?? null,
-                'display_name' => data_get($selectedPage, 'name'),
-                'avatar_url' => $avatarPath,
-                'access_token' => data_get($selectedPage, 'access_token'),
-                'refresh_token' => null,
-                'token_expires_at' => null,
-                'scopes' => $this->scopes,
-                'status' => Status::Connected,
-                'meta' => [
-                    'page_id' => data_get($selectedPage, 'id'),
-                    'user_id' => data_get($oauthData, 'user_id'),
-                    'user_token' => data_get($oauthData, 'user_token'),
+            $workspace->socialAccounts()->updateOrCreate(
+                [
+                    'platform' => $this->platform->value,
+                    'platform_user_id' => data_get($selectedPage, 'id'),
                 ],
-            ]);
+                [
+                    'username' => data_get($selectedPage, 'username') ?? null,
+                    'display_name' => data_get($selectedPage, 'name'),
+                    'avatar_url' => $avatarPath,
+                    'access_token' => data_get($selectedPage, 'access_token'),
+                    'refresh_token' => null,
+                    'token_expires_at' => null,
+                    'scopes' => $this->scopes,
+                    'status' => Status::Connected,
+                    'error_message' => null,
+                    'disconnected_at' => null,
+                    'meta' => [
+                        'page_id' => data_get($selectedPage, 'id'),
+                        'user_id' => data_get($oauthData, 'user_id'),
+                        'user_token' => data_get($oauthData, 'user_token'),
+                    ],
+                ],
+            );
 
             session()->forget(['facebook_oauth', 'social_reconnect_id']);
 

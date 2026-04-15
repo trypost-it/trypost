@@ -159,19 +159,24 @@ class SocialController extends Controller
 
             $avatarPath = uploadFromUrl($socialUser->getAvatar());
 
-            // Create new account
-            $workspace->socialAccounts()->create([
-                'platform' => $platform->value,
-                'platform_user_id' => $socialUser->getId(),
-                'username' => $socialUser->getNickname(),
-                'display_name' => $socialUser->getName(),
-                'avatar_url' => $avatarPath,
-                'access_token' => $socialUser->token,
-                'refresh_token' => $socialUser->refreshToken,
-                'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
-                'scopes' => $socialUser->approvedScopes ?? null,
-                'status' => Status::Connected,
-            ]);
+            $workspace->socialAccounts()->updateOrCreate(
+                [
+                    'platform' => $platform->value,
+                    'platform_user_id' => $socialUser->getId(),
+                ],
+                [
+                    'username' => $socialUser->getNickname(),
+                    'display_name' => $socialUser->getName(),
+                    'avatar_url' => $avatarPath,
+                    'access_token' => $socialUser->token,
+                    'refresh_token' => $socialUser->refreshToken,
+                    'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
+                    'scopes' => $socialUser->approvedScopes ?? null,
+                    'status' => Status::Connected,
+                    'error_message' => null,
+                    'disconnected_at' => null,
+                ],
+            );
 
             return $this->popupCallback(true, 'Account connected!', $platform->value);
         } catch (\Exception $e) {

@@ -183,23 +183,28 @@ class MastodonController extends SocialController
 
             $avatarPath = data_get($profile, 'avatar') ? uploadFromUrl(data_get($profile, 'avatar')) : null;
 
-            // Create new account
-            $workspace->socialAccounts()->create([
-                'platform' => $this->platform->value,
-                'platform_user_id' => data_get($profile, 'id'),
-                'username' => data_get($profile, 'acct'),
-                'display_name' => data_get($profile, 'display_name') ?: data_get($profile, 'username'),
-                'avatar_url' => $avatarPath,
-                'access_token' => $accessToken,
-                'refresh_token' => null, // Mastodon tokens don't expire
-                'token_expires_at' => null,
-                'status' => Status::Connected,
-                'meta' => [
-                    'instance' => $instance,
-                    'client_id' => $clientId,
-                    'client_secret' => $clientSecret,
+            $workspace->socialAccounts()->updateOrCreate(
+                [
+                    'platform' => $this->platform->value,
+                    'platform_user_id' => data_get($profile, 'id'),
                 ],
-            ]);
+                [
+                    'username' => data_get($profile, 'acct'),
+                    'display_name' => data_get($profile, 'display_name') ?: data_get($profile, 'username'),
+                    'avatar_url' => $avatarPath,
+                    'access_token' => $accessToken,
+                    'refresh_token' => null,
+                    'token_expires_at' => null,
+                    'status' => Status::Connected,
+                    'error_message' => null,
+                    'disconnected_at' => null,
+                    'meta' => [
+                        'instance' => $instance,
+                        'client_id' => $clientId,
+                        'client_secret' => $clientSecret,
+                    ],
+                ],
+            );
 
             $this->clearMastodonSession();
 

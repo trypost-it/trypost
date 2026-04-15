@@ -80,23 +80,28 @@ class YouTubeController extends SocialController
                 $channel = $channels[0];
                 $avatarPath = uploadFromUrl(data_get($channel, 'thumbnail'));
 
-                // Create new account
-                $workspace->socialAccounts()->create([
-                    'platform' => $this->platform->value,
-                    'platform_user_id' => data_get($channel, 'id'),
-                    'username' => ltrim(data_get($channel, 'custom_url', data_get($channel, 'id')), '@'),
-                    'display_name' => data_get($channel, 'title'),
-                    'avatar_url' => $avatarPath,
-                    'access_token' => $socialUser->token,
-                    'refresh_token' => $socialUser->refreshToken,
-                    'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
-                    'scopes' => $this->scopes,
-                    'status' => Status::Connected,
-                    'meta' => [
-                        'channel_id' => data_get($channel, 'id'),
-                        'google_user_id' => $socialUser->getId(),
+                $workspace->socialAccounts()->updateOrCreate(
+                    [
+                        'platform' => $this->platform->value,
+                        'platform_user_id' => data_get($channel, 'id'),
                     ],
-                ]);
+                    [
+                        'username' => ltrim(data_get($channel, 'custom_url', data_get($channel, 'id')), '@'),
+                        'display_name' => data_get($channel, 'title'),
+                        'avatar_url' => $avatarPath,
+                        'access_token' => $socialUser->token,
+                        'refresh_token' => $socialUser->refreshToken,
+                        'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
+                        'scopes' => $this->scopes,
+                        'status' => Status::Connected,
+                        'error_message' => null,
+                        'disconnected_at' => null,
+                        'meta' => [
+                            'channel_id' => data_get($channel, 'id'),
+                            'google_user_id' => $socialUser->getId(),
+                        ],
+                    ],
+                );
 
                 return $this->popupCallback(true, 'YouTube channel connected!', $this->platform->value);
             }
@@ -220,23 +225,28 @@ class YouTubeController extends SocialController
                 }
             }
 
-            // Create new account
-            $workspace->socialAccounts()->create([
-                'platform' => $this->platform->value,
-                'platform_user_id' => data_get($selectedChannel, 'id'),
-                'username' => ltrim(data_get($selectedChannel, 'custom_url', data_get($selectedChannel, 'id')), '@'),
-                'display_name' => data_get($selectedChannel, 'title'),
-                'avatar_url' => $avatarPath,
-                'access_token' => data_get($oauthData, 'access_token'),
-                'refresh_token' => data_get($oauthData, 'refresh_token'),
-                'token_expires_at' => data_get($oauthData, 'expires_in') ? now()->addSeconds(data_get($oauthData, 'expires_in')) : null,
-                'scopes' => $this->scopes,
-                'status' => Status::Connected,
-                'meta' => [
-                    'channel_id' => data_get($selectedChannel, 'id'),
-                    'google_user_id' => data_get($oauthData, 'user_id'),
+            $workspace->socialAccounts()->updateOrCreate(
+                [
+                    'platform' => $this->platform->value,
+                    'platform_user_id' => data_get($selectedChannel, 'id'),
                 ],
-            ]);
+                [
+                    'username' => ltrim(data_get($selectedChannel, 'custom_url', data_get($selectedChannel, 'id')), '@'),
+                    'display_name' => data_get($selectedChannel, 'title'),
+                    'avatar_url' => $avatarPath,
+                    'access_token' => data_get($oauthData, 'access_token'),
+                    'refresh_token' => data_get($oauthData, 'refresh_token'),
+                    'token_expires_at' => data_get($oauthData, 'expires_in') ? now()->addSeconds(data_get($oauthData, 'expires_in')) : null,
+                    'scopes' => $this->scopes,
+                    'status' => Status::Connected,
+                    'error_message' => null,
+                    'disconnected_at' => null,
+                    'meta' => [
+                        'channel_id' => data_get($selectedChannel, 'id'),
+                        'google_user_id' => data_get($oauthData, 'user_id'),
+                    ],
+                ],
+            );
 
             session()->forget(['youtube_oauth', 'social_reconnect_id']);
 

@@ -136,19 +136,24 @@ class ThreadsController extends SocialController
             $profile = $profileResponse->json();
             $avatarPath = uploadFromUrl(data_get($profile, 'threads_profile_picture_url', null));
 
-            // Create new account
-            $workspace->socialAccounts()->create([
-                'platform' => $this->platform->value,
-                'platform_user_id' => data_get($profile, 'id'),
-                'username' => data_get($profile, 'username'),
-                'display_name' => data_get($profile, 'name', data_get($profile, 'username')),
-                'avatar_url' => $avatarPath,
-                'access_token' => $longLivedToken,
-                'refresh_token' => null,
-                'token_expires_at' => $expiresIn ? now()->addSeconds($expiresIn) : null,
-                'scopes' => $this->scopes,
-                'status' => Status::Connected,
-            ]);
+            $workspace->socialAccounts()->updateOrCreate(
+                [
+                    'platform' => $this->platform->value,
+                    'platform_user_id' => data_get($profile, 'id'),
+                ],
+                [
+                    'username' => data_get($profile, 'username'),
+                    'display_name' => data_get($profile, 'name', data_get($profile, 'username')),
+                    'avatar_url' => $avatarPath,
+                    'access_token' => $longLivedToken,
+                    'refresh_token' => null,
+                    'token_expires_at' => $expiresIn ? now()->addSeconds($expiresIn) : null,
+                    'scopes' => $this->scopes,
+                    'status' => Status::Connected,
+                    'error_message' => null,
+                    'disconnected_at' => null,
+                ],
+            );
 
             session()->forget(['threads_oauth_state', 'social_reconnect_id']);
 

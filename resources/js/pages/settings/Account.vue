@@ -18,8 +18,9 @@ interface AccountData {
     billing_email: string;
 }
 
-defineProps<{
+const props = defineProps<{
     account: AccountData;
+    selfHosted: boolean;
 }>();
 
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
@@ -54,7 +55,7 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
                     <InputError :message="errors.name" />
                 </div>
 
-                <div class="grid gap-2">
+                <div v-if="!selfHosted" class="grid gap-2">
                     <Label for="billing-email">{{ $t('settings.account.billing_email') }}</Label>
                     <Input
                         id="billing-email"

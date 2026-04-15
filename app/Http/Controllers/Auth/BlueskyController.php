@@ -89,23 +89,28 @@ class BlueskyController extends SocialController
 
             $avatarPath = data_get($profile, 'avatar') ? uploadFromUrl(data_get($profile, 'avatar')) : null;
 
-            // Create new account
-            $workspace->socialAccounts()->create([
-                'platform' => $this->platform->value,
-                'platform_user_id' => data_get($data, 'did'),
-                'username' => data_get($data, 'handle'),
-                'display_name' => data_get($profile, 'displayName', data_get($data, 'handle')),
-                'avatar_url' => $avatarPath,
-                'access_token' => data_get($data, 'accessJwt'),
-                'refresh_token' => data_get($data, 'refreshJwt'),
-                'token_expires_at' => now()->addHours(2),
-                'status' => Status::Connected,
-                'meta' => [
-                    'service' => $service,
-                    'identifier' => $request->identifier,
-                    'password' => encrypt($request->password),
+            $workspace->socialAccounts()->updateOrCreate(
+                [
+                    'platform' => $this->platform->value,
+                    'platform_user_id' => data_get($data, 'did'),
                 ],
-            ]);
+                [
+                    'username' => data_get($data, 'handle'),
+                    'display_name' => data_get($profile, 'displayName', data_get($data, 'handle')),
+                    'avatar_url' => $avatarPath,
+                    'access_token' => data_get($data, 'accessJwt'),
+                    'refresh_token' => data_get($data, 'refreshJwt'),
+                    'token_expires_at' => now()->addHours(2),
+                    'status' => Status::Connected,
+                    'error_message' => null,
+                    'disconnected_at' => null,
+                    'meta' => [
+                        'service' => $service,
+                        'identifier' => $request->identifier,
+                        'password' => encrypt($request->password),
+                    ],
+                ],
+            );
 
             return $this->popupCallback(true, 'Bluesky account connected!', $this->platform->value);
         } catch (\Exception $e) {

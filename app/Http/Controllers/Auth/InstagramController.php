@@ -78,22 +78,27 @@ class InstagramController extends SocialController
             $expiresIn = $socialUser->expiresIn ?? 5184000; // 60 days in seconds
             $tokenExpiresAt = now()->addSeconds($expiresIn);
 
-            // Create new account
-            $workspace->socialAccounts()->create([
-                'platform' => $this->platform->value,
-                'platform_user_id' => $socialUser->getId(),
-                'username' => $socialUser->getNickname(),
-                'display_name' => $socialUser->getName() ?? $socialUser->getNickname(),
-                'avatar_url' => $avatarPath,
-                'access_token' => $socialUser->token,
-                'refresh_token' => $socialUser->refreshToken,
-                'token_expires_at' => $tokenExpiresAt,
-                'scopes' => $this->scopes,
-                'status' => Status::Connected,
-                'meta' => [
-                    'account_type' => $socialUser->user['account_type'] ?? null,
+            $workspace->socialAccounts()->updateOrCreate(
+                [
+                    'platform' => $this->platform->value,
+                    'platform_user_id' => $socialUser->getId(),
                 ],
-            ]);
+                [
+                    'username' => $socialUser->getNickname(),
+                    'display_name' => $socialUser->getName() ?? $socialUser->getNickname(),
+                    'avatar_url' => $avatarPath,
+                    'access_token' => $socialUser->token,
+                    'refresh_token' => $socialUser->refreshToken,
+                    'token_expires_at' => $tokenExpiresAt,
+                    'scopes' => $this->scopes,
+                    'status' => Status::Connected,
+                    'error_message' => null,
+                    'disconnected_at' => null,
+                    'meta' => [
+                        'account_type' => $socialUser->user['account_type'] ?? null,
+                    ],
+                ],
+            );
 
             return $this->popupCallback(true, 'Instagram account connected!', $this->platform->value);
         } catch (\Exception $e) {

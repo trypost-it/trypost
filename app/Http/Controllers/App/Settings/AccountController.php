@@ -25,6 +25,7 @@ class AccountController extends Controller
                 'name' => $account->name,
                 'billing_email' => $account->billing_email,
             ],
+            'selfHosted' => config('trypost.self_hosted'),
         ]);
     }
 
@@ -32,19 +33,24 @@ class AccountController extends Controller
     {
         abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
 
+        $isSelfHosted = config('trypost.self_hosted');
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'billing_email' => ['required', 'email', 'max:255'],
+            'billing_email' => [$isSelfHosted ? 'nullable' : 'required', 'email', 'max:255'],
         ]);
 
         $account = $request->user()->account;
 
-        $account->update([
-            'name' => data_get($validated, 'name'),
-            'billing_email' => data_get($validated, 'billing_email'),
-        ]);
+        $data = ['name' => data_get($validated, 'name')];
 
-        if ($account->hasStripeId()) {
+        if (! $isSelfHosted) {
+            $data['billing_email'] = data_get($validated, 'billing_email');
+        }
+
+        $account->update($data);
+
+        if (! $isSelfHosted && $account->hasStripeId()) {
             $account->updateStripeCustomer([
                 'name' => data_get($validated, 'name'),
                 'email' => data_get($validated, 'billing_email'),

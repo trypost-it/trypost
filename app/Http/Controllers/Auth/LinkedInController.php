@@ -72,19 +72,24 @@ class LinkedInController extends SocialController
 
             $avatarPath = uploadFromUrl($socialUser->getAvatar());
 
-            // Create new account
-            $account = $workspace->socialAccounts()->create([
-                'platform' => $this->platform->value,
-                'platform_user_id' => $socialUser->getId(),
-                'username' => $username,
-                'display_name' => $socialUser->getName(),
-                'avatar_url' => $avatarPath,
-                'access_token' => $socialUser->token,
-                'refresh_token' => $socialUser->refreshToken,
-                'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
-                'scopes' => $socialUser->approvedScopes ?? null,
-                'status' => Status::Connected,
-            ]);
+            $account = $workspace->socialAccounts()->updateOrCreate(
+                [
+                    'platform' => $this->platform->value,
+                    'platform_user_id' => $socialUser->getId(),
+                ],
+                [
+                    'username' => $username,
+                    'display_name' => $socialUser->getName(),
+                    'avatar_url' => $avatarPath,
+                    'access_token' => $socialUser->token,
+                    'refresh_token' => $socialUser->refreshToken,
+                    'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
+                    'scopes' => $socialUser->approvedScopes ?? null,
+                    'status' => Status::Connected,
+                    'error_message' => null,
+                    'disconnected_at' => null,
+                ],
+            );
 
             // Sync tokens to LinkedIn Page if it exists
             app(LinkedInTokenSynchronizer::class)->syncTokens($account);

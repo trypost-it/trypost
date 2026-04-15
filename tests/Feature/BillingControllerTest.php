@@ -45,6 +45,8 @@ test('subscribe shows subscription page', function () {
 });
 
 test('subscribe redirects to billing index when account has active subscription', function () {
+    config(['trypost.self_hosted' => false]);
+
     $this->account->subscriptions()->create([
         'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_test_'.fake()->uuid(),
@@ -57,6 +59,14 @@ test('subscribe redirects to billing index when account has active subscription'
     $response->assertRedirect(route('app.billing.index'));
 });
 
+test('subscribe redirects to calendar in self hosted mode', function () {
+    config(['trypost.self_hosted' => true]);
+
+    $response = $this->actingAs($this->user)->get(route('app.subscribe'));
+
+    $response->assertRedirect(route('app.calendar'));
+});
+
 // Index tests
 test('billing index requires authentication', function () {
     $response = $this->get(route('app.billing.index'));
@@ -65,6 +75,8 @@ test('billing index requires authentication', function () {
 });
 
 test('billing index shows billing dashboard', function () {
+    config(['trypost.self_hosted' => false]);
+
     $this->account->subscriptions()->create([
         'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_test_'.fake()->uuid(),
@@ -83,6 +95,14 @@ test('billing index shows billing dashboard', function () {
     );
 });
 
+test('billing index redirects to calendar in self hosted mode', function () {
+    config(['trypost.self_hosted' => true]);
+
+    $response = $this->actingAs($this->user)->get(route('app.billing.index'));
+
+    $response->assertRedirect(route('app.calendar'));
+});
+
 // Processing tests
 test('billing processing requires authentication', function () {
     $response = $this->get(route('app.billing.processing'));
@@ -91,6 +111,8 @@ test('billing processing requires authentication', function () {
 });
 
 test('billing processing shows processing page', function () {
+    config(['trypost.self_hosted' => false]);
+
     $response = $this->actingAs($this->user)->get(route('app.billing.processing'));
 
     $response->assertOk();
@@ -100,6 +122,13 @@ test('billing processing shows processing page', function () {
     );
 });
 
+test('billing processing redirects to calendar in self hosted mode', function () {
+    config(['trypost.self_hosted' => true]);
+
+    $response = $this->actingAs($this->user)->get(route('app.billing.processing'));
+
+    $response->assertRedirect(route('app.calendar'));
+});
 
 // Checkout tests
 test('checkout requires authentication', function () {
@@ -118,6 +147,8 @@ test('portal requires authentication', function () {
 
 // Authorization tests
 test('non-owner admin cannot access billing index', function () {
+    config(['trypost.self_hosted' => false]);
+
     $admin = User::factory()->create([
         'setup' => Setup::Completed,
         'account_id' => $this->account->id,
@@ -136,6 +167,8 @@ test('non-owner admin cannot access billing index', function () {
 });
 
 test('member cannot access billing index', function () {
+    config(['trypost.self_hosted' => false]);
+
     $member = User::factory()->create([
         'setup' => Setup::Completed,
         'account_id' => $this->account->id,

@@ -15,7 +15,7 @@ class FacebookAnalytics
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://graph.facebook.com/v20.0';
+    private string $baseUrl = 'https://graph.facebook.com/v25.0';
 
     private string $accessToken;
 
@@ -38,7 +38,7 @@ class FacebookAnalytics
 
         $response = $this->getHttpClient()
             ->get("{$this->baseUrl}/{$account->platform_user_id}/insights", [
-                'metric' => 'page_impressions_unique,page_posts_impressions_unique,page_post_engagements,page_daily_follows,page_video_views',
+                'metric' => 'page_total_media_view_unique,post_total_media_view_unique,page_post_engagements,page_daily_follows,page_media_view',
                 'period' => 'day',
                 'since' => $since->startOfDay()->unix(),
                 'until' => $until->endOfDay()->unix(),
@@ -67,11 +67,11 @@ class FacebookAnalytics
             $total = collect($values)->sum('value');
 
             $label = match ($name) {
-                'page_impressions_unique' => 'Page Impressions',
-                'page_posts_impressions_unique' => 'Posts Impressions',
+                'page_total_media_view_unique' => 'Page Reach',
+                'post_total_media_view_unique' => 'Posts Reach',
                 'page_post_engagements' => 'Posts Engagement',
                 'page_daily_follows' => 'Page Followers',
-                'page_video_views' => 'Video Views',
+                'page_media_view' => 'Page Views',
                 default => ucfirst(str_replace('_', ' ', $name)),
             };
 

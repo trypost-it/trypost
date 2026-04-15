@@ -218,10 +218,17 @@ class InstagramFacebookController extends SocialController
             return $this->popupCallback(true, 'Instagram account reconnected!', $this->platform->value);
         }
 
-        $account = $workspace->socialAccounts()->create(array_merge($accountData, [
-            'platform' => $this->platform->value,
-            'status' => Status::Connected,
-        ]));
+        $account = $workspace->socialAccounts()->updateOrCreate(
+            [
+                'platform' => $this->platform->value,
+                'platform_user_id' => data_get($pageData, 'ig_id'),
+            ],
+            array_merge($accountData, [
+                'status' => Status::Connected,
+                'error_message' => null,
+                'disconnected_at' => null,
+            ]),
+        );
 
         $isOnboarding = session('social_connect_onboarding', false);
 

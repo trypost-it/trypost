@@ -16,6 +16,10 @@ class BillingController extends Controller
 {
     public function subscribe(Request $request): Response|RedirectResponse
     {
+        if (config('trypost.self_hosted')) {
+            return redirect()->route('app.calendar');
+        }
+
         $account = $request->user()->account;
 
         if ($account && $account->hasActiveSubscription()) {
@@ -28,8 +32,12 @@ class BillingController extends Controller
         ]);
     }
 
-    public function checkout(Request $request, Plan $plan): SymfonyResponse
+    public function checkout(Request $request, Plan $plan): SymfonyResponse|RedirectResponse
     {
+        if (config('trypost.self_hosted')) {
+            return redirect()->route('app.calendar');
+        }
+
         $user = $request->user();
         $account = $user->account;
 
@@ -66,8 +74,12 @@ class BillingController extends Controller
         return Inertia::location($checkoutSession->url);
     }
 
-    public function processing(Request $request): Response
+    public function processing(Request $request): Response|RedirectResponse
     {
+        if (config('trypost.self_hosted')) {
+            return redirect()->route('app.calendar');
+        }
+
         $account = $request->user()->account;
 
         return Inertia::render('billing/Processing', [
@@ -75,8 +87,12 @@ class BillingController extends Controller
         ]);
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
+        if (config('trypost.self_hosted')) {
+            return redirect()->route('app.calendar');
+        }
+
         $account = $request->user()->account;
 
         abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
@@ -111,6 +127,10 @@ class BillingController extends Controller
 
     public function swap(Request $request, Plan $plan): RedirectResponse
     {
+        if (config('trypost.self_hosted')) {
+            return redirect()->route('app.calendar');
+        }
+
         $account = $request->user()->account;
 
         abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
@@ -136,6 +156,10 @@ class BillingController extends Controller
 
     public function portal(Request $request): RedirectResponse
     {
+        if (config('trypost.self_hosted')) {
+            return redirect()->route('app.calendar');
+        }
+
         $account = $request->user()->account;
 
         abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, InfiniteScroll, router, useHttp } from '@inertiajs/vue3';
-import { IconCloudUpload, IconPhoto, IconPlus, IconSearch, IconTrash } from '@tabler/icons-vue';
-import { trans } from 'laravel-vue-i18n';
+import { IconCloudUpload, IconPencilPlus, IconPhoto, IconPlus, IconSearch, IconTrash } from '@tabler/icons-vue';
 import { computed, onUnmounted, ref } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
@@ -13,15 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as assetsIndex, destroy as assetsDestroy, store as assetsStore, storeFromUrl } from '@/routes/app/assets';
+import { destroy as assetsDestroy, store as assetsStore, storeFromUrl } from '@/routes/app/assets';
 import { search as giphySearch, trending as giphyTrending } from '@/routes/app/assets/giphy';
 import { search as unsplashSearch, trending as unsplashTrending } from '@/routes/app/assets/unsplash';
-import { type BreadcrumbItem } from '@/types';
-
+import { store as storePost } from '@/routes/app/posts';
 interface AssetMedia {
     id: string;
+    path: string;
     url: string;
     type: string;
+    mime_type: string;
     original_filename: string;
     size: number;
     meta: { width?: number; height?: number } | null;
@@ -67,10 +67,6 @@ const props = defineProps<{
 
 const httpGet = useHttp({});
 const httpUpload = useHttp<{ media: File | null }>({ media: null });
-
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('assets.title'), href: assetsIndex.url() },
-]);
 
 // Upload
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -383,6 +379,12 @@ const saveFromGiphy = (gif: GiphyGif) => {
     });
 };
 
+const createPostFromAsset = (asset: AssetMedia) => {
+    router.post(storePost.url(), {
+        media: [{ id: asset.id, path: asset.path, url: asset.url, type: asset.type, mime_type: asset.mime_type }],
+    });
+};
+
 const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -393,7 +395,7 @@ const formatFileSize = (bytes: number): string => {
 <template>
     <Head :title="$t('assets.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout :title="$t('assets.title')">
         <div class="flex flex-col gap-6 p-6">
             <Tabs default-value="uploads">
                 <TabsList>
@@ -433,14 +435,7 @@ const formatFileSize = (bytes: number): string => {
                     </div>
 
                     <!-- Assets Grid -->
-                    <EmptyState
-                        v-if="assets.data.length === 0 && !uploading"
-                        :icon="IconPhoto"
-                        :title="$t('assets.empty.title')"
-                        :description="$t('assets.empty.description')"
-                    />
-
-                    <div v-else class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    <div v-if="assets.data.length > 0" class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                         <div
                             v-for="asset in assets.data"
                             :key="asset.id"
@@ -464,7 +459,22 @@ const formatFileSize = (bytes: number): string => {
 
                             <!-- Hover overlay -->
                             <div class="absolute inset-0 flex flex-col justify-between bg-black/60 p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                <div class="flex justify-end">
+                                <div class="flex justify-end gap-1">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger as-child>
+                                                <Button
+                                                    variant="secondary"
+                                                    size="icon"
+                                                    class="size-7"
+                                                    @click="createPostFromAsset(asset)"
+                                                >
+                                                    <IconPencilPlus class="size-3.5" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>{{ $t('assets.create_post') }}</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                     <Button
                                         variant="destructive"
                                         size="icon"

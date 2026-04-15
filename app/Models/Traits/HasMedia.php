@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Models\Traits;
 
 use App\Models\Media;
-use App\Models\PostPlatform;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -27,9 +26,6 @@ trait HasMedia
         ],
         User::class => [
             'avatar' => 'single',
-        ],
-        PostPlatform::class => [
-            'default' => 'multiple',
         ],
     ];
 

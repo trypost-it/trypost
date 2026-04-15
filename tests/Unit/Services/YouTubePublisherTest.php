@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
-use App\Models\Media;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -22,11 +21,10 @@ beforeEach(function () {
         'access_token' => 'test-token',
         'token_expires_at' => now()->addDays(30),
     ]);
-    $this->post = Post::factory()->create(['workspace_id' => $this->workspace->id]);
+    $this->post = Post::factory()->create(['workspace_id' => $this->workspace->id, 'content' => 'Test YouTube Short description']);
     $this->postPlatform = PostPlatform::factory()->create([
         'post_id' => $this->post->id,
         'social_account_id' => $this->socialAccount->id,
-        'content' => 'Test YouTube Short description',
         'content_type' => ContentType::YouTubeShort,
     ]);
 });
@@ -39,11 +37,10 @@ test('youtube publisher throws exception when no media', function () {
 });
 
 test('youtube publisher throws exception for non video media', function () {
-    Media::factory()->create([
-        'mediable_type' => 'postPlatform',
-        'mediable_id' => $this->postPlatform->id,
-        'mime_type' => 'image/jpeg',
-    ]);
+    $this->post->update([
+        'media' => [
+            ['id' => 'test-img', 'path' => 'medias/test.jpg', 'url' => 'https://example.com/medias/test.jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'test.jpg'],
+        ]]);
 
     $publisher = new YouTubePublisher;
 
@@ -57,11 +54,10 @@ test('youtube publisher throws exception when no refresh token for expired token
         'refresh_token' => null,
     ]);
 
-    Media::factory()->create([
-        'mediable_type' => 'postPlatform',
-        'mediable_id' => $this->postPlatform->id,
-        'mime_type' => 'video/mp4',
-    ]);
+    $this->post->update([
+        'media' => [
+            ['id' => 'test-vid', 'path' => 'medias/test.mp4', 'url' => 'https://example.com/medias/test.mp4', 'mime_type' => 'video/mp4', 'original_filename' => 'test.mp4'],
+        ]]);
 
     $publisher = new YouTubePublisher;
 
@@ -70,11 +66,10 @@ test('youtube publisher throws exception when no refresh token for expired token
 });
 
 test('youtube publisher throws token expired exception on 401', function () {
-    Media::factory()->create([
-        'mediable_type' => 'postPlatform',
-        'mediable_id' => $this->postPlatform->id,
-        'mime_type' => 'video/mp4',
-    ]);
+    $this->post->update([
+        'media' => [
+            ['id' => 'test-vid', 'path' => 'medias/test.mp4', 'url' => 'https://example.com/medias/test.mp4', 'mime_type' => 'video/mp4', 'original_filename' => 'test.mp4'],
+        ]]);
 
     Http::fake([
         '*' => Http::response([
@@ -102,11 +97,10 @@ test('youtube publisher throws token expired exception on invalid grant', functi
         'refresh_token' => 'invalid-refresh-token',
     ]);
 
-    Media::factory()->create([
-        'mediable_type' => 'postPlatform',
-        'mediable_id' => $this->postPlatform->id,
-        'mime_type' => 'video/mp4',
-    ]);
+    $this->post->update([
+        'media' => [
+            ['id' => 'test-vid', 'path' => 'medias/test.mp4', 'url' => 'https://example.com/medias/test.mp4', 'mime_type' => 'video/mp4', 'original_filename' => 'test.mp4'],
+        ]]);
 
     Http::fake([
         'https://oauth2.googleapis.com/token' => Http::response([
@@ -127,11 +121,10 @@ test('youtube publisher handles auth error reason', function () {
         'refresh_token' => 'refresh-token',
     ]);
 
-    Media::factory()->create([
-        'mediable_type' => 'postPlatform',
-        'mediable_id' => $this->postPlatform->id,
-        'mime_type' => 'video/mp4',
-    ]);
+    $this->post->update([
+        'media' => [
+            ['id' => 'test-vid', 'path' => 'medias/test.mp4', 'url' => 'https://example.com/medias/test.mp4', 'mime_type' => 'video/mp4', 'original_filename' => 'test.mp4'],
+        ]]);
 
     Http::fake([
         'https://oauth2.googleapis.com/token' => Http::response([

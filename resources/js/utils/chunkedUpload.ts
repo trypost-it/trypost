@@ -1,10 +1,8 @@
-import axios from 'axios';
-
 interface ChunkedUploadOptions {
     file: File;
     url: string;
-    model: string;
-    modelId: string;
+    model?: string;
+    modelId?: string;
     collection?: string;
     chunkSize?: number;
     onProgress?: (progress: number) => void;
@@ -14,14 +12,17 @@ interface ChunkedUploadOptions {
 
 interface ChunkedUploadResult {
     id: string;
+    path?: string;
     url: string;
     type: string;
+    mime_type?: string;
     original_filename: string;
+    [key: string]: any;
 }
 
 const DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
 
-export async function uploadChunked(options: ChunkedUploadOptions): Promise<ChunkedUploadResult> {
+export const uploadChunked = async (options: ChunkedUploadOptions): Promise<ChunkedUploadResult> => {
     const {
         file,
         url,
@@ -34,6 +35,7 @@ export async function uploadChunked(options: ChunkedUploadOptions): Promise<Chun
         onError,
     } = options;
 
+    const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
     const totalSize = file.size;
     const totalChunks = Math.ceil(totalSize / chunkSize);
     let uploadedBytes = 0;
@@ -44,24 +46,36 @@ export async function uploadChunked(options: ChunkedUploadOptions): Promise<Chun
             const end = Math.min(start + chunkSize, totalSize);
             const chunk = file.slice(start, end);
 
-            const response = await axios.post(url, chunk, {
-                headers: {
-                    'Content-Type': 'application/octet-stream',
-                    'Content-Range': `bytes ${start}-${end - 1}/${totalSize}`,
-                    'X-Model': model,
-                    'X-Model-Id': modelId,
-                    'X-Collection': collection,
-                    'X-File-Name': file.name,
-                },
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/octet-stream',
+                'Content-Range': `bytes ${start}-${end - 1}/${totalSize}`,
+                'X-File-Name': file.name,
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+                Accept: 'application/json',
+            };
+
+            if (model) headers['X-Model'] = model;
+            if (modelId) headers['X-Model-Id'] = modelId;
+            if (collection) headers['X-Collection'] = collection;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: chunk,
             });
+
+            if (!response.ok) throw new Error(`Upload chunk failed: ${response.statusText}`);
+
+            const data = await response.json();
 
             uploadedBytes = end;
             const progress = Math.round((uploadedBytes / totalSize) * 100);
             onProgress?.(progress);
 
-            if (response.data.done) {
-                onComplete?.(response.data);
-                return response.data;
+            if (data.done) {
+                onComplete?.(data);
+                return data;
             }
         }
 
@@ -70,11 +84,10 @@ export async function uploadChunked(options: ChunkedUploadOptions): Promise<Chun
         onError?.(error);
         throw error;
     }
-}
+};
 
-// Threshold for when to use chunked upload (10MB)
-const CHUNKED_UPLOAD_THRESHOLD = 10 * 1024 * 1024;
+const CHUNKED_UPLOAD_THRESHOLD = 10 * 1024 * 1024; // 10MB
 
-export function shouldUseChunkedUpload(file: File): boolean {
+export const shouldUseChunkedUpload = (file: File): boolean => {
     return file.size > CHUNKED_UPLOAD_THRESHOLD;
-}
+};

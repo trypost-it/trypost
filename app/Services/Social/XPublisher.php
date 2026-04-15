@@ -28,7 +28,7 @@ class XPublisher
     {
         $this->validateContentLength($postPlatform);
 
-        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+        $content = $postPlatform->post->content ? app(ContentSanitizer::class)->sanitize($postPlatform->post->content, $postPlatform->platform) : null;
 
         $account = $postPlatform->socialAccount;
 
@@ -47,7 +47,7 @@ class XPublisher
         }
 
         $mediaIds = [];
-        $media = $postPlatform->media;
+        $media = $postPlatform->post->mediaItems;
 
         if ($media->isNotEmpty()) {
             foreach ($media as $mediaItem) {

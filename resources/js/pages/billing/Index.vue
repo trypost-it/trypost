@@ -1,15 +1,11 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { IconDownload, IconFileText } from '@tabler/icons-vue';
-import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as billingIndex, portal } from '@/routes/app/billing';
-import { type BreadcrumbItem } from '@/types';
-
+import { portal } from '@/routes/app/billing';
 interface Plan {
     name: string;
     slug: string;
@@ -48,10 +44,6 @@ const props = defineProps<{
     defaultPaymentMethod: PaymentMethod | null;
 }>();
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('billing.title'), href: billingIndex.url() },
-]);
-
 const formatPrice = (cents: number): string => {
     if (cents === 0) return 'Free';
     return '$' + (cents / 100).toFixed(0);
@@ -61,7 +53,7 @@ const formatPrice = (cents: number): string => {
 <template>
     <Head :title="$t('billing.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout :title="$t('billing.title')">
         <div class="mx-auto max-w-3xl space-y-0 p-6">
             <!-- Plan -->
             <section class="grid grid-cols-1 gap-8 md:grid-cols-[280px_1fr] md:gap-16">

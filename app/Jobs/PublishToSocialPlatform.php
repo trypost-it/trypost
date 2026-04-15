@@ -135,8 +135,8 @@ class PublishToSocialPlatform implements ShouldQueue
                     'category' => $e->category->value,
                     'platform_error_code' => $e->platformErrorCode,
                     'failed_at' => now()->toIso8601String(),
-                    'content_length' => mb_strlen($this->postPlatform->content ?? ''),
-                    'media_count' => $this->postPlatform->media->count(),
+                    'content_length' => mb_strlen($this->postPlatform->post->content ?? ''),
+                    'media_count' => count($this->postPlatform->post->media ?? []),
                 ]);
                 break;
             } catch (\Throwable $e) {
@@ -148,8 +148,8 @@ class PublishToSocialPlatform implements ShouldQueue
                 $this->postPlatform->markAsFailed($e->getMessage(), [
                     'category' => 'unknown',
                     'failed_at' => now()->toIso8601String(),
-                    'content_length' => mb_strlen($this->postPlatform->content ?? ''),
-                    'media_count' => $this->postPlatform->media->count(),
+                    'content_length' => mb_strlen($this->postPlatform->post->content ?? ''),
+                    'media_count' => count($this->postPlatform->post->media ?? []),
                 ]);
                 break;
             }

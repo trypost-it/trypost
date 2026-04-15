@@ -32,8 +32,9 @@ class UpdatePost
         $status = data_get($data, 'status', $post->status);
 
         $post->update([
+            'content' => data_get($data, 'content', $post->content),
+            'media' => data_get($data, 'media', $post->media),
             'status' => $status === PostStatus::Publishing->value ? PostStatus::Publishing : $status,
-            'synced' => data_get($data, 'synced', $post->synced),
             'scheduled_at' => $scheduledAt,
         ]);
 
@@ -45,10 +46,7 @@ class UpdatePost
             $post->postPlatforms()->update(['enabled' => false]);
 
             foreach (data_get($data, 'platforms', []) as $platformData) {
-                $updateData = [
-                    'enabled' => true,
-                    'content' => data_get($platformData, 'content'),
-                ];
+                $updateData = ['enabled' => true];
 
                 if (data_get($platformData, 'content_type') !== null) {
                     $updateData['content_type'] = data_get($platformData, 'content_type');

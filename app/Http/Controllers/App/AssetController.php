@@ -26,7 +26,7 @@ class AssetController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('manageAccounts', $workspace);
+        $this->authorize('createPost', $workspace);
 
         $assets = $workspace->getMedia('assets')
             ->latest()
@@ -41,7 +41,7 @@ class AssetController extends Controller
     {
         $workspace = $request->user()->currentWorkspace;
 
-        $this->authorize('manageAccounts', $workspace);
+        $this->authorize('createPost', $workspace);
 
         $request->validate([
             'media' => ['required', 'file', 'max:1048576', 'mimetypes:image/jpeg,image/png,image/gif,image/webp,video/mp4'], // max 1GB in KB
@@ -51,8 +51,10 @@ class AssetController extends Controller
 
         return response()->json([
             'id' => $media->id,
+            'path' => $media->path,
             'url' => $media->url,
             'type' => $media->type->value,
+            'mime_type' => $media->mime_type,
             'original_filename' => $media->original_filename,
             'size' => $media->size,
             'meta' => $media->meta,
@@ -64,7 +66,7 @@ class AssetController extends Controller
     {
         $workspace = $request->user()->currentWorkspace;
 
-        $this->authorize('manageAccounts', $workspace);
+        $this->authorize('createPost', $workspace);
 
         $contentRange = $request->header('Content-Range');
 
@@ -113,8 +115,10 @@ class AssetController extends Controller
         return response()->json([
             'done' => true,
             'id' => $media->id,
+            'path' => $media->path,
             'url' => $media->url,
             'type' => $media->type->value,
+            'mime_type' => $media->mime_type,
             'original_filename' => $media->original_filename,
             'size' => $media->size,
             'meta' => $media->meta,
@@ -126,7 +130,7 @@ class AssetController extends Controller
     {
         $workspace = $request->user()->currentWorkspace;
 
-        $this->authorize('manageAccounts', $workspace);
+        $this->authorize('createPost', $workspace);
 
         $validated = $request->validate([
             'url' => ['required', 'url', 'regex:/^https:\/\/(images\.unsplash\.com|media[0-9]*\.giphy\.com)\//'],
@@ -190,7 +194,7 @@ class AssetController extends Controller
     {
         $workspace = $request->user()->currentWorkspace;
 
-        $this->authorize('manageAccounts', $workspace);
+        $this->authorize('createPost', $workspace);
 
         if ($media->mediable_type !== $workspace->getMorphClass() || $media->mediable_id !== $workspace->id) {
             abort(SymfonyResponse::HTTP_FORBIDDEN);

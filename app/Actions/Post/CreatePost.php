@@ -23,8 +23,9 @@ class CreatePost
 
         $post = $workspace->posts()->create([
             'user_id' => $user->id,
+            'content' => data_get($data, 'content', ''),
+            'media' => data_get($data, 'media', []),
             'status' => PostStatus::Draft,
-            'synced' => true,
             'scheduled_at' => $scheduledAt,
         ]);
 
@@ -34,10 +35,12 @@ class CreatePost
             $post->postPlatforms()->create([
                 'social_account_id' => $account->id,
                 'platform' => $account->platform->value,
-                'content' => '',
+                'platform_name' => $account->display_name,
+                'platform_username' => $account->username,
+                'platform_avatar' => $account->getRawOriginal('avatar_url'),
                 'content_type' => ContentType::defaultFor($account->platform),
                 'status' => PostPlatformStatus::Pending,
-                'enabled' => true,
+                'enabled' => false,
             ]);
         }
 

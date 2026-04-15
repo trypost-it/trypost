@@ -28,7 +28,7 @@ class YouTubePublisher
     {
         $this->validateContentLength($postPlatform);
 
-        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+        $content = $postPlatform->post->content ? app(ContentSanitizer::class)->sanitize($postPlatform->post->content, $postPlatform->platform) : null;
 
         $account = $postPlatform->socialAccount;
 
@@ -37,7 +37,7 @@ class YouTubePublisher
             $account->refresh();
         }
 
-        $media = $postPlatform->media;
+        $media = $postPlatform->post->mediaItems;
 
         if ($media->isEmpty()) {
             throw new \Exception('YouTube Shorts requires a video to publish.');

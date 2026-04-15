@@ -35,7 +35,7 @@ class LinkedInPagePublisher
     {
         $this->validateContentLength($postPlatform);
 
-        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+        $content = $postPlatform->post->content ? app(ContentSanitizer::class)->sanitize($postPlatform->post->content, $postPlatform->platform) : null;
 
         $this->account = $postPlatform->socialAccount;
         $this->hasRetried = false;
@@ -58,8 +58,8 @@ class LinkedInPagePublisher
 
         try {
             return match ($contentType) {
-                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $content, $postPlatform->media, $this->account),
-                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $content, $postPlatform->post->mediaItems, $this->account),
+                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $content, $postPlatform->post->mediaItems, $this->account),
                 default => throw new \Exception("Unsupported LinkedIn Page content type: {$contentType?->value}"),
             };
         } catch (TokenExpiredException $e) {
@@ -85,8 +85,8 @@ class LinkedInPagePublisher
             $contentType = $postPlatform->content_type;
 
             return match ($contentType) {
-                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $content, $postPlatform->media, $this->account),
-                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $content, $postPlatform->media, $this->account),
+                ContentType::LinkedInPageCarousel => $this->publishCarousel($organizationUrn, $content, $postPlatform->post->mediaItems, $this->account),
+                ContentType::LinkedInPagePost => $this->publishPost($organizationUrn, $content, $postPlatform->post->mediaItems, $this->account),
                 default => throw new \Exception("Unsupported LinkedIn Page content type: {$contentType?->value}"),
             };
         } catch (\Throwable $e) {

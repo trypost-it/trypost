@@ -27,6 +27,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Hello from Threads!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->create([
@@ -34,7 +35,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::Threads,
         'content_type' => ContentType::ThreadsPost,
-        'content' => 'Hello from Threads!',
     ]);
 
     $this->publisher = new ThreadsPublisher;
@@ -67,15 +67,16 @@ test('threads publisher can publish text-only post', function () {
 });
 
 test('threads publisher can publish image post', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -103,15 +104,16 @@ test('threads publisher can publish image post', function () {
 });
 
 test('threads publisher can publish video post', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1234567,
-        'order' => 0,
-        'meta' => ['width' => 1080, 'height' => 1920, 'duration' => 30],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -139,19 +141,18 @@ test('threads publisher can publish video post', function () {
 });
 
 test('threads publisher can publish carousel', function () {
-    // Create multiple media items
+    $mediaItems = [];
     for ($i = 0; $i < 3; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
             'path' => "media/2026-01/test-image-{$i}.jpg",
-            'original_filename' => "test-{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/test-image-{$i}.jpg",
             'mime_type' => 'image/jpeg',
-            'size' => 12345,
-            'order' => $i,
-            'meta' => ['width' => 1920, 'height' => 1080],
-        ]);
+            'original_filename' => "test-{$i}.jpg",
+        ];
     }
+    $this->post->update([
+        'media' => $mediaItems]);
 
     Http::fake([
         'https://graph.threads.net/v1.0/123456789/threads' => Http::response([
@@ -237,15 +238,16 @@ test('threads publisher refreshes token when expired', function () {
 });
 
 test('threads publisher waits for media processing', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -270,15 +272,16 @@ test('threads publisher waits for media processing', function () {
 });
 
 test('threads publisher handles media processing error', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -296,23 +299,24 @@ test('threads publisher handles media processing error', function () {
 });
 
 test('threads publisher throws exception for text post with null content', function () {
-    $this->postPlatform->update(['content' => null]);
+    $this->post->update(['content' => null]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(Exception::class, 'Threads text posts require content');
 });
 
 test('threads publisher can publish image with null content', function () {
-    $this->postPlatform->update(['content' => null]);
-
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'content' => null,
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -336,18 +340,18 @@ test('threads publisher can publish image with null content', function () {
 });
 
 test('threads publisher throws exception when all carousel items fail', function () {
+    $mediaItems = [];
     for ($i = 0; $i < 3; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
             'path' => "media/2026-01/fail-image-{$i}.jpg",
-            'original_filename' => "fail-{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/fail-image-{$i}.jpg",
             'mime_type' => 'image/jpeg',
-            'size' => 12345,
-            'order' => $i,
-            'meta' => ['width' => 1920, 'height' => 1080],
-        ]);
+            'original_filename' => "fail-{$i}.jpg",
+        ];
     }
+    $this->post->update([
+        'media' => $mediaItems]);
 
     Http::fake([
         'https://graph.threads.net/v1.0/123456789/threads' => Http::response([
@@ -364,16 +368,17 @@ test('threads publisher throws exception when all carousel items fail', function
 });
 
 test('threads publisher can publish video with null content', function () {
-    $this->postPlatform->update(['content' => null]);
-
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1234567,
-        'order' => 0,
+    $this->post->update([
+        'content' => null,
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([

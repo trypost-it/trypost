@@ -12,7 +12,7 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id');
+            $table->uuid('user_id')->nullable();
             $table->uuid('workspace_id');
             $table->string('type');
             $table->string('channel');
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
 
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
             $table->foreign('workspace_id')->references('id')->on('workspaces')->cascadeOnDelete();
             $table->index(['user_id', 'workspace_id', 'read_at']);
         });

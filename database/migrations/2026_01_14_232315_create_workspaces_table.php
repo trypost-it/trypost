@@ -16,12 +16,12 @@ return new class extends Migration
         Schema::create('workspaces', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('account_id')->constrained()->cascadeOnDelete();
-            $table->uuid('user_id');
+            $table->uuid('user_id')->nullable();
             $table->string('name');
             $table->string('timezone');
             $table->timestamps();
 
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
         });
     }
 

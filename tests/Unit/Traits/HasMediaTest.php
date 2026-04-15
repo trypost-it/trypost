@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Models\Media;
-use App\Models\PostPlatform;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -94,14 +93,14 @@ test('adding media to single collection clears existing media', function () {
 });
 
 test('adding media to multiple collection does not clear existing', function () {
-    $post = PostPlatform::factory()->create();
+    $workspace = Workspace::factory()->create();
     $file1 = UploadedFile::fake()->image('image1.jpg', 100, 100);
     $file2 = UploadedFile::fake()->image('image2.jpg', 100, 100);
 
-    $post->addMedia($file1, 'default');
-    $post->addMedia($file2, 'default');
+    $workspace->addMedia($file1, 'assets');
+    $workspace->addMedia($file2, 'assets');
 
-    expect($post->getMedia('default')->count())->toBe(2);
+    expect($workspace->getMedia('assets')->count())->toBe(2);
 });
 
 test('model can add media from file path', function () {
@@ -129,15 +128,15 @@ test('model can clear media collection', function () {
     $workspace->addMedia($file1, 'logo');
 
     // Need to use a 'multiple' collection model
-    $post = PostPlatform::factory()->create();
-    $post->addMedia($file2, 'default');
-    $post->addMedia($file3, 'default');
+    $ws = Workspace::factory()->create();
+    $ws->addMedia($file2, 'assets');
+    $ws->addMedia($file3, 'assets');
 
-    expect($post->getMedia('default')->count())->toBe(2);
+    expect($ws->getMedia('assets')->count())->toBe(2);
 
-    $post->clearMediaCollection('default');
+    $ws->clearMediaCollection('assets');
 
-    expect($post->getMedia('default')->count())->toBe(0);
+    expect($ws->getMedia('assets')->count())->toBe(0);
 });
 
 test('is single media collection returns true for single collections', function () {
@@ -147,9 +146,9 @@ test('is single media collection returns true for single collections', function 
 });
 
 test('is single media collection returns false for multiple collections', function () {
-    $post = PostPlatform::factory()->create();
+    $workspace = Workspace::factory()->create();
 
-    expect($post->isSingleMediaCollection('default'))->toBeFalse();
+    expect($workspace->isSingleMediaCollection('assets'))->toBeFalse();
 });
 
 test('is single media collection returns false for undefined collections', function () {

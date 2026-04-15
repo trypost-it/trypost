@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
-use App\Models\Media;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -21,11 +20,10 @@ beforeEach(function () {
         'platform_user_id' => '12345678',
         'access_token' => 'test-token',
     ]);
-    $this->post = Post::factory()->create(['workspace_id' => $this->workspace->id]);
+    $this->post = Post::factory()->create(['workspace_id' => $this->workspace->id, 'content' => 'Test caption']);
     $this->postPlatform = PostPlatform::factory()->instagram()->create([
         'post_id' => $this->post->id,
         'social_account_id' => $this->socialAccount->id,
-        'content' => 'Test caption',
         'content_type' => ContentType::InstagramFeed,
     ]);
 });
@@ -45,11 +43,10 @@ test('instagram publisher publishes single image', function () {
         '*/post-123*' => Http::response(['permalink' => 'https://instagram.com/p/abc123'], 200),
     ]);
 
-    Media::factory()->create([
-        'mediable_type' => 'postPlatform',
-        'mediable_id' => $this->postPlatform->id,
-        'mime_type' => 'image/jpeg',
-    ]);
+    $this->post->update([
+        'media' => [
+            ['id' => 'test-img', 'path' => 'medias/test.jpg', 'url' => 'https://example.com/medias/test.jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'test.jpg'],
+        ]]);
 
     $publisher = new InstagramPublisher;
     $result = $publisher->publish($this->postPlatform);
@@ -68,11 +65,10 @@ test('instagram publisher publishes reel', function () {
         '*/reel-123*' => Http::response(['permalink' => 'https://instagram.com/reel/abc123'], 200),
     ]);
 
-    Media::factory()->create([
-        'mediable_type' => 'postPlatform',
-        'mediable_id' => $this->postPlatform->id,
-        'mime_type' => 'video/mp4',
-    ]);
+    $this->post->update([
+        'media' => [
+            ['id' => 'test-vid', 'path' => 'medias/test.mp4', 'url' => 'https://example.com/medias/test.mp4', 'mime_type' => 'video/mp4', 'original_filename' => 'test.mp4'],
+        ]]);
 
     $publisher = new InstagramPublisher;
     $result = $publisher->publish($this->postPlatform);
@@ -90,11 +86,10 @@ test('instagram publisher publishes story', function () {
         '*/story-123*' => Http::response(['permalink' => 'https://instagram.com/stories/abc123'], 200),
     ]);
 
-    Media::factory()->create([
-        'mediable_type' => 'postPlatform',
-        'mediable_id' => $this->postPlatform->id,
-        'mime_type' => 'image/jpeg',
-    ]);
+    $this->post->update([
+        'media' => [
+            ['id' => 'test-img', 'path' => 'medias/test.jpg', 'url' => 'https://example.com/medias/test.jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'test.jpg'],
+        ]]);
 
     $publisher = new InstagramPublisher;
     $result = $publisher->publish($this->postPlatform);
@@ -113,11 +108,10 @@ test('instagram publisher throws token expired exception on oauth error', functi
         ], 400),
     ]);
 
-    Media::factory()->create([
-        'mediable_type' => 'postPlatform',
-        'mediable_id' => $this->postPlatform->id,
-        'mime_type' => 'image/jpeg',
-    ]);
+    $this->post->update([
+        'media' => [
+            ['id' => 'test-img', 'path' => 'medias/test.jpg', 'url' => 'https://example.com/medias/test.jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'test.jpg'],
+        ]]);
 
     $publisher = new InstagramPublisher;
 
@@ -135,11 +129,10 @@ test('instagram publisher throws exception on api error', function () {
         ], 400),
     ]);
 
-    Media::factory()->create([
-        'mediable_type' => 'postPlatform',
-        'mediable_id' => $this->postPlatform->id,
-        'mime_type' => 'image/jpeg',
-    ]);
+    $this->post->update([
+        'media' => [
+            ['id' => 'test-img', 'path' => 'medias/test.jpg', 'url' => 'https://example.com/medias/test.jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'test.jpg'],
+        ]]);
 
     $publisher = new InstagramPublisher;
 

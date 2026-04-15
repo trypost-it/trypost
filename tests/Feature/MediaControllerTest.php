@@ -42,8 +42,8 @@ test('store media requires authentication', function () {
 
 test('store media uploads file', function () {
     $response = $this->actingAs($this->user)->post(route('app.medias.store'), [
-        'model' => 'postPlatform',
-        'model_id' => $this->postPlatform->id,
+        'model' => 'workspace',
+        'model_id' => $this->workspace->id,
         'media' => UploadedFile::fake()->image('test.jpg'),
     ]);
 
@@ -117,20 +117,17 @@ test('duplicate media requires authentication', function () {
 
 test('duplicate media creates copies', function () {
     $media = Media::factory()->create([
-        'mediable_id' => $this->postPlatform->id,
-        'mediable_type' => 'postPlatform',
-    ]);
-
-    $otherPostPlatform = PostPlatform::factory()->create([
-        'post_id' => $this->post->id,
-        'social_account_id' => $this->socialAccount->id,
+        'mediable_id' => $this->workspace->id,
+        'mediable_type' => 'workspace',
+        'collection' => 'assets',
     ]);
 
     $response = $this->actingAs($this->user)->post(route('app.medias.duplicate', $media), [
         'targets' => [
             [
-                'model' => 'postPlatform',
-                'model_id' => $otherPostPlatform->id,
+                'model' => 'workspace',
+                'model_id' => $this->workspace->id,
+                'collection' => 'assets',
             ],
         ],
     ]);
@@ -138,13 +135,23 @@ test('duplicate media creates copies', function () {
     $response->assertOk();
     $response->assertJsonCount(1);
 
-    expect(Media::where('mediable_id', $otherPostPlatform->id)->count())->toBe(1);
+    expect(Media::where('mediable_id', $this->workspace->id)->where('collection', 'assets')->count())->toBe(2);
 });
 
 // Reorder tests
 test('reorder media updates order', function () {
-    $media1 = $this->postPlatform->addMedia(UploadedFile::fake()->image('img1.jpg'), 'media');
-    $media2 = $this->postPlatform->addMedia(UploadedFile::fake()->image('img2.jpg'), 'media');
+    $media1 = Media::factory()->create([
+        'mediable_id' => $this->postPlatform->id,
+        'mediable_type' => 'postPlatform',
+        'original_filename' => 'img1.jpg',
+        'order' => 0,
+    ]);
+    $media2 = Media::factory()->create([
+        'mediable_id' => $this->postPlatform->id,
+        'mediable_type' => 'postPlatform',
+        'original_filename' => 'img2.jpg',
+        'order' => 1,
+    ]);
 
     $response = $this->actingAs($this->user)->postJson(route('app.medias.reorder'), [
         'media' => [
@@ -178,7 +185,12 @@ test('reorder media rejects media from other workspace', function () {
         'social_account_id' => $otherAccount->id,
     ]);
 
-    $otherMedia = $otherPlatform->addMedia(UploadedFile::fake()->image('img.jpg'), 'media');
+    $otherMedia = Media::factory()->create([
+        'mediable_id' => $otherPlatform->id,
+        'mediable_type' => 'postPlatform',
+        'original_filename' => 'img.jpg',
+        'order' => 0,
+    ]);
 
     $response = $this->actingAs($this->user)->postJson(route('app.medias.reorder'), [
         'media' => [

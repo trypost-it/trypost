@@ -15,7 +15,7 @@ trait HasSocialHttpClient
     protected function validateContentLength(PostPlatform $postPlatform): void
     {
         $maxLength = $postPlatform->platform->maxContentLength();
-        $contentLength = mb_strlen($postPlatform->content ?? '');
+        $contentLength = mb_strlen($postPlatform->post->content ?? '');
 
         if ($contentLength > $maxLength) {
             throw new \Exception(

@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
-use App\Models\Media;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -28,6 +27,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Hello from Bluesky!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->create([
@@ -35,7 +35,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::Bluesky,
         'content_type' => ContentType::BlueskyPost,
-        'content' => 'Hello from Bluesky!',
     ]);
 
     $this->publisher = new BlueskyPublisher;
@@ -63,7 +62,7 @@ test('bluesky publisher can publish text-only post', function () {
 });
 
 test('bluesky publisher parses URLs as facets', function () {
-    $this->postPlatform->update(['content' => 'Check out https://example.com for more info!']);
+    $this->post->update(['content' => 'Check out https://example.com for more info!']);
 
     Http::fake([
         'https://bsky.social/xrpc/com.atproto.repo.createRecord' => Http::response([
@@ -84,7 +83,7 @@ test('bluesky publisher parses URLs as facets', function () {
 });
 
 test('bluesky publisher parses hashtags as facets', function () {
-    $this->postPlatform->update(['content' => 'Hello #bluesky #test']);
+    $this->post->update(['content' => 'Hello #bluesky #test']);
 
     Http::fake([
         'https://bsky.social/xrpc/com.atproto.repo.createRecord' => Http::response([
@@ -104,15 +103,16 @@ test('bluesky publisher parses hashtags as facets', function () {
 
 test('bluesky publisher uploads images', function () {
     // Create a media item through the PostPlatform's media() relation
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -193,15 +193,16 @@ test('bluesky publisher optimizes images before upload', function () {
     $tempFile = tempnam(sys_get_temp_dir(), 'bsky_test_');
     file_put_contents($tempFile, str_repeat('x', 1024));
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     $this->mock(MediaOptimizer::class)
@@ -241,15 +242,16 @@ test('bluesky publisher optimizes images before upload', function () {
 });
 
 test('bluesky publisher handles media download failure gracefully', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake(function ($request) {
@@ -284,19 +286,17 @@ test('bluesky publisher handles media download failure gracefully', function () 
 });
 
 test('bluesky publisher limits images to 4', function () {
-    // Create 6 media items through the PostPlatform's media() relation
+    $mediaItems = [];
     for ($i = 0; $i < 6; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
             'path' => "media/2026-01/test-image-{$i}.jpg",
-            'original_filename' => "test-{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/test-image-{$i}.jpg",
             'mime_type' => 'image/jpeg',
-            'size' => 12345,
-            'order' => $i,
-            'meta' => ['width' => 1920, 'height' => 1080],
-        ]);
+            'original_filename' => "test-{$i}.jpg",
+        ];
     }
+    $this->post->update(['media' => $mediaItems]);
 
     Http::fake([
         'https://bsky.social/xrpc/com.atproto.repo.uploadBlob' => Http::response([

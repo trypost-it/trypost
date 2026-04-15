@@ -44,7 +44,7 @@ class PostController extends Controller
         }
 
         if ($search = $request->input('search')) {
-            $query->whereHas('postPlatforms', fn ($q) => $q->where('content', 'ilike', "%{$search}%"));
+            $query->where('content', 'ilike', "%{$search}%");
         }
 
         return Inertia::render('posts/Index', [
@@ -134,6 +134,7 @@ class PostController extends Controller
 
         $post = CreatePost::execute($workspace, $request->user(), [
             'date' => $request->input('date'),
+            'media' => $request->input('media', []),
         ]);
 
         return Inertia::location(route('app.posts.edit', $post));
@@ -153,7 +154,7 @@ class PostController extends Controller
             abort(404);
         }
 
-        $post->load(['postPlatforms.socialAccount', 'postPlatforms.media', 'labels']);
+        $post->load(['postPlatforms.socialAccount', 'labels']);
         $socialAccounts = $workspace->socialAccounts()->active()->get();
         $labels = $workspace->labels;
         $hashtags = $workspace->hashtags;

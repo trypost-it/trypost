@@ -14,7 +14,7 @@ class GiphyController extends Controller
     {
         $workspace = $request->user()->currentWorkspace;
 
-        $this->authorize('manageAccounts', $workspace);
+        $this->authorize('createPost', $workspace);
 
         $request->validate([
             'query' => ['required', 'string', 'max:255'],
@@ -33,7 +33,7 @@ class GiphyController extends Controller
     {
         $workspace = $request->user()->currentWorkspace;
 
-        $this->authorize('manageAccounts', $workspace);
+        $this->authorize('createPost', $workspace);
 
         $photos = $giphy->trending(
             page: $request->integer('page', 1),

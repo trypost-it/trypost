@@ -2,7 +2,6 @@
 import { Head, useForm, router } from '@inertiajs/vue3';
 import { IconUserPlus, IconUsers, IconMail, IconTrash, IconCrown, IconUser, IconShield } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
 
 import { WorkspaceRole } from '@/enums/workspace-role';
 import HeadingSmall from '@/components/HeadingSmall.vue';
@@ -13,11 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { members as membersRoute } from '@/routes/app';
 import { destroy as destroyInvite, store as storeInvite } from '@/routes/app/invites';
 import { remove as removeMember } from '@/routes/app/members';
-import { type BreadcrumbItem } from '@/types';
-
 interface Workspace {
     id: string;
     name: string;
@@ -50,11 +46,6 @@ interface Props {
 }
 
 defineProps<Props>();
-
-const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.title'), href: membersRoute.url() },
-    { title: trans('settings.nav.members'), href: membersRoute.url() },
-]);
 
 const form = useForm({
     email: '',
@@ -97,7 +88,7 @@ const getRoleIcon = (role: string) => {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbItems">
+    <AppLayout :title="$t('settings.members.title')">
         <Head :title="$t('settings.members.title')" />
 
         <h1 class="sr-only">{{ $t('settings.members.title') }}</h1>

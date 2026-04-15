@@ -28,6 +28,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Check out this TikTok video!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->tiktok()->create([
@@ -35,7 +36,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::TikTok,
         'content_type' => ContentType::TikTokVideo,
-        'content' => 'Check out this TikTok video!',
     ]);
 
     $this->publisher = new TikTokPublisher;
@@ -47,14 +47,16 @@ test('tiktok publisher throws exception when no media', function () {
 });
 
 test('tiktok publisher can publish video', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -82,14 +84,16 @@ test('tiktok publisher can publish video', function () {
 });
 
 test('tiktok publisher can publish photos', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image1.jpg',
-        'original_filename' => 'image1.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-image',
+                'path' => 'media/2026-01/image1.jpg',
+                'url' => 'https://example.com/media/2026-01/image1.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image1.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -115,14 +119,16 @@ test('tiktok publisher can publish photos', function () {
 });
 
 test('tiktok publisher throws exception on api error', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -139,14 +145,16 @@ test('tiktok publisher throws exception on api error', function () {
 });
 
 test('tiktok publisher throws token expired exception on auth error', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -165,14 +173,16 @@ test('tiktok publisher throws token expired exception on auth error', function (
 test('tiktok publisher refreshes token when expired', function () {
     $this->socialAccount->update(['token_expires_at' => now()->subHour()]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -205,14 +215,16 @@ test('tiktok publisher throws exception when no refresh token available', functi
         'refresh_token' => null,
     ]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -220,14 +232,16 @@ test('tiktok publisher throws exception when no refresh token available', functi
 });
 
 test('tiktok publisher throws exception for unsupported media type', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'document',
-        'path' => 'media/2026-01/doc.pdf',
-        'original_filename' => 'doc.pdf',
-        'mime_type' => 'application/pdf',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-doc',
+                'path' => 'media/2026-01/doc.pdf',
+                'url' => 'https://example.com/media/2026-01/doc.pdf',
+                'mime_type' => 'application/pdf',
+                'original_filename' => 'doc.pdf',
+            ],
+        ],
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -235,14 +249,16 @@ test('tiktok publisher throws exception for unsupported media type', function ()
 });
 
 test('tiktok publisher builds correct profile url when username present', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -262,14 +278,16 @@ test('tiktok publisher builds correct profile url when username present', functi
 test('tiktok publisher returns null url when username missing', function () {
     $this->socialAccount->update(['username' => null]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -287,14 +305,16 @@ test('tiktok publisher returns null url when username missing', function () {
 });
 
 test('tiktok publisher falls back to self only when creator info fails', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -330,14 +350,16 @@ test('tiktok publisher falls back to self only when creator info fails', functio
 });
 
 test('tiktok publisher throws exception when publish fails', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -369,14 +391,16 @@ test('tiktok publisher sends meta settings in video publish request', function (
         ],
     ]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -421,14 +445,16 @@ test('tiktok publisher sends auto_add_music for photo posts', function () {
         ],
     ]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/photo.jpg',
-        'original_filename' => 'photo.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-photo',
+                'path' => 'media/2026-01/photo.jpg',
+                'url' => 'https://example.com/media/2026-01/photo.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'photo.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -467,14 +493,16 @@ test('tiktok publisher does not send auto_add_music for video posts', function (
         ],
     ]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/video.mp4',
-        'original_filename' => 'video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/video.mp4',
+                'url' => 'https://example.com/media/2026-01/video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -505,14 +533,16 @@ test('tiktok publisher does not send auto_add_music for video posts', function (
 test('tiktok publisher uses default settings when meta is empty', function () {
     $this->postPlatform->update(['meta' => null]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([

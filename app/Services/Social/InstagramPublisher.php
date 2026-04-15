@@ -36,9 +36,9 @@ class InstagramPublisher
         $instagramId = $account->platform_user_id;
         $accessToken = $account->access_token;
 
-        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+        $content = $postPlatform->post->content ? app(ContentSanitizer::class)->sanitize($postPlatform->post->content, $postPlatform->platform) : null;
 
-        $media = $postPlatform->media;
+        $media = $postPlatform->post->mediaItems;
 
         if ($media->isEmpty()) {
             throw new \Exception('Instagram requires at least one image or video.');

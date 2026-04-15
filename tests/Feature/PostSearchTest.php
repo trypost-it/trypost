@@ -17,22 +17,20 @@ beforeEach(function () {
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
-test('search returns matching posts by platform content', function () {
+test('search returns matching posts by content', function () {
     $account = SocialAccount::factory()->create(['workspace_id' => $this->workspace->id]);
 
-    $matchingPost = Post::factory()->create(['workspace_id' => $this->workspace->id, 'user_id' => $this->user->id]);
+    $matchingPost = Post::factory()->create(['workspace_id' => $this->workspace->id, 'user_id' => $this->user->id, 'content' => 'Hello marketing world']);
     PostPlatform::factory()->create([
         'post_id' => $matchingPost->id,
         'social_account_id' => $account->id,
-        'content' => 'Hello marketing world',
         'enabled' => true,
     ]);
 
-    $nonMatchingPost = Post::factory()->create(['workspace_id' => $this->workspace->id, 'user_id' => $this->user->id]);
+    $nonMatchingPost = Post::factory()->create(['workspace_id' => $this->workspace->id, 'user_id' => $this->user->id, 'content' => 'Something else entirely']);
     PostPlatform::factory()->create([
         'post_id' => $nonMatchingPost->id,
         'social_account_id' => $account->id,
-        'content' => 'Something else entirely',
         'enabled' => true,
     ]);
 
@@ -48,11 +46,10 @@ test('search returns matching posts by platform content', function () {
 test('search with no matches returns empty', function () {
     $account = SocialAccount::factory()->create(['workspace_id' => $this->workspace->id]);
 
-    $post = Post::factory()->create(['workspace_id' => $this->workspace->id, 'user_id' => $this->user->id]);
+    $post = Post::factory()->create(['workspace_id' => $this->workspace->id, 'user_id' => $this->user->id, 'content' => 'Hello world']);
     PostPlatform::factory()->create([
         'post_id' => $post->id,
         'social_account_id' => $account->id,
-        'content' => 'Hello world',
         'enabled' => true,
     ]);
 
@@ -88,11 +85,10 @@ test('empty search returns all posts', function () {
 test('search is case insensitive', function () {
     $account = SocialAccount::factory()->create(['workspace_id' => $this->workspace->id]);
 
-    $post = Post::factory()->create(['workspace_id' => $this->workspace->id, 'user_id' => $this->user->id]);
+    $post = Post::factory()->create(['workspace_id' => $this->workspace->id, 'user_id' => $this->user->id, 'content' => 'MARKETING CAMPAIGN']);
     PostPlatform::factory()->create([
         'post_id' => $post->id,
         'social_account_id' => $account->id,
-        'content' => 'MARKETING CAMPAIGN',
         'enabled' => true,
     ]);
 

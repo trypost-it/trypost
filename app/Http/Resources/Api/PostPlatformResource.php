@@ -17,7 +17,6 @@ class PostPlatformResource extends JsonResource
         return [
             'id' => $this->id,
             'platform' => $this->platform,
-            'content' => $this->content,
             'content_type' => $this->content_type,
             'status' => $this->status,
             'enabled' => $this->enabled,

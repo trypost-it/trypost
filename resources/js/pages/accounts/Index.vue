@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { IconAffiliate, IconAlertCircle, IconCheck, IconExternalLink, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-vue';
-import { trans } from 'laravel-vue-i18n';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 import AddSocialDialog, { type AvailablePlatform } from '@/components/accounts/AddSocialDialog.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
@@ -14,10 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import date from '@/date';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { accounts } from '@/routes/app';
 import { disconnect as disconnectAccount, toggle as toggleAccount } from '@/routes/app/accounts';
-import { type BreadcrumbItemType } from '@/types';
-
 interface SocialAccount {
     id: string;
     platform: string;
@@ -40,10 +36,6 @@ const props = defineProps<Props>();
 
 const isAddDialogOpen = ref(false);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
-
-const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
-    { title: trans('accounts.title'), href: accounts.url() },
-]);
 
 const getPlatformLogo = (platform: string): string => {
     const logos: Record<string, string> = {
@@ -120,8 +112,8 @@ const handleDisconnect = (accountId: string) => {
 <template>
     <Head :title="$t('accounts.page_title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <template #header-right>
+    <AppLayout :title="$t('accounts.page_title')">
+        <template #header-actions>
             <Button @click="isAddDialogOpen = true">
                 {{ $t('accounts.add_social') }}
             </Button>

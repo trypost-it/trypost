@@ -29,7 +29,6 @@ class PostPlatformFactory extends Factory
             'social_account_id' => SocialAccount::factory(),
             'enabled' => true,
             'platform' => Platform::LinkedIn,
-            'content' => $this->faker->paragraph(),
             'content_type' => ContentType::LinkedInPost,
             'status' => Status::Pending,
             'meta' => [],

@@ -344,7 +344,7 @@ test('publish to social platform skips if already published (idempotency)', func
 test('publish to social platform saves error context on generic failure', function () {
     Event::fake();
 
-    $this->postPlatform->update(['content' => 'Test content here']);
+    $this->post->update(['content' => 'Test content here']);
 
     $publisher = Mockery::mock(LinkedInPublisher::class);
     $publisher->shouldReceive('publish')->andThrow(new Exception('Something broke'));
@@ -364,7 +364,7 @@ test('publish to social platform saves error context on generic failure', functi
 test('publish to social platform saves error context on social publish exception', function () {
     Event::fake();
 
-    $this->postPlatform->update(['content' => 'Hello world']);
+    $this->post->update(['content' => 'Hello world']);
 
     $publisher = Mockery::mock(LinkedInPublisher::class);
     $publisher->shouldReceive('publish')->andThrow(

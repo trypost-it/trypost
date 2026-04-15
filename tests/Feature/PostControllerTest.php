@@ -196,21 +196,20 @@ test('update post saves changes', function () {
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
         'status' => PostStatus::Draft,
+        'content' => 'Original content',
     ]);
 
     $postPlatform = PostPlatform::factory()->create([
         'post_id' => $post->id,
         'social_account_id' => $this->socialAccount->id,
-        'content' => 'Original content',
     ]);
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
-        'synced' => true,
+        'content' => 'Updated content',
         'platforms' => [
             [
                 'id' => $postPlatform->id,
-                'content' => 'Updated content',
                 'content_type' => ContentType::LinkedInPost->value,
             ],
         ],
@@ -218,8 +217,9 @@ test('update post saves changes', function () {
 
     $response->assertRedirect();
 
+    $post->refresh();
+    expect($post->content)->toBe('Updated content');
     $postPlatform->refresh();
-    expect($postPlatform->content)->toBe('Updated content');
     expect($postPlatform->content_type)->toBe(ContentType::LinkedInPost);
 });
 
@@ -237,11 +237,10 @@ test('update post cannot update published posts', function () {
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
-        'synced' => true,
+        'content' => 'Test content',
         'platforms' => [
             [
                 'id' => $postPlatform->id,
-                'content' => 'Test content',
                 'content_type' => ContentType::LinkedInPost->value,
             ],
         ],
@@ -258,22 +257,21 @@ test('publish now updates scheduled_at to current time', function () {
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
         'status' => PostStatus::Draft,
+        'content' => 'Test content',
         'scheduled_at' => now()->addDays(7),
     ]);
 
     $postPlatform = PostPlatform::factory()->create([
         'post_id' => $post->id,
         'social_account_id' => $this->socialAccount->id,
-        'content' => 'Test content',
     ]);
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'publishing',
-        'synced' => true,
+        'content' => 'Test content',
         'platforms' => [
             [
                 'id' => $postPlatform->id,
-                'content' => 'Test content',
                 'content_type' => ContentType::LinkedInPost->value,
             ],
         ],
@@ -395,11 +393,9 @@ test('update post can attach labels', function () {
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
-        'synced' => true,
         'platforms' => [
             [
                 'id' => $postPlatform->id,
-                'content' => 'Test content',
                 'content_type' => ContentType::LinkedInPost->value,
             ],
         ],
@@ -433,11 +429,9 @@ test('update post can detach labels', function () {
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
-        'synced' => true,
         'platforms' => [
             [
                 'id' => $postPlatform->id,
-                'content' => 'Test content',
                 'content_type' => ContentType::LinkedInPost->value,
             ],
         ],
@@ -472,11 +466,9 @@ test('update post can sync multiple labels', function () {
     // Update with different labels
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
-        'synced' => true,
         'platforms' => [
             [
                 'id' => $postPlatform->id,
-                'content' => 'Test content',
                 'content_type' => ContentType::LinkedInPost->value,
             ],
         ],
@@ -504,11 +496,9 @@ test('update post validates label_ids exist', function () {
 
     $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
         'status' => 'draft',
-        'synced' => true,
         'platforms' => [
             [
                 'id' => $postPlatform->id,
-                'content' => 'Test content',
                 'content_type' => ContentType::LinkedInPost->value,
             ],
         ],

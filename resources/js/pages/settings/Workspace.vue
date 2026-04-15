@@ -2,7 +2,7 @@
 import { Form, Head, router } from '@inertiajs/vue3';
 import { IconClock, IconDots, IconShield, IconTrash, IconUser } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 import WorkspaceController from '@/actions/App/Http/Controllers/App/WorkspaceController';
 import { WorkspaceRole } from '@/enums/workspace-role';
@@ -34,9 +34,7 @@ import {
 import AppLayout from '@/layouts/AppLayout.vue';
 import { destroy as destroyInvite } from '@/routes/app/invites';
 import { remove as removeMemberRoute, updateRole } from '@/routes/app/members';
-import { settings, uploadLogo, deleteLogo } from '@/routes/app/workspace';
-import { type BreadcrumbItem } from '@/types';
-
+import { uploadLogo, deleteLogo } from '@/routes/app/workspace';
 interface Workspace {
     id: string;
     name: string;
@@ -65,11 +63,6 @@ const props = defineProps<{
     timezones: Record<string, string>;
 }>();
 
-const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.title'), href: settings().url },
-    { title: trans('settings.nav.workspace'), href: settings().url },
-]);
-
 const timezone = ref(props.workspace.timezone);
 const inviteDialogOpen = ref(false);
 
@@ -82,7 +75,7 @@ const changeRole = (member: Member, role: string) => {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbItems">
+    <AppLayout :title="$t('settings.workspace.title')">
         <Head :title="$t('settings.workspace.title')" />
 
         <h1 class="sr-only">{{ $t('settings.workspace.title') }}</h1>

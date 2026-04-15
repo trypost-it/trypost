@@ -32,6 +32,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Hello from our LinkedIn Page!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->create([
@@ -39,7 +40,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::LinkedInPage,
         'content_type' => ContentType::LinkedInPagePost,
-        'content' => 'Hello from our LinkedIn Page!',
     ]);
 
     $this->publisher = new LinkedInPagePublisher;
@@ -168,7 +168,7 @@ test('linkedin page publisher throws exception when no refresh token available',
 });
 
 test('linkedin page publisher handles empty content', function () {
-    $this->postPlatform->update(['content' => '']);
+    $this->post->update(['content' => '']);
 
     Http::fake([
         'https://api.linkedin.com/rest/posts' => Http::response(null, 201, [
@@ -219,15 +219,16 @@ test('linkedin page publisher builds feed url when username missing', function (
 });
 
 test('linkedin page publisher can publish post with image using organization urn', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     $uploadUrl = 'https://www.linkedin.com/dms/upload/v2/pic/0/OrgFake';

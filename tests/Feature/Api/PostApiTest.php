@@ -127,11 +127,9 @@ it('updates a post', function () {
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
         ->putJson(route('api.posts.update', $post), [
             'status' => 'draft',
-            'synced' => true,
             'platforms' => [
                 [
                     'id' => $postPlatform->id,
-                    'content' => 'Updated content',
                     'content_type' => ContentType::LinkedInPost->value,
                 ],
             ],
@@ -158,11 +156,9 @@ it('cannot update post from another workspace', function () {
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
         ->putJson(route('api.posts.update', $post), [
             'status' => 'draft',
-            'synced' => true,
             'platforms' => [
                 [
                     'id' => $postPlatform->id,
-                    'content' => 'Test',
                     'content_type' => ContentType::LinkedInPost->value,
                 ],
             ],
@@ -186,11 +182,9 @@ it('cannot update published post', function () {
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
         ->putJson(route('api.posts.update', $post), [
             'status' => 'draft',
-            'synced' => true,
             'platforms' => [
                 [
                     'id' => $postPlatform->id,
-                    'content' => 'Test',
                     'content_type' => ContentType::LinkedInPost->value,
                 ],
             ],
@@ -284,7 +278,7 @@ it('list posts returns correct structure', function () {
         ->assertOk()
         ->assertJsonStructure([
             'data' => [
-                '*' => ['id', 'status', 'synced', 'scheduled_at', 'published_at', 'created_at', 'updated_at'],
+                '*' => ['id', 'status', 'scheduled_at', 'published_at', 'created_at', 'updated_at'],
             ],
         ]);
 });
@@ -298,5 +292,5 @@ it('show post returns correct structure', function () {
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
         ->getJson(route('api.posts.show', $post))
         ->assertOk()
-        ->assertJsonStructure(['id', 'status', 'synced', 'scheduled_at', 'published_at']);
+        ->assertJsonStructure(['id', 'status', 'scheduled_at', 'published_at']);
 });

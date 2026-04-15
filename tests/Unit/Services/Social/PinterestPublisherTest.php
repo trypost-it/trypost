@@ -31,6 +31,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Check out this pin!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->pinterest()->create([
@@ -38,7 +39,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::Pinterest,
         'content_type' => ContentType::PinterestPin,
-        'content' => 'Check out this pin!',
         'meta' => ['board_id' => 'board_123'],
     ]);
 
@@ -57,14 +57,16 @@ beforeEach(function () {
 });
 
 test('pinterest publisher can publish image pin', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -95,14 +97,16 @@ test('pinterest publisher throws exception when no board id', function () {
     $this->postPlatform->update(['meta' => []]);
     $this->socialAccount->update(['meta' => []]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -112,14 +116,16 @@ test('pinterest publisher throws exception when no board id', function () {
 test('pinterest publisher uses default board id from account', function () {
     $this->postPlatform->update(['meta' => []]); // No board_id in post meta
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -138,20 +144,23 @@ test('pinterest publisher uses default board id from account', function () {
 });
 
 test('pinterest publisher can publish carousel', function () {
+    $mediaItems = [];
+    for ($i = 1; $i <= 3; $i++) {
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
+            'path' => "media/2026-01/image{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/image{$i}.jpg",
+            'mime_type' => 'image/jpeg',
+            'original_filename' => "image{$i}.jpg",
+        ];
+    }
     $this->postPlatform->update(['content_type' => ContentType::PinterestCarousel]);
 
-    // Create 3 images for carousel
-    for ($i = 1; $i <= 3; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
-            'path' => "media/2026-01/image{$i}.jpg",
-            'original_filename' => "image{$i}.jpg",
-            'mime_type' => 'image/jpeg',
-            'size' => 512000,
-            'order' => $i - 1,
-        ]);
-    }
+    $this->post->update([
+
+        'media' => $mediaItems,
+
+    ]);
 
     Http::fake([
         '*/v5/pins' => Http::response([
@@ -172,14 +181,16 @@ test('pinterest publisher can publish carousel', function () {
 test('pinterest publisher throws exception for carousel with less than 2 images', function () {
     $this->postPlatform->update(['content_type' => ContentType::PinterestCarousel]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -187,34 +198,39 @@ test('pinterest publisher throws exception for carousel with less than 2 images'
 });
 
 test('pinterest publisher throws exception for carousel with more than 5 images', function () {
+    $mediaItems = [];
+    for ($i = 1; $i <= 6; $i++) {
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
+            'path' => "media/2026-01/image{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/image{$i}.jpg",
+            'mime_type' => 'image/jpeg',
+            'original_filename' => "image{$i}.jpg",
+        ];
+    }
     $this->postPlatform->update(['content_type' => ContentType::PinterestCarousel]);
 
-    // Create 6 images
-    for ($i = 1; $i <= 6; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
-            'path' => "media/2026-01/image{$i}.jpg",
-            'original_filename' => "image{$i}.jpg",
-            'mime_type' => 'image/jpeg',
-            'size' => 512000,
-            'order' => $i - 1,
-        ]);
-    }
+    $this->post->update([
+
+        'media' => $mediaItems,
+
+    ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(Exception::class, 'Pinterest carousel requires 2-5 images');
 });
 
 test('pinterest publisher throws exception on api error', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -230,14 +246,16 @@ test('pinterest publisher throws exception on api error', function () {
 });
 
 test('pinterest publisher throws token expired exception on auth error', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -255,14 +273,16 @@ test('pinterest publisher throws token expired exception on auth error', functio
 test('pinterest publisher refreshes token when expired', function () {
     $this->socialAccount->update(['token_expires_at' => now()->subHour()]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -296,14 +316,16 @@ test('pinterest publisher includes title and link when provided', function () {
         ],
     ]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -341,14 +363,18 @@ test('pinterest publisher can get boards', function () {
 test('pinterest publisher can publish video pin', function () {
     $this->postPlatform->update(['content_type' => ContentType::PinterestVideoPin]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/video.mp4',
-        'original_filename' => 'video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 5120000,
-        'order' => 0,
+    $this->post->update([
+
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/video.mp4',
+                'url' => 'https://example.com/media/2026-01/video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'video.mp4',
+            ],
+        ],
+
     ]);
 
     $s3UploadUrl = 'https://pinterest-media-upload.s3.amazonaws.com/upload';
@@ -403,14 +429,16 @@ test('pinterest publisher can publish video pin', function () {
 test('pinterest publisher throws exception for unsupported content type', function () {
     $this->postPlatform->update(['content_type' => ContentType::InstagramFeed]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))

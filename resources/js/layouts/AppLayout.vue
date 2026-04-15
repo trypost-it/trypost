@@ -1,28 +1,24 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
-import type { BreadcrumbItem } from '@/types';
 
 type Props = {
-    breadcrumbs?: BreadcrumbItem[];
+    title?: string;
     fullWidth?: boolean;
 };
 
 withDefaults(defineProps<Props>(), {
-    breadcrumbs: () => [],
+    title: '',
     fullWidth: false,
 });
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs" :full-width="fullWidth">
-        <template v-if="$slots['header-left']" #header-left>
-            <slot name="header-left" />
+    <AppLayout :title="title" :full-width="fullWidth">
+        <template v-if="$slots['header']" #header>
+            <slot name="header" />
         </template>
-        <template v-if="$slots['header-center']" #header-center>
-            <slot name="header-center" />
-        </template>
-        <template v-if="$slots['header-right']" #header-right>
-            <slot name="header-right" />
+        <template v-if="$slots['header-actions']" #header-actions>
+            <slot name="header-actions" />
         </template>
         <slot />
     </AppLayout>

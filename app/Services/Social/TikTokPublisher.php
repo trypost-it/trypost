@@ -26,7 +26,7 @@ class TikTokPublisher
     {
         $this->validateContentLength($postPlatform);
 
-        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+        $content = $postPlatform->post->content ? app(ContentSanitizer::class)->sanitize($postPlatform->post->content, $postPlatform->platform) : null;
 
         $account = $postPlatform->socialAccount;
 
@@ -37,7 +37,7 @@ class TikTokPublisher
 
         $this->accessToken = $account->access_token;
 
-        $media = $postPlatform->media;
+        $media = $postPlatform->post->mediaItems;
 
         if ($media->isEmpty()) {
             throw new \Exception('TikTok requires media (video or photos) to publish.');

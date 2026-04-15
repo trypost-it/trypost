@@ -1,22 +1,16 @@
-import axios from 'axios';
 import { ref, type Ref } from 'vue';
 
-import {
-    store as storeMedia,
-    storeChunked as storeMediaChunked,
-    destroy as destroyMedia,
-    duplicate as duplicateMedia,
-    reorder as reorderMedia,
-} from '@/actions/App/Http/Controllers/App/MediaController';
+import { store as storeAsset, storeChunked as storeAssetChunked } from '@/routes/app/assets';
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
 import { uploadChunked, shouldUseChunkedUpload } from '@/utils/chunkedUpload';
 
 export interface MediaItem {
     id: string;
-    group_id: string | null;
+    path: string;
     url: string;
-    type: string;
-    original_filename: string;
+    type?: string;
+    mime_type?: string;
+    original_filename?: string;
 }
 
 interface PostPlatform {
@@ -33,18 +27,16 @@ interface UseMediaManagerOptions {
     postPlatforms: Ref<PostPlatform[]>;
 }
 
-export function useMediaManager(options: UseMediaManagerOptions) {
+export const useMediaManager = (options: UseMediaManagerOptions) => {
     const { synced, selectedPlatformIds, platformContentTypes, postPlatforms } = options;
 
-    // State
     const platformMedia = ref<Record<string, MediaItem[]>>(
-        Object.fromEntries(postPlatforms.value.map(pp => [pp.id, pp.media || []]))
+        Object.fromEntries(postPlatforms.value.map((pp) => [pp.id, pp.media || []])),
     );
     const isUploading = ref<Record<string, boolean>>({});
 
-    // Helper: check if platform's content type only allows single media
     const isSingleMediaContentType = (platformId: string): boolean => {
-        const platform = postPlatforms.value.find(pp => pp.id === platformId);
+        const platform = postPlatforms.value.find((pp) => pp.id === platformId);
         if (!platform) return false;
 
         const contentType = platformContentTypes.value[platformId] || platform.content_type;
@@ -54,234 +46,136 @@ export function useMediaManager(options: UseMediaManagerOptions) {
         return rules.maxFiles === 1;
     };
 
-    // Helper: clear all media from a platform
-    const clearPlatformMedia = async (platformId: string) => {
-        const media = platformMedia.value[platformId] || [];
+    const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 
-        for (const m of media) {
-            await axios.delete(destroyMedia.url({ modelId: platformId, media: m.id }));
+    const uploadToAssets = async (file: File): Promise<MediaItem | null> => {
+        try {
+            if (shouldUseChunkedUpload(file)) {
+                const data = await uploadChunked({
+                    file,
+                    url: storeAssetChunked.url(),
+                    model: 'workspace',
+                    modelId: '',
+                    collection: 'assets',
+                });
+                return {
+                    id: data.id,
+                    path: data.path ?? '',
+                    url: data.url,
+                    type: data.type,
+                    mime_type: data.mime_type,
+                    original_filename: data.original_filename,
+                };
+            }
+
+            const formData = new FormData();
+            formData.append('media', file);
+
+            const response = await fetch(storeAsset.url(), {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: formData,
+            });
+
+            if (!response.ok) return null;
+
+            const data = await response.json();
+            return {
+                id: data.id,
+                path: data.path ?? '',
+                url: data.url,
+                type: data.type,
+                mime_type: data.mime_type,
+                original_filename: data.original_filename,
+            };
+        } catch {
+            return null;
         }
-
-        platformMedia.value[platformId] = [];
     };
 
-    // Upload files to a platform (with sync support)
     const upload = async (files: File[], postPlatformId: string) => {
         if (!files || files.length === 0) return;
 
-        // Get content type rules to check max files
-        const platform = postPlatforms.value.find(pp => pp.id === postPlatformId);
+        const platform = postPlatforms.value.find((pp) => pp.id === postPlatformId);
         const contentType = platformContentTypes.value[postPlatformId] || platform?.content_type || '';
         const rules = getMediaRulesForContentType(contentType);
 
-        // Get other platforms to duplicate to (if synced)
-        const otherPlatformIds = synced.value
-            ? selectedPlatformIds.value.filter(id => id !== postPlatformId)
-            : [];
+        const targetPlatformIds = synced.value ? selectedPlatformIds.value : [postPlatformId];
 
-        // Mark all as uploading
-        isUploading.value[postPlatformId] = true;
-        for (const id of otherPlatformIds) {
+        for (const id of targetPlatformIds) {
             isUploading.value[id] = true;
         }
 
-        // For single-media content types, clear existing media first
         if (rules.maxFiles === 1) {
-            await clearPlatformMedia(postPlatformId);
+            platformMedia.value[postPlatformId] = [];
         }
 
-        // Calculate how many files we can still add
         const currentMedia = platformMedia.value[postPlatformId] || [];
         const remainingSlots = rules.maxFiles - currentMedia.length;
         const filesToUpload = Array.from(files).slice(0, remainingSlots);
 
         if (filesToUpload.length === 0) {
-            // No slots available
-            isUploading.value[postPlatformId] = false;
-            for (const id of otherPlatformIds) {
+            for (const id of targetPlatformIds) {
                 isUploading.value[id] = false;
             }
             return;
         }
 
         for (const file of filesToUpload) {
-            try {
-                let data;
+            const mediaItem = await uploadToAssets(file);
+            if (!mediaItem) continue;
 
-                // Use chunked upload for large files (> 10MB)
-                if (shouldUseChunkedUpload(file)) {
-                    data = await uploadChunked({
-                        file,
-                        url: storeMediaChunked.url(),
-                        model: 'postPlatform',
-                        modelId: postPlatformId,
-                        collection: 'default',
-                        onProgress: () => {},
-                    });
+            for (const targetId of targetPlatformIds) {
+                if (isSingleMediaContentType(targetId)) {
+                    platformMedia.value[targetId] = [mediaItem];
                 } else {
-                    // Regular upload for small files
-                    const formData = new FormData();
-                    formData.append('media', file);
-                    formData.append('model', 'postPlatform');
-                    formData.append('model_id', postPlatformId);
-
-                    const response = await axios.post(storeMedia.url(), formData);
-                    data = response.data;
+                    platformMedia.value[targetId] = [...(platformMedia.value[targetId] || []), mediaItem];
                 }
-
-                // Add to current platform (use spread for reactivity)
-                const currentMediaList = platformMedia.value[postPlatformId] || [];
-                platformMedia.value[postPlatformId] = [...currentMediaList, data];
-
-                // If synced, duplicate to other platforms
-                if (otherPlatformIds.length > 0) {
-                    const targets = otherPlatformIds.map(id => ({
-                        model: 'postPlatform',
-                        model_id: id,
-                    }));
-
-                    const duplicateResponse = await axios.post(
-                        duplicateMedia.url({ media: data.id }),
-                        { targets }
-                    );
-
-                    const duplicates = duplicateResponse.data;
-                    for (const dup of duplicates) {
-                        // For single-media platforms, clear first
-                        if (isSingleMediaContentType(dup.mediable_id)) {
-                            await clearPlatformMedia(dup.mediable_id);
-                        }
-                        const existingMedia = platformMedia.value[dup.mediable_id] || [];
-                        platformMedia.value[dup.mediable_id] = [...existingMedia, dup];
-                    }
-                }
-            } catch (error) {
-                console.error('Upload failed:', error);
             }
         }
 
-        // Mark all as done
-        isUploading.value[postPlatformId] = false;
-        for (const id of otherPlatformIds) {
+        for (const id of targetPlatformIds) {
             isUploading.value[id] = false;
         }
     };
 
-    // Remove media from a platform (with sync support)
-    const remove = async (postPlatformId: string, mediaId: string) => {
-        // Find the media to get its group_id for synced removal
-        const mediaToRemove = platformMedia.value[postPlatformId]?.find(m => m.id === mediaId);
-
-        if (!mediaToRemove) return;
-
-        // Get target platforms - all selected if synced, otherwise just the current one
+    const remove = (postPlatformId: string, mediaId: string) => {
         const targetPlatformIds = synced.value ? selectedPlatformIds.value : [postPlatformId];
 
         for (const targetId of targetPlatformIds) {
-            // Find media with same group_id in this platform
-            const mediaInPlatform = platformMedia.value[targetId]?.find(
-                m => m.group_id === mediaToRemove.group_id
-            );
-
-            if (mediaInPlatform) {
-                // Remove from local state
-                platformMedia.value[targetId] = platformMedia.value[targetId].filter(
-                    m => m.id !== mediaInPlatform.id
-                );
-
-                // Delete from server
-                await axios.delete(destroyMedia.url({ modelId: targetId, media: mediaInPlatform.id }));
-            }
+            platformMedia.value[targetId] = (platformMedia.value[targetId] || []).filter((m) => m.id !== mediaId);
         }
     };
 
-    // Reorder media in a platform (with sync support)
-    const reorder = async (postPlatformId: string, mediaIds: string[]) => {
-        // Get the current platform's media to extract group_ids in new order
+    const reorder = (postPlatformId: string, mediaIds: string[]) => {
         const currentMedia = platformMedia.value[postPlatformId] || [];
-        const reorderedMedia = mediaIds.map(id => currentMedia.find(m => m.id === id)).filter(Boolean) as MediaItem[];
+        const reorderedMedia = mediaIds
+            .map((id) => currentMedia.find((m) => m.id === id))
+            .filter(Boolean) as MediaItem[];
 
-        // Get the group_ids in new order (for syncing to other platforms)
-        const groupIdsInOrder = reorderedMedia.map(m => m.group_id);
-        const firstGroupId = groupIdsInOrder[0];
-
-        // Get target platforms - all selected if synced, otherwise just the current one
         const targetPlatformIds = synced.value ? selectedPlatformIds.value : [postPlatformId];
 
-        // Collect all media items to reorder across all platforms
-        const allMediaToReorder: { id: string; order: number }[] = [];
-
         for (const targetId of targetPlatformIds) {
-            const targetMedia = platformMedia.value[targetId] || [];
-            const isSingleMedia = isSingleMediaContentType(targetId);
-
-            if (isSingleMedia && synced.value) {
-                // For single-media platforms with sync enabled:
-                // Check if current media matches the first group_id
-                const currentSingleMedia = targetMedia[0];
-
-                if (currentSingleMedia && currentSingleMedia.group_id !== firstGroupId) {
-                    // Need to replace: delete current and duplicate the correct one
-                    // Find the source media (first of the new order from the active platform)
-                    const sourceMedia = reorderedMedia[0];
-
-                    if (sourceMedia) {
-                        // Delete current media from this platform
-                        await axios.delete(destroyMedia.url({ modelId: targetId, media: currentSingleMedia.id }));
-
-                        // Duplicate the correct media to this platform
-                        const duplicateResponse = await axios.post(
-                            duplicateMedia.url({ media: sourceMedia.id }),
-                            { targets: [{ model: 'postPlatform', model_id: targetId }] }
-                        );
-
-                        const duplicate = duplicateResponse.data[0];
-                        if (duplicate) {
-                            // Update local state with the new media
-                            platformMedia.value[targetId] = [{
-                                id: duplicate.id,
-                                group_id: duplicate.group_id,
-                                url: duplicate.url,
-                                type: duplicate.type,
-                                original_filename: duplicate.original_filename,
-                            }];
-
-                            // Add to reorder payload
-                            allMediaToReorder.push({ id: duplicate.id, order: 0 });
-                        }
-                    }
-                } else if (currentSingleMedia) {
-                    // Media is already correct, just update order
-                    allMediaToReorder.push({ id: currentSingleMedia.id, order: 0 });
-                }
+            if (isSingleMediaContentType(targetId)) {
+                platformMedia.value[targetId] = reorderedMedia.length > 0 ? [reorderedMedia[0]] : [];
             } else {
-                // For multi-media platforms: reorder based on group_id order
-                const reorderedTargetMedia = groupIdsInOrder
-                    .map(groupId => targetMedia.find(m => m.group_id === groupId))
+                const targetMedia = platformMedia.value[targetId] || [];
+                const reorderedIds = reorderedMedia.map((m) => m.id);
+                platformMedia.value[targetId] = reorderedIds
+                    .map((id) => targetMedia.find((m) => m.id === id) || reorderedMedia.find((m) => m.id === id))
                     .filter(Boolean) as MediaItem[];
-
-                // Update local state
-                platformMedia.value[targetId] = reorderedTargetMedia;
-
-                // Add to API payload
-                reorderedTargetMedia.forEach((m, index) => {
-                    allMediaToReorder.push({ id: m.id, order: index });
-                });
             }
-        }
-
-        // Send all reorders to API in one request
-        if (allMediaToReorder.length > 0) {
-            await axios.post(reorderMedia.url(), { media: allMediaToReorder });
         }
     };
 
-    // Get media for a specific platform
     const getMedia = (platformId: string): MediaItem[] => {
         return platformMedia.value[platformId] || [];
     };
 
-    // Check if a platform is uploading
     const isUploadingFor = (platformId: string): boolean => {
         return isUploading.value[platformId] || false;
     };
@@ -296,4 +190,4 @@ export function useMediaManager(options: UseMediaManagerOptions) {
         isUploadingFor,
         isSingleMediaContentType,
     };
-}
+};

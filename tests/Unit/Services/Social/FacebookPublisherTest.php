@@ -31,6 +31,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Check out this Facebook post!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->facebook()->create([
@@ -38,7 +39,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::Facebook,
         'content_type' => ContentType::FacebookPost,
-        'content' => 'Check out this Facebook post!',
     ]);
 
     $this->publisher = new FacebookPublisher;
@@ -65,14 +65,16 @@ test('facebook publisher can publish text only post', function () {
 });
 
 test('facebook publisher can publish single image post', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -94,18 +96,18 @@ test('facebook publisher can publish single image post', function () {
 });
 
 test('facebook publisher can publish multi image post', function () {
-    // Create 3 images
+    $mediaItems = [];
     for ($i = 1; $i <= 3; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
             'path' => "media/2026-01/image{$i}.jpg",
-            'original_filename' => "image{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/image{$i}.jpg",
             'mime_type' => 'image/jpeg',
-            'size' => 512000,
-            'order' => $i - 1,
-        ]);
+            'original_filename' => "image{$i}.jpg",
+        ];
     }
+    $this->post->update([
+        'media' => $mediaItems]);
 
     Http::fake([
         '*/page_123/photos' => Http::sequence()
@@ -128,14 +130,16 @@ test('facebook publisher can publish multi image post', function () {
 });
 
 test('facebook publisher can publish video post', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/video.mp4',
-        'original_filename' => 'video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 10240000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/video.mp4',
+                'url' => 'https://example.com/media/2026-01/video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -159,14 +163,18 @@ test('facebook publisher can publish video post', function () {
 test('facebook publisher can publish reel', function () {
     $this->postPlatform->update(['content_type' => ContentType::FacebookReel]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/reel.mp4',
-        'original_filename' => 'reel.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 5120000,
-        'order' => 0,
+    $this->post->update([
+
+        'media' => [
+            [
+                'id' => 'test-media-reel',
+                'path' => 'media/2026-01/reel.mp4',
+                'url' => 'https://example.com/media/2026-01/reel.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'reel.mp4',
+            ],
+        ],
+
     ]);
 
     Http::fake([
@@ -187,14 +195,18 @@ test('facebook publisher can publish reel', function () {
 test('facebook publisher can publish image story', function () {
     $this->postPlatform->update(['content_type' => ContentType::FacebookStory]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/story.jpg',
-        'original_filename' => 'story.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+
+        'media' => [
+            [
+                'id' => 'test-media-story',
+                'path' => 'media/2026-01/story.jpg',
+                'url' => 'https://example.com/media/2026-01/story.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'story.jpg',
+            ],
+        ],
+
     ]);
 
     Http::fake([
@@ -216,14 +228,18 @@ test('facebook publisher can publish image story', function () {
 test('facebook publisher can publish video story', function () {
     $this->postPlatform->update(['content_type' => ContentType::FacebookStory]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/story.mp4',
-        'original_filename' => 'story.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 5120000,
-        'order' => 0,
+    $this->post->update([
+
+        'media' => [
+            [
+                'id' => 'test-media-video-story',
+                'path' => 'media/2026-01/story.mp4',
+                'url' => 'https://example.com/media/2026-01/story.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'story.mp4',
+            ],
+        ],
+
     ]);
 
     Http::fake([
@@ -294,18 +310,18 @@ test('facebook publisher throws exception for unsupported content type', functio
 });
 
 test('facebook publisher throws exception when multi image upload fails', function () {
-    // Create 3 images
+    $mediaItems = [];
     for ($i = 1; $i <= 3; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
             'path' => "media/2026-01/image{$i}.jpg",
-            'original_filename' => "image{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/image{$i}.jpg",
             'mime_type' => 'image/jpeg',
-            'size' => 512000,
-            'order' => $i - 1,
-        ]);
+            'original_filename' => "image{$i}.jpg",
+        ];
     }
+    $this->post->update([
+        'media' => $mediaItems]);
 
     Http::fake([
         '*/page_123/photos' => Http::response([
@@ -318,14 +334,16 @@ test('facebook publisher throws exception when multi image upload fails', functi
 });
 
 test('facebook publisher throws exception for unsupported media type', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'document',
-        'path' => 'media/2026-01/doc.pdf',
-        'original_filename' => 'doc.pdf',
-        'mime_type' => 'application/pdf',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-doc',
+                'path' => 'media/2026-01/doc.pdf',
+                'url' => 'https://example.com/media/2026-01/doc.pdf',
+                'mime_type' => 'application/pdf',
+                'original_filename' => 'doc.pdf',
+            ],
+        ],
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -333,7 +351,7 @@ test('facebook publisher throws exception for unsupported media type', function 
 });
 
 test('facebook publisher throws exception for text post with null content', function () {
-    $this->postPlatform->update(['content' => null]);
+    $this->post->update(['content' => null]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(Exception::class, 'Facebook text posts require content');
@@ -342,14 +360,18 @@ test('facebook publisher throws exception for text post with null content', func
 test('facebook publisher cleans up temp files after reel upload', function () {
     $this->postPlatform->update(['content_type' => ContentType::FacebookReel]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/reel.mp4',
-        'original_filename' => 'reel.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 5120000,
-        'order' => 0,
+    $this->post->update([
+
+        'media' => [
+            [
+                'id' => 'test-media-reel',
+                'path' => 'media/2026-01/reel.mp4',
+                'url' => 'https://example.com/media/2026-01/reel.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'reel.mp4',
+            ],
+        ],
+
     ]);
 
     Http::fake([
@@ -370,16 +392,17 @@ test('facebook publisher cleans up temp files after reel upload', function () {
 });
 
 test('facebook publisher can publish single image with null content', function () {
-    $this->postPlatform->update(['content' => null]);
-
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'content' => null,
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([

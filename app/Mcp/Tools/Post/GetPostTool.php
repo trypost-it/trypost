@@ -20,7 +20,7 @@ class GetPostTool extends Tool
     public function handle(Request $request): Response|ResponseFactory
     {
         $post = Post::where('workspace_id', $request->user()->current_workspace_id)
-            ->with(['postPlatforms.socialAccount', 'postPlatforms.media', 'labels'])
+            ->with(['postPlatforms.socialAccount', 'labels'])
             ->find(data_get($request->validate(['post_id' => ['required', 'string']]), 'post_id'));
 
         if (! $post) {

@@ -21,11 +21,10 @@ beforeEach(function () {
         'access_token' => 'test-token',
         'token_expires_at' => now()->addDays(30),
     ]);
-    $this->post = Post::factory()->create(['workspace_id' => $this->workspace->id]);
+    $this->post = Post::factory()->create(['workspace_id' => $this->workspace->id, 'content' => 'Test LinkedIn post']);
     $this->postPlatform = PostPlatform::factory()->create([
         'post_id' => $this->post->id,
         'social_account_id' => $this->socialAccount->id,
-        'content' => 'Test LinkedIn post',
         'content_type' => ContentType::LinkedInPost,
     ]);
 });

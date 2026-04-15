@@ -27,6 +27,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Hello from Instagram!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->create([
@@ -34,7 +35,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::Instagram,
         'content_type' => ContentType::InstagramFeed,
-        'content' => 'Hello from Instagram!',
     ]);
 
     $this->publisher = new InstagramPublisher;
@@ -46,15 +46,16 @@ test('instagram publisher throws exception without media', function () {
 });
 
 test('instagram publisher can publish single image', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -87,15 +88,18 @@ test('instagram publisher can publish single image', function () {
 test('instagram publisher can publish reel', function () {
     $this->postPlatform->update(['content_type' => ContentType::InstagramReel]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1234567,
-        'order' => 0,
-        'meta' => ['width' => 1080, 'height' => 1920, 'duration' => 30],
+    $this->post->update([
+
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test.mp4',
+            ],
+        ],
+
     ]);
 
     Http::fake([
@@ -127,14 +131,18 @@ test('instagram publisher can publish reel', function () {
 test('instagram publisher can publish image story', function () {
     $this->postPlatform->update(['content_type' => ContentType::InstagramStory]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/story.jpg',
-        'original_filename' => 'story.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+
+        'media' => [
+            [
+                'id' => 'test-media-story',
+                'path' => 'media/2026-01/story.jpg',
+                'url' => 'https://example.com/media/2026-01/story.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'story.jpg',
+            ],
+        ],
+
     ]);
 
     Http::fake([
@@ -164,14 +172,18 @@ test('instagram publisher can publish image story', function () {
 test('instagram publisher can publish video story', function () {
     $this->postPlatform->update(['content_type' => ContentType::InstagramStory]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/story.mp4',
-        'original_filename' => 'story.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 5120000,
-        'order' => 0,
+    $this->post->update([
+
+        'media' => [
+            [
+                'id' => 'test-media-video-story',
+                'path' => 'media/2026-01/story.mp4',
+                'url' => 'https://example.com/media/2026-01/story.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'story.mp4',
+            ],
+        ],
+
     ]);
 
     Http::fake([
@@ -195,19 +207,18 @@ test('instagram publisher can publish video story', function () {
 });
 
 test('instagram publisher can publish carousel', function () {
-    // Create multiple media items
+    $mediaItems = [];
     for ($i = 0; $i < 3; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
             'path' => "media/2026-01/test-image-{$i}.jpg",
-            'original_filename' => "test-{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/test-image-{$i}.jpg",
             'mime_type' => 'image/jpeg',
-            'size' => 12345,
-            'order' => $i,
-            'meta' => ['width' => 1920, 'height' => 1080],
-        ]);
+            'original_filename' => "test-{$i}.jpg",
+        ];
     }
+    $this->post->update([
+        'media' => $mediaItems]);
 
     Http::fake([
         'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::sequence()
@@ -233,24 +244,23 @@ test('instagram publisher can publish carousel', function () {
 });
 
 test('instagram publisher can publish carousel with videos', function () {
-    // Create image and video mix
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-    ]);
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1234567,
-        'order' => 1,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-image',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -278,14 +288,16 @@ test('instagram publisher can publish carousel with videos', function () {
 });
 
 test('instagram publisher throws exception on api error', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -303,14 +315,16 @@ test('instagram publisher throws exception on api error', function () {
 });
 
 test('instagram publisher throws token expired exception on oauth error', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -328,14 +342,16 @@ test('instagram publisher throws token expired exception on oauth error', functi
 });
 
 test('instagram publisher throws token expired exception on session expired subcode', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -356,14 +372,16 @@ test('instagram publisher throws token expired exception on session expired subc
 test('instagram publisher throws exception for unsupported content type', function () {
     $this->postPlatform->update(['content_type' => ContentType::LinkedInPost]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -371,14 +389,16 @@ test('instagram publisher throws exception for unsupported content type', functi
 });
 
 test('instagram publisher throws exception when no container id returned', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -393,14 +413,16 @@ test('instagram publisher throws exception when no container id returned', funct
 });
 
 test('instagram publisher handles media processing error', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -417,14 +439,16 @@ test('instagram publisher handles media processing error', function () {
 });
 
 test('instagram publisher waits for media processing', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -449,18 +473,18 @@ test('instagram publisher waits for media processing', function () {
 });
 
 test('instagram publisher throws exception when all carousel items fail', function () {
-    // Create multiple media items
+    $mediaItems = [];
     for ($i = 0; $i < 3; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
             'path' => "media/2026-01/test-image-{$i}.jpg",
-            'original_filename' => "test-{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/test-image-{$i}.jpg",
             'mime_type' => 'image/jpeg',
-            'size' => 12345,
-            'order' => $i,
-        ]);
+            'original_filename' => "test-{$i}.jpg",
+        ];
     }
+    $this->post->update([
+        'media' => $mediaItems]);
 
     Http::fake([
         'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
@@ -473,16 +497,17 @@ test('instagram publisher throws exception when all carousel items fail', functi
 });
 
 test('instagram publisher can publish single image with null content', function () {
-    $this->postPlatform->update(['content' => null]);
-
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'content' => null,
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -507,19 +532,18 @@ test('instagram publisher can publish single image with null content', function 
 });
 
 test('instagram publisher can publish reel with null content', function () {
-    $this->postPlatform->update([
-        'content_type' => ContentType::InstagramReel,
+    $this->postPlatform->update(['content_type' => ContentType::InstagramReel]);
+    $this->post->update([
         'content' => null,
-    ]);
-
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1234567,
-        'order' => 0,
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -543,19 +567,25 @@ test('instagram publisher can publish reel with null content', function () {
 });
 
 test('instagram publisher can publish carousel with null content', function () {
-    $this->postPlatform->update(['content' => null]);
-
-    for ($i = 0; $i < 2; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
-            'path' => "media/2026-01/test-image-{$i}.jpg",
-            'original_filename' => "test-{$i}.jpg",
-            'mime_type' => 'image/jpeg',
-            'size' => 12345,
-            'order' => $i,
-        ]);
-    }
+    $this->post->update([
+        'content' => null,
+        'media' => [
+            [
+                'id' => 'test-media-0',
+                'path' => 'media/2026-01/test-image-0.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image-0.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test-0.jpg',
+            ],
+            [
+                'id' => 'test-media-1',
+                'path' => 'media/2026-01/test-image-1.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image-1.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test-1.jpg',
+            ],
+        ],
+    ]);
 
     Http::fake([
         'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::sequence()
@@ -579,16 +609,17 @@ test('instagram publisher can publish carousel with null content', function () {
 });
 
 test('instagram publisher can publish single image with empty string content', function () {
-    $this->postPlatform->update(['content' => '']);
-
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'content' => '',
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -613,15 +644,16 @@ test('instagram publisher can publish single image with empty string content', f
 
 test('instagram publisher routes feed video to reel', function () {
     // InstagramFeed content type with a single video should route to publishReel (REELS media_type)
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/feed-video.mp4',
-        'original_filename' => 'feed-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 2048000,
-        'order' => 0,
-        'meta' => ['width' => 1080, 'height' => 1920, 'duration' => 15],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-feed-video',
+                'path' => 'media/2026-01/feed-video.mp4',
+                'url' => 'https://example.com/media/2026-01/feed-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'feed-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -651,14 +683,16 @@ test('instagram publisher routes feed video to reel', function () {
 });
 
 test('instagram publisher handles publish failure', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([

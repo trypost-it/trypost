@@ -26,11 +26,6 @@ export interface FlashData {
     [key: string]: unknown;
 }
 
-export interface BreadcrumbItem {
-    title: string;
-    href: string;
-}
-
 export interface NavItem {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
@@ -66,4 +61,3 @@ export interface User {
     [key: string]: unknown;
 }
 
-export type BreadcrumbItemType = BreadcrumbItem;

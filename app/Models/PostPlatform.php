@@ -7,7 +7,6 @@ namespace App\Models;
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\PostPlatform\Status;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
-use App\Models\Traits\HasMedia;
 use Database\Factories\PostPlatformFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,14 +16,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class PostPlatform extends Model
 {
     /** @use HasFactory<PostPlatformFactory> */
-    use HasFactory, HasMedia, HasUuids;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'post_id',
         'social_account_id',
         'enabled',
         'platform',
-        'content',
+        'platform_name',
+        'platform_username',
+        'platform_avatar',
         'content_type',
         'status',
         'platform_post_id',
@@ -56,6 +57,30 @@ class PostPlatform extends Model
     public function socialAccount(): BelongsTo
     {
         return $this->belongsTo(SocialAccount::class);
+    }
+
+    /**
+     * Get display name, falling back to snapshot if account was deleted.
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->socialAccount?->display_name ?? $this->platform_name ?? $this->platform->label();
+    }
+
+    /**
+     * Get username, falling back to snapshot if account was deleted.
+     */
+    public function getDisplayUsernameAttribute(): ?string
+    {
+        return $this->socialAccount?->username ?? $this->platform_username;
+    }
+
+    /**
+     * Get avatar URL, falling back to snapshot if account was deleted.
+     */
+    public function getDisplayAvatarAttribute(): ?string
+    {
+        return $this->socialAccount?->avatar_url ?? $this->platform_avatar;
     }
 
     public function markAsPublishing(): void

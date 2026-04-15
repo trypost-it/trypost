@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { trans } from 'laravel-vue-i18n';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Button } from '@/components/ui/button';
@@ -10,8 +9,6 @@ import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { preferences as preferencesRoute } from '@/routes/app/notifications';
-import { type BreadcrumbItem } from '@/types';
-
 interface Preferences {
     post_published: boolean;
     post_failed: boolean;
@@ -23,11 +20,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-
-const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.title'), href: preferencesRoute().url },
-    { title: trans('settings.nav.notifications'), href: preferencesRoute().url },
-]);
 
 const postPublished = ref(props.preferences.post_published);
 const postFailed = ref(props.preferences.post_failed);
@@ -51,7 +43,7 @@ const submit = () => {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbItems">
+    <AppLayout :title="$t('settings.notifications.title')">
         <Head :title="$t('settings.notifications.title')" />
 
         <h1 class="sr-only">{{ $t('settings.notifications.title') }}</h1>

@@ -14,10 +14,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { edit, uploadPhoto, deletePhoto } from '@/routes/app/profile';
+import { uploadPhoto, deletePhoto } from '@/routes/app/profile';
 import { send } from '@/routes/verification';
-import { type BreadcrumbItem } from '@/types';
-
 interface Props {
     mustVerifyEmail: boolean;
     status?: string;
@@ -27,15 +25,10 @@ defineProps<Props>();
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
-
-const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.title'), href: edit().url },
-    { title: trans('settings.nav.profile'), href: edit().url },
-]);
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbItems">
+    <AppLayout :title="$t('settings.profile.title')">
         <Head :title="$t('settings.profile.title')" />
 
         <h1 class="sr-only">{{ $t('settings.profile.title') }}</h1>

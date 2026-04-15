@@ -31,6 +31,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Check out this YouTube Short!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->youtube()->create([
@@ -38,7 +39,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::YouTube,
         'content_type' => ContentType::YouTubeShort,
-        'content' => 'Check out this YouTube Short!',
     ]);
 
     $this->publisher = new YouTubePublisher;
@@ -50,14 +50,16 @@ test('youtube publisher throws exception when no media', function () {
 });
 
 test('youtube publisher throws exception for non-video content', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/image.jpg',
-        'original_filename' => 'image.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-image',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -67,14 +69,16 @@ test('youtube publisher throws exception for non-video content', function () {
 test('youtube publisher refreshes token when expired', function () {
     $this->socialAccount->update(['token_expires_at' => now()->subHour()]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -106,14 +110,16 @@ test('youtube publisher throws exception when no refresh token available', funct
         'refresh_token' => null,
     ]);
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
@@ -121,14 +127,16 @@ test('youtube publisher throws exception when no refresh token available', funct
 });
 
 test('youtube publisher throws exception on api init error', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1024000,
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -148,16 +156,17 @@ test('youtube publisher throws exception on api init error', function () {
 // expiration handling. Full integration tests should cover the 401 error scenario.
 
 test('youtube publisher throws exception with null content', function () {
-    $this->postPlatform->update(['content' => null]);
-
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 1234567,
-        'order' => 0,
+    $this->post->update([
+        'content' => null,
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test.mp4',
+            ],
+        ],
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))

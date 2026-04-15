@@ -29,9 +29,6 @@ import {
 import date from '@/date';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { copyToClipboard } from '@/lib/utils';
-import { index as apiKeysIndex } from '@/routes/app/api-keys';
-import { type BreadcrumbItem } from '@/types';
-
 interface ApiToken {
     id: string;
     name: string;
@@ -51,17 +48,12 @@ defineProps<Props>();
 const page = usePage();
 const newToken = computed(() => (page.props.flash as Record<string, unknown>)?.plainToken as string | undefined);
 
-const breadcrumbItems = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.title'), href: apiKeysIndex.url() },
-    { title: trans('settings.api_keys.title'), href: apiKeysIndex.url() },
-]);
-
 const createDialogOpen = ref(false);
 const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbItems">
+    <AppLayout :title="$t('settings.api_keys.page_title')">
         <Head :title="$t('settings.api_keys.page_title')" />
 
         <h1 class="sr-only">{{ $t('settings.api_keys.heading') }}</h1>

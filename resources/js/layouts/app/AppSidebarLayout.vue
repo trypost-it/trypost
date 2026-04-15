@@ -5,18 +5,17 @@ import AppHeader from '@/components/AppHeader.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import Toast from '@/components/Toast.vue';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import type { BreadcrumbItem } from '@/types';
 
 const page = usePage();
 const isOpen = page.props.sidebarOpen;
 
 type Props = {
-    breadcrumbs?: BreadcrumbItem[];
+    title?: string;
     fullWidth?: boolean;
 };
 
 withDefaults(defineProps<Props>(), {
-    breadcrumbs: () => [],
+    title: '',
     fullWidth: false,
 });
 </script>
@@ -24,16 +23,13 @@ withDefaults(defineProps<Props>(), {
 <template>
     <SidebarProvider :default-open="isOpen">
         <AppSidebar />
-        <SidebarInset class="flex h-screen flex-col overflow-hidden">
-            <AppHeader :breadcrumbs="$slots['header-left'] ? [] : breadcrumbs" :show-sidebar-trigger="!$slots['header-left']">
-                <template v-if="$slots['header-left']" #left>
-                    <slot name="header-left" />
+        <SidebarInset class="overflow-x-hidden">
+            <AppHeader v-if="$slots['header'] || $slots['header-actions'] || title" :title="$slots['header'] ? '' : title">
+                <template v-if="$slots['header']" #left>
+                    <slot name="header" />
                 </template>
-                <template v-if="$slots['header-center']" #center>
-                    <slot name="header-center" />
-                </template>
-                <template v-if="$slots['header-right']" #right>
-                    <slot name="header-right" />
+                <template v-if="$slots['header-actions']" #right>
+                    <slot name="header-actions" />
                 </template>
             </AppHeader>
             <div

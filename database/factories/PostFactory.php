@@ -25,8 +25,9 @@ class PostFactory extends Factory
         return [
             'workspace_id' => Workspace::factory(),
             'user_id' => User::factory(),
+            'content' => '',
+            'media' => [],
             'status' => PostStatus::Draft,
-            'synced' => true,
         ];
     }
 

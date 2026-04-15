@@ -21,13 +21,13 @@ class FacebookPublisher
     {
         $this->validateContentLength($postPlatform);
 
-        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+        $content = $postPlatform->post->content ? app(ContentSanitizer::class)->sanitize($postPlatform->post->content, $postPlatform->platform) : null;
 
         $account = $postPlatform->socialAccount;
         $pageId = $account->platform_user_id;
         $accessToken = $account->access_token;
 
-        $media = $postPlatform->media;
+        $media = $postPlatform->post->mediaItems;
         $contentType = $postPlatform->content_type;
 
         return match ($contentType) {

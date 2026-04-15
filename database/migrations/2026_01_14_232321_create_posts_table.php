@@ -16,15 +16,16 @@ return new class extends Migration
         Schema::create('posts', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('workspace_id');
-            $table->uuid('user_id');
+            $table->uuid('user_id')->nullable();
+            $table->text('content')->nullable();
+            $table->json('media')->default('[]');
             $table->string('status')->default('draft');
-            $table->boolean('synced');
             $table->timestamp('scheduled_at')->nullable();
             $table->timestamp('published_at')->nullable();
             $table->timestamps();
 
             $table->foreign('workspace_id')->references('id')->on('workspaces')->cascadeOnDelete();
-            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
+            $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
 
             $table->index(['workspace_id', 'status', 'scheduled_at']);
         });

@@ -1,13 +1,8 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
-
 import UsageMetricRow from '@/components/settings/UsageMetricRow.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as usageRoute } from '@/routes/app/usage';
-import { type BreadcrumbItem } from '@/types';
-
 interface Plan {
     name: string;
     slug: string;
@@ -32,10 +27,6 @@ const props = defineProps<{
     usage: Usage;
 }>();
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('usage.title'), href: usageRoute.url() },
-]);
-
 const formatRetention = (days: number): string => {
     if (days >= 730) return trans('usage.unlimited');
     if (days >= 365) {
@@ -49,7 +40,7 @@ const formatRetention = (days: number): string => {
 <template>
     <Head :title="$t('usage.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout :title="$t('usage.title')">
         <div class="mx-auto max-w-3xl space-y-0 p-6">
             <!-- Account -->
             <section class="grid grid-cols-1 gap-8 md:grid-cols-[280px_1fr] md:gap-16">

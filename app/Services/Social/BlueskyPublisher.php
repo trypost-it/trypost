@@ -23,7 +23,7 @@ class BlueskyPublisher
     {
         $this->validateContentLength($postPlatform);
 
-        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+        $content = $postPlatform->post->content ? app(ContentSanitizer::class)->sanitize($postPlatform->post->content, $postPlatform->platform) : null;
 
         $account = $postPlatform->socialAccount;
         $service = $account->meta['service'] ?? 'https://bsky.social';
@@ -34,7 +34,7 @@ class BlueskyPublisher
             $account->refresh();
         }
 
-        $medias = $postPlatform->media;
+        $medias = $postPlatform->post->mediaItems;
         $embed = null;
 
         // Upload images if present (max 4)

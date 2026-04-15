@@ -20,7 +20,11 @@ class UpdatePostRequest extends FormRequest
     {
         return [
             'status' => ['required', 'string', Rule::in([Status::Draft->value, Status::Scheduled->value, Status::Publishing->value])],
-            'synced' => ['required', 'boolean'],
+            'content' => ['nullable', 'string', 'max:63206'],
+            'media' => ['sometimes', 'array'],
+            'media.*.id' => ['required', 'string'],
+            'media.*.path' => ['required', 'string', 'max:500'],
+            'media.*.url' => ['required', 'string', 'max:2048'],
             'scheduled_at' => [
                 'sometimes',
                 'nullable',
@@ -30,10 +34,9 @@ class UpdatePostRequest extends FormRequest
                     ['after:now']
                 ),
             ],
-            'platforms' => ['required', 'array'],
+            'platforms' => ['sometimes', 'array'],
             'platforms.*.id' => ['required', 'uuid', Rule::exists('post_platforms', 'id')->where('post_id', $this->route('post')->id ?? $this->route('post'))],
-            'platforms.*.content' => ['nullable', 'string', 'max:63206'],
-            'platforms.*.content_type' => ['required', 'string', Rule::in(array_column(ContentType::cases(), 'value'))],
+            'platforms.*.content_type' => ['sometimes', 'string', Rule::in(array_column(ContentType::cases(), 'value'))],
             'platforms.*.meta' => ['nullable', 'array'],
             'platforms.*.meta.privacy_level' => ['sometimes', 'string', Rule::in(['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'FOLLOWER_OF_CREATOR', 'SELF_ONLY'])],
             'platforms.*.meta.auto_add_music' => ['sometimes', 'boolean'],
@@ -53,9 +56,6 @@ class UpdatePostRequest extends FormRequest
         return [
             'status.required' => 'The post status is required.',
             'status.in' => 'Invalid post status.',
-            'synced.required' => 'The synced field is required.',
-            'platforms.required' => 'At least one platform is required.',
-            'platforms.*.content_type.required' => 'The content type is required for each platform.',
             'platforms.*.content_type.in' => 'Invalid content type.',
             'scheduled_at.after' => 'The scheduled date must be in the future.',
         ];

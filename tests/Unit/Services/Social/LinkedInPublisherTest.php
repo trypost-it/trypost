@@ -27,6 +27,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Hello from LinkedIn!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->create([
@@ -34,7 +35,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::LinkedIn,
         'content_type' => ContentType::LinkedInPost,
-        'content' => 'Hello from LinkedIn!',
     ]);
 
     $this->publisher = new LinkedInPublisher;
@@ -142,7 +142,7 @@ test('linkedin publisher throws exception when no refresh token available', func
 });
 
 test('linkedin publisher handles empty content', function () {
-    $this->postPlatform->update(['content' => '']);
+    $this->post->update(['content' => '']);
 
     Http::fake([
         'https://api.linkedin.com/rest/posts' => Http::response(null, 201, [
@@ -167,15 +167,16 @@ test('linkedin publisher throws exception for unsupported content type', functio
 });
 
 test('linkedin publisher can publish post with image', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     $uploadUrl = 'https://www.linkedin.com/dms/upload/v2/pic/0/C5622AQFake';
@@ -217,19 +218,31 @@ test('linkedin publisher can publish post with image', function () {
 
 test('linkedin publisher can publish carousel with multiple images', function () {
     $this->postPlatform->update(['content_type' => ContentType::LinkedInCarousel]);
-
-    for ($i = 1; $i <= 3; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
-            'path' => "media/2026-01/carousel-{$i}.jpg",
-            'original_filename' => "carousel-{$i}.jpg",
-            'mime_type' => 'image/jpeg',
-            'size' => 256000,
-            'order' => $i - 1,
-            'meta' => ['width' => 1200, 'height' => 628],
-        ]);
-    }
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-1',
+                'path' => 'media/2026-01/carousel-1.jpg',
+                'url' => 'https://example.com/media/2026-01/carousel-1.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'carousel-1.jpg',
+            ],
+            [
+                'id' => 'test-media-2',
+                'path' => 'media/2026-01/carousel-2.jpg',
+                'url' => 'https://example.com/media/2026-01/carousel-2.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'carousel-2.jpg',
+            ],
+            [
+                'id' => 'test-media-3',
+                'path' => 'media/2026-01/carousel-3.jpg',
+                'url' => 'https://example.com/media/2026-01/carousel-3.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'carousel-3.jpg',
+            ],
+        ],
+    ]);
 
     $uploadUrls = [
         'https://www.linkedin.com/dms/upload/v2/pic/carousel/1',
@@ -292,15 +305,16 @@ test('linkedin publisher can publish carousel with multiple images', function ()
 });
 
 test('linkedin publisher can publish post with video', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 2 * 1024 * 1024,
-        'order' => 0,
-        'meta' => ['duration' => 30],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     $chunkUploadUrl = 'https://www.linkedin.com/dms/upload/v2/chunk/video/1';

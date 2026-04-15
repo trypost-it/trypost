@@ -2,7 +2,7 @@
 import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
 import { IconPencil, IconSearch, IconTag, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
@@ -15,8 +15,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index as labelsIndex, destroy as labelsDestroy } from '@/routes/app/labels';
-import { type BreadcrumbItemType } from '@/types';
-
 interface Label {
     id: string;
     name: string;
@@ -44,10 +42,6 @@ const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const isCreateDialogOpen = ref(false);
 const isEditDialogOpen = ref(false);
 const editingLabel = ref<Label | null>(null);
-
-const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
-    { title: trans('labels.title'), href: labelsIndex.url() },
-]);
 
 const searchQuery = ref(props.filters.search);
 
@@ -81,8 +75,8 @@ const handleDelete = (labelId: string) => {
 
     <Head :title="$t('labels.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <template #header-right>
+    <AppLayout :title="$t('labels.title')">
+        <template #header-actions>
             <div class="relative">
                 <IconSearch class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input

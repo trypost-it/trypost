@@ -257,7 +257,7 @@ const formatTime = (scheduledAt: string): string => {
     <Head :title="$t('calendar.title')" />
 
     <AppLayout :fullWidth="true">
-        <template #header-left>
+        <template #header>
             <Button variant="outline" size="icon" @click="navigate(-1)">
                 <IconChevronLeft class="h-4 w-4" />
             </Button>
@@ -268,15 +268,12 @@ const formatTime = (scheduledAt: string): string => {
                 <IconChevronRight class="h-4 w-4" />
             </Button>
             <DatePicker v-if="isMobile" v-model="selectedDate" @update:model-value="(v: any) => goToDate(v)" />
-        </template>
-
-        <template #header-center>
             <span class="text-sm font-semibold">
                 {{ headerTitle }}
             </span>
         </template>
 
-        <template #header-right>
+        <template #header-actions>
             <div class="flex items-center gap-2">
                 <Tabs v-if="!isMobile" :default-value="view" @update:model-value="switchView">
                     <TabsList class="h-10">

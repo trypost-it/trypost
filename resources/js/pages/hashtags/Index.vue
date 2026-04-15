@@ -2,7 +2,7 @@
 import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
 import { IconHash, IconPencil, IconSearch, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
@@ -15,8 +15,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index as hashtagsIndex, destroy as hashtagsDestroy } from '@/routes/app/hashtags';
-import { type BreadcrumbItemType } from '@/types';
-
 interface Workspace {
     id: string;
     name: string;
@@ -67,10 +65,6 @@ const isCreateDialogOpen = ref(false);
 const isEditDialogOpen = ref(false);
 const editingHashtag = ref<Hashtag | null>(null);
 
-const breadcrumbs = computed<BreadcrumbItemType[]>(() => [
-    { title: trans('hashtags.title'), href: hashtagsIndex.url() },
-]);
-
 const openEditDialog = (hashtag: Hashtag) => {
     editingHashtag.value = hashtag;
     isEditDialogOpen.value = true;
@@ -91,8 +85,8 @@ const getHashtagCount = (hashtags: string): number => {
 
     <Head :title="$t('hashtags.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <template #header-right>
+    <AppLayout :title="$t('hashtags.title')">
+        <template #header-actions>
             <div class="relative">
                 <IconSearch class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input

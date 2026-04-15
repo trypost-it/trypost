@@ -16,8 +16,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItemType } from '@/types';
-
 interface SocialAccount {
     id: string;
     platform: string;
@@ -106,23 +104,6 @@ const pageTitle = computed(() => {
     return trans('posts.all_posts');
 });
 
-const breadcrumbs = computed<BreadcrumbItemType[]>(() => {
-    const items: BreadcrumbItemType[] = [
-        { title: trans('posts.title'), href: postsIndex.url() },
-    ];
-
-    items.push({
-        title: props.currentStatus
-            ? trans(`posts.status.${props.currentStatus}`)
-            : trans('posts.all_posts'),
-        href: props.currentStatus
-            ? postsIndex.url(props.currentStatus)
-            : postsIndex.url(),
-    });
-
-    return items;
-});
-
 const getPlatformLogo = (platform: string): string => {
     const logos: Record<string, string> = {
         'linkedin': '/images/accounts/linkedin.png',
@@ -191,8 +172,8 @@ const handleDelete = (post: Post) => {
 
     <Head :title="pageTitle" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <template #header-right>
+    <AppLayout :title="pageTitle">
+        <template #header-actions>
             <div class="relative">
                 <IconSearch class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input

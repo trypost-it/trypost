@@ -27,6 +27,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Hello from X!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->create([
@@ -34,7 +35,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::X,
         'content_type' => ContentType::XPost,
-        'content' => 'Hello from X!',
     ]);
 
     $this->publisher = new XPublisher;
@@ -159,14 +159,14 @@ test('x publisher includes media ids in post when media uploaded', function () {
 });
 
 test('x publisher throws exception with empty content and no media', function () {
-    $this->postPlatform->update(['content' => '']);
+    $this->post->update(['content' => '']);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(Exception::class, 'X posts require either text or media');
 });
 
 test('x publisher throws exception with null content and no media', function () {
-    $this->postPlatform->update(['content' => null]);
+    $this->post->update(['content' => null]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(Exception::class, 'X posts require either text or media');
@@ -183,14 +183,16 @@ test('x publisher throws exception when no refresh token available', function ()
 });
 
 test('x publisher handles gif upload with processing', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/animated.gif',
-        'original_filename' => 'animated.gif',
-        'mime_type' => 'image/gif',
-        'size' => 1024 * 1024, // 1MB — triggers chunked upload (isGif === true)
-        'order' => 0,
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-gif',
+                'path' => 'media/2026-01/animated.gif',
+                'url' => 'https://example.com/media/2026-01/animated.gif',
+                'mime_type' => 'image/gif',
+                'original_filename' => 'animated.gif',
+            ],
+        ],
     ]);
 
     Http::fake(function ($request) {
@@ -237,15 +239,16 @@ test('x publisher handles gif upload with processing', function () {
 });
 
 test('x publisher uploads video via chunked upload', function () {
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'video',
-        'path' => 'media/2026-01/test-video.mp4',
-        'original_filename' => 'test-video.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 2 * 1024 * 1024,
-        'order' => 0,
-        'meta' => ['duration' => 30],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
     ]);
 
     Http::fake(function ($request) {

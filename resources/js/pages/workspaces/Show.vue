@@ -7,8 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { accounts, calendar } from '@/routes/app';
 import { settings } from '@/routes/app/workspace';
-import { type BreadcrumbItemType } from '@/types';
-
 interface SocialAccount {
     id: string;
     platform: string;
@@ -36,16 +34,12 @@ interface Props {
 }
 
 defineProps<Props>();
-
-const breadcrumbs: BreadcrumbItemType[] = [
-    { title: 'Calendar', href: calendar.url() },
-];
 </script>
 
 <template>
     <Head :title="workspace.name" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout :title="workspace.name">
         <div class="flex flex-col gap-6 p-6">
             <div class="flex items-center justify-between">
                 <div>

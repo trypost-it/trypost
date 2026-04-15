@@ -83,6 +83,7 @@ test('instagram facebook publisher uses graph.facebook.com', function () {
     $post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Test post via Facebook Business',
     ]);
 
     $postPlatform = PostPlatform::factory()->create([
@@ -90,17 +91,18 @@ test('instagram facebook publisher uses graph.facebook.com', function () {
         'social_account_id' => $this->instagramFacebookAccount->id,
         'platform' => Platform::InstagramFacebook,
         'content_type' => ContentType::InstagramFeed,
-        'content' => 'Test post via Facebook Business',
     ]);
 
-    $postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/test.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/test.jpg',
+                'url' => 'https://example.com/media/test.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -139,6 +141,7 @@ test('instagram standalone publisher uses graph.instagram.com', function () {
     $post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Test post via standalone',
     ]);
 
     $postPlatform = PostPlatform::factory()->create([
@@ -146,17 +149,18 @@ test('instagram standalone publisher uses graph.instagram.com', function () {
         'social_account_id' => $standaloneAccount->id,
         'platform' => Platform::Instagram,
         'content_type' => ContentType::InstagramFeed,
-        'content' => 'Test post via standalone',
     ]);
 
-    $postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/test.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 512000,
-        'order' => 0,
+    $post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/test.jpg',
+                'url' => 'https://example.com/media/test.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([

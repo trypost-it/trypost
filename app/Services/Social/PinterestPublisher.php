@@ -32,7 +32,7 @@ class PinterestPublisher
             $account->refresh();
         }
 
-        $content = $postPlatform->content ? app(ContentSanitizer::class)->sanitize($postPlatform->content, $postPlatform->platform) : null;
+        $content = $postPlatform->post->content ? app(ContentSanitizer::class)->sanitize($postPlatform->post->content, $postPlatform->platform) : null;
 
         return match ($postPlatform->content_type) {
             ContentType::PinterestPin => $this->publishImagePin($postPlatform, $content),
@@ -45,7 +45,7 @@ class PinterestPublisher
     private function publishImagePin(PostPlatform $postPlatform, ?string $content): array
     {
         $account = $postPlatform->socialAccount;
-        $media = $postPlatform->media->first();
+        $media = $postPlatform->post->mediaItems->first();
 
         if (! $media) {
             throw new \Exception('Pinterest requires at least one image');
@@ -127,7 +127,7 @@ class PinterestPublisher
     private function publishVideoPin(PostPlatform $postPlatform, ?string $content): array
     {
         $account = $postPlatform->socialAccount;
-        $media = $postPlatform->media->first();
+        $media = $postPlatform->post->mediaItems->first();
 
         if (! $media) {
             throw new \Exception('Pinterest requires a video');
@@ -261,7 +261,7 @@ class PinterestPublisher
     private function publishCarousel(PostPlatform $postPlatform, ?string $content): array
     {
         $account = $postPlatform->socialAccount;
-        $medias = $postPlatform->media;
+        $medias = $postPlatform->post->mediaItems;
 
         if ($medias->count() < 2 || $medias->count() > 5) {
             throw new \Exception('Pinterest carousel requires 2-5 images');

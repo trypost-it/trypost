@@ -16,21 +16,24 @@ return new class extends Migration
         Schema::create('post_platforms', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('post_id');
-            $table->uuid('social_account_id');
+            $table->uuid('social_account_id')->nullable();
             $table->string('platform');
-            $table->text('content')->nullable();
+            $table->string('platform_name')->nullable();
+            $table->string('platform_username')->nullable();
+            $table->string('platform_avatar')->nullable();
             $table->string('content_type');
             $table->string('status')->default('pending');
             $table->string('platform_post_id')->nullable();
-            $table->boolean('enabled');
+            $table->boolean('enabled')->default(false);
             $table->string('platform_url')->nullable();
             $table->text('error_message')->nullable();
+            $table->json('error_context')->nullable();
             $table->timestamp('published_at')->nullable();
             $table->json('meta')->nullable();
             $table->timestamps();
 
             $table->foreign('post_id')->references('id')->on('posts')->cascadeOnDelete();
-            $table->foreign('social_account_id')->references('id')->on('social_accounts')->cascadeOnDelete();
+            $table->foreign('social_account_id')->references('id')->on('social_accounts')->nullOnDelete();
         });
     }
 

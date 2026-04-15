@@ -28,6 +28,7 @@ beforeEach(function () {
     $this->post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Hello from Mastodon!',
     ]);
 
     $this->postPlatform = PostPlatform::factory()->create([
@@ -35,7 +36,6 @@ beforeEach(function () {
         'social_account_id' => $this->socialAccount->id,
         'platform' => Platform::Mastodon,
         'content_type' => ContentType::MastodonPost,
-        'content' => 'Hello from Mastodon!',
     ]);
 
     $this->publisher = new MastodonPublisher;
@@ -91,16 +91,16 @@ test('mastodon publisher works with custom instance', function () {
 });
 
 test('mastodon publisher uploads media', function () {
-    // Create a media item through the PostPlatform's media() relation
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     Http::fake([
@@ -172,19 +172,18 @@ test('mastodon publisher throws permission exception on forbidden', function () 
 });
 
 test('mastodon publisher limits media to 4', function () {
-    // Create 6 media items through the PostPlatform's media() relation
+    $mediaItems = [];
     for ($i = 0; $i < 6; $i++) {
-        $this->postPlatform->media()->create([
-            'collection' => 'default',
-            'type' => 'image',
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
             'path' => "media/2026-01/test-image-{$i}.jpg",
-            'original_filename' => "test-{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/test-image-{$i}.jpg",
             'mime_type' => 'image/jpeg',
-            'size' => 12345,
-            'order' => $i,
-            'meta' => ['width' => 1920, 'height' => 1080],
-        ]);
+            'original_filename' => "test-{$i}.jpg",
+        ];
     }
+    $this->post->update([
+        'media' => $mediaItems]);
 
     Http::fake([
         'https://mastodon.social/api/v1/media' => Http::response([
@@ -206,7 +205,7 @@ test('mastodon publisher limits media to 4', function () {
 });
 
 test('mastodon publisher handles empty content', function () {
-    $this->postPlatform->update(['content' => '']);
+    $this->post->update(['content' => '']);
 
     Http::fake([
         'https://mastodon.social/api/v1/statuses' => Http::response([
@@ -253,15 +252,16 @@ test('mastodon publisher optimizes images before upload', function () {
         ."\x05\x01\x01\x01\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x01\x02\x03\x04\x05"
         ."\xFF\xDA\x00\x08\x01\x01\x00\x00\x3F\x00\xFB\xD3\xFF\xD9";
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/test-image.jpg',
-        'original_filename' => 'test.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-        'meta' => ['width' => 1920, 'height' => 1080],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/test-image.jpg',
+                'url' => 'https://example.com/media/2026-01/test-image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
     ]);
 
     $this->mock(MediaOptimizer::class)
@@ -309,15 +309,16 @@ test('mastodon publisher publishes text-only when media upload fails', function 
     $optimizedFile = tempnam(sys_get_temp_dir(), 'masto_fail_opt_');
     file_put_contents($optimizedFile, str_repeat('x', 512));
 
-    $this->postPlatform->media()->create([
-        'collection' => 'default',
-        'type' => 'image',
-        'path' => 'media/2026-01/failing-upload.jpg',
-        'original_filename' => 'failing-upload.jpg',
-        'mime_type' => 'image/jpeg',
-        'size' => 12345,
-        'order' => 0,
-        'meta' => ['width' => 800, 'height' => 600],
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-fail',
+                'path' => 'media/2026-01/failing-upload.jpg',
+                'url' => 'https://example.com/media/2026-01/failing-upload.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'failing-upload.jpg',
+            ],
+        ],
     ]);
 
     $this->mock(MediaOptimizer::class)

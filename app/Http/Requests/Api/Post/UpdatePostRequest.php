@@ -21,11 +21,11 @@ class UpdatePostRequest extends FormRequest
     {
         return [
             'status' => ['required', 'string', Rule::in([Status::Draft->value, Status::Scheduled->value, Status::Publishing->value])],
-            'synced' => ['required', 'boolean'],
-            'platforms' => ['required', 'array'],
+            'content' => ['nullable', 'string', 'max:63206'],
+            'media' => ['sometimes', 'array'],
+            'platforms' => ['sometimes', 'array'],
             'platforms.*.id' => ['required', 'uuid', Rule::exists('post_platforms', 'id')->where('post_id', $this->route('post') instanceof Post ? $this->route('post')->id : $this->route('post'))],
-            'platforms.*.content' => ['nullable', 'string', 'max:63206'],
-            'platforms.*.content_type' => ['required', 'string', Rule::in(array_column(ContentType::cases(), 'value'))],
+            'platforms.*.content_type' => ['sometimes', 'string', Rule::in(array_column(ContentType::cases(), 'value'))],
             'platforms.*.meta' => ['nullable', 'array'],
             'scheduled_at' => [
                 'nullable',

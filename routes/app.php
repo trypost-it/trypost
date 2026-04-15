@@ -6,6 +6,7 @@ use App\Http\Controllers\App\AnalyticsController;
 use App\Http\Controllers\App\ApiKeyController;
 use App\Http\Controllers\App\AssetController;
 use App\Http\Controllers\App\BillingController;
+use App\Http\Controllers\App\GiphyController;
 use App\Http\Controllers\App\MediaController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\OnboardingController;
@@ -167,6 +168,9 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::post('assets/from-url', [AssetController::class, 'storeFromUrl'])->name('app.assets.store-from-url');
     Route::delete('assets/{media}', [AssetController::class, 'destroy'])->name('app.assets.destroy');
     Route::get('assets/unsplash/search', [UnsplashController::class, 'search'])->name('app.assets.unsplash.search');
+    Route::get('assets/unsplash/trending', [UnsplashController::class, 'trending'])->name('app.assets.unsplash.trending');
+    Route::get('assets/giphy/search', [GiphyController::class, 'search'])->name('app.assets.giphy.search');
+    Route::get('assets/giphy/trending', [GiphyController::class, 'trending'])->name('app.assets.giphy.trending');
 
     // Labels
     Route::get('labels', [WorkspaceLabelController::class, 'index'])->name('app.labels.index');

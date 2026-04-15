@@ -36,13 +36,11 @@ onMounted(() => {
 });
 
 // Show flash on SPA navigation (Inertia visits)
-watch(message, (newMessage) => {
-    if (!newMessage) {
-        return;
+watch(() => page.props.flash, () => {
+    if (message.value) {
+        showToast(message.value);
     }
-
-    showToast(newMessage);
-});
+}, { deep: true });
 </script>
 
 <template>

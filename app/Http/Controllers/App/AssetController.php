@@ -30,7 +30,7 @@ class AssetController extends Controller
 
         $assets = $workspace->getMedia('assets')
             ->latest()
-            ->paginate(24);
+            ->paginate(config('app.pagination.default'));
 
         return Inertia::render('assets/Index', [
             'assets' => Inertia::scroll(fn () => $assets),
@@ -122,16 +122,16 @@ class AssetController extends Controller
         ]);
     }
 
-    public function storeFromUrl(Request $request, UnsplashService $unsplash): JsonResponse
+    public function storeFromUrl(Request $request, UnsplashService $unsplash): RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
         $this->authorize('manageAccounts', $workspace);
 
         $validated = $request->validate([
-            'url' => ['required', 'url', 'regex:/^https:\/\/images\.unsplash\.com\//'],
+            'url' => ['required', 'url', 'regex:/^https:\/\/(images\.unsplash\.com|media[0-9]*\.giphy\.com)\//'],
             'filename' => ['required', 'string', 'max:255'],
-            'download_location' => ['sometimes', 'url', 'regex:/^https:\/\/api\.unsplash\.com\//'],
+            'download_location' => ['nullable', 'url', 'regex:/^https:\/\/api\.unsplash\.com\//'],
         ]);
 
         // Trigger Unsplash download tracking (required by API guidelines)
@@ -168,7 +168,7 @@ class AssetController extends Controller
         }
         @unlink($tempFile);
 
-        $media = $workspace->media()->create([
+        $workspace->media()->create([
             'group_id' => Str::uuid()->toString(),
             'collection' => 'assets',
             'type' => 'image',
@@ -180,15 +180,10 @@ class AssetController extends Controller
             'meta' => $meta,
         ]);
 
-        return response()->json([
-            'id' => $media->id,
-            'url' => $media->url,
-            'type' => $media->type->value,
-            'original_filename' => $media->original_filename,
-            'size' => $media->size,
-            'meta' => $media->meta,
-            'created_at' => $media->created_at->toISOString(),
-        ]);
+        session()->flash('flash.banner', __('assets.saved'));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
     }
 
     public function destroy(Request $request, Media $media): RedirectResponse

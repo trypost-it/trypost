@@ -6,6 +6,7 @@ return [
     'tabs' => [
         'my_uploads' => 'My Uploads',
         'stock_photos' => 'Stock Photos',
+        'gifs' => 'GIFs',
     ],
 
     'upload' => [
@@ -19,6 +20,9 @@ return [
         'description' => 'Upload images and videos to build your media library.',
     ],
 
+    'save_to_assets' => 'Save to Assets',
+    'saved' => 'Saved to your assets!',
+
     'delete' => [
         'title' => 'Delete asset',
         'description' => 'Are you sure you want to delete this asset? This action cannot be undone.',
@@ -30,7 +34,15 @@ return [
         'search_placeholder' => 'Search free photos...',
         'no_results' => 'No photos found',
         'no_results_description' => 'Try a different search term.',
+        'trending' => 'Trending on Unsplash',
         'start_searching' => 'Search for free stock photos from Unsplash',
-        'load_more' => 'Load more',
+    ],
+
+    'giphy' => [
+        'trending' => 'Trending on Giphy',
+        'search_placeholder' => 'Search GIFs...',
+        'no_results' => 'No GIFs found',
+        'no_results_description' => 'Try a different search term.',
+        'powered_by' => 'Powered by GIPHY',
     ],
 ];

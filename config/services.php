@@ -118,4 +118,8 @@ return [
         'secret_key' => env('UNSPLASH_SECRET_KEY'),
     ],
 
+    'giphy' => [
+        'api_key' => env('GIPHY_API_KEY'),
+    ],
+
 ];

@@ -111,14 +111,13 @@ test('can store asset from url', function () {
     $unsplash->shouldReceive('trackDownload')->once();
 
     $response = $this->actingAs($this->user)
-        ->postJson(route('app.assets.store-from-url'), [
+        ->post(route('app.assets.store-from-url'), [
             'url' => 'https://images.unsplash.com/photo-test',
             'filename' => 'unsplash-test.jpg',
             'download_location' => 'https://api.unsplash.com/photos/test/download',
         ]);
 
-    $response->assertOk();
-    $response->assertJsonStructure(['id', 'url', 'type', 'original_filename']);
+    $response->assertRedirect();
 
     expect($this->workspace->getMedia('assets')->count())->toBe(1);
 });

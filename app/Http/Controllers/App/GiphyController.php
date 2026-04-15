@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
-use App\Services\UnsplashService;
+use App\Services\GiphyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class UnsplashController extends Controller
+class GiphyController extends Controller
 {
-    public function search(Request $request, UnsplashService $unsplash): JsonResponse
+    public function search(Request $request, GiphyService $giphy): JsonResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -21,7 +21,7 @@ class UnsplashController extends Controller
             'page' => ['sometimes', 'integer', 'min:1'],
         ]);
 
-        $results = $unsplash->search(
+        $results = $giphy->search(
             query: $request->input('query'),
             page: $request->integer('page', 1),
         );
@@ -29,13 +29,13 @@ class UnsplashController extends Controller
         return response()->json($results);
     }
 
-    public function trending(Request $request, UnsplashService $unsplash): JsonResponse
+    public function trending(Request $request, GiphyService $giphy): JsonResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
         $this->authorize('manageAccounts', $workspace);
 
-        $photos = $unsplash->trending(
+        $photos = $giphy->trending(
             page: $request->integer('page', 1),
         );
 

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import {
+    IconArrowBackUp,
     IconEdit,
+    IconLoader2,
     IconMoodSmile,
     IconSend,
     IconTrash,
-    IconCornerDownRight,
-    IconLoader2,
     IconX,
 } from '@tabler/icons-vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import date from '@/date';
+import dayjs from '@/dayjs';
 import {
     index as fetchComments,
     store as storeComment,
@@ -80,6 +81,29 @@ const scrollContainer = ref<HTMLDivElement | null>(null);
 const textareaRef = ref<InstanceType<typeof Textarea> | null>(null);
 
 const hasOlderComments = computed(() => currentPage.value < lastPage.value);
+
+interface DayGroup {
+    label: string;
+    comments: Comment[];
+}
+
+const commentsByDay = computed((): DayGroup[] => {
+    const groups: Map<string, Comment[]> = new Map();
+
+    for (const comment of comments.value) {
+        const day = dayjs.utc(comment.created_at).local().format('YYYY-MM-DD');
+        if (!groups.has(day)) groups.set(day, []);
+        groups.get(day)!.push(comment);
+    }
+
+    const today = dayjs().format('YYYY-MM-DD');
+    const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+
+    return Array.from(groups.entries()).map(([day, items]) => ({
+        label: day === today ? 'Today' : day === yesterday ? 'Yesterday' : dayjs(day).format('MMM D, YYYY'),
+        comments: items,
+    }));
+});
 
 const getInitials = (name: string): string => {
     return name
@@ -340,8 +364,12 @@ const toggleReaction = async (comment: Comment, emoji: string) => {
     }
 };
 
-const toggleEmojiPicker = (commentId: string) => {
-    emojiPickerCommentId.value = emojiPickerCommentId.value === commentId ? null : commentId;
+const showEmojiPicker = (commentId: string) => {
+    emojiPickerCommentId.value = commentId;
+};
+
+const hideEmojiPicker = () => {
+    emojiPickerCommentId.value = null;
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
@@ -414,14 +442,17 @@ watch(() => props.postId, () => {
                 <p class="text-sm text-muted-foreground">{{ $t('comments.empty') }}</p>
             </div>
 
-            <!-- Comments -->
-            <div class="space-y-1 p-2">
-                <template v-for="comment in comments" :key="comment.id">
+            <!-- Comments grouped by day -->
+            <div class="px-2 py-1">
+                <template v-for="group in commentsByDay" :key="group.label">
+                    <div class="mt-2 mb-4 text-center text-xs text-muted-foreground">{{ group.label }}</div>
+
+                <template v-for="comment in group.comments" :key="comment.id">
                     <!-- Top-level comment -->
                     <div
-                        class="group relative rounded-lg p-2 hover:bg-muted/50"
+                        class="group relative rounded-lg py-1.5 px-2 hover:bg-muted/50"
                         @mouseenter="hoveredCommentId = comment.id"
-                        @mouseleave="hoveredCommentId = null"
+                        @mouseleave="hoveredCommentId = null; emojiPickerCommentId = null"
                     >
                         <!-- Editing mode -->
                         <div v-if="editingComment?.id === comment.id" class="space-y-2">
@@ -461,7 +492,7 @@ watch(() => props.postId, () => {
                                     <p class="mt-0.5 whitespace-pre-wrap text-sm">{{ comment.body }}</p>
 
                                     <!-- Reactions -->
-                                    <div v-if="groupedReactions(comment.reactions).length > 0" class="mt-1 flex flex-wrap gap-1">
+                                    <div v-if="groupedReactions(comment.reactions).length > 0" class="mt-1.5 flex flex-wrap gap-1">
                                         <button
                                             v-for="r in groupedReactions(comment.reactions)"
                                             :key="r.emoji"
@@ -473,70 +504,49 @@ watch(() => props.postId, () => {
                                             <span class="text-[10px] text-muted-foreground">{{ r.count }}</span>
                                         </button>
                                     </div>
+
                                 </div>
 
-                                <!-- Hover actions -->
+                                <!-- Floating toolbar -->
                                 <div
                                     v-if="hoveredCommentId === comment.id && editingComment?.id !== comment.id"
-                                    class="absolute -top-2 right-1 flex items-center gap-0.5 rounded-md border bg-background px-1 py-0.5 shadow-sm"
+                                    class="absolute -top-3 right-2 z-50 flex items-center gap-0.5 rounded-md border bg-background px-1 py-0.5 shadow-sm"
                                 >
-                                    <TooltipProvider>
+                                    <TooltipProvider :delay-duration="200">
                                         <Tooltip>
                                             <TooltipTrigger as-child>
-                                                <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="toggleEmojiPicker(comment.id)">
-                                                    <IconMoodSmile class="h-3.5 w-3.5" />
-                                                </button>
+                                                <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @mouseenter="showEmojiPicker(comment.id)"><IconMoodSmile class="h-3.5 w-3.5" /></button>
                                             </TooltipTrigger>
-                                            <TooltipContent side="top"><span class="text-xs">React</span></TooltipContent>
+                                            <TooltipContent side="top" class="text-xs">React</TooltipContent>
                                         </Tooltip>
-                                    </TooltipProvider>
-                                    <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger as-child>
-                                                <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="startReply(comment)">
-                                                    <IconCornerDownRight class="h-3.5 w-3.5" />
-                                                </button>
+                                                <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="startReply(comment)"><IconArrowBackUp class="h-3.5 w-3.5" /></button>
                                             </TooltipTrigger>
-                                            <TooltipContent side="top"><span class="text-xs">{{ $t('comments.reply') }}</span></TooltipContent>
+                                            <TooltipContent side="top" class="text-xs">{{ $t('comments.reply') }}</TooltipContent>
                                         </Tooltip>
+                                        <template v-if="comment.user_id === currentUserId">
+                                            <Tooltip>
+                                                <TooltipTrigger as-child>
+                                                    <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="startEdit(comment)"><IconEdit class="h-3.5 w-3.5" /></button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" class="text-xs">{{ $t('comments.edit') }}</TooltipContent>
+                                            </Tooltip>
+                                            <Tooltip>
+                                                <TooltipTrigger as-child>
+                                                    <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive" @click="deleteComment(comment)"><IconTrash class="h-3.5 w-3.5" /></button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top" class="text-xs">{{ $t('comments.delete') }}</TooltipContent>
+                                            </Tooltip>
+                                        </template>
                                     </TooltipProvider>
-                                    <template v-if="comment.user_id === currentUserId">
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger as-child>
-                                                    <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="startEdit(comment)">
-                                                        <IconEdit class="h-3.5 w-3.5" />
-                                                    </button>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="top"><span class="text-xs">{{ $t('comments.edit') }}</span></TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger as-child>
-                                                    <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive" @click="deleteComment(comment)">
-                                                        <IconTrash class="h-3.5 w-3.5" />
-                                                    </button>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="top"><span class="text-xs">{{ $t('comments.delete') }}</span></TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    </template>
                                 </div>
 
-                                <!-- Emoji picker dropdown -->
+                                <!-- Emoji picker -->
                                 <div
                                     v-if="emojiPickerCommentId === comment.id"
-                                    class="absolute -top-10 right-1 z-10 flex items-center gap-0.5 rounded-lg border bg-background p-1.5 shadow-md"
-                                >
-                                    <button
-                                        v-for="emoji in EMOJIS"
-                                        :key="emoji"
-                                        class="rounded p-0.5 text-sm transition-transform hover:scale-125 hover:bg-muted"
-                                        @click="toggleReaction(comment, emoji)"
-                                    >
-                                        {{ emoji }}
-                                    </button>
+                                    class="absolute -top-10 right-2 z-50 flex items-center gap-0.5 rounded-lg border bg-popover p-1.5 shadow-md"                                >
+                                    <button v-for="emoji in EMOJIS" :key="emoji" class="rounded p-0.5 text-sm transition-transform hover:scale-125 hover:bg-muted" @click="toggleReaction(comment, emoji)">{{ emoji }}</button>
                                 </div>
                             </div>
                         </template>
@@ -547,9 +557,9 @@ watch(() => props.postId, () => {
                         <div
                             v-for="reply in comment.replies"
                             :key="reply.id"
-                            class="group relative ml-6 rounded-lg border-l-2 border-border p-2 pl-3 hover:bg-muted/50"
+                            class="group relative ml-8 rounded-lg py-1.5 px-2 hover:bg-muted/50"
                             @mouseenter="hoveredCommentId = reply.id"
-                            @mouseleave="hoveredCommentId = null"
+                            @mouseleave="hoveredCommentId = null; emojiPickerCommentId = null"
                         >
                             <!-- Editing reply -->
                             <div v-if="editingComment?.id === reply.id" class="space-y-2">
@@ -589,7 +599,7 @@ watch(() => props.postId, () => {
                                         <p class="mt-0.5 whitespace-pre-wrap text-sm">{{ reply.body }}</p>
 
                                         <!-- Reply reactions -->
-                                        <div v-if="groupedReactions(reply.reactions).length > 0" class="mt-1 flex flex-wrap gap-1">
+                                        <div v-if="groupedReactions(reply.reactions).length > 0" class="mt-1.5 flex flex-wrap gap-1">
                                             <button
                                                 v-for="r in groupedReactions(reply.reactions)"
                                                 :key="r.emoji"
@@ -601,65 +611,49 @@ watch(() => props.postId, () => {
                                                 <span class="text-[10px] text-muted-foreground">{{ r.count }}</span>
                                             </button>
                                         </div>
+
                                     </div>
 
-                                    <!-- Reply hover actions -->
+                                    <!-- Reply floating toolbar -->
                                     <div
                                         v-if="hoveredCommentId === reply.id && editingComment?.id !== reply.id"
-                                        class="absolute -top-2 right-1 flex items-center gap-0.5 rounded-md border bg-background px-1 py-0.5 shadow-sm"
+                                        class="absolute -top-3 right-2 z-50 flex items-center gap-0.5 rounded-md border bg-background px-1 py-0.5 shadow-sm"
                                     >
-                                        <TooltipProvider>
+                                        <TooltipProvider :delay-duration="200">
                                             <Tooltip>
                                                 <TooltipTrigger as-child>
-                                                    <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="toggleEmojiPicker(reply.id)">
-                                                        <IconMoodSmile class="h-3.5 w-3.5" />
-                                                    </button>
+                                                    <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @mouseenter="showEmojiPicker(reply.id)"><IconMoodSmile class="h-3.5 w-3.5" /></button>
                                                 </TooltipTrigger>
-                                                <TooltipContent side="top"><span class="text-xs">React</span></TooltipContent>
+                                                <TooltipContent side="top" class="text-xs">React</TooltipContent>
                                             </Tooltip>
+                                            <template v-if="reply.user_id === currentUserId">
+                                                <Tooltip>
+                                                    <TooltipTrigger as-child>
+                                                        <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="startEdit(reply)"><IconEdit class="h-3.5 w-3.5" /></button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top" class="text-xs">{{ $t('comments.edit') }}</TooltipContent>
+                                                </Tooltip>
+                                                <Tooltip>
+                                                    <TooltipTrigger as-child>
+                                                        <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive" @click="deleteComment(reply)"><IconTrash class="h-3.5 w-3.5" /></button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top" class="text-xs">{{ $t('comments.delete') }}</TooltipContent>
+                                                </Tooltip>
+                                            </template>
                                         </TooltipProvider>
-                                        <template v-if="reply.user_id === currentUserId">
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger as-child>
-                                                        <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="startEdit(reply)">
-                                                            <IconEdit class="h-3.5 w-3.5" />
-                                                        </button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent side="top"><span class="text-xs">{{ $t('comments.edit') }}</span></TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                            <TooltipProvider>
-                                                <Tooltip>
-                                                    <TooltipTrigger as-child>
-                                                        <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive" @click="deleteComment(reply)">
-                                                            <IconTrash class="h-3.5 w-3.5" />
-                                                        </button>
-                                                    </TooltipTrigger>
-                                                    <TooltipContent side="top"><span class="text-xs">{{ $t('comments.delete') }}</span></TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        </template>
                                     </div>
 
                                     <!-- Reply emoji picker -->
                                     <div
                                         v-if="emojiPickerCommentId === reply.id"
-                                        class="absolute -top-10 right-1 z-10 flex items-center gap-0.5 rounded-lg border bg-background p-1.5 shadow-md"
-                                    >
-                                        <button
-                                            v-for="emoji in EMOJIS"
-                                            :key="emoji"
-                                            class="rounded p-0.5 text-sm transition-transform hover:scale-125 hover:bg-muted"
-                                            @click="toggleReaction(reply, emoji)"
-                                        >
-                                            {{ emoji }}
-                                        </button>
+                                        class="absolute -top-10 right-2 z-50 flex items-center gap-0.5 rounded-lg border bg-popover p-1.5 shadow-md"                                    >
+                                        <button v-for="emoji in EMOJIS" :key="emoji" class="rounded p-0.5 text-sm transition-transform hover:scale-125 hover:bg-muted" @click="toggleReaction(reply, emoji)">{{ emoji }}</button>
                                     </div>
                                 </div>
                             </template>
                         </div>
                     </template>
+                </template>
                 </template>
             </div>
 
@@ -673,7 +667,7 @@ watch(() => props.postId, () => {
         <div class="shrink-0 border-t p-2">
             <!-- Replying to indicator -->
             <div v-if="replyingTo" class="mb-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <IconCornerDownRight class="h-3 w-3" />
+                <IconArrowBackUp class="h-3 w-3" />
                 <span>{{ $t('comments.replying_to', { name: replyingTo.user.name }) }}</span>
                 <button class="ml-auto rounded p-0.5 hover:bg-muted" @click="cancelReply">
                     <IconX class="h-3 w-3" />

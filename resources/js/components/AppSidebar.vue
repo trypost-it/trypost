@@ -13,6 +13,7 @@ import {
     IconHash,
     IconKey,
     IconLifebuoy,
+    IconPhoto,
     IconMessageCircle,
     IconPencil,
     IconPlus,
@@ -52,6 +53,7 @@ import { edit as accountSettings } from '@/routes/app/account';
 import { index as apiKeys } from '@/routes/app/api-keys';
 import { index as billing } from '@/routes/app/billing';
 import { index as usage } from '@/routes/app/usage';
+import { index as assets } from '@/routes/app/assets';
 import { index as hashtags } from '@/routes/app/hashtags';
 import { index as labels } from '@/routes/app/labels';
 import { settings as workspaceSettings } from '@/routes/app/workspace';
@@ -129,6 +131,11 @@ const workspaceNavItems = computed<NavItem[]>(() => [
         title: trans('sidebar.workspace.labels'),
         href: labels.url(),
         icon: IconTag,
+    },
+    {
+        title: trans('sidebar.workspace.assets'),
+        href: assets.url(),
+        icon: IconPhoto,
     },
     {
         title: trans('sidebar.workspace.api_keys'),

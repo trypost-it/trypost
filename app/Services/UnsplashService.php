@@ -1,0 +1,69 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class UnsplashService
+{
+    private string $baseUrl = 'https://api.unsplash.com';
+
+    private string $accessKey;
+
+    public function __construct()
+    {
+        $this->accessKey = config('services.unsplash.access_key', '');
+    }
+
+    /**
+     * @return array{results: array<int, array<string, mixed>>, total: int, total_pages: int}
+     */
+    public function search(string $query, int $page = 1, int $perPage = 30): array
+    {
+        $response = Http::timeout(10)
+            ->withHeaders(['Authorization' => "Client-ID {$this->accessKey}"])
+            ->get("{$this->baseUrl}/search/photos", [
+                'query' => $query,
+                'page' => $page,
+                'per_page' => $perPage,
+                'orientation' => 'landscape',
+            ]);
+
+        if ($response->failed()) {
+            Log::warning('Unsplash search failed', ['body' => $response->body()]);
+
+            return ['results' => [], 'total' => 0, 'total_pages' => 0];
+        }
+
+        $data = $response->json();
+
+        return [
+            'results' => collect(data_get($data, 'results', []))->map(fn (array $photo) => [
+                'id' => data_get($photo, 'id'),
+                'url_small' => data_get($photo, 'urls.small'),
+                'url_regular' => data_get($photo, 'urls.regular'),
+                'url_full' => data_get($photo, 'urls.full'),
+                'download_location' => data_get($photo, 'links.download_location'),
+                'description' => data_get($photo, 'alt_description'),
+                'width' => data_get($photo, 'width'),
+                'height' => data_get($photo, 'height'),
+                'author' => [
+                    'name' => data_get($photo, 'user.name'),
+                    'url' => data_get($photo, 'user.links.html'),
+                ],
+            ])->all(),
+            'total' => data_get($data, 'total', 0),
+            'total_pages' => data_get($data, 'total_pages', 0),
+        ];
+    }
+
+    public function trackDownload(string $downloadLocation): void
+    {
+        Http::timeout(5)
+            ->withHeaders(['Authorization' => "Client-ID {$this->accessKey}"])
+            ->get($downloadLocation);
+    }
+}

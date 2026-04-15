@@ -23,6 +23,7 @@ trait HasMedia
     protected static array $mediaCollections = [
         Workspace::class => [
             'logo' => 'single',
+            'assets' => 'multiple',
         ],
         User::class => [
             'avatar' => 'single',

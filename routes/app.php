@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\App\AnalyticsController;
 use App\Http\Controllers\App\ApiKeyController;
+use App\Http\Controllers\App\AssetController;
 use App\Http\Controllers\App\BillingController;
 use App\Http\Controllers\App\MediaController;
 use App\Http\Controllers\App\NotificationController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\App\Settings\NotificationPreferenceController;
 use App\Http\Controllers\App\Settings\PasswordController;
 use App\Http\Controllers\App\Settings\ProfileController;
 use App\Http\Controllers\App\Settings\UsageController;
+use App\Http\Controllers\App\UnsplashController;
 use App\Http\Controllers\App\WorkspaceController;
 use App\Http\Controllers\App\WorkspaceHashtagController;
 use App\Http\Controllers\App\WorkspaceInviteController;
@@ -157,6 +159,14 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::post('hashtags', [WorkspaceHashtagController::class, 'store'])->name('app.hashtags.store');
     Route::put('hashtags/{hashtag}', [WorkspaceHashtagController::class, 'update'])->name('app.hashtags.update');
     Route::delete('hashtags/{hashtag}', [WorkspaceHashtagController::class, 'destroy'])->name('app.hashtags.destroy');
+
+    // Assets
+    Route::get('assets', [AssetController::class, 'index'])->name('app.assets.index');
+    Route::post('assets', [AssetController::class, 'store'])->name('app.assets.store');
+    Route::post('assets/chunked', [AssetController::class, 'storeChunked'])->name('app.assets.store-chunked');
+    Route::post('assets/from-url', [AssetController::class, 'storeFromUrl'])->name('app.assets.store-from-url');
+    Route::delete('assets/{media}', [AssetController::class, 'destroy'])->name('app.assets.destroy');
+    Route::get('assets/unsplash/search', [UnsplashController::class, 'search'])->name('app.assets.unsplash.search');
 
     // Labels
     Route::get('labels', [WorkspaceLabelController::class, 'index'])->name('app.labels.index');

@@ -40,6 +40,7 @@ return [
         'connections' => 'Connections',
         'hashtags' => 'Hashtags',
         'labels' => 'Labels',
+        'assets' => 'Assets',
         'api_keys' => 'API Keys',
         'settings' => 'Settings',
     ],

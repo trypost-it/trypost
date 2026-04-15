@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
-use App\Enums\Plan\Slug as PlanSlug;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\User\Persona;
 use App\Enums\User\Setup;
-use App\Models\Account;
-use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class OnboardingController extends Controller
 {
@@ -43,10 +39,10 @@ class OnboardingController extends Controller
             'setup' => Setup::Connections,
         ]);
 
-        return redirect()->route('app.onboarding.connect');
+        return redirect()->route('app.onboarding.account');
     }
 
-    public function connect(Request $request): Response|RedirectResponse
+    public function account(Request $request): Response|RedirectResponse
     {
         $redirect = $this->enforceStep($request->user(), Setup::Connections);
         if ($redirect) {
@@ -70,62 +66,24 @@ class OnboardingController extends Controller
             ])->values();
         }
 
-        return Inertia::render('onboarding/Connect', [
+        return Inertia::render('onboarding/Account', [
             'platforms' => $platforms,
             'hasWorkspace' => $workspace !== null,
         ]);
     }
 
-    public function storeConnect(Request $request): SymfonyResponse|RedirectResponse
+    public function storeAccount(Request $request): RedirectResponse
     {
-        $user = $request->user();
-        $workspace = $user->currentWorkspace;
+        $request->user()->update(['setup' => Setup::Completed]);
 
         if (config('trypost.self_hosted')) {
-            $user->update(['setup' => Setup::Completed]);
-
             session()->flash('flash.banner', __('auth.flash.welcome'));
             session()->flash('flash.bannerStyle', 'success');
 
             return redirect()->route('app.calendar');
         }
 
-        $user->update(['setup' => Setup::Subscription]);
-
-        $account = $user->account;
-        $defaultPlan = Plan::where('slug', PlanSlug::Starter)->firstOrFail();
-
-        $account->createOrGetStripeCustomer([
-            'email' => $account->stripeEmail(),
-            'name' => $account->stripeName(),
-        ]);
-
-        $subscription = $account->newSubscription(Account::SUBSCRIPTION_NAME, $defaultPlan->stripe_monthly_price_id)
-            ->allowPromotionCodes()
-            ->trialDays(config('cashier.trial_days'));
-
-        $checkoutSession = $subscription->checkout([
-            'success_url' => route('app.onboarding.complete').'?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => route('app.onboarding.connect'),
-        ]);
-
-        $account->update(['plan_id' => $defaultPlan->id]);
-
-        return Inertia::location($checkoutSession->url);
-    }
-
-    public function complete(Request $request): RedirectResponse
-    {
-        $user = $request->user();
-
-        $user->update([
-            'setup' => Setup::Completed,
-        ]);
-
-        session()->flash('flash.banner', __('auth.flash.welcome_trial'));
-        session()->flash('flash.bannerStyle', 'success');
-
-        return redirect()->route('app.calendar');
+        return redirect()->route('app.subscribe');
     }
 
     private function enforceStep(User $user, Setup $expectedStep): ?RedirectResponse
@@ -140,8 +98,7 @@ class OnboardingController extends Controller
 
         return match ($user->setup) {
             Setup::Role => redirect()->route('app.onboarding.role'),
-            Setup::Connections => redirect()->route('app.onboarding.connect'),
-            Setup::Subscription => redirect()->route('app.subscribe'),
+            Setup::Connections => redirect()->route('app.onboarding.account'),
             default => redirect()->route('app.onboarding.role'),
         };
     }

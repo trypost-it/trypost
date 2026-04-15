@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
+use App\Events\SubscriptionCreated;
 use App\Listeners\StripeEventListener;
 use App\Models\Account;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\Event;
 use Laravel\Cashier\Events\WebhookReceived;
 
 beforeEach(function () {
@@ -17,7 +19,7 @@ beforeEach(function () {
         'stripe_id' => 'cus_test_'.fake()->uuid(),
     ]);
     $this->user = User::factory()->create([
-        'setup' => Setup::Subscription,
+        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->account->update(['owner_id' => $this->user->id]);
@@ -29,7 +31,9 @@ beforeEach(function () {
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
-test('webhook creates subscription and completes setup', function () {
+test('webhook dispatches subscription created event', function () {
+    Event::fake([SubscriptionCreated::class]);
+
     $payload = [
         'type' => 'customer.subscription.created',
         'data' => [
@@ -41,15 +45,15 @@ test('webhook creates subscription and completes setup', function () {
         ],
     ];
 
-    $event = new WebhookReceived($payload);
-
     $listener = new StripeEventListener;
-    $listener->handle($event);
+    $listener->handle(new WebhookReceived($payload));
 
-    expect($this->user->fresh()->setup)->toBe(Setup::Completed);
+    Event::assertDispatched(SubscriptionCreated::class);
 });
 
 test('webhook ignores unknown stripe customer', function () {
+    Event::fake([SubscriptionCreated::class]);
+
     $payload = [
         'type' => 'customer.subscription.created',
         'data' => [
@@ -61,10 +65,8 @@ test('webhook ignores unknown stripe customer', function () {
         ],
     ];
 
-    $event = new WebhookReceived($payload);
-
     $listener = new StripeEventListener;
-    $listener->handle($event);
+    $listener->handle(new WebhookReceived($payload));
 
-    expect($this->user->fresh()->setup)->toBe(Setup::Subscription);
+    Event::assertNotDispatched(SubscriptionCreated::class);
 });

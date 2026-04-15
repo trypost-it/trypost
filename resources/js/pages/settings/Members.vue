@@ -13,7 +13,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
-import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { members as membersRoute } from '@/routes/app';
 import { destroy as destroyInvite, store as storeInvite } from '@/routes/app/invites';
 import { remove as removeMember } from '@/routes/app/members';
@@ -103,7 +102,7 @@ const getRoleIcon = (role: string) => {
 
         <h1 class="sr-only">{{ $t('settings.members.title') }}</h1>
 
-        <SettingsLayout>
+        <div class="mx-auto max-w-4xl px-4 py-6 space-y-12">
             <div class="flex flex-col space-y-6">
                 <HeadingSmall
                     :title="$t('settings.members.heading')"
@@ -258,6 +257,6 @@ const getRoleIcon = (role: string) => {
                     </CardContent>
                 </Card>
             </div>
-        </SettingsLayout>
+        </div>
     </AppLayout>
 </template>

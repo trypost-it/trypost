@@ -32,7 +32,6 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
-import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { destroy as destroyInvite } from '@/routes/app/invites';
 import { remove as removeMemberRoute, updateRole } from '@/routes/app/members';
 import { settings, uploadLogo, deleteLogo } from '@/routes/app/workspace';
@@ -88,7 +87,7 @@ const changeRole = (member: Member, role: string) => {
 
         <h1 class="sr-only">{{ $t('settings.workspace.title') }}</h1>
 
-        <SettingsLayout>
+        <div class="mx-auto max-w-4xl px-4 py-6 space-y-12">
             <div class="flex flex-col space-y-6">
                 <HeadingSmall
                     :title="$t('settings.workspace.logo_heading')"
@@ -262,6 +261,6 @@ const changeRole = (member: Member, role: string) => {
                 :description="trans('settings.members.cancel_invite_modal.description')"
                 :action="trans('settings.members.cancel_invite_modal.action')"
             />
-        </SettingsLayout>
+        </div>
     </AppLayout>
 </template>

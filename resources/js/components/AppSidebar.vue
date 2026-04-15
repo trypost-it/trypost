@@ -6,9 +6,12 @@ import {
     IconChartBar,
     IconChevronRight,
     IconClock,
+    IconChartPie,
+    IconCreditCard,
     IconFileCheck,
     IconFileText,
     IconHash,
+    IconKey,
     IconLifebuoy,
     IconMessageCircle,
     IconPencil,
@@ -45,9 +48,13 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { accounts, analytics, calendar } from '@/routes/app';
+import { edit as accountSettings } from '@/routes/app/account';
+import { index as apiKeys } from '@/routes/app/api-keys';
+import { index as billing } from '@/routes/app/billing';
+import { index as usage } from '@/routes/app/usage';
 import { index as hashtags } from '@/routes/app/hashtags';
 import { index as labels } from '@/routes/app/labels';
-import { edit as editProfile } from '@/routes/app/profile';
+import { settings as workspaceSettings } from '@/routes/app/workspace';
 import { create as createWorkspaceRoute, switchMethod } from '@/routes/app/workspaces';
 import type { NavItem } from '@/types';
 
@@ -60,6 +67,7 @@ interface Workspace {
 const page = usePage();
 const auth = computed(() => page.props.auth);
 const currentWorkspace = computed<Workspace | null>(() => page.props.auth.currentWorkspace as Workspace | null);
+const isSelfHosted = computed(() => page.props.selfHosted as boolean);
 const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Workspace[]);
 
 const { state: sidebarState } = useSidebar();
@@ -101,41 +109,56 @@ const postsNavItems = computed<NavItem[]>(() => [
     },
 ]);
 
-const canManageWorkspace = computed(() => {
+const isOwner = computed(() => {
     const role = auth.value.currentWorkspace?.role;
-    return role === WorkspaceRole.Owner || role === WorkspaceRole.Admin;
+    return role === WorkspaceRole.Owner;
 });
 
-const configNavItems = computed(() => {
-    const items: NavItem[] = [
-        {
-            title: trans('sidebar.config.connections'),
-            href: accounts.url(),
-            icon: IconAffiliate,
-        },
-        {
-            title: trans('sidebar.config.hashtags'),
-            href: hashtags.url(),
-            icon: IconHash,
-        },
-        {
-            title: trans('sidebar.config.labels'),
-            href: labels.url(),
-            icon: IconTag,
-        },
-    ];
+const workspaceNavItems = computed<NavItem[]>(() => [
+    {
+        title: trans('sidebar.workspace.connections'),
+        href: accounts.url(),
+        icon: IconAffiliate,
+    },
+    {
+        title: trans('sidebar.workspace.hashtags'),
+        href: hashtags.url(),
+        icon: IconHash,
+    },
+    {
+        title: trans('sidebar.workspace.labels'),
+        href: labels.url(),
+        icon: IconTag,
+    },
+    {
+        title: trans('sidebar.workspace.api_keys'),
+        href: apiKeys.url(),
+        icon: IconKey,
+    },
+    {
+        title: trans('sidebar.workspace.settings'),
+        href: workspaceSettings.url(),
+        icon: IconSettings,
+    },
+]);
 
-    if (canManageWorkspace.value) {
-        items.push({
-            title: trans('sidebar.config.settings'),
-            href: editProfile.url(),
-            icon: IconSettings,
-            activePattern: '/settings',
-        });
-    }
-
-    return items;
-});
+const accountNavItems = computed<NavItem[]>(() => [
+    {
+        title: trans('sidebar.account.settings'),
+        href: accountSettings.url(),
+        icon: IconSettings,
+    },
+    {
+        title: trans('sidebar.account.usage'),
+        href: usage.url(),
+        icon: IconChartPie,
+    },
+    {
+        title: trans('sidebar.account.billing'),
+        href: billing.url(),
+        icon: IconCreditCard,
+    },
+]);
 
 const switchWorkspace = (workspaceId: string) => {
     router.post(switchMethod.url(workspaceId), {}, {
@@ -204,7 +227,8 @@ const switchWorkspace = (workspaceId: string) => {
 
             <NavMain v-if="currentWorkspace" :items="mainNavItems" />
             <NavMain v-if="currentWorkspace" :items="postsNavItems" :label="$t('sidebar.groups.posts')" />
-            <NavMain v-if="currentWorkspace" :items="configNavItems" :label="$t('sidebar.groups.configuration')" />
+            <NavMain v-if="currentWorkspace" :items="workspaceNavItems" :label="$t('sidebar.groups.workspace')" />
+            <NavMain v-if="currentWorkspace && isOwner && !isSelfHosted" :items="accountNavItems" :label="$t('sidebar.groups.account')" />
         </SidebarContent>
 
         <SidebarFooter>

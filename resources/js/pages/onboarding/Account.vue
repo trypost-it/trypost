@@ -4,7 +4,7 @@ import { IconCheck } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
-import { storeConnect } from '@/actions/App/Http/Controllers/App/OnboardingController';
+import { storeAccount } from '@/actions/App/Http/Controllers/App/OnboardingController';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { role } from '@/routes/app/onboarding';
@@ -79,7 +79,7 @@ onUnmounted(() => window.removeEventListener('message', handleOAuthMessage));
 
 const submit = () => {
     isSubmitting.value = true;
-    router.post(storeConnect.url());
+    router.post(storeAccount.url());
 };
 </script>
 

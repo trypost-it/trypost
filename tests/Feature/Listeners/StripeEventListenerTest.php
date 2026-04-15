@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
 use App\Events\SubscriptionCreated;
 use App\Listeners\StripeEventListener;
 use App\Models\Account;
@@ -34,54 +33,6 @@ test('subscription created dispatches event', function () {
     ]));
 
     Event::assertDispatched(SubscriptionCreated::class, fn ($e) => $e->account->id === $this->account->id);
-});
-
-test('subscription created marks setup as completed when on subscription step', function () {
-    Event::fake([SubscriptionCreated::class]);
-    $this->user->update(['setup' => Setup::Subscription]);
-
-    $this->listener->handle(new WebhookReceived([
-        'type' => 'customer.subscription.created',
-        'data' => ['object' => ['customer' => 'cus_test123', 'id' => 'sub_123']],
-    ]));
-
-    expect($this->user->fresh()->setup)->toBe(Setup::Completed);
-});
-
-test('subscription created does not change setup if already completed', function () {
-    Event::fake([SubscriptionCreated::class]);
-    $this->user->update(['setup' => Setup::Completed]);
-
-    $this->listener->handle(new WebhookReceived([
-        'type' => 'customer.subscription.created',
-        'data' => ['object' => ['customer' => 'cus_test123', 'id' => 'sub_123']],
-    ]));
-
-    expect($this->user->fresh()->setup)->toBe(Setup::Completed);
-});
-
-test('subscription created does not skip onboarding steps', function () {
-    Event::fake([SubscriptionCreated::class]);
-    $this->user->update(['setup' => Setup::Role]);
-
-    $this->listener->handle(new WebhookReceived([
-        'type' => 'customer.subscription.created',
-        'data' => ['object' => ['customer' => 'cus_test123', 'id' => 'sub_123']],
-    ]));
-
-    expect($this->user->fresh()->setup)->toBe(Setup::Role);
-});
-
-test('subscription created does not skip connections step', function () {
-    Event::fake([SubscriptionCreated::class]);
-    $this->user->update(['setup' => Setup::Connections]);
-
-    $this->listener->handle(new WebhookReceived([
-        'type' => 'customer.subscription.created',
-        'data' => ['object' => ['customer' => 'cus_test123', 'id' => 'sub_123']],
-    ]));
-
-    expect($this->user->fresh()->setup)->toBe(Setup::Connections);
 });
 
 // ========================================

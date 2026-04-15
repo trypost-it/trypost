@@ -30,15 +30,22 @@ class BillingController extends Controller
 
     public function checkout(Request $request, Plan $plan): SymfonyResponse
     {
-        $account = $request->user()->account;
+        $user = $request->user();
+        $account = $user->account;
 
-        abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
+        abort_unless($user->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
 
-        $priceId = $request->input('interval', 'monthly') === 'yearly'
-            ? $plan->stripe_yearly_price_id
-            : $plan->stripe_monthly_price_id;
+        $request->validate([
+            'price_id' => ['required', 'string'],
+        ]);
 
-        abort_if(! $priceId, 422, 'Plan price not configured');
+        $priceId = $request->input('price_id');
+
+        abort_unless(
+            $priceId === $plan->stripe_monthly_price_id || $priceId === $plan->stripe_yearly_price_id,
+            422,
+            'Invalid price for this plan',
+        );
 
         $account->createOrGetStripeCustomer([
             'email' => $account->stripeEmail(),
@@ -50,8 +57,8 @@ class BillingController extends Controller
             ->trialDays(config('cashier.trial_days'));
 
         $checkoutSession = $subscription->checkout([
-            'success_url' => route('app.billing.processing').'?status=success',
-            'cancel_url' => route('app.billing.processing').'?status=cancelled',
+            'success_url' => route('app.billing.processing'),
+            'cancel_url' => route('app.subscribe'),
         ]);
 
         $account->update(['plan_id' => $plan->id]);
@@ -59,22 +66,12 @@ class BillingController extends Controller
         return Inertia::location($checkoutSession->url);
     }
 
-    public function processing(Request $request): Response|RedirectResponse
+    public function processing(Request $request): Response
     {
         $account = $request->user()->account;
-        $status = $request->query('status', 'processing');
-
-        if ($account && $account->subscribed(Account::SUBSCRIPTION_NAME)) {
-            return redirect()->route('app.calendar');
-        }
-
-        if (! in_array($status, ['processing', 'success', 'cancelled'])) {
-            $status = 'processing';
-        }
 
         return Inertia::render('billing/Processing', [
-            'accountId' => $account?->id,
-            'status' => $status,
+            'subscriptionActive' => $account && $account->subscribed(Account::SUBSCRIPTION_NAME),
         ]);
     }
 
@@ -119,11 +116,17 @@ class BillingController extends Controller
         abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
         abort_unless($account->subscribed(Account::SUBSCRIPTION_NAME), 422, 'No active subscription');
 
-        $priceId = $request->input('interval', 'monthly') === 'yearly'
-            ? $plan->stripe_yearly_price_id
-            : $plan->stripe_monthly_price_id;
+        $request->validate([
+            'price_id' => ['required', 'string'],
+        ]);
 
-        abort_if(! $priceId, 422, 'Plan price not configured');
+        $priceId = $request->input('price_id');
+
+        abort_unless(
+            $priceId === $plan->stripe_monthly_price_id || $priceId === $plan->stripe_yearly_price_id,
+            422,
+            'Invalid price for this plan',
+        );
 
         $account->subscription(Account::SUBSCRIPTION_NAME)->swap($priceId);
         $account->update(['plan_id' => $plan->id]);

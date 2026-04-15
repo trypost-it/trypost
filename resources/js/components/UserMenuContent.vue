@@ -82,7 +82,7 @@ const handleLogout = () => {
         <DropdownMenuItem :as-child="true">
             <Link class="block w-full cursor-pointer" :href="edit()" prefetch>
                 <IconUser class="size-4" />
-                {{ $t('sidebar.account') }}
+                {{ $t('sidebar.profile') }}
             </Link>
         </DropdownMenuItem>
     </DropdownMenuGroup>

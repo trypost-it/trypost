@@ -96,28 +96,10 @@ test('billing processing shows processing page', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('billing/Processing', false)
-        ->has('accountId')
-        ->has('status')
+        ->has('subscriptionActive')
     );
 });
 
-test('billing processing accepts status parameter', function () {
-    $response = $this->actingAs($this->user)->get(route('app.billing.processing', ['status' => 'success']));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->where('status', 'success')
-    );
-});
-
-test('billing processing validates status parameter', function () {
-    $response = $this->actingAs($this->user)->get(route('app.billing.processing', ['status' => 'invalid']));
-
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->where('status', 'processing')
-    );
-});
 
 // Checkout tests
 test('checkout requires authentication', function () {

@@ -1,131 +1,179 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { IconCheck } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
 import { checkout } from '@/routes/app/billing';
-import { index as workspacesIndex } from '@/routes/app/workspaces';
 
-interface Props {
-    trialDays: number;
+interface Plan {
+    id: string;
+    slug: string;
+    name: string;
+    stripe_monthly_price_id: string | null;
+    stripe_yearly_price_id: string | null;
+    monthly_price: number;
+    yearly_price: number;
+    social_account_limit: number;
+    member_limit: number;
+    workspace_limit: number;
+    ai_images_limit: number;
+    ai_videos_limit: number;
+    data_retention_days: number;
 }
 
-const props = defineProps<Props>();
+const props = defineProps<{
+    plans: Plan[];
+    trialDays: number;
+}>();
 
-const processing = ref(false);
-const displayDays = computed(() => props.trialDays - 1);
+const isYearly = ref(false);
+const processing = ref<string | null>(null);
 
-const subscribe = () => {
-    processing.value = true;
-    router.post(checkout.url());
+const formatPrice = (cents: number): string => {
+    return '$' + (cents / 100).toFixed(0);
 };
 
-const platforms = [
-    { name: 'LinkedIn', icon: '/images/accounts/linkedin.png' },
-    { name: 'X', icon: '/images/accounts/x.png' },
-    { name: 'Instagram', icon: '/images/accounts/instagram.png' },
-    { name: 'Facebook', icon: '/images/accounts/facebook.png' },
-    { name: 'TikTok', icon: '/images/accounts/tiktok.png' },
-    { name: 'YouTube', icon: '/images/accounts/youtube.png' },
-    { name: 'Threads', icon: '/images/accounts/threads.png' },
-    { name: 'Pinterest', icon: '/images/accounts/pinterest.png' },
-    { name: 'Bluesky', icon: '/images/accounts/bluesky.png' },
-    { name: 'Mastodon', icon: '/images/accounts/mastodon.png' },
+const getPrice = (plan: Plan): string => {
+    return formatPrice(isYearly.value ? plan.yearly_price / 12 : plan.monthly_price);
+};
+
+const getTotalPrice = (plan: Plan): string => {
+    return formatPrice(isYearly.value ? plan.yearly_price : plan.monthly_price);
+};
+
+const getSavings = (plan: Plan): number => {
+    const monthlyTotal = plan.monthly_price * 12;
+    const yearlyTotal = plan.yearly_price;
+    return Math.round(((monthlyTotal - yearlyTotal) / monthlyTotal) * 100);
+};
+
+const formatRetention = (days: number): string => {
+    if (days >= 730) return '2 years';
+    return `${days} days`;
+};
+
+const selectPlan = (plan: Plan) => {
+    processing.value = plan.id;
+    const priceId = isYearly.value ? plan.stripe_yearly_price_id : plan.stripe_monthly_price_id;
+    router.post(checkout.url(plan.id), {
+        price_id: priceId,
+    });
+};
+
+const features = (plan: Plan): string[] => [
+    trans('billing.subscribe.features.social_accounts', { count: String(plan.social_account_limit) }),
+    trans('billing.subscribe.features.workspaces', { count: String(plan.workspace_limit) }),
+    trans('billing.subscribe.features.members', { count: String(plan.member_limit) }),
+    trans('billing.subscribe.features.ai_images', { count: String(plan.ai_images_limit) }),
+    trans('billing.subscribe.features.ai_videos', { count: String(plan.ai_videos_limit) }),
+    trans('billing.subscribe.features.data_retention', { days: formatRetention(plan.data_retention_days) }),
 ];
 
-const featureKeys = [
-    'calendar',
-    'scheduling',
-    'media',
-    'video',
-    'team',
-    'hashtags',
-];
+const isPopular = (plan: Plan): boolean => {
+    return plan.slug === 'pro';
+};
 </script>
 
 <template>
     <Head :title="$t('billing.subscribe.page_title')" />
 
-    <div class="flex min-h-screen items-center justify-center bg-background px-4">
-        <div class="w-full max-w-md">
-            <!-- Logo -->
-            <div class="mb-8 text-center">
+    <div class="min-h-screen bg-background">
+        <!-- Top bar -->
+        <div class="border-b">
+            <div class="mx-auto flex max-w-7xl items-center px-6 py-4">
                 <img
                     src="/images/trypost/logo-light.png"
                     alt="TryPost"
-                    class="mx-auto h-8 w-auto dark:hidden"
+                    class="h-7 w-auto dark:hidden"
                 />
                 <img
                     src="/images/trypost/logo-dark.png"
                     alt="TryPost"
-                    class="mx-auto hidden h-8 w-auto dark:block"
+                    class="hidden h-7 w-auto dark:block"
                 />
             </div>
+        </div>
 
-            <!-- Card -->
-            <div class="rounded-xl border bg-card p-8">
-                <div class="mb-6 text-center">
-                    <h1 class="text-2xl font-semibold tracking-tight">
-                        {{ $t('billing.subscribe.title') }}
-                    </h1>
-                    <p class="mt-2 text-sm text-muted-foreground">
-                        {{ trans('billing.subscribe.description', { days: String(displayDays) }) }}
-                    </p>
-                </div>
-
-                <!-- Platforms -->
-                <div class="mb-6 flex flex-wrap justify-center gap-2">
-                    <img
-                        v-for="platform in platforms"
-                        :key="platform.name"
-                        :src="platform.icon"
-                        :alt="platform.name"
-                        :title="platform.name"
-                        class="size-10 rounded-full border bg-background p-0.5"
-                    />
-                </div>
-
-                <Separator class="mb-6" />
-
-                <!-- Features -->
-                <ul class="mb-6 space-y-3">
-                    <li
-                        v-for="key in featureKeys"
-                        :key="key"
-                        class="flex items-center gap-3 text-sm"
-                    >
-                        <div class="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                            <IconCheck class="size-3 text-primary" />
-                        </div>
-                        {{ $t(`billing.subscribe.features.${key}`) }}
-                    </li>
-                </ul>
-
-                <!-- CTA -->
-                <Button
-                    class="w-full"
-                    size="lg"
-                    :disabled="processing"
-                    @click="subscribe"
-                >
-                    {{ trans('billing.subscribe.start_trial', { days: String(displayDays) }) }}
-                </Button>
-            </div>
-
-            <div class="mt-4 space-y-1 text-center">
-                <p class="text-xs text-muted-foreground">
-                    {{ $t('billing.subscribe.cancel_anytime') }}
+        <!-- Content -->
+        <div class="mx-auto max-w-7xl px-6 py-16">
+            <!-- Header -->
+            <div class="mb-12 text-center">
+                <h1 class="text-4xl font-bold tracking-tight">
+                    {{ $t('billing.subscribe.title') }}
+                </h1>
+                <p class="mt-3 text-lg text-muted-foreground">
+                    {{ trans('billing.subscribe.description', { days: String(trialDays) }) }}
                 </p>
-                <Link
-                    :href="workspacesIndex.url()"
-                    class="inline-block text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                >
-                    {{ $t('billing.subscribe.switch_workspace') }}
-                </Link>
             </div>
+
+            <!-- Billing toggle -->
+            <div class="mb-10 flex items-center justify-center gap-3">
+                <span class="text-sm" :class="!isYearly ? 'font-medium' : 'text-muted-foreground'">
+                    {{ $t('billing.subscribe.monthly') }}
+                </span>
+                <Switch v-model="isYearly" />
+                <span class="flex items-center gap-2 text-sm" :class="isYearly ? 'font-medium' : 'text-muted-foreground'">
+                    {{ $t('billing.subscribe.yearly') }}
+                    <Badge variant="secondary" class="whitespace-nowrap">
+                        {{ $t('billing.subscribe.save_months') }}
+                    </Badge>
+                </span>
+            </div>
+
+            <!-- Plan cards -->
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div
+                    v-for="plan in plans"
+                    :key="plan.id"
+                    class="relative flex flex-col rounded-xl border bg-card p-6 transition-shadow hover:shadow-lg"
+                    :class="isPopular(plan) ? 'border-primary ring-1 ring-primary' : ''"
+                >
+                    <Badge v-if="isPopular(plan)" class="absolute -top-3 left-1/2 -translate-x-1/2">
+                        {{ $t('billing.subscribe.popular') }}
+                    </Badge>
+
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold">{{ plan.name }}</h3>
+                        <div class="mt-3 flex items-baseline gap-1">
+                            <span class="text-4xl font-bold tracking-tight">{{ getPrice(plan) }}</span>
+                            <span class="text-muted-foreground">/{{ $t('billing.subscribe.per_month') }}</span>
+                        </div>
+                        <p class="mt-1 text-sm text-muted-foreground">
+                            {{ isYearly ? $t('billing.subscribe.billed_yearly') : $t('billing.subscribe.billed_monthly') }}
+                        </p>
+                    </div>
+
+                    <ul class="mb-8 flex-1 space-y-3">
+                        <li
+                            v-for="feature in features(plan)"
+                            :key="feature"
+                            class="flex items-start gap-2.5 text-sm"
+                        >
+                            <IconCheck class="mt-0.5 size-4 shrink-0 text-primary" />
+                            <span>{{ feature }}</span>
+                        </li>
+                    </ul>
+
+                    <Button
+                        class="w-full"
+                        :variant="isPopular(plan) ? 'default' : 'outline'"
+                        size="lg"
+                        :disabled="processing !== null"
+                        @click="selectPlan(plan)"
+                    >
+                        {{ trans('billing.subscribe.start_trial', { days: String(trialDays) }) }}
+                    </Button>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <p class="mt-10 text-center text-sm text-muted-foreground">
+                {{ $t('billing.subscribe.cancel_anytime') }}
+            </p>
         </div>
     </div>
 </template>

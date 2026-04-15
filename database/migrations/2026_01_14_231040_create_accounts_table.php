@@ -14,6 +14,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('owner_id')->nullable();
             $table->string('name');
+            $table->string('billing_email')->nullable();
             $table->foreignUuid('plan_id')->nullable()->constrained()->nullOnDelete();
             $table->string('stripe_id')->nullable()->index();
             $table->string('pm_type')->nullable();

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware\App;
 
+use App\Enums\User\Setup;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -20,6 +21,11 @@ class EnsureSubscribed
 
         if (! $user) {
             return redirect()->route('login');
+        }
+
+        // Let onboarding middleware handle users still in setup
+        if ($user->setup !== Setup::Completed) {
+            return $next($request);
         }
 
         $account = $user->account;

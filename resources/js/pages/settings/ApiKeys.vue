@@ -28,7 +28,6 @@ import {
 } from '@/components/ui/table';
 import date from '@/date';
 import AppLayout from '@/layouts/AppLayout.vue';
-import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { copyToClipboard } from '@/lib/utils';
 import { index as apiKeysIndex } from '@/routes/app/api-keys';
 import { type BreadcrumbItem } from '@/types';
@@ -67,7 +66,7 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
 
         <h1 class="sr-only">{{ $t('settings.api_keys.heading') }}</h1>
 
-        <SettingsLayout>
+        <div class="mx-auto max-w-4xl px-4 py-6 space-y-12">
             <div class="flex flex-col space-y-6">
                 <div class="flex items-center justify-between">
                     <HeadingSmall
@@ -167,7 +166,7 @@ const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(n
                     :description="$t('settings.api_keys.empty.description')"
                 />
             </div>
-        </SettingsLayout>
+        </div>
     </AppLayout>
 
     <CreateApiKeyDialog v-model:open="createDialogOpen" />

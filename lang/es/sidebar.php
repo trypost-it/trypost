@@ -6,7 +6,6 @@ return [
     'create_workspace' => 'Crear workspace',
     'create_post' => 'Crear post',
     'profile' => 'Perfil',
-    'account' => 'Cuenta',
     'log_out' => 'Cerrar sesión',
 
     'workspace' => 'Workspace: :name',
@@ -22,7 +21,8 @@ return [
 
     'groups' => [
         'posts' => 'Posts',
-        'configuration' => 'Configuración',
+        'workspace' => 'Workspace',
+        'account' => 'Cuenta',
         'support' => 'Soporte',
     ],
 
@@ -36,12 +36,18 @@ return [
         'drafts' => 'Borradores',
     ],
 
-    'config' => [
+    'workspace' => [
         'connections' => 'Conexiones',
-        'brands' => 'Marcas',
         'hashtags' => 'Hashtags',
         'labels' => 'Etiquetas',
+        'api_keys' => 'API Keys',
         'settings' => 'Configuración',
+    ],
+
+    'account' => [
+        'settings' => 'Configuración',
+        'usage' => 'Uso',
+        'billing' => 'Facturación',
     ],
 
     'notifications' => 'Notificaciones',

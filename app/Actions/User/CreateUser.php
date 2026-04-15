@@ -23,6 +23,7 @@ class CreateUser
 
             $account = Account::create([
                 'name' => data_get($data, 'name')."'s Account",
+                'billing_email' => data_get($data, 'email'),
             ]);
 
             $user = User::create([

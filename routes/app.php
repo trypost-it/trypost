@@ -9,9 +9,11 @@ use App\Http\Controllers\App\MediaController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\OnboardingController;
 use App\Http\Controllers\App\PostController;
+use App\Http\Controllers\App\Settings\AccountController;
 use App\Http\Controllers\App\Settings\NotificationPreferenceController;
 use App\Http\Controllers\App\Settings\PasswordController;
 use App\Http\Controllers\App\Settings\ProfileController;
+use App\Http\Controllers\App\Settings\UsageController;
 use App\Http\Controllers\App\WorkspaceController;
 use App\Http\Controllers\App\WorkspaceHashtagController;
 use App\Http\Controllers\App\WorkspaceInviteController;
@@ -48,9 +50,8 @@ Route::middleware(['auth', 'verified'])->prefix('onboarding')->group(function ()
     Route::get('/', fn () => redirect()->route('app.onboarding.role'));
     Route::get('role', [OnboardingController::class, 'role'])->name('app.onboarding.role');
     Route::post('role', [OnboardingController::class, 'storeRole'])->name('app.onboarding.role.store');
-    Route::get('connect', [OnboardingController::class, 'connect'])->name('app.onboarding.connect');
-    Route::post('connect', [OnboardingController::class, 'storeConnect'])->name('app.onboarding.connect.store');
-    Route::get('complete', [OnboardingController::class, 'complete'])->name('app.onboarding.complete');
+    Route::get('account', [OnboardingController::class, 'account'])->name('app.onboarding.account');
+    Route::post('account', [OnboardingController::class, 'storeAccount'])->name('app.onboarding.account.store');
 });
 
 // Social Connect routes
@@ -167,6 +168,11 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::get('api-keys', [ApiKeyController::class, 'index'])->name('app.api-keys.index');
     Route::post('api-keys', [ApiKeyController::class, 'store'])->name('app.api-keys.store');
     Route::delete('api-keys/{apiToken}', [ApiKeyController::class, 'destroy'])->name('app.api-keys.destroy');
+
+    // Account Settings
+    Route::get('settings/account', [AccountController::class, 'edit'])->name('app.account.edit');
+    Route::put('settings/account', [AccountController::class, 'update'])->name('app.account.update');
+    Route::get('settings/usage', [UsageController::class, 'index'])->name('app.usage.index');
 
     // Billing
     Route::get('settings/billing', [BillingController::class, 'index'])->name('app.billing.index');

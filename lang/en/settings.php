@@ -146,7 +146,19 @@ return [
         ],
     ],
 
+    'account' => [
+        'title' => 'Account Settings',
+        'description' => 'Manage your account name and billing email',
+        'name' => 'Account Name',
+        'name_placeholder' => 'My Company',
+        'billing_email' => 'Billing Email',
+        'billing_email_placeholder' => 'billing@company.com',
+        'billing_email_hint' => 'This email will be used for invoices and billing communications from Stripe.',
+        'submit' => 'Save',
+    ],
+
     'flash' => [
+        'account_updated' => 'Account updated successfully!',
         'profile_updated' => 'Profile updated successfully!',
         'language_updated' => 'Language updated successfully!',
         'password_updated' => 'Password updated successfully!',

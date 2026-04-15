@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
-use App\Enums\User\Setup;
 use App\Events\SubscriptionCreated;
 use App\Models\Account;
 use Illuminate\Support\Facades\Log;
@@ -42,15 +41,9 @@ class StripeEventListener
         }
     }
 
-    protected function handleSubscriptionCreated(Account $workspace, array $payload): void
+    protected function handleSubscriptionCreated(Account $account, array $payload): void
     {
-        $owner = $workspace->owner;
-
-        if ($owner && $owner->setup === Setup::Subscription) {
-            $owner->update(['setup' => Setup::Completed]);
-        }
-
-        SubscriptionCreated::dispatch($workspace);
+        SubscriptionCreated::dispatch($account);
     }
 
     protected function handleSubscriptionUpdated(Account $workspace, array $payload): void

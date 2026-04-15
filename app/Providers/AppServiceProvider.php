@@ -12,6 +12,7 @@ use App\Models\Notification;
 use App\Models\NotificationPreference;
 use App\Models\Plan;
 use App\Models\Post;
+use App\Models\PostComment;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\Subscription;
@@ -95,6 +96,7 @@ class AppServiceProvider extends ServiceProvider
             'plan' => Plan::class,
             'notificationPreference' => NotificationPreference::class,
             'post' => Post::class,
+            'postComment' => PostComment::class,
             'postPlatform' => PostPlatform::class,
             'socialAccount' => SocialAccount::class,
             'subscription' => Subscription::class,

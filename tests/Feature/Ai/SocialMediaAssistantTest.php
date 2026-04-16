@@ -97,7 +97,7 @@ test('messages enriches assistant content with attachment summary', function () 
     $messages = collect($agent->messages())->all();
 
     expect($messages[0]->content)->toContain('Here is your image');
-    expect($messages[0]->content)->toContain('[This assistant message attached: 2 image]');
+    expect($messages[0]->content)->toContain('[This assistant message attached: 2 images]');
 });
 
 test('instructions include rules only for active post platforms', function () {

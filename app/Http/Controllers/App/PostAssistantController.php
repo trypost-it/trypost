@@ -18,7 +18,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Laravel\Pennant\Feature;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 class PostAssistantController extends Controller
 {
@@ -86,15 +88,19 @@ class PostAssistantController extends Controller
         }
 
         try {
-            $imagesInThread = $post->aiMessages()
-                ->where('role', 'assistant')
-                ->get()
-                ->sum(fn ($m) => collect($m->attachments ?? [])->where('type', 'image')->count());
+            $post->loadMissing('postPlatforms');
 
-            $videosInThread = $post->aiMessages()
+            $assistantMessages = $post->aiMessages()
                 ->where('role', 'assistant')
-                ->get()
-                ->sum(fn ($m) => collect($m->attachments ?? [])->where('type', 'video')->count());
+                ->get();
+
+            $imagesInThread = $assistantMessages->sum(
+                fn ($m) => collect($m->attachments ?? [])->where('type', 'image')->count()
+            );
+
+            $videosInThread = $assistantMessages->sum(
+                fn ($m) => collect($m->attachments ?? [])->where('type', 'video')->count()
+            );
 
             $imageLimit = (int) Feature::for($workspace->account)->value(AiImagesLimit::class);
             $imageUsed = AiUsageLog::monthlyCount($workspace->account_id, UsageType::Image);
@@ -147,10 +153,10 @@ class PostAssistantController extends Controller
                 'user_message' => $userMessage,
                 'assistant_message' => $assistantMessage,
             ], Response::HTTP_CREATED);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::error('PostAssistantController error', ['error' => $e->getMessage()]);
 
-            $errorMessage = $e instanceof \RuntimeException ? $e->getMessage() : __('assistant.error');
+            $errorMessage = $e instanceof RuntimeException ? $e->getMessage() : __('assistant.error');
 
             $assistantMessage = $post->aiMessages()->create([
                 'role' => 'assistant',

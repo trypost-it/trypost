@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Ai\Tools;
 
 use App\Enums\Ai\UsageType;
+use App\Features\AiVideosLimit;
 use App\Models\AiUsageLog;
 use App\Models\Post;
 use App\Models\Workspace;
@@ -14,6 +15,7 @@ use Illuminate\Support\Str;
 use Laravel\Ai\Audio;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
+use Laravel\Pennant\Feature;
 use Stringable;
 
 class GenerateAudio implements Tool
@@ -42,7 +44,16 @@ TXT;
 
     public function handle(Request $request): Stringable|string
     {
-        $text = (string) $request['text'];
+        // Audio generation counts against the monthly video quota by design.
+        $limit = (int) Feature::for($this->workspace->account)->value(AiVideosLimit::class);
+        $used = AiUsageLog::monthlyCount($this->workspace->account_id, UsageType::Video)
+            + AiUsageLog::monthlyCount($this->workspace->account_id, UsageType::Audio);
+
+        if ($used >= $limit) {
+            return "Audio and video share a monthly quota that is exhausted ({$used} of {$limit} used). Ask the user to upgrade their plan or wait until next month.";
+        }
+
+        $text = (string) data_get($request, 'text', '');
         $voice = config('services.elevenlabs.default_voice', 'EXAVITQu4vr4xnSDxMaL');
 
         $response = Audio::of($text)->voice($voice)->generate();

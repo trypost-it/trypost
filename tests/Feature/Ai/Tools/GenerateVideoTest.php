@@ -6,6 +6,7 @@ use App\Ai\Tools\AttachmentCollector;
 use App\Ai\Tools\GenerateVideo;
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
+use App\Models\AiUsageLog;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Workspace;
@@ -50,6 +51,32 @@ test('tool delegates to VideoGenerationService and pushes attachment to collecto
     expect((string) $summary)->toContain('video');
     expect(app(AttachmentCollector::class)->all())->toHaveCount(1);
     expect(app(AttachmentCollector::class)->all()[0])->toBe($expected);
+});
+
+test('tool refuses to generate when monthly video quota is exhausted', function () {
+    // Fill up the video quota. Default (no plan attached) is 10 videos.
+    AiUsageLog::factory()->video()->count(10)->create([
+        'account_id' => $this->workspace->account_id,
+        'workspace_id' => $this->workspace->id,
+    ]);
+
+    // VideoGenerationService should not be called when quota is hit.
+    $mock = $this->mock(VideoGenerationService::class);
+    $mock->shouldNotReceive('generate');
+
+    $tool = new GenerateVideo(
+        workspace: $this->workspace,
+        post: $this->post,
+        userId: $this->user->id,
+    );
+
+    $summary = $tool->handle(new ToolRequest([
+        'prompt' => 'A cat',
+        'orientation' => 'vertical',
+    ]));
+
+    expect((string) $summary)->toContain('quota exhausted');
+    expect(app(AttachmentCollector::class)->all())->toBeEmpty();
 });
 
 test('tool exposes schema with prompt and orientation parameters', function () {

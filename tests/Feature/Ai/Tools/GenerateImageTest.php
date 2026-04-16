@@ -7,14 +7,17 @@ use App\Ai\Tools\GenerateImage;
 use App\Enums\Ai\UsageType;
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
+use App\Models\AiUsageLog;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\JsonSchema\JsonSchemaTypeFactory;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Ai\Image;
 use Laravel\Ai\Tools\Request as ToolRequest;
 
 beforeEach(function () {
+    Storage::fake('public');
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
@@ -73,6 +76,31 @@ test('tool defaults to vertical when orientation is unknown', function () {
     ]));
 
     expect(app(AttachmentCollector::class)->all()[0]['type'])->toBe('image');
+});
+
+test('tool refuses to generate when monthly image quota is exhausted', function () {
+    Image::fake();
+
+    // Fill up the image quota. Default (no plan attached) is 50 images.
+    AiUsageLog::factory()->image()->count(50)->create([
+        'account_id' => $this->workspace->account_id,
+        'workspace_id' => $this->workspace->id,
+    ]);
+
+    $tool = new GenerateImage(
+        workspace: $this->workspace,
+        post: $this->post,
+        userId: $this->user->id,
+    );
+
+    $summary = $tool->handle(new ToolRequest([
+        'prompt' => 'A sunset',
+        'orientation' => 'vertical',
+    ]));
+
+    expect((string) $summary)->toContain('quota exhausted');
+    expect(app(AttachmentCollector::class)->all())->toBeEmpty();
+    Image::assertNothingGenerated();
 });
 
 test('tool exposes schema with prompt and orientation parameters', function () {

@@ -6,6 +6,7 @@ namespace App\Ai\Tools;
 
 use App\Enums\Ai\Orientation;
 use App\Enums\Ai\UsageType;
+use App\Features\AiImagesLimit;
 use App\Models\AiUsageLog;
 use App\Models\Post;
 use App\Models\Workspace;
@@ -15,6 +16,7 @@ use Illuminate\Support\Str;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Image;
 use Laravel\Ai\Tools\Request;
+use Laravel\Pennant\Feature;
 use Stringable;
 
 class GenerateImage implements Tool
@@ -46,8 +48,15 @@ TXT;
 
     public function handle(Request $request): Stringable|string
     {
-        $prompt = (string) $request['prompt'];
-        $orientationString = (string) ($request['orientation'] ?? 'vertical');
+        $limit = (int) Feature::for($this->workspace->account)->value(AiImagesLimit::class);
+        $used = AiUsageLog::monthlyCount($this->workspace->account_id, UsageType::Image);
+
+        if ($used >= $limit) {
+            return "Image quota exhausted this month ({$used} of {$limit} used). Ask the user to upgrade their plan or wait until next month.";
+        }
+
+        $prompt = (string) data_get($request, 'prompt', '');
+        $orientationString = (string) data_get($request, 'orientation', 'vertical');
         $orientationEnum = Orientation::tryFrom($orientationString) ?? Orientation::Vertical;
         $aspectRatio = $orientationEnum->aspectRatio();
 

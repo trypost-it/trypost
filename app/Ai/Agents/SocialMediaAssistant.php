@@ -13,6 +13,7 @@ use App\Enums\SocialAccount\Platform;
 use App\Models\AiMessage;
 use App\Models\Post;
 use App\Models\Workspace;
+use Illuminate\Support\Str;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasTools;
@@ -123,7 +124,7 @@ class SocialMediaAssistant implements Agent, Conversational, HasTools
         if ($m->role === 'assistant' && ! empty($m->attachments)) {
             $counts = collect($m->attachments)
                 ->groupBy('type')
-                ->map(fn ($group, $type) => count($group)." {$type}")
+                ->map(fn ($group, $type) => count($group).' '.Str::plural((string) $type, count($group)))
                 ->implode(', ');
 
             $content .= "\n\n[This assistant message attached: {$counts}]";

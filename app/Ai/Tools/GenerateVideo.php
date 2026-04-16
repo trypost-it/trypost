@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Ai\Tools;
 
 use App\Enums\Ai\Orientation;
+use App\Enums\Ai\UsageType;
+use App\Features\AiVideosLimit;
+use App\Models\AiUsageLog;
 use App\Models\Post;
 use App\Models\Workspace;
 use App\Services\Ai\VideoGenerationService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
+use Laravel\Pennant\Feature;
 use Stringable;
 
 class GenerateVideo implements Tool
@@ -42,11 +46,17 @@ TXT;
 
     public function handle(Request $request): Stringable|string
     {
-        $prompt = (string) $request['prompt'];
-        $orientationString = (string) ($request['orientation'] ?? 'vertical');
+        $limit = (int) Feature::for($this->workspace->account)->value(AiVideosLimit::class);
+        $used = AiUsageLog::monthlyCount($this->workspace->account_id, UsageType::Video);
+
+        if ($used >= $limit) {
+            return "Video quota exhausted this month ({$used} of {$limit} used). Ask the user to upgrade their plan or wait until next month.";
+        }
+
+        $prompt = (string) data_get($request, 'prompt', '');
+        $orientationString = (string) data_get($request, 'orientation', 'vertical');
         $orientationEnum = Orientation::tryFrom($orientationString) ?? Orientation::Vertical;
 
-        /** @var VideoGenerationService $service */
         $service = app(VideoGenerationService::class);
 
         $attachment = $service->generate(

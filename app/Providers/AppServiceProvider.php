@@ -109,11 +109,11 @@ class AppServiceProvider extends ServiceProvider
 
     protected function configureAi(): void
     {
-        Ai::extend('gemini', function (array $config) {
+        Ai::extend('gemini', function ($app, array $config) {
             return new ExtendedGeminiProvider(
-                new GeminiGateway($this->app['events']),
+                new GeminiGateway($app['events']),
                 $config,
-                $this->app->make(Dispatcher::class),
+                $app->make(Dispatcher::class),
             );
         });
     }

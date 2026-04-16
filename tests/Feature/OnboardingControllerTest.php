@@ -8,6 +8,7 @@ use App\Enums\User\Setup;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Role]);
@@ -157,6 +158,54 @@ test('store brand validates content_language is supported', function () {
     ]);
 
     $response->assertSessionHasErrors('content_language');
+});
+
+test('autofill brand returns extracted fields from the site', function () {
+    $workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->user->update([
+        'current_workspace_id' => $workspace->id,
+        'setup' => Setup::Brand,
+    ]);
+
+    Http::fake([
+        'acme.com' => Http::response(<<<'HTML'
+            <html lang="pt-BR">
+            <head>
+              <title>Acme | Best in class</title>
+              <meta name="description" content="Tools for creators.">
+              <meta property="og:site_name" content="Acme">
+            </head>
+            </html>
+        HTML, 200),
+    ]);
+
+    $response = $this->actingAs($this->user)->postJson(
+        route('app.onboarding.brand.autofill'),
+        ['url' => 'https://acme.com'],
+    );
+
+    $response->assertOk();
+    $response->assertJson([
+        'name' => 'Acme',
+        'brand_description' => 'Tools for creators.',
+        'content_language' => 'pt-BR',
+    ]);
+});
+
+test('autofill brand returns 422 when site cannot be reached', function () {
+    $workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->user->update([
+        'current_workspace_id' => $workspace->id,
+        'setup' => Setup::Brand,
+    ]);
+
+    $response = $this->actingAs($this->user)->postJson(
+        route('app.onboarding.brand.autofill'),
+        ['url' => 'http://127.0.0.1'],
+    );
+
+    $response->assertUnprocessable();
+    $response->assertJsonStructure(['message']);
 });
 
 test('skip brand advances setup without saving workspace changes', function () {

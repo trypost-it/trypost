@@ -43,6 +43,11 @@ return [
         'description' => 'Estos valores predeterminados se usarán en todos los posts generados por IA en este workspace. Puedes cambiarlos después en Configuración.',
         'submit' => 'Continuar',
         'skip' => 'Omitir por ahora',
+        'autofill' => 'Autocompletar',
+        'autofill_success' => 'Extrajimos lo que pudimos de tu sitio. Revisa y ajusta si es necesario.',
+        'autofill_error' => 'No pudimos leer ese sitio. Complétalo manualmente.',
+        'autofill_missing_url' => 'Ingresa primero la URL de tu sitio.',
+        'logo_captured' => 'Logo capturado desde tu sitio.',
     ],
 
     'connect' => [

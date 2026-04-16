@@ -58,6 +58,9 @@ Route::middleware(['auth', 'verified'])->prefix('onboarding')->group(function ()
     Route::get('brand', [OnboardingController::class, 'brand'])->name('app.onboarding.brand');
     Route::post('brand', [OnboardingController::class, 'storeBrand'])->name('app.onboarding.brand.store');
     Route::post('brand/skip', [OnboardingController::class, 'skipBrand'])->name('app.onboarding.brand.skip');
+    Route::post('brand/autofill', [OnboardingController::class, 'autofillBrand'])
+        ->middleware('throttle:10,1')
+        ->name('app.onboarding.brand.autofill');
     Route::get('account', [OnboardingController::class, 'account'])->name('app.onboarding.account');
     Route::post('account', [OnboardingController::class, 'storeAccount'])->name('app.onboarding.account.store');
 });

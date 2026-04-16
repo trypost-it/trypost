@@ -43,6 +43,11 @@ return [
         'description' => 'These defaults power every AI-generated post in this workspace. You can change them later in Settings.',
         'submit' => 'Continue',
         'skip' => 'Skip for now',
+        'autofill' => 'Autofill',
+        'autofill_success' => 'We pulled what we could from your site. Review and adjust if needed.',
+        'autofill_error' => 'We could not read that site. Please fill in manually.',
+        'autofill_missing_url' => 'Add your website URL first.',
+        'logo_captured' => 'Logo captured from your site.',
     ],
 
     'connect' => [

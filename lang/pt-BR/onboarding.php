@@ -43,6 +43,11 @@ return [
         'description' => 'Esses valores padrão serão usados em todos os posts gerados por AI neste workspace. Você pode alterar depois em Configurações.',
         'submit' => 'Continuar',
         'skip' => 'Pular por enquanto',
+        'autofill' => 'Preencher',
+        'autofill_success' => 'Puxamos o que conseguimos do seu site. Revise e ajuste se precisar.',
+        'autofill_error' => 'Não conseguimos ler esse site. Preencha manualmente.',
+        'autofill_missing_url' => 'Informe a URL do seu site primeiro.',
+        'logo_captured' => 'Logo capturado do seu site.',
     ],
 
     'connect' => [

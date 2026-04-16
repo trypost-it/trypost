@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
+use App\Actions\Ai\AutofillBrand;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\User\Persona;
 use App\Enums\User\Setup;
 use App\Http\Requests\App\Onboarding\StoreBrandRequest;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class OnboardingController extends Controller
 {
@@ -82,6 +86,33 @@ class OnboardingController extends Controller
         $request->user()->update(['setup' => Setup::Connections]);
 
         return redirect()->route('app.onboarding.account');
+    }
+
+    public function autofillBrand(Request $request, AutofillBrand $autofill): JsonResponse
+    {
+        $validated = $request->validate([
+            'url' => ['required', 'string', 'max:255'],
+        ]);
+
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            abort(SymfonyResponse::HTTP_BAD_REQUEST, 'No workspace found.');
+        }
+
+        try {
+            $result = $autofill(data_get($validated, 'url'), $workspace);
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $workspace->refresh();
+
+        return response()->json([
+            ...$result,
+            'logo_url' => $workspace->logo_url,
+            'has_logo' => $workspace->has_logo,
+        ]);
     }
 
     public function account(Request $request): Response|RedirectResponse

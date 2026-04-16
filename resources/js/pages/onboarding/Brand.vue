@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { IconLoader2, IconSparkles } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
+import { toast } from 'vue-sonner';
 
-import { skipBrand, storeBrand } from '@/actions/App/Http/Controllers/App/OnboardingController';
+import { autofillBrand, skipBrand, storeBrand } from '@/actions/App/Http/Controllers/App/OnboardingController';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +44,10 @@ const form = useForm({
 });
 
 const skipForm = useForm({});
+const isAutofilling = ref(false);
+const logoPreview = ref<string | null>(null);
+
+const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 
 const submit = () => {
     form.post(storeBrand.url());
@@ -51,7 +57,55 @@ const skip = () => {
     skipForm.post(skipBrand.url());
 };
 
-const isSkipping = ref(false);
+const runAutofill = async () => {
+    const url = form.brand_website.trim();
+
+    if (! url) {
+        toast.error(trans('onboarding.brand.autofill_missing_url'));
+        return;
+    }
+
+    isAutofilling.value = true;
+
+    try {
+        const response = await fetch(autofillBrand.url(), {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ url }),
+        });
+
+        if (! response.ok) {
+            const body = await response.json().catch(() => ({}));
+            toast.error(body.message ?? trans('onboarding.brand.autofill_error'));
+            return;
+        }
+
+        const data = await response.json();
+
+        if (data.brand_description) {
+            form.brand_description = data.brand_description;
+        }
+
+        if (data.content_language) {
+            form.content_language = data.content_language;
+        }
+
+        if (data.logo_url && data.has_logo) {
+            logoPreview.value = data.logo_url;
+        }
+
+        toast.success(trans('onboarding.brand.autofill_success'));
+    } catch {
+        toast.error(trans('onboarding.brand.autofill_error'));
+    } finally {
+        isAutofilling.value = false;
+    }
+};
 </script>
 
 <template>
@@ -64,12 +118,29 @@ const isSkipping = ref(false);
         <form class="flex flex-col gap-5" @submit.prevent="submit">
             <div class="grid gap-2">
                 <Label for="brand_website">{{ $t('settings.brand.website') }}</Label>
-                <Input
-                    id="brand_website"
-                    v-model="form.brand_website"
-                    type="url"
-                    :placeholder="trans('settings.brand.website_placeholder')"
-                />
+                <div class="flex gap-2">
+                    <Input
+                        id="brand_website"
+                        v-model="form.brand_website"
+                        type="url"
+                        :placeholder="trans('settings.brand.website_placeholder')"
+                        class="flex-1"
+                    />
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        :disabled="isAutofilling || !form.brand_website"
+                        @click="runAutofill"
+                    >
+                        <IconLoader2 v-if="isAutofilling" class="h-4 w-4 animate-spin" />
+                        <IconSparkles v-else class="h-4 w-4" />
+                        {{ $t('onboarding.brand.autofill') }}
+                    </Button>
+                </div>
+                <p v-if="logoPreview" class="flex items-center gap-2 text-xs text-muted-foreground">
+                    <img :src="logoPreview" alt="" class="h-6 w-6 rounded object-cover" />
+                    {{ $t('onboarding.brand.logo_captured') }}
+                </p>
                 <InputError :message="form.errors.brand_website" />
             </div>
 

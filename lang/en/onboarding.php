@@ -37,6 +37,14 @@ return [
         ],
     ],
 
+    'brand' => [
+        'page_title' => 'Tell us about your brand',
+        'title' => 'Tell us about your brand',
+        'description' => 'These defaults power every AI-generated post in this workspace. You can change them later in Settings.',
+        'submit' => 'Continue',
+        'skip' => 'Skip for now',
+    ],
+
     'connect' => [
         'page_title' => 'Connect your accounts',
         'title' => 'Connect your accounts',

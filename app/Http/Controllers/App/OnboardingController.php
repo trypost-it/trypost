@@ -7,6 +7,7 @@ namespace App\Http\Controllers\App;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\User\Persona;
 use App\Enums\User\Setup;
+use App\Http\Requests\App\Onboarding\StoreBrandRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,8 +37,49 @@ class OnboardingController extends Controller
 
         $request->user()->update([
             'persona' => data_get($validated, 'persona'),
-            'setup' => Setup::Connections,
+            'setup' => Setup::Brand,
         ]);
+
+        return redirect()->route('app.onboarding.brand');
+    }
+
+    public function brand(Request $request): Response|RedirectResponse
+    {
+        $redirect = $this->enforceStep($request->user(), Setup::Brand);
+        if ($redirect) {
+            return $redirect;
+        }
+
+        $workspace = $request->user()->currentWorkspace;
+
+        return Inertia::render('onboarding/Brand', [
+            'workspace' => [
+                'name' => $workspace?->name ?? '',
+                'brand_website' => $workspace?->brand_website ?? '',
+                'brand_description' => $workspace?->brand_description ?? '',
+                'brand_tone' => $workspace?->brand_tone ?? 'professional',
+                'brand_voice_notes' => $workspace?->brand_voice_notes ?? '',
+                'content_language' => $workspace?->content_language ?? 'en',
+            ],
+        ]);
+    }
+
+    public function storeBrand(StoreBrandRequest $request): RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        if ($workspace) {
+            $workspace->update($request->validated());
+        }
+
+        $request->user()->update(['setup' => Setup::Connections]);
+
+        return redirect()->route('app.onboarding.account');
+    }
+
+    public function skipBrand(Request $request): RedirectResponse
+    {
+        $request->user()->update(['setup' => Setup::Connections]);
 
         return redirect()->route('app.onboarding.account');
     }
@@ -98,6 +140,7 @@ class OnboardingController extends Controller
 
         return match ($user->setup) {
             Setup::Role => redirect()->route('app.onboarding.role'),
+            Setup::Brand => redirect()->route('app.onboarding.brand'),
             Setup::Connections => redirect()->route('app.onboarding.account'),
             default => redirect()->route('app.onboarding.role'),
         };

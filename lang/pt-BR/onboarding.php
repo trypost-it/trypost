@@ -37,6 +37,14 @@ return [
         ],
     ],
 
+    'brand' => [
+        'page_title' => 'Conte sobre sua marca',
+        'title' => 'Conte sobre sua marca',
+        'description' => 'Esses valores padrão serão usados em todos os posts gerados por AI neste workspace. Você pode alterar depois em Configurações.',
+        'submit' => 'Continuar',
+        'skip' => 'Pular por enquanto',
+    ],
+
     'connect' => [
         'page_title' => 'Conecte suas contas',
         'title' => 'Conecte suas contas',

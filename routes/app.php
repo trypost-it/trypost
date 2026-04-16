@@ -55,6 +55,9 @@ Route::middleware(['auth', 'verified'])->prefix('onboarding')->group(function ()
     Route::get('/', fn () => redirect()->route('app.onboarding.role'));
     Route::get('role', [OnboardingController::class, 'role'])->name('app.onboarding.role');
     Route::post('role', [OnboardingController::class, 'storeRole'])->name('app.onboarding.role.store');
+    Route::get('brand', [OnboardingController::class, 'brand'])->name('app.onboarding.brand');
+    Route::post('brand', [OnboardingController::class, 'storeBrand'])->name('app.onboarding.brand.store');
+    Route::post('brand/skip', [OnboardingController::class, 'skipBrand'])->name('app.onboarding.brand.skip');
     Route::get('account', [OnboardingController::class, 'account'])->name('app.onboarding.account');
     Route::post('account', [OnboardingController::class, 'storeAccount'])->name('app.onboarding.account.store');
 });

@@ -37,6 +37,14 @@ return [
         ],
     ],
 
+    'brand' => [
+        'page_title' => 'Cuéntanos sobre tu marca',
+        'title' => 'Cuéntanos sobre tu marca',
+        'description' => 'Estos valores predeterminados se usarán en todos los posts generados por IA en este workspace. Puedes cambiarlos después en Configuración.',
+        'submit' => 'Continuar',
+        'skip' => 'Omitir por ahora',
+    ],
+
     'connect' => [
         'page_title' => 'Conecta tus cuentas',
         'title' => 'Conecta tus cuentas',

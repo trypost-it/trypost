@@ -39,16 +39,16 @@ test('store step1 requires authentication', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('store step1 saves persona and redirects to step2', function () {
+test('store step1 saves persona and redirects to brand step', function () {
     $response = $this->actingAs($this->user)->post(route('app.onboarding.role.store'), [
         'persona' => Persona::Founder->value,
     ]);
 
-    $response->assertRedirect(route('app.onboarding.account'));
+    $response->assertRedirect(route('app.onboarding.brand'));
 
     $this->user->refresh();
     expect($this->user->persona)->toBe(Persona::Founder);
-    expect($this->user->setup)->toBe(Setup::Connections);
+    expect($this->user->setup)->toBe(Setup::Brand);
 });
 
 test('store step1 validates persona is required', function () {
@@ -65,6 +65,119 @@ test('store step1 validates persona is valid enum', function () {
     ]);
 
     $response->assertSessionHasErrors('persona');
+});
+
+// Brand step tests
+test('brand step requires authentication', function () {
+    $response = $this->get(route('app.onboarding.brand'));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('brand step redirects users not at the brand step', function () {
+    $this->user->update(['setup' => Setup::Role]);
+
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.brand'));
+
+    $response->assertRedirect(route('app.onboarding.role'));
+});
+
+test('brand step shows the form with workspace defaults', function () {
+    $workspace = Workspace::factory()->create([
+        'user_id' => $this->user->id,
+        'brand_tone' => 'casual',
+        'content_language' => 'pt-BR',
+    ]);
+    $this->user->update([
+        'current_workspace_id' => $workspace->id,
+        'setup' => Setup::Brand,
+    ]);
+
+    $response = $this->actingAs($this->user)->get(route('app.onboarding.brand'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('onboarding/Brand', false)
+        ->where('workspace.brand_tone', 'casual')
+        ->where('workspace.content_language', 'pt-BR')
+    );
+});
+
+test('store brand persists workspace settings and advances to connections', function () {
+    $workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->user->update([
+        'current_workspace_id' => $workspace->id,
+        'setup' => Setup::Brand,
+    ]);
+
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.brand.store'), [
+        'brand_website' => 'https://example.com',
+        'brand_description' => 'We build social tools.',
+        'brand_tone' => 'friendly',
+        'brand_voice_notes' => 'Short and punchy.',
+        'content_language' => 'pt-BR',
+    ]);
+
+    $response->assertRedirect(route('app.onboarding.account'));
+
+    $workspace->refresh();
+    expect($workspace->brand_website)->toBe('https://example.com');
+    expect($workspace->brand_tone)->toBe('friendly');
+    expect($workspace->content_language)->toBe('pt-BR');
+
+    $this->user->refresh();
+    expect($this->user->setup)->toBe(Setup::Connections);
+});
+
+test('store brand validates tone is in allowed list', function () {
+    $workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->user->update([
+        'current_workspace_id' => $workspace->id,
+        'setup' => Setup::Brand,
+    ]);
+
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.brand.store'), [
+        'brand_tone' => 'invalid-tone',
+        'content_language' => 'en',
+    ]);
+
+    $response->assertSessionHasErrors('brand_tone');
+});
+
+test('store brand validates content_language is supported', function () {
+    $workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->user->update([
+        'current_workspace_id' => $workspace->id,
+        'setup' => Setup::Brand,
+    ]);
+
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.brand.store'), [
+        'brand_tone' => 'professional',
+        'content_language' => 'fr',
+    ]);
+
+    $response->assertSessionHasErrors('content_language');
+});
+
+test('skip brand advances setup without saving workspace changes', function () {
+    $workspace = Workspace::factory()->create([
+        'user_id' => $this->user->id,
+        'brand_tone' => 'casual',
+    ]);
+    $this->user->update([
+        'current_workspace_id' => $workspace->id,
+        'setup' => Setup::Brand,
+    ]);
+
+    $response = $this->actingAs($this->user)->post(route('app.onboarding.brand.skip'));
+
+    $response->assertRedirect(route('app.onboarding.account'));
+
+    $workspace->refresh();
+    expect($workspace->brand_tone)->toBe('casual');
+
+    $this->user->refresh();
+    expect($this->user->setup)->toBe(Setup::Connections);
 });
 
 // Step 2 tests

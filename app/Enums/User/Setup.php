@@ -8,6 +8,7 @@ enum Setup: string
 {
     case Registering = 'registering';
     case Role = 'role';
+    case Brand = 'brand';
     case Connections = 'connections';
     case Subscription = 'subscription';
     case Completed = 'completed';
@@ -17,6 +18,7 @@ enum Setup: string
         return match ($this) {
             self::Registering => 'Registering',
             self::Role => 'Select Role',
+            self::Brand => 'Configure Brand',
             self::Connections => 'Connect Accounts',
             self::Subscription => 'Start Subscription',
             self::Completed => 'Completed',
@@ -28,9 +30,10 @@ enum Setup: string
         return match ($this) {
             self::Registering => 0,
             self::Role => 1,
-            self::Connections => 2,
-            self::Subscription => 3,
-            self::Completed => 4,
+            self::Brand => 2,
+            self::Connections => 3,
+            self::Subscription => 4,
+            self::Completed => 5,
         };
     }
 }

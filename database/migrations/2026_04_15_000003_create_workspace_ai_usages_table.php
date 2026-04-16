@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('ai_usage_logs', function (Blueprint $table) {
+        Schema::create('workspace_ai_usages', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('account_id');
             $table->uuid('workspace_id');
@@ -28,6 +28,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('ai_usage_logs');
+        Schema::dropIfExists('workspace_ai_usages');
     }
 };

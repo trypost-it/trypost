@@ -10,6 +10,7 @@ use App\Http\Controllers\App\GiphyController;
 use App\Http\Controllers\App\MediaController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\OnboardingController;
+use App\Http\Controllers\App\PostAssistantController;
 use App\Http\Controllers\App\PostCommentController;
 use App\Http\Controllers\App\PostController;
 use App\Http\Controllers\App\Settings\AccountController;
@@ -148,6 +149,12 @@ Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::
     Route::put('posts/{post}/comments/{comment}', [PostCommentController::class, 'update'])->name('app.posts.comments.update');
     Route::delete('posts/{post}/comments/{comment}', [PostCommentController::class, 'destroy'])->name('app.posts.comments.destroy');
     Route::post('posts/{post}/comments/{comment}/react', [PostCommentController::class, 'react'])->name('app.posts.comments.react');
+
+    // Post AI Assistant
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::get('posts/{post}/assistant', [PostAssistantController::class, 'index'])->name('app.posts.assistant.index');
+        Route::post('posts/{post}/assistant', [PostAssistantController::class, 'store'])->name('app.posts.assistant.store');
+    });
 
     // Media
     Route::post('medias', [MediaController::class, 'store'])->name('app.medias.store');

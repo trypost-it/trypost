@@ -21,6 +21,11 @@ interface AiMessage {
     role: 'user' | 'assistant';
     content: string;
     attachments?: Attachment[];
+    metadata?: {
+        intent?: string;
+        error?: boolean;
+        limit_reached?: boolean;
+    };
     created_at: string;
     user?: {
         id: string;
@@ -169,7 +174,7 @@ onMounted(() => {
                             <IconSparkles class="h-3.5 w-3.5 text-muted-foreground" />
                         </div>
                         <div class="max-w-[85%]">
-                            <div class="rounded-lg bg-muted px-3 py-2">
+                            <div :class="['rounded-lg px-3 py-2', message.metadata?.error ? 'bg-destructive/10 text-destructive' : 'bg-muted']">
                                 <p class="whitespace-pre-wrap text-sm">{{ message.content }}</p>
 
                                 <!-- Attachments -->

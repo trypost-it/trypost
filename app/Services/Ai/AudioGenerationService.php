@@ -25,8 +25,10 @@ class AudioGenerationService
     /**
      * @return array{id: string, path: string, url: string, mime_type: string, type: string}
      */
-    public function generate(string $text, Workspace $workspace, ?string $userId = null, ?string $postId = null, string $voiceId = 'EXAVITQu4vr4xnSDxMaL'): array
+    public function generate(string $text, Workspace $workspace, ?string $userId = null, ?string $postId = null, ?string $voiceId = null): array
     {
+        $voiceId ??= config('services.elevenlabs.default_voice', 'EXAVITQu4vr4xnSDxMaL');
+
         $response = Http::timeout(120)
             ->withHeaders([
                 'xi-api-key' => $this->apiKey,
@@ -56,7 +58,7 @@ class AudioGenerationService
         $media = $workspace->media()->create([
             'group_id' => Str::uuid()->toString(),
             'collection' => 'assets',
-            'type' => 'document',
+            'type' => 'video',
             'path' => $path,
             'original_filename' => 'ai-generated.mp3',
             'mime_type' => 'audio/mpeg',

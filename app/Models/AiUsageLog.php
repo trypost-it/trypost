@@ -15,6 +15,8 @@ class AiUsageLog extends Model
     /** @use HasFactory<AiUsageLogFactory> */
     use HasFactory, HasUuids;
 
+    protected $table = 'workspace_ai_usages';
+
     protected $fillable = [
         'account_id',
         'workspace_id',

@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace App\Ai\Agents;
 
+use App\Ai\Tools\GenerateAudio;
+use App\Ai\Tools\GenerateImage;
+use App\Ai\Tools\GenerateVideo;
 use App\Models\AiMessage;
 use App\Models\Post;
 use App\Models\Workspace;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
+use Laravel\Ai\Contracts\HasTools;
+use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Messages\Message;
 use Laravel\Ai\Promptable;
 
-class SocialMediaAssistant implements Agent, Conversational
+class SocialMediaAssistant implements Agent, Conversational, HasTools
 {
     use Promptable;
 
@@ -60,6 +65,30 @@ class SocialMediaAssistant implements Agent, Conversational
             'openai' => Lab::OpenAI,
             default => Lab::Gemini,
         };
+    }
+
+    /**
+     * @return iterable<Tool>
+     */
+    public function tools(): iterable
+    {
+        return [
+            new GenerateImage(
+                workspace: $this->workspace,
+                post: $this->post,
+                userId: $this->userId,
+            ),
+            new GenerateVideo(
+                workspace: $this->workspace,
+                post: $this->post,
+                userId: $this->userId,
+            ),
+            new GenerateAudio(
+                workspace: $this->workspace,
+                post: $this->post,
+                userId: $this->userId,
+            ),
+        ];
     }
 
     private function enrichContent(AiMessage $m): string

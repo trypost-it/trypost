@@ -34,7 +34,7 @@ test('event broadcasts on correct channel', function () {
 
     expect($channels)->toHaveCount(1);
     expect($channels[0])->toBeInstanceOf(PrivateChannel::class);
-    expect($channels[0]->name)->toBe('private-posts.'.$this->post->id);
+    expect($channels[0]->name)->toBe('private-post.'.$this->post->id);
 });
 
 test('event broadcasts with correct data', function () {

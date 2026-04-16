@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
+use App\Http\Requests\App\Asset\StoreAssetFromUrlRequest;
+use App\Http\Requests\App\Asset\StoreAssetRequest;
 use App\Models\Media;
 use App\Services\UnsplashService;
 use Illuminate\Http\JsonResponse;
@@ -37,15 +39,11 @@ class AssetController extends Controller
         ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreAssetRequest $request): JsonResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
         $this->authorize('createPost', $workspace);
-
-        $request->validate([
-            'media' => ['required', 'file', 'max:1048576', 'mimetypes:image/jpeg,image/png,image/gif,image/webp,video/mp4'], // max 1GB in KB
-        ]);
 
         $media = $workspace->addMedia($request->file('media'), 'assets');
 
@@ -126,17 +124,13 @@ class AssetController extends Controller
         ]);
     }
 
-    public function storeFromUrl(Request $request, UnsplashService $unsplash): RedirectResponse
+    public function storeFromUrl(StoreAssetFromUrlRequest $request, UnsplashService $unsplash): RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
         $this->authorize('createPost', $workspace);
 
-        $validated = $request->validate([
-            'url' => ['required', 'url', 'regex:/^https:\/\/(images\.unsplash\.com|media[0-9]*\.giphy\.com)\//'],
-            'filename' => ['required', 'string', 'max:255'],
-            'download_location' => ['nullable', 'url', 'regex:/^https:\/\/api\.unsplash\.com\//'],
-        ]);
+        $validated = $request->validated();
 
         // Trigger Unsplash download tracking (required by API guidelines)
         if ($downloadLocation = data_get($validated, 'download_location')) {

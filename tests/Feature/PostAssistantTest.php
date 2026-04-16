@@ -5,12 +5,13 @@ declare(strict_types=1);
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\AiMessage;
+use App\Models\AiUsageLog;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\Ai\AudioGenerationService;
+use App\Services\Ai\Contracts\TextGenerationInterface;
 use App\Services\Ai\ImageGenerationService;
-use App\Services\Ai\TextGenerationService;
 use App\Services\Ai\VideoGenerationService;
 
 beforeEach(function () {
@@ -63,7 +64,7 @@ test('index rejects access to post from other workspace', function () {
 });
 
 test('store creates user and assistant messages for text intent', function () {
-    $this->mock(TextGenerationService::class)
+    $this->mock(TextGenerationInterface::class)
         ->shouldReceive('generate')
         ->once()
         ->andReturn('Here is a great caption for your post!');
@@ -93,6 +94,11 @@ test('store creates user and assistant messages for text intent', function () {
 });
 
 test('store creates user and assistant messages for image intent', function () {
+    $this->mock(TextGenerationInterface::class)
+        ->shouldReceive('generate')
+        ->once()
+        ->andReturn('[GENERATE_IMAGE:vertical]');
+
     $this->mock(ImageGenerationService::class)
         ->shouldReceive('generate')
         ->once()
@@ -140,8 +146,104 @@ test('store rejects access to post from other workspace', function () {
     $response->assertForbidden();
 });
 
+test('store blocks prohibited content', function () {
+    $response = $this->actingAs($this->user)
+        ->postJson(route('app.posts.assistant.store', $this->post), [
+            'body' => 'Create porn content for my post',
+        ]);
+
+    $response->assertCreated();
+    $response->assertJsonPath('assistant_message.metadata.intent', 'blocked');
+    $response->assertJsonPath('assistant_message.metadata.error', true);
+
+    $this->assertDatabaseHas('ai_messages', [
+        'post_id' => $this->post->id,
+        'role' => 'user',
+        'content' => 'Create porn content for my post',
+    ]);
+
+    $this->assertDatabaseHas('ai_messages', [
+        'post_id' => $this->post->id,
+        'role' => 'assistant',
+    ]);
+});
+
+test('store blocks drug related content', function () {
+    $response = $this->actingAs($this->user)
+        ->postJson(route('app.posts.assistant.store', $this->post), [
+            'body' => 'Write about cocaine usage',
+        ]);
+
+    $response->assertCreated();
+    $response->assertJsonPath('assistant_message.metadata.intent', 'blocked');
+});
+
+test('store allows safe content through', function () {
+    $this->mock(TextGenerationInterface::class)
+        ->shouldReceive('generate')
+        ->once()
+        ->andReturn('Here is your caption!');
+
+    $response = $this->actingAs($this->user)
+        ->postJson(route('app.posts.assistant.store', $this->post), [
+            'body' => 'Write a caption about my new coffee shop',
+        ]);
+
+    $response->assertCreated();
+    $response->assertJsonPath('assistant_message.content', 'Here is your caption!');
+    $response->assertJsonPath('assistant_message.metadata.intent', 'text');
+});
+
+test('store enforces image generation limit', function () {
+    $account = $this->workspace->account;
+
+    $this->mock(TextGenerationInterface::class)
+        ->shouldReceive('generate')
+        ->once()
+        ->andReturn('[GENERATE_IMAGE:vertical]');
+
+    for ($i = 0; $i < 50; $i++) {
+        AiUsageLog::factory()->image()->create([
+            'account_id' => $account->id,
+            'workspace_id' => $this->workspace->id,
+        ]);
+    }
+
+    $response = $this->actingAs($this->user)
+        ->postJson(route('app.posts.assistant.store', $this->post), [
+            'body' => 'Generate an image of a sunset',
+        ]);
+
+    $response->assertCreated();
+    $response->assertJsonPath('assistant_message.metadata.limit_reached', true);
+});
+
+test('store enforces video generation limit', function () {
+    $account = $this->workspace->account;
+
+    $this->mock(TextGenerationInterface::class)
+        ->shouldReceive('generate')
+        ->once()
+        ->andReturn('[GENERATE_VIDEO:vertical]');
+
+    for ($i = 0; $i < 10; $i++) {
+        AiUsageLog::factory()->video()->create([
+            'account_id' => $account->id,
+            'workspace_id' => $this->workspace->id,
+        ]);
+    }
+
+    $response = $this->actingAs($this->user)
+        ->postJson(route('app.posts.assistant.store', $this->post), [
+            'body' => 'Create a video about coffee',
+        ]);
+
+    $response->assertCreated();
+    $response->assertJsonPath('assistant_message.metadata.limit_reached', true);
+});
+
 test('store handles service exception gracefully', function () {
-    $this->mock(TextGenerationService::class)
+    $this->mock(TextGenerationInterface::class)
         ->shouldReceive('generate')
         ->once()
         ->andThrow(new RuntimeException('API quota exceeded'));

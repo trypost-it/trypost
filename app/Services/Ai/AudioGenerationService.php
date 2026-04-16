@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Ai;
 
+use App\Enums\Ai\UsageType;
 use App\Models\AiUsageLog;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -13,13 +15,13 @@ use Illuminate\Support\Str;
 
 class AudioGenerationService
 {
-    private string $apiKey;
-
     private string $baseUrl = 'https://api.elevenlabs.io/v1';
+
+    private string $apiKey;
 
     public function __construct()
     {
-        $this->apiKey = config('services.elevenlabs.api_key', '');
+        $this->apiKey = config('services.elevenlabs.api_key') ?? '';
     }
 
     /**
@@ -27,12 +29,15 @@ class AudioGenerationService
      */
     public function generate(string $text, Workspace $workspace, ?string $userId = null, ?string $postId = null, ?string $voiceId = null): array
     {
-        $voiceId ??= config('services.elevenlabs.default_voice', 'EXAVITQu4vr4xnSDxMaL');
+        if (empty($this->apiKey)) {
+            throw new \RuntimeException('ElevenLabs API key is not configured. Please set ELEVENLABS_API_KEY in your .env file.');
+        }
+
+        $voiceId ??= config('services.elevenlabs.default_voice') ?? 'EXAVITQu4vr4xnSDxMaL';
 
         $response = Http::timeout(120)
             ->withHeaders([
                 'xi-api-key' => $this->apiKey,
-                'Content-Type' => 'application/json',
                 'Accept' => 'audio/mpeg',
             ])
             ->post("{$this->baseUrl}/text-to-speech/{$voiceId}", [
@@ -50,38 +55,42 @@ class AudioGenerationService
             throw new \RuntimeException('Failed to generate audio. Please try again.');
         }
 
-        $filename = Str::uuid().'.mp3';
-        $path = 'medias/'.$filename;
+        $audioContent = $response->body();
 
-        Storage::put($path, $response->body());
+        return DB::transaction(function () use ($audioContent, $text, $workspace, $userId, $postId) {
+            $filename = Str::uuid().'.mp3';
+            $path = 'medias/'.$filename;
 
-        $media = $workspace->media()->create([
-            'group_id' => Str::uuid()->toString(),
-            'collection' => 'assets',
-            'type' => 'video',
-            'path' => $path,
-            'original_filename' => 'ai-generated.mp3',
-            'mime_type' => 'audio/mpeg',
-            'size' => strlen($response->body()),
-            'order' => 0,
-            'meta' => ['ai_generated' => true, 'text' => Str::limit($text, 200)],
-        ]);
+            Storage::put($path, $audioContent);
 
-        AiUsageLog::create([
-            'account_id' => $workspace->account_id,
-            'workspace_id' => $workspace->id,
-            'user_id' => $userId,
-            'post_id' => $postId,
-            'type' => 'audio',
-            'provider' => 'elevenlabs',
-        ]);
+            $media = $workspace->media()->create([
+                'group_id' => Str::uuid()->toString(),
+                'collection' => 'assets',
+                'type' => 'video',
+                'path' => $path,
+                'original_filename' => 'ai-generated.mp3',
+                'mime_type' => 'audio/mpeg',
+                'size' => strlen($audioContent),
+                'order' => 0,
+                'meta' => ['ai_generated' => true, 'text' => Str::limit($text, 200)],
+            ]);
 
-        return [
-            'id' => $media->id,
-            'path' => $media->path,
-            'url' => $media->url,
-            'mime_type' => 'audio/mpeg',
-            'type' => 'audio',
-        ];
+            AiUsageLog::create([
+                'account_id' => $workspace->account_id,
+                'workspace_id' => $workspace->id,
+                'user_id' => $userId,
+                'post_id' => $postId,
+                'type' => UsageType::Audio,
+                'provider' => 'elevenlabs',
+            ]);
+
+            return [
+                'id' => $media->id,
+                'path' => $media->path,
+                'url' => $media->url,
+                'mime_type' => 'audio/mpeg',
+                'type' => 'audio',
+            ];
+        });
     }
 }

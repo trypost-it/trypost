@@ -23,6 +23,10 @@ class UnsplashService
      */
     public function search(string $query, int $page = 1): array
     {
+        if (empty($this->accessKey)) {
+            return ['results' => [], 'total' => 0, 'total_pages' => 0];
+        }
+
         $response = Http::timeout(10)
             ->withHeaders(['Authorization' => "Client-ID {$this->accessKey}"])
             ->get("{$this->baseUrl}/search/photos", [
@@ -52,6 +56,10 @@ class UnsplashService
      */
     public function trending(int $page = 1): array
     {
+        if (empty($this->accessKey)) {
+            return [];
+        }
+
         $response = Http::timeout(10)
             ->withHeaders(['Authorization' => "Client-ID {$this->accessKey}"])
             ->get("{$this->baseUrl}/photos", [

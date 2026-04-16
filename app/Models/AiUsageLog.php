@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Ai\UsageType;
 use Database\Factories\AiUsageLogFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,7 +30,10 @@ class AiUsageLog extends Model
 
     protected function casts(): array
     {
-        return ['metadata' => 'array'];
+        return [
+            'type' => UsageType::class,
+            'metadata' => 'array',
+        ];
     }
 
     public function account(): BelongsTo
@@ -37,12 +41,11 @@ class AiUsageLog extends Model
         return $this->belongsTo(Account::class);
     }
 
-    public static function monthlyCount(string $accountId, string $type): int
+    public static function monthlyCount(string $accountId, UsageType $type): int
     {
         return static::where('account_id', $accountId)
             ->where('type', $type)
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
+            ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
             ->count();
     }
 }

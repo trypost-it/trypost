@@ -23,6 +23,10 @@ class GiphyService
      */
     public function search(string $query, int $page = 1): array
     {
+        if (empty($this->apiKey)) {
+            return ['results' => [], 'total' => 0, 'total_pages' => 0];
+        }
+
         $perPage = (int) config('app.pagination.default');
         $offset = ($page - 1) * $perPage;
 
@@ -57,6 +61,10 @@ class GiphyService
      */
     public function trending(int $page = 1): array
     {
+        if (empty($this->apiKey)) {
+            return [];
+        }
+
         $perPage = (int) config('app.pagination.default');
         $offset = ($page - 1) * $perPage;
 

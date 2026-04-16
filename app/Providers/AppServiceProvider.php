@@ -23,6 +23,9 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceHashtag;
 use App\Models\WorkspaceLabel;
+use App\Services\Ai\Contracts\TextGenerationInterface;
+use App\Services\Ai\GeminiTextGenerationService;
+use App\Services\Ai\TextGenerationService;
 use App\Socialite\InstagramProvider;
 use App\Socialite\LinkedInPageExtendSocialite;
 use Carbon\CarbonImmutable;
@@ -65,6 +68,14 @@ class AppServiceProvider extends ServiceProvider
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
             $this->app->register(TelescopeServiceProvider::class);
         }
+
+        $this->app->bind(
+            TextGenerationInterface::class,
+            fn () => match (config('trypost.ai.text_provider')) {
+                'openai' => new TextGenerationService,
+                default => new GeminiTextGenerationService,
+            },
+        );
     }
 
     /**

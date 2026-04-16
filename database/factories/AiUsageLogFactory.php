@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\Ai\UsageType;
 use App\Models\Account;
 use App\Models\AiUsageLog;
 use App\Models\Workspace;
@@ -17,7 +18,7 @@ class AiUsageLogFactory extends Factory
         return [
             'account_id' => Account::factory(),
             'workspace_id' => Workspace::factory(),
-            'type' => fake()->randomElement(['image', 'video', 'audio']),
+            'type' => fake()->randomElement(UsageType::cases()),
             'provider' => fake()->randomElement(['gemini', 'veo', 'elevenlabs']),
         ];
     }
@@ -25,7 +26,7 @@ class AiUsageLogFactory extends Factory
     public function image(): static
     {
         return $this->state(fn () => [
-            'type' => 'image',
+            'type' => UsageType::Image,
             'provider' => 'gemini',
         ]);
     }
@@ -33,7 +34,7 @@ class AiUsageLogFactory extends Factory
     public function video(): static
     {
         return $this->state(fn () => [
-            'type' => 'video',
+            'type' => UsageType::Video,
             'provider' => 'veo',
         ]);
     }
@@ -41,7 +42,7 @@ class AiUsageLogFactory extends Factory
     public function audio(): static
     {
         return $this->state(fn () => [
-            'type' => 'audio',
+            'type' => UsageType::Audio,
             'provider' => 'elevenlabs',
         ]);
     }

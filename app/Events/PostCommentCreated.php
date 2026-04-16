@@ -33,7 +33,7 @@ class PostCommentCreated implements ShouldBroadcastNow
                 'body' => $this->comment->body,
                 'reactions' => $this->comment->reactions ?? [],
                 'created_at' => $this->comment->created_at->toISOString(),
-                'updated_at' => $this->comment->created_at->toISOString(),
+                'updated_at' => $this->comment->updated_at->toISOString(),
                 'user' => [
                     'id' => $this->comment->user->id,
                     'name' => $this->comment->user->name,

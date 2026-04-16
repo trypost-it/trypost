@@ -78,4 +78,21 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | AI Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure which AI providers to use for content generation.
+    | Supported text providers: "gemini", "openai"
+    |
+    */
+
+    'ai' => [
+        'text_provider' => env('AI_TEXT_PROVIDER', 'gemini'),
+        'image_provider' => env('AI_IMAGE_PROVIDER', 'gemini'),
+        'audio_provider' => env('AI_AUDIO_PROVIDER', 'elevenlabs'),
+        'video_provider' => env('AI_VIDEO_PROVIDER', 'gemini'),
+    ],
+
 ];

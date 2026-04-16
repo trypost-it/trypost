@@ -1,9 +1,18 @@
-Create a social media image.
-@if($brandName)
-Brand: {{ $brandName }}
+Generate a social media image. You MUST produce an actual image, not just describe one.
+
+Image requirements:
+- Aspect ratio: {{ $aspect_ratio }}
+- Eye-catching, professional quality suitable for social media
+- Modern design with vibrant colors and clean composition
+- If including text on the image, keep it minimal, bold, and highly readable
+- No watermarks, no borders, no mockup frames
+- Do NOT include any offensive, violent, sexual, or inappropriate content
+@if($brand_name)
+
+Brand: {{ $brand_name }} — incorporate the brand identity subtly if relevant.
 @endif
 @if($tone)
-Style should match a {{ $tone }} tone.
+Visual style: {{ $tone }}
 @endif
 
-User request: {{ $prompt }}
+What to create: {{ $prompt }}

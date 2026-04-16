@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controllers\App;
 
 use App\Events\PostCommentCreated;
+use App\Http\Requests\App\PostComment\ReactPostCommentRequest;
+use App\Http\Requests\App\PostComment\StorePostCommentRequest;
+use App\Http\Requests\App\PostComment\UpdatePostCommentRequest;
 use App\Models\Post;
 use App\Models\PostComment;
 use Illuminate\Http\JsonResponse;
@@ -30,7 +33,7 @@ class PostCommentController extends Controller
         return response()->json($comments);
     }
 
-    public function store(Request $request, Post $post): JsonResponse
+    public function store(StorePostCommentRequest $request, Post $post): JsonResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -38,14 +41,18 @@ class PostCommentController extends Controller
             abort(Response::HTTP_FORBIDDEN);
         }
 
-        $validated = $request->validate([
-            'body' => ['required', 'string', 'max:2000'],
-            'parent_id' => ['nullable', 'uuid', 'exists:post_comments,id'],
-        ]);
+        $validated = $request->validated();
 
         if (data_get($validated, 'parent_id')) {
-            $parent = PostComment::find(data_get($validated, 'parent_id'));
-            if ($parent && $parent->parent_id !== null) {
+            $parent = PostComment::where('id', data_get($validated, 'parent_id'))
+                ->where('post_id', $post->id)
+                ->first();
+
+            if (! $parent) {
+                abort(Response::HTTP_NOT_FOUND);
+            }
+
+            if ($parent->parent_id !== null) {
                 abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'Cannot reply to a reply.');
             }
         }
@@ -63,15 +70,22 @@ class PostCommentController extends Controller
         return response()->json($comment, Response::HTTP_CREATED);
     }
 
-    public function update(Request $request, Post $post, PostComment $comment): JsonResponse
+    public function update(UpdatePostCommentRequest $request, Post $post, PostComment $comment): JsonResponse
     {
+        if ($comment->post_id !== $post->id) {
+            abort(Response::HTTP_NOT_FOUND);
+        }
+
         if ($comment->user_id !== $request->user()->id) {
             abort(Response::HTTP_FORBIDDEN);
         }
 
-        $validated = $request->validate([
-            'body' => ['required', 'string', 'max:2000'],
-        ]);
+        $workspace = $request->user()->currentWorkspace;
+        if ($comment->post->workspace_id !== $workspace->id) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
+        $validated = $request->validated();
 
         $comment->update(['body' => data_get($validated, 'body')]);
 
@@ -80,7 +94,16 @@ class PostCommentController extends Controller
 
     public function destroy(Request $request, Post $post, PostComment $comment): JsonResponse
     {
+        if ($comment->post_id !== $post->id) {
+            abort(Response::HTTP_NOT_FOUND);
+        }
+
         if ($comment->user_id !== $request->user()->id) {
+            abort(Response::HTTP_FORBIDDEN);
+        }
+
+        $workspace = $request->user()->currentWorkspace;
+        if ($comment->post->workspace_id !== $workspace->id) {
             abort(Response::HTTP_FORBIDDEN);
         }
 
@@ -89,17 +112,19 @@ class PostCommentController extends Controller
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function react(Request $request, Post $post, PostComment $comment): JsonResponse
+    public function react(ReactPostCommentRequest $request, Post $post, PostComment $comment): JsonResponse
     {
+        if ($comment->post_id !== $post->id) {
+            abort(Response::HTTP_NOT_FOUND);
+        }
+
         $workspace = $request->user()->currentWorkspace;
 
         if ($post->workspace_id !== $workspace->id) {
             abort(Response::HTTP_FORBIDDEN);
         }
 
-        $validated = $request->validate([
-            'emoji' => ['required', 'string', 'max:10'],
-        ]);
+        $validated = $request->validated();
 
         $comment->addReaction($request->user()->id, data_get($validated, 'emoji'));
 

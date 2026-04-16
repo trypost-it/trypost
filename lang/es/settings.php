@@ -84,6 +84,27 @@ return [
         'save' => 'Guardar',
     ],
 
+    'brand' => [
+        'title' => 'Marca',
+        'description' => 'Configura la identidad de tu marca para el contenido generado por IA.',
+        'website' => 'Sitio web',
+        'website_placeholder' => 'https://tumarca.com',
+        'brand_description' => 'Descripción',
+        'brand_description_placeholder' => 'Cuéntanos sobre tu marca, lo que haces y quién es tu audiencia...',
+        'tone' => 'Tono de voz',
+        'tone_professional' => 'Profesional',
+        'tone_casual' => 'Casual',
+        'tone_friendly' => 'Amigable',
+        'tone_bold' => 'Audaz',
+        'tone_inspirational' => 'Inspirador',
+        'tone_humorous' => 'Humorístico',
+        'tone_educational' => 'Educativo',
+        'voice_notes' => 'Notas de voz',
+        'voice_notes_placeholder' => 'Directrices adicionales de escritura, palabras a evitar, preferencias de estilo...',
+        'content_language' => 'Idioma del contenido',
+        'content_language_description' => 'Idioma usado en los subtítulos, hashtags y cualquier texto dentro de imágenes o videos generados por IA.',
+    ],
+
     'members' => [
         'title' => 'Miembros',
         'heading' => 'Miembros del equipo',

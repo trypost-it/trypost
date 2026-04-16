@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Ai\Agents;
 
+use App\Ai\PlatformRules\Contract;
+use App\Ai\PlatformRules\Registry as PlatformRulesRegistry;
 use App\Ai\Tools\GenerateAudio;
 use App\Ai\Tools\GenerateImage;
 use App\Ai\Tools\GenerateVideo;
+use App\Enums\SocialAccount\Platform;
 use App\Models\AiMessage;
 use App\Models\Post;
 use App\Models\Workspace;
@@ -37,7 +40,29 @@ class SocialMediaAssistant implements Agent, Conversational, HasTools
             'tone' => $this->workspace->brand_tone ?? 'professional',
             'voice_notes' => $this->workspace->brand_voice_notes ?? '',
             'locale' => app()->getLocale(),
+            'platform_rules' => $this->activePlatformRules(),
         ])->render();
+    }
+
+    /**
+     * @return array<int, Contract>
+     */
+    private function activePlatformRules(): array
+    {
+        if (! $this->post) {
+            return [];
+        }
+
+        $platforms = $this->post->postPlatforms
+            ->pluck('platform')
+            ->filter()
+            ->map(fn ($p) => $p instanceof Platform ? $p : Platform::tryFrom((string) $p))
+            ->filter()
+            ->unique(fn (Platform $p) => $p->value)
+            ->values()
+            ->all();
+
+        return PlatformRulesRegistry::forMany($platforms);
     }
 
     /**

@@ -3,10 +3,13 @@
 declare(strict_types=1);
 
 use App\Ai\Agents\SocialMediaAssistant;
+use App\Enums\SocialAccount\Platform;
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\AiMessage;
 use App\Models\Post;
+use App\Models\PostPlatform;
+use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
 use Laravel\Ai\Enums\Lab;
@@ -95,6 +98,34 @@ test('messages enriches assistant content with attachment summary', function () 
 
     expect($messages[0]->content)->toContain('Here is your image');
     expect($messages[0]->content)->toContain('[This assistant message attached: 2 image]');
+});
+
+test('instructions include rules only for active post platforms', function () {
+    $socialAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::X,
+    ]);
+
+    PostPlatform::factory()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $socialAccount->id,
+        'platform' => Platform::X,
+    ]);
+
+    $agent = new SocialMediaAssistant($this->workspace, $this->post->fresh('postPlatforms'));
+
+    $instructions = $agent->instructions();
+
+    expect($instructions)->toContain('X (Twitter): 280 chars');
+    expect($instructions)->not->toContain('Instagram: caption max 2200');
+});
+
+test('instructions include no platform rules section when post has no platforms', function () {
+    $agent = new SocialMediaAssistant($this->workspace, $this->post);
+
+    $instructions = $agent->instructions();
+
+    expect($instructions)->not->toContain('ACTIVE PLATFORMS FOR THIS POST');
 });
 
 test('provider honors trypost.ai.text_provider config', function () {

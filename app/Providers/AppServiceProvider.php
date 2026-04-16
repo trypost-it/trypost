@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Ai\Providers\ExtendedGeminiProvider;
+use App\Ai\Tools\AttachmentCollector;
 use App\Listeners\StripeEventListener;
 use App\Models\Account;
 use App\Models\AiMessage;
@@ -80,6 +81,8 @@ class AppServiceProvider extends ServiceProvider
                 default => new GeminiTextGenerationService,
             },
         );
+
+        $this->app->scoped(AttachmentCollector::class);
     }
 
     /**

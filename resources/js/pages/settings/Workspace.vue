@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, router } from '@inertiajs/vue3';
 import { IconClock, IconDots, IconShield, IconTrash, IconUser } from '@tabler/icons-vue';
-import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
 import WorkspaceController from '@/actions/App/Http/Controllers/App/WorkspaceController';
@@ -130,7 +129,7 @@ const changeRole = (member: Member, role: string) => {
                             id="name"
                             name="name"
                             :default-value="workspace.name"
-                            :placeholder="trans('settings.workspace.name_placeholder')"
+                            :placeholder="$t('settings.workspace.name_placeholder')"
                         />
                         <InputError :message="errors.name" />
                     </div>
@@ -172,7 +171,7 @@ const changeRole = (member: Member, role: string) => {
                             name="brand_website"
                             type="url"
                             :default-value="workspace.brand_website ?? ''"
-                            :placeholder="trans('settings.brand.website_placeholder')"
+                            :placeholder="$t('settings.brand.website_placeholder')"
                         />
                         <InputError :message="errors.brand_website" />
                     </div>
@@ -183,7 +182,7 @@ const changeRole = (member: Member, role: string) => {
                             id="brand_description"
                             name="brand_description"
                             :default-value="workspace.brand_description ?? ''"
-                            :placeholder="trans('settings.brand.brand_description_placeholder')"
+                            :placeholder="$t('settings.brand.brand_description_placeholder')"
                             rows="3"
                         />
                         <InputError :message="errors.brand_description" />
@@ -194,7 +193,7 @@ const changeRole = (member: Member, role: string) => {
                             <Label for="brand_tone">{{ $t('settings.brand.tone') }}</Label>
                             <Select v-model="brandTone" name="brand_tone">
                                 <SelectTrigger id="brand_tone" class="w-full">
-                                    <SelectValue />
+                                    <SelectValue :placeholder="$t('settings.brand.tone')" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="professional">{{ $t('settings.brand.tone_professional') }}</SelectItem>
@@ -214,7 +213,7 @@ const changeRole = (member: Member, role: string) => {
                             <Label for="content_language">{{ $t('settings.brand.content_language') }}</Label>
                             <Select v-model="contentLanguage" name="content_language">
                                 <SelectTrigger id="content_language" class="w-full">
-                                    <SelectValue />
+                                    <SelectValue :placeholder="$t('settings.brand.content_language')" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="en">English</SelectItem>
@@ -237,7 +236,7 @@ const changeRole = (member: Member, role: string) => {
                             id="brand_voice_notes"
                             name="brand_voice_notes"
                             :default-value="workspace.brand_voice_notes ?? ''"
-                            :placeholder="trans('settings.brand.voice_notes_placeholder')"
+                            :placeholder="$t('settings.brand.voice_notes_placeholder')"
                             rows="3"
                         />
                         <InputError :message="errors.brand_voice_notes" />
@@ -356,16 +355,16 @@ const changeRole = (member: Member, role: string) => {
 
             <ConfirmDeleteModal
                 ref="removeMemberModal"
-                :title="trans('settings.members.remove_modal.title')"
-                :description="trans('settings.members.remove_modal.description')"
-                :action="trans('settings.members.remove_modal.action')"
+                :title="$t('settings.members.remove_modal.title')"
+                :description="$t('settings.members.remove_modal.description')"
+                :action="$t('settings.members.remove_modal.action')"
             />
 
             <ConfirmDeleteModal
                 ref="cancelInvitationModal"
-                :title="trans('settings.members.cancel_invite_modal.title')"
-                :description="trans('settings.members.cancel_invite_modal.description')"
-                :action="trans('settings.members.cancel_invite_modal.action')"
+                :title="$t('settings.members.cancel_invite_modal.title')"
+                :description="$t('settings.members.cancel_invite_modal.description')"
+                :action="$t('settings.members.cancel_invite_modal.action')"
             />
         </div>
     </AppLayout>

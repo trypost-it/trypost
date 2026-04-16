@@ -123,7 +123,7 @@ const runAutofill = async () => {
                         id="brand_website"
                         v-model="form.brand_website"
                         type="url"
-                        :placeholder="trans('onboarding.brand.website_placeholder')"
+                        :placeholder="$t('onboarding.brand.website_placeholder')"
                         class="flex-1"
                     />
                     <Button
@@ -149,7 +149,7 @@ const runAutofill = async () => {
                 <Textarea
                     id="brand_description"
                     v-model="form.brand_description"
-                    :placeholder="trans('onboarding.brand.brand_description_placeholder')"
+                    :placeholder="$t('onboarding.brand.brand_description_placeholder')"
                     rows="3"
                 />
                 <InputError :message="form.errors.brand_description" />
@@ -160,7 +160,7 @@ const runAutofill = async () => {
                     <Label for="brand_tone">{{ $t('onboarding.brand.tone') }}</Label>
                     <Select v-model="form.brand_tone">
                         <SelectTrigger id="brand_tone" class="w-full">
-                            <SelectValue />
+                            <SelectValue :placeholder="$t('onboarding.brand.tone')" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="professional">{{ $t('onboarding.brand.tone_professional') }}</SelectItem>
@@ -179,7 +179,7 @@ const runAutofill = async () => {
                     <Label for="content_language">{{ $t('onboarding.brand.content_language') }}</Label>
                     <Select v-model="form.content_language">
                         <SelectTrigger id="content_language" class="w-full">
-                            <SelectValue />
+                            <SelectValue :placeholder="$t('onboarding.brand.content_language')" />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="en">English</SelectItem>
@@ -200,7 +200,7 @@ const runAutofill = async () => {
                 <Textarea
                     id="brand_voice_notes"
                     v-model="form.brand_voice_notes"
-                    :placeholder="trans('onboarding.brand.voice_notes_placeholder')"
+                    :placeholder="$t('onboarding.brand.voice_notes_placeholder')"
                     rows="3"
                 />
                 <InputError :message="form.errors.brand_voice_notes" />

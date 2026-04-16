@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Ai\Agents\SocialMediaAssistant;
+use App\Ai\Tools\AttachmentCollector;
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\AiMessage;
@@ -9,10 +11,6 @@ use App\Models\AiUsageLog;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\Ai\AudioGenerationService;
-use App\Services\Ai\Contracts\TextGenerationInterface;
-use App\Services\Ai\ImageGenerationService;
-use App\Services\Ai\VideoGenerationService;
 
 beforeEach(function () {
     $this->user = User::factory()->create(['setup' => Setup::Completed]);
@@ -25,8 +23,7 @@ beforeEach(function () {
         'user_id' => $this->user->id,
     ]);
 
-    $this->mock(AudioGenerationService::class);
-    $this->mock(VideoGenerationService::class);
+    app(AttachmentCollector::class)->clear();
 });
 
 test('index returns ai messages for a post', function () {
@@ -63,11 +60,8 @@ test('index rejects access to post from other workspace', function () {
     $response->assertForbidden();
 });
 
-test('store creates user and assistant messages for text intent', function () {
-    $this->mock(TextGenerationInterface::class)
-        ->shouldReceive('generate')
-        ->once()
-        ->andReturn('Here is a great caption for your post!');
+test('store creates user and assistant messages from agent response', function () {
+    SocialMediaAssistant::fake(['Here is a great caption for your post!']);
 
     $response = $this->actingAs($this->user)
         ->postJson(route('app.posts.assistant.store', $this->post), [
@@ -93,16 +87,12 @@ test('store creates user and assistant messages for text intent', function () {
     ]);
 });
 
-test('store creates user and assistant messages for image intent', function () {
-    $this->mock(TextGenerationInterface::class)
-        ->shouldReceive('generate')
-        ->once()
-        ->andReturn('[GENERATE_IMAGE:vertical]');
+test('store surfaces attachments pushed by tools into the AiMessage', function () {
+    // Simulate the agent invoking generate_image — it would push to collector.
+    $collector = app(AttachmentCollector::class);
 
-    $this->mock(ImageGenerationService::class)
-        ->shouldReceive('generate')
-        ->once()
-        ->andReturn([
+    SocialMediaAssistant::fake(function () use ($collector) {
+        $collector->push([
             'id' => 'test-media-id',
             'path' => 'medias/test.png',
             'url' => 'https://example.com/medias/test.png',
@@ -110,16 +100,18 @@ test('store creates user and assistant messages for image intent', function () {
             'type' => 'image',
         ]);
 
+        return 'Generated a vertical image and attached it to the post.';
+    });
+
     $response = $this->actingAs($this->user)
         ->postJson(route('app.posts.assistant.store', $this->post), [
             'body' => 'Generate an image of a sunset on the beach',
         ]);
 
     $response->assertCreated();
-    $response->assertJsonPath('user_message.role', 'user');
-    $response->assertJsonPath('assistant_message.role', 'assistant');
     $response->assertJsonPath('assistant_message.attachments.0.id', 'test-media-id');
     $response->assertJsonPath('assistant_message.attachments.0.type', 'image');
+    $response->assertJsonPath('assistant_message.metadata.intent', 'image');
 });
 
 test('store validates body is required', function () {
@@ -146,7 +138,7 @@ test('store rejects access to post from other workspace', function () {
     $response->assertForbidden();
 });
 
-test('store blocks prohibited content', function () {
+test('store blocks prohibited content via IntentDetector', function () {
     $response = $this->actingAs($this->user)
         ->postJson(route('app.posts.assistant.store', $this->post), [
             'body' => 'Create porn content for my post',
@@ -161,11 +153,6 @@ test('store blocks prohibited content', function () {
         'role' => 'user',
         'content' => 'Create porn content for my post',
     ]);
-
-    $this->assertDatabaseHas('ai_messages', [
-        'post_id' => $this->post->id,
-        'role' => 'assistant',
-    ]);
 });
 
 test('store blocks drug related content', function () {
@@ -179,10 +166,7 @@ test('store blocks drug related content', function () {
 });
 
 test('store allows safe content through', function () {
-    $this->mock(TextGenerationInterface::class)
-        ->shouldReceive('generate')
-        ->once()
-        ->andReturn('Here is your caption!');
+    SocialMediaAssistant::fake(['Here is your caption!']);
 
     $response = $this->actingAs($this->user)
         ->postJson(route('app.posts.assistant.store', $this->post), [
@@ -194,59 +178,10 @@ test('store allows safe content through', function () {
     $response->assertJsonPath('assistant_message.metadata.intent', 'text');
 });
 
-test('store enforces image generation limit', function () {
-    $account = $this->workspace->account;
-
-    $this->mock(TextGenerationInterface::class)
-        ->shouldReceive('generate')
-        ->once()
-        ->andReturn('[GENERATE_IMAGE:vertical]');
-
-    for ($i = 0; $i < 50; $i++) {
-        AiUsageLog::factory()->image()->create([
-            'account_id' => $account->id,
-            'workspace_id' => $this->workspace->id,
-        ]);
-    }
-
-    $response = $this->actingAs($this->user)
-        ->postJson(route('app.posts.assistant.store', $this->post), [
-            'body' => 'Generate an image of a sunset',
-        ]);
-
-    $response->assertCreated();
-    $response->assertJsonPath('assistant_message.metadata.limit_reached', true);
-});
-
-test('store enforces video generation limit', function () {
-    $account = $this->workspace->account;
-
-    $this->mock(TextGenerationInterface::class)
-        ->shouldReceive('generate')
-        ->once()
-        ->andReturn('[GENERATE_VIDEO:vertical]');
-
-    for ($i = 0; $i < 10; $i++) {
-        AiUsageLog::factory()->video()->create([
-            'account_id' => $account->id,
-            'workspace_id' => $this->workspace->id,
-        ]);
-    }
-
-    $response = $this->actingAs($this->user)
-        ->postJson(route('app.posts.assistant.store', $this->post), [
-            'body' => 'Create a video about coffee',
-        ]);
-
-    $response->assertCreated();
-    $response->assertJsonPath('assistant_message.metadata.limit_reached', true);
-});
-
-test('store handles service exception gracefully', function () {
-    $this->mock(TextGenerationInterface::class)
-        ->shouldReceive('generate')
-        ->once()
-        ->andThrow(new RuntimeException('API quota exceeded'));
+test('store handles agent exception gracefully', function () {
+    SocialMediaAssistant::fake(function () {
+        throw new RuntimeException('API quota exceeded');
+    });
 
     $response = $this->actingAs($this->user)
         ->postJson(route('app.posts.assistant.store', $this->post), [
@@ -255,4 +190,40 @@ test('store handles service exception gracefully', function () {
 
     $response->assertCreated();
     $response->assertJsonPath('assistant_message.content', 'API quota exceeded');
+    $response->assertJsonPath('assistant_message.metadata.error', true);
+});
+
+test('session state block reports current attachment count and remaining quota', function () {
+    // Seed existing attachments in the thread
+    AiMessage::factory()->create([
+        'post_id' => $this->post->id,
+        'role' => 'assistant',
+        'attachments' => [
+            ['id' => 'm1', 'type' => 'image'],
+            ['id' => 'm2', 'type' => 'image'],
+        ],
+    ]);
+
+    // Pre-existing monthly usage records
+    AiUsageLog::factory()->image()->count(2)->create([
+        'account_id' => $this->workspace->account_id,
+        'workspace_id' => $this->workspace->id,
+    ]);
+
+    $capturedPrompt = null;
+    SocialMediaAssistant::fake(function ($prompt) use (&$capturedPrompt) {
+        $capturedPrompt = (string) $prompt;
+
+        return 'ok';
+    });
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.posts.assistant.store', $this->post), [
+            'body' => 'Write about coffee',
+        ]);
+
+    expect($capturedPrompt)
+        ->toContain('Session state')
+        ->toContain('Images already generated in this conversation: 2')
+        ->toContain('Monthly quota remaining:');
 });

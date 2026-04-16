@@ -2,7 +2,7 @@
 import { Head, useForm } from '@inertiajs/vue3';
 import { IconLoader2, IconSparkles } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
 import { autofillBrand, skipBrand, storeBrand } from '@/actions/App/Http/Controllers/App/OnboardingController';
@@ -46,6 +46,19 @@ const form = useForm({
 const skipForm = useForm({});
 const isAutofilling = ref(false);
 const logoPreview = ref<string | null>(null);
+
+const toneLabel = computed(() =>
+    form.brand_tone ? trans(`onboarding.brand.tone_${form.brand_tone}`) : '',
+);
+
+const languageLabel = computed(() => {
+    const map: Record<string, string> = {
+        en: 'English',
+        'pt-BR': 'Português (Brasil)',
+        es: 'Español',
+    };
+    return map[form.content_language] ?? '';
+});
 
 const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 
@@ -160,7 +173,9 @@ const runAutofill = async () => {
                     <Label for="brand_tone">{{ $t('onboarding.brand.tone') }}</Label>
                     <Select v-model="form.brand_tone">
                         <SelectTrigger id="brand_tone" class="w-full">
-                            <SelectValue :placeholder="$t('onboarding.brand.tone')" />
+                            <SelectValue :placeholder="$t('onboarding.brand.tone')">
+                                {{ toneLabel }}
+                            </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="professional">{{ $t('onboarding.brand.tone_professional') }}</SelectItem>
@@ -179,7 +194,9 @@ const runAutofill = async () => {
                     <Label for="content_language">{{ $t('onboarding.brand.content_language') }}</Label>
                     <Select v-model="form.content_language">
                         <SelectTrigger id="content_language" class="w-full">
-                            <SelectValue :placeholder="$t('onboarding.brand.content_language')" />
+                            <SelectValue :placeholder="$t('onboarding.brand.content_language')">
+                                {{ languageLabel }}
+                            </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="en">English</SelectItem>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Form, Head, router } from '@inertiajs/vue3';
 import { IconClock, IconDots, IconShield, IconTrash, IconUser } from '@tabler/icons-vue';
-import { ref } from 'vue';
+import { trans } from 'laravel-vue-i18n';
+import { computed, ref } from 'vue';
 
 import WorkspaceController from '@/actions/App/Http/Controllers/App/WorkspaceController';
 import { WorkspaceRole } from '@/enums/workspace-role';
@@ -78,6 +79,19 @@ const props = defineProps<{
 const timezone = ref(props.workspace.timezone);
 const brandTone = ref(props.workspace.brand_tone ?? 'professional');
 const contentLanguage = ref(props.workspace.content_language ?? 'en');
+
+const toneLabel = computed(() =>
+    brandTone.value ? trans(`settings.brand.tone_${brandTone.value}`) : '',
+);
+
+const languageLabel = computed(() => {
+    const map: Record<string, string> = {
+        en: 'English',
+        'pt-BR': 'Português (Brasil)',
+        es: 'Español',
+    };
+    return map[contentLanguage.value] ?? '';
+});
 const inviteDialogOpen = ref(false);
 
 const removeMemberModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
@@ -193,7 +207,9 @@ const changeRole = (member: Member, role: string) => {
                             <Label for="brand_tone">{{ $t('settings.brand.tone') }}</Label>
                             <Select v-model="brandTone" name="brand_tone">
                                 <SelectTrigger id="brand_tone" class="w-full">
-                                    <SelectValue :placeholder="$t('settings.brand.tone')" />
+                                    <SelectValue :placeholder="$t('settings.brand.tone')">
+                                        {{ toneLabel }}
+                                    </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="professional">{{ $t('settings.brand.tone_professional') }}</SelectItem>
@@ -213,7 +229,9 @@ const changeRole = (member: Member, role: string) => {
                             <Label for="content_language">{{ $t('settings.brand.content_language') }}</Label>
                             <Select v-model="contentLanguage" name="content_language">
                                 <SelectTrigger id="content_language" class="w-full">
-                                    <SelectValue :placeholder="$t('settings.brand.content_language')" />
+                                    <SelectValue :placeholder="$t('settings.brand.content_language')">
+                                        {{ languageLabel }}
+                                    </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="en">English</SelectItem>

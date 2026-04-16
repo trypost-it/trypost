@@ -11,6 +11,7 @@ use App\Features\MemberLimit;
 use App\Features\SocialAccountLimit;
 use App\Features\WorkspaceLimit;
 use App\Http\Controllers\App\Controller;
+use App\Models\AiUsageLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -46,9 +47,9 @@ class UsageController extends Controller
                 'socialAccountLimit' => Feature::for($account)->value(SocialAccountLimit::class),
                 'memberCount' => $totalMembers,
                 'memberLimit' => Feature::for($account)->value(MemberLimit::class),
-                'aiImagesUsed' => 0,
+                'aiImagesUsed' => AiUsageLog::monthlyCount($account->id, 'image'),
                 'aiImagesLimit' => Feature::for($account)->value(AiImagesLimit::class),
-                'aiVideosUsed' => 0,
+                'aiVideosUsed' => AiUsageLog::monthlyCount($account->id, 'video'),
                 'aiVideosLimit' => Feature::for($account)->value(AiVideosLimit::class),
                 'dataRetentionDays' => Feature::for($account)->value(DataRetentionDays::class),
             ],

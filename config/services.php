@@ -122,4 +122,8 @@ return [
         'api_key' => env('GIPHY_API_KEY'),
     ],
 
+    'elevenlabs' => [
+        'api_key' => env('ELEVENLABS_API_KEY'),
+    ],
+
 ];

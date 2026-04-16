@@ -48,6 +48,23 @@ return [
         'autofill_error' => 'Não conseguimos ler esse site. Preencha manualmente.',
         'autofill_missing_url' => 'Informe a URL do seu site primeiro.',
         'logo_captured' => 'Logo capturado do seu site.',
+
+        'website' => 'Site',
+        'website_placeholder' => 'https://suamarca.com',
+        'brand_description' => 'Descrição',
+        'brand_description_placeholder' => 'Conte sobre sua marca, o que você faz e quem é seu público...',
+        'tone' => 'Tom de voz',
+        'tone_professional' => 'Profissional',
+        'tone_casual' => 'Casual',
+        'tone_friendly' => 'Amigável',
+        'tone_bold' => 'Ousado',
+        'tone_inspirational' => 'Inspirador',
+        'tone_humorous' => 'Bem-humorado',
+        'tone_educational' => 'Educacional',
+        'voice_notes' => 'Notas de voz',
+        'voice_notes_placeholder' => 'Diretrizes adicionais de escrita, palavras a evitar, preferências de estilo...',
+        'content_language' => 'Idioma do conteúdo',
+        'content_language_description' => 'Idioma usado nas legendas, hashtags e em qualquer texto dentro de imagens ou vídeos gerados por AI.',
     ],
 
     'connect' => [

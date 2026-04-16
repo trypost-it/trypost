@@ -48,6 +48,23 @@ return [
         'autofill_error' => 'We could not read that site. Please fill in manually.',
         'autofill_missing_url' => 'Add your website URL first.',
         'logo_captured' => 'Logo captured from your site.',
+
+        'website' => 'Website',
+        'website_placeholder' => 'https://yourbrand.com',
+        'brand_description' => 'Description',
+        'brand_description_placeholder' => 'Tell us about your brand, what you do, and who your audience is...',
+        'tone' => 'Tone of voice',
+        'tone_professional' => 'Professional',
+        'tone_casual' => 'Casual',
+        'tone_friendly' => 'Friendly',
+        'tone_bold' => 'Bold',
+        'tone_inspirational' => 'Inspirational',
+        'tone_humorous' => 'Humorous',
+        'tone_educational' => 'Educational',
+        'voice_notes' => 'Voice notes',
+        'voice_notes_placeholder' => 'Additional writing guidelines, words to avoid, style preferences...',
+        'content_language' => 'Content language',
+        'content_language_description' => 'Language used for AI-generated captions, hashtags, and any text inside generated images or videos.',
     ],
 
     'connect' => [

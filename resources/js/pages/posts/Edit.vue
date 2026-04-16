@@ -209,6 +209,10 @@ const removeMedia = (mediaId: string) => {
     media.value = media.value.filter((m) => m.id !== mediaId);
 };
 
+const addMediaFromAssistant = (mediaItem: { id: string; path: string; url: string; type: string; mime_type: string }) => {
+    media.value = [...media.value, mediaItem];
+};
+
 // Save logic
 const getSubmitData = () => {
     const platforms = post.value.post_platforms
@@ -444,8 +448,8 @@ const formatFileSize = (bytes: number): string => {
                                 <CommentsTab ref="commentsTabRef" :post-id="post.id" :current-user-id="authUserId" />
                             </TabsContent>
 
-                            <TabsContent value="assistant" class="flex-1 overflow-y-auto p-4">
-                                <WritingAssistantTab />
+                            <TabsContent value="assistant" class="flex-1 overflow-hidden">
+                                <WritingAssistantTab :post-id="post.id" :workspace-id="workspace.id" @add-media="addMediaFromAssistant" />
                             </TabsContent>
                         </Tabs>
                     </div>

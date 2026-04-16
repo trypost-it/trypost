@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Ai\Providers\ExtendedGeminiProvider;
 use App\Listeners\StripeEventListener;
 use App\Models\Account;
 use App\Models\AiMessage;
@@ -32,6 +33,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -43,6 +45,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Ai\Ai;
+use Laravel\Ai\Gateway\Gemini\GeminiGateway;
 use Laravel\Cashier\Cashier;
 use Laravel\Cashier\Events\WebhookReceived;
 use Laravel\Nightwatch\Facades\Nightwatch;
@@ -85,6 +89,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureMorphMap();
+        $this->configureAi();
         $this->configurePostHog();
         $this->configureRateLimiting();
         $this->configureSocialite();
@@ -97,6 +102,17 @@ class AppServiceProvider extends ServiceProvider
         Feature::resolveScopeUsing(fn () => auth()->user()?->account);
         Feature::useMorphMap();
         Feature::discover();
+    }
+
+    protected function configureAi(): void
+    {
+        Ai::extend('gemini', function (array $config) {
+            return new ExtendedGeminiProvider(
+                new GeminiGateway($this->app['events']),
+                $config,
+                $this->app->make(Dispatcher::class),
+            );
+        });
     }
 
     protected function configureMorphMap(): void

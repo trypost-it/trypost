@@ -193,7 +193,7 @@ const changeRole = (member: Member, role: string) => {
                         <div class="grid gap-2">
                             <Label for="brand_tone">{{ $t('settings.brand.tone') }}</Label>
                             <Select v-model="brandTone" name="brand_tone">
-                                <SelectTrigger id="brand_tone">
+                                <SelectTrigger id="brand_tone" class="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -213,7 +213,7 @@ const changeRole = (member: Member, role: string) => {
                         <div class="grid gap-2">
                             <Label for="content_language">{{ $t('settings.brand.content_language') }}</Label>
                             <Select v-model="contentLanguage" name="content_language">
-                                <SelectTrigger id="content_language">
+                                <SelectTrigger id="content_language" class="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>

@@ -125,7 +125,7 @@ class PostAssistantController extends Controller
                     ->map(fn (AiMessage $m) => ['role' => $m->role, 'content' => $m->content])
                     ->all();
 
-                $responseContent = $textService->generate($prompt, $history);
+                $responseContent = $textService->generate($prompt, $history, $workspace);
             }
 
             $assistantMessage = $post->aiMessages()->create([

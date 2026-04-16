@@ -84,6 +84,25 @@ return [
         'save' => 'Save',
     ],
 
+    'brand' => [
+        'title' => 'Brand',
+        'description' => 'Configure your brand identity for AI-generated content.',
+        'website' => 'Website',
+        'website_placeholder' => 'https://yourbrand.com',
+        'brand_description' => 'Description',
+        'brand_description_placeholder' => 'Tell us about your brand, what you do, and who your audience is...',
+        'tone' => 'Tone of voice',
+        'tone_professional' => 'Professional',
+        'tone_casual' => 'Casual',
+        'tone_friendly' => 'Friendly',
+        'tone_bold' => 'Bold',
+        'tone_inspirational' => 'Inspirational',
+        'tone_humorous' => 'Humorous',
+        'tone_educational' => 'Educational',
+        'voice_notes' => 'Voice notes',
+        'voice_notes_placeholder' => 'Additional writing guidelines, words to avoid, style preferences...',
+    ],
+
     'members' => [
         'title' => 'Members',
         'heading' => 'Team members',

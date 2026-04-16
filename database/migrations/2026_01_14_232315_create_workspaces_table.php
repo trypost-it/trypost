@@ -19,6 +19,10 @@ return new class extends Migration
             $table->uuid('user_id')->nullable();
             $table->string('name');
             $table->string('timezone');
+            $table->string('brand_website')->nullable();
+            $table->text('brand_description')->nullable();
+            $table->string('brand_tone')->default('professional');
+            $table->text('brand_voice_notes')->nullable();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();

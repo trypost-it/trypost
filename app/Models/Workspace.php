@@ -24,6 +24,10 @@ class Workspace extends Model
         'user_id',
         'name',
         'timezone',
+        'brand_website',
+        'brand_description',
+        'brand_tone',
+        'brand_voice_notes',
     ];
 
     protected $appends = ['has_logo', 'logo_url'];

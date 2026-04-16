@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Ai;
 
+use App\Models\Workspace;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -21,12 +22,20 @@ class TextGenerationService
     /**
      * @param  array<int, array{role: string, content: string}>  $history
      */
-    public function generate(string $prompt, array $history = []): string
+    public function generate(string $prompt, array $history = [], ?Workspace $workspace = null): string
     {
+        $systemPrompt = view('prompts.assistant.system', [
+            'brandName' => $workspace?->name ?? '',
+            'brandDescription' => $workspace?->brand_description ?? '',
+            'brandWebsite' => $workspace?->brand_website ?? '',
+            'tone' => $workspace?->brand_tone ?? 'professional',
+            'voiceNotes' => $workspace?->brand_voice_notes ?? '',
+        ])->render();
+
         $messages = [
             [
                 'role' => 'system',
-                'content' => 'You are a social media content expert. Help users write engaging captions, hashtags, and post content. Be creative, concise, and on-brand. Respond in the same language the user writes in.',
+                'content' => $systemPrompt,
             ],
             ...$history,
             ['role' => 'user', 'content' => $prompt],

@@ -22,6 +22,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
     Table,
@@ -31,6 +38,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { destroy as destroyInvite } from '@/routes/app/invites';
 import { remove as removeMemberRoute, updateRole } from '@/routes/app/members';
@@ -41,6 +49,10 @@ interface Workspace {
     timezone: string;
     has_logo: boolean;
     logo_url: string | null;
+    brand_website: string | null;
+    brand_description: string | null;
+    brand_tone: string;
+    brand_voice_notes: string | null;
 }
 
 interface Member {
@@ -64,6 +76,7 @@ const props = defineProps<{
 }>();
 
 const timezone = ref(props.workspace.timezone);
+const brandTone = ref(props.workspace.brand_tone ?? 'professional');
 const inviteDialogOpen = ref(false);
 
 const removeMemberModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
@@ -128,6 +141,82 @@ const changeRole = (member: Member, role: string) => {
                         />
                         <input type="hidden" name="timezone" :value="timezone" />
                         <InputError :message="errors.timezone" />
+                    </div>
+
+                    <Button :disabled="processing">{{ $t('settings.workspace.save') }}</Button>
+                </Form>
+            </div>
+
+            <Separator />
+
+            <div class="flex flex-col space-y-6">
+                <HeadingSmall
+                    :title="$t('settings.brand.title')"
+                    :description="$t('settings.brand.description')"
+                />
+
+                <Form
+                    v-bind="WorkspaceController.updateSettings.form()"
+                    class="space-y-6"
+                    v-slot="{ errors, processing }"
+                >
+                    <input type="hidden" name="name" :value="workspace.name" />
+                    <input type="hidden" name="timezone" :value="workspace.timezone" />
+
+                    <div class="grid gap-2">
+                        <Label for="brand_website">{{ $t('settings.brand.website') }}</Label>
+                        <Input
+                            id="brand_website"
+                            name="brand_website"
+                            type="url"
+                            :default-value="workspace.brand_website ?? ''"
+                            :placeholder="trans('settings.brand.website_placeholder')"
+                        />
+                        <InputError :message="errors.brand_website" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="brand_description">{{ $t('settings.brand.brand_description') }}</Label>
+                        <Textarea
+                            id="brand_description"
+                            name="brand_description"
+                            :default-value="workspace.brand_description ?? ''"
+                            :placeholder="trans('settings.brand.brand_description_placeholder')"
+                            rows="3"
+                        />
+                        <InputError :message="errors.brand_description" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="brand_tone">{{ $t('settings.brand.tone') }}</Label>
+                        <Select v-model="brandTone" name="brand_tone">
+                            <SelectTrigger id="brand_tone">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="professional">{{ $t('settings.brand.tone_professional') }}</SelectItem>
+                                <SelectItem value="casual">{{ $t('settings.brand.tone_casual') }}</SelectItem>
+                                <SelectItem value="friendly">{{ $t('settings.brand.tone_friendly') }}</SelectItem>
+                                <SelectItem value="bold">{{ $t('settings.brand.tone_bold') }}</SelectItem>
+                                <SelectItem value="inspirational">{{ $t('settings.brand.tone_inspirational') }}</SelectItem>
+                                <SelectItem value="humorous">{{ $t('settings.brand.tone_humorous') }}</SelectItem>
+                                <SelectItem value="educational">{{ $t('settings.brand.tone_educational') }}</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <input type="hidden" name="brand_tone" :value="brandTone" />
+                        <InputError :message="errors.brand_tone" />
+                    </div>
+
+                    <div class="grid gap-2">
+                        <Label for="brand_voice_notes">{{ $t('settings.brand.voice_notes') }}</Label>
+                        <Textarea
+                            id="brand_voice_notes"
+                            name="brand_voice_notes"
+                            :default-value="workspace.brand_voice_notes ?? ''"
+                            :placeholder="trans('settings.brand.voice_notes_placeholder')"
+                            rows="3"
+                        />
+                        <InputError :message="errors.brand_voice_notes" />
                     </div>
 
                     <Button :disabled="processing">{{ $t('settings.workspace.save') }}</Button>

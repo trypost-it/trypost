@@ -101,6 +101,8 @@ return [
         'tone_educational' => 'Educational',
         'voice_notes' => 'Voice notes',
         'voice_notes_placeholder' => 'Additional writing guidelines, words to avoid, style preferences...',
+        'content_language' => 'Content language',
+        'content_language_description' => 'Language used for AI-generated captions, hashtags, and any text inside generated images or videos.',
     ],
 
     'members' => [

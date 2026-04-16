@@ -46,6 +46,7 @@ class VideoGenerationService
             'prompt' => $prompt,
             'brand_name' => $workspace->name ?? '',
             'tone' => $workspace->brand_tone ?? 'professional',
+            'content_language' => $workspace->content_language ?? 'en',
         ])->render();
 
         $operationName = $this->startGeneration($fullPrompt, $aspectRatio);

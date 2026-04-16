@@ -23,6 +23,7 @@ return new class extends Migration
             $table->text('brand_description')->nullable();
             $table->string('brand_tone')->default('professional');
             $table->text('brand_voice_notes')->nullable();
+            $table->string('content_language', 10)->default('en');
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();

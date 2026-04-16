@@ -28,6 +28,7 @@ class Workspace extends Model
         'brand_description',
         'brand_tone',
         'brand_voice_notes',
+        'content_language',
     ];
 
     protected $appends = ['has_logo', 'logo_url'];

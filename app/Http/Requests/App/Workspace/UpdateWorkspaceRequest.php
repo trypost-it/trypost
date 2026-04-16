@@ -23,6 +23,7 @@ class UpdateWorkspaceRequest extends FormRequest
             'brand_description' => ['nullable', 'string', 'max:2000'],
             'brand_tone' => ['nullable', 'string', 'in:professional,casual,friendly,bold,inspirational,humorous,educational'],
             'brand_voice_notes' => ['nullable', 'string', 'max:2000'],
+            'content_language' => ['sometimes', 'string', 'in:en,pt-BR,es'],
         ];
     }
 

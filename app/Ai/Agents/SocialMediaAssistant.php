@@ -40,9 +40,14 @@ class SocialMediaAssistant implements Agent, Conversational, HasTools
             'brand_website' => $this->workspace->brand_website ?? '',
             'tone' => $this->workspace->brand_tone ?? 'professional',
             'voice_notes' => $this->workspace->brand_voice_notes ?? '',
-            'locale' => app()->getLocale(),
+            'content_language' => $this->workspace->content_language ?? 'en',
             'platform_rules' => $this->activePlatformRules(),
         ])->render();
+    }
+
+    public function contentLanguage(): string
+    {
+        return $this->workspace->content_language ?? 'en';
     }
 
     /**

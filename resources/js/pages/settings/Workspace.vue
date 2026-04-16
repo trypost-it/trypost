@@ -53,6 +53,7 @@ interface Workspace {
     brand_description: string | null;
     brand_tone: string;
     brand_voice_notes: string | null;
+    content_language: string;
 }
 
 interface Member {
@@ -77,6 +78,7 @@ const props = defineProps<{
 
 const timezone = ref(props.workspace.timezone);
 const brandTone = ref(props.workspace.brand_tone ?? 'professional');
+const contentLanguage = ref(props.workspace.content_language ?? 'en');
 const inviteDialogOpen = ref(false);
 
 const removeMemberModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
@@ -187,25 +189,47 @@ const changeRole = (member: Member, role: string) => {
                         <InputError :message="errors.brand_description" />
                     </div>
 
-                    <div class="grid gap-2">
-                        <Label for="brand_tone">{{ $t('settings.brand.tone') }}</Label>
-                        <Select v-model="brandTone" name="brand_tone">
-                            <SelectTrigger id="brand_tone">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="professional">{{ $t('settings.brand.tone_professional') }}</SelectItem>
-                                <SelectItem value="casual">{{ $t('settings.brand.tone_casual') }}</SelectItem>
-                                <SelectItem value="friendly">{{ $t('settings.brand.tone_friendly') }}</SelectItem>
-                                <SelectItem value="bold">{{ $t('settings.brand.tone_bold') }}</SelectItem>
-                                <SelectItem value="inspirational">{{ $t('settings.brand.tone_inspirational') }}</SelectItem>
-                                <SelectItem value="humorous">{{ $t('settings.brand.tone_humorous') }}</SelectItem>
-                                <SelectItem value="educational">{{ $t('settings.brand.tone_educational') }}</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <input type="hidden" name="brand_tone" :value="brandTone" />
-                        <InputError :message="errors.brand_tone" />
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="grid gap-2">
+                            <Label for="brand_tone">{{ $t('settings.brand.tone') }}</Label>
+                            <Select v-model="brandTone" name="brand_tone">
+                                <SelectTrigger id="brand_tone">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="professional">{{ $t('settings.brand.tone_professional') }}</SelectItem>
+                                    <SelectItem value="casual">{{ $t('settings.brand.tone_casual') }}</SelectItem>
+                                    <SelectItem value="friendly">{{ $t('settings.brand.tone_friendly') }}</SelectItem>
+                                    <SelectItem value="bold">{{ $t('settings.brand.tone_bold') }}</SelectItem>
+                                    <SelectItem value="inspirational">{{ $t('settings.brand.tone_inspirational') }}</SelectItem>
+                                    <SelectItem value="humorous">{{ $t('settings.brand.tone_humorous') }}</SelectItem>
+                                    <SelectItem value="educational">{{ $t('settings.brand.tone_educational') }}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <input type="hidden" name="brand_tone" :value="brandTone" />
+                            <InputError :message="errors.brand_tone" />
+                        </div>
+
+                        <div class="grid gap-2">
+                            <Label for="content_language">{{ $t('settings.brand.content_language') }}</Label>
+                            <Select v-model="contentLanguage" name="content_language">
+                                <SelectTrigger id="content_language">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="en">English</SelectItem>
+                                    <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
+                                    <SelectItem value="es">Español</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <input type="hidden" name="content_language" :value="contentLanguage" />
+                            <InputError :message="errors.content_language" />
+                        </div>
                     </div>
+
+                    <p class="-mt-4 text-xs text-muted-foreground">
+                        {{ $t('settings.brand.content_language_description') }}
+                    </p>
 
                     <div class="grid gap-2">
                         <Label for="brand_voice_notes">{{ $t('settings.brand.voice_notes') }}</Label>

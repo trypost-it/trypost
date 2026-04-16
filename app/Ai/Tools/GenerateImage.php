@@ -65,6 +65,7 @@ TXT;
             'brand_name' => $this->workspace->name ?? '',
             'tone' => $this->workspace->brand_tone ?? 'professional',
             'aspect_ratio' => $aspectRatio,
+            'content_language' => $this->workspace->content_language ?? 'en',
         ])->render();
 
         $response = Image::of($renderedPrompt)

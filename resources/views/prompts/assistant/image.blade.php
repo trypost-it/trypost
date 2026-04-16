@@ -5,6 +5,7 @@ Image requirements:
 - Eye-catching, professional quality suitable for social media
 - Modern design with vibrant colors and clean composition
 - If including text on the image, keep it minimal, bold, and highly readable
+- ANY text that appears on the image MUST be written in {{ $content_language }}. Do not use any other language for on-image text.
 - No watermarks, no borders, no mockup frames
 - Do NOT include any offensive, violent, sexual, or inappropriate content
 @if($brand_name)

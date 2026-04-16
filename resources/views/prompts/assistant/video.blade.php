@@ -5,6 +5,7 @@ Video requirements:
 - Professional quality suitable for social media platforms
 - Modern aesthetic with good lighting and composition
 - Hook the viewer in the first 1-2 seconds
+- ANY text that appears on screen or any spoken narration MUST be in {{ $content_language }}. Do not use any other language for on-screen text or audio.
 - No watermarks, no borders
 - Do NOT include any offensive, violent, sexual, or inappropriate content
 @if($brand_name)

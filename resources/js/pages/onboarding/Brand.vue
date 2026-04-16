@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, useHttp } from '@inertiajs/vue3';
 import { IconLoader2, IconSparkles } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
@@ -60,7 +60,17 @@ const languageLabel = computed(() => {
     return map[form.content_language] ?? '';
 });
 
-const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+interface AutofillResponse {
+    name: string | null;
+    brand_description: string | null;
+    content_language: string | null;
+    brand_tone: string | null;
+    brand_voice_notes: string | null;
+    logo_url: string | null;
+    has_logo: boolean;
+}
+
+const autofillHttp = useHttp<{ url: string }, AutofillResponse>({ url: '' });
 
 const submit = () => {
     form.post(storeBrand.url());
@@ -81,48 +91,34 @@ const runAutofill = async () => {
     isAutofilling.value = true;
 
     try {
-        const response = await fetch(autofillBrand.url(), {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify({ url }),
-        });
+        autofillHttp.data.url = url;
 
-        if (! response.ok) {
-            const body = await response.json().catch(() => ({}));
-            toast.error(body.message ?? trans('onboarding.brand.autofill_error'));
-            return;
-        }
+        const data = await autofillHttp.post(autofillBrand.url());
 
-        const data = await response.json();
-
-        if (data.brand_description) {
+        if (data?.brand_description) {
             form.brand_description = data.brand_description;
         }
 
-        if (data.content_language) {
+        if (data?.content_language) {
             form.content_language = data.content_language;
         }
 
-        if (data.brand_tone) {
+        if (data?.brand_tone) {
             form.brand_tone = data.brand_tone;
         }
 
-        if (data.brand_voice_notes) {
+        if (data?.brand_voice_notes) {
             form.brand_voice_notes = data.brand_voice_notes;
         }
 
-        if (data.logo_url && data.has_logo) {
+        if (data?.logo_url && data.has_logo) {
             logoPreview.value = data.logo_url;
         }
 
         toast.success(trans('onboarding.brand.autofill_success'));
-    } catch {
-        toast.error(trans('onboarding.brand.autofill_error'));
+    } catch (error) {
+        const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        toast.error(message ?? trans('onboarding.brand.autofill_error'));
     } finally {
         isAutofilling.value = false;
     }

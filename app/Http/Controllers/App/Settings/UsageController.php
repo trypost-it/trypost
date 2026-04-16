@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App\Settings;
 
+use App\Enums\Ai\UsageType;
 use App\Features\AiImagesLimit;
 use App\Features\AiVideosLimit;
 use App\Features\DataRetentionDays;
@@ -47,9 +48,9 @@ class UsageController extends Controller
                 'socialAccountLimit' => Feature::for($account)->value(SocialAccountLimit::class),
                 'memberCount' => $totalMembers,
                 'memberLimit' => Feature::for($account)->value(MemberLimit::class),
-                'aiImagesUsed' => AiUsageLog::monthlyCount($account->id, 'image'),
+                'aiImagesUsed' => AiUsageLog::monthlyCount($account->id, UsageType::Image),
                 'aiImagesLimit' => Feature::for($account)->value(AiImagesLimit::class),
-                'aiVideosUsed' => AiUsageLog::monthlyCount($account->id, 'video'),
+                'aiVideosUsed' => AiUsageLog::monthlyCount($account->id, UsageType::Video),
                 'aiVideosLimit' => Feature::for($account)->value(AiVideosLimit::class),
                 'dataRetentionDays' => Feature::for($account)->value(DataRetentionDays::class),
             ],

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Ai\Intent;
+use App\Enums\Ai\UsageType;
 use App\Models\Account;
 use App\Models\AiUsageLog;
 use App\Models\Workspace;
@@ -22,9 +23,9 @@ test('monthly count returns correct count for account and type', function () {
         'workspace_id' => $workspace->id,
     ]);
 
-    expect(AiUsageLog::monthlyCount($account->id, 'image'))->toBe(3);
-    expect(AiUsageLog::monthlyCount($account->id, 'video'))->toBe(2);
-    expect(AiUsageLog::monthlyCount($account->id, 'audio'))->toBe(0);
+    expect(AiUsageLog::monthlyCount($account->id, UsageType::Image))->toBe(3);
+    expect(AiUsageLog::monthlyCount($account->id, UsageType::Video))->toBe(2);
+    expect(AiUsageLog::monthlyCount($account->id, UsageType::Audio))->toBe(0);
 });
 
 test('monthly count excludes logs from other months', function () {
@@ -42,7 +43,7 @@ test('monthly count excludes logs from other months', function () {
         'created_at' => now()->subMonth(),
     ]);
 
-    expect(AiUsageLog::monthlyCount($account->id, 'image'))->toBe(1);
+    expect(AiUsageLog::monthlyCount($account->id, UsageType::Image))->toBe(1);
 });
 
 test('monthly count excludes logs from other accounts', function () {
@@ -61,7 +62,7 @@ test('monthly count excludes logs from other accounts', function () {
         'workspace_id' => $otherWorkspace->id,
     ]);
 
-    expect(AiUsageLog::monthlyCount($account->id, 'image'))->toBe(1);
+    expect(AiUsageLog::monthlyCount($account->id, UsageType::Image))->toBe(1);
 });
 
 test('intent detector detects video intent', function () {

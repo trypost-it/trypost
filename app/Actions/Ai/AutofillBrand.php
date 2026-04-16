@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Actions\Ai;
 
+use App\Ai\Agents\BrandAnalyzer;
 use App\Models\Workspace;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use League\HTMLToMarkdown\HtmlConverter;
 use RuntimeException;
 use Symfony\Component\DomCrawler\Crawler;
+use Throwable;
 
 class AutofillBrand
 {
@@ -19,7 +24,7 @@ class AutofillBrand
     private const ALLOWED_LOGO_MIME = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/x-icon', 'image/vnd.microsoft.icon'];
 
     /**
-     * @return array{name: ?string, brand_description: ?string, content_language: ?string, logo_url: ?string}
+     * @return array{name: ?string, brand_description: ?string, content_language: ?string, brand_tone: ?string, brand_voice_notes: ?string, logo_url: ?string}
      */
     public function __invoke(string $url, Workspace $workspace): array
     {
@@ -35,12 +40,91 @@ class AutofillBrand
             $this->attachLogoToWorkspace($workspace, $logoUrl);
         }
 
-        return [
+        $result = [
             'name' => $this->extractName($crawler),
             'brand_description' => $this->extractDescription($crawler),
             'content_language' => $this->extractLanguage($crawler),
+            'brand_tone' => null,
+            'brand_voice_notes' => null,
             'logo_url' => $logoUrl,
         ];
+
+        if ($this->isLlmAvailable()) {
+            $llm = $this->analyzeWithLlm($crawler);
+
+            if ($llm !== null) {
+                $result['brand_description'] = $llm['description'] ?? $result['brand_description'];
+                $result['content_language'] = $llm['language'] ?? $result['content_language'];
+                $result['brand_tone'] = $llm['tone'] ?? null;
+                $result['brand_voice_notes'] = $llm['voice_notes'] ?? null;
+            }
+        }
+
+        return $result;
+    }
+
+    private function isLlmAvailable(): bool
+    {
+        $provider = config('trypost.ai.text_provider');
+
+        return match ($provider) {
+            'openai' => ! empty(config('services.openai.api_key')),
+            'gemini' => ! empty(config('services.gemini.api_key')),
+            default => false,
+        };
+    }
+
+    /**
+     * @return array{description: string, tone: string, language: string, voice_notes: string}|null
+     */
+    private function analyzeWithLlm(Crawler $crawler): ?array
+    {
+        $markdown = $this->buildMarkdown($crawler);
+
+        if ($markdown === '') {
+            return null;
+        }
+
+        try {
+            $response = (new BrandAnalyzer)->prompt($markdown);
+        } catch (Throwable $e) {
+            Log::warning('BrandAnalyzer failed, falling back to meta tags', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+
+        return [
+            'description' => (string) ($response['description'] ?? ''),
+            'tone' => (string) ($response['tone'] ?? ''),
+            'language' => (string) ($response['language'] ?? ''),
+            'voice_notes' => (string) ($response['voice_notes'] ?? ''),
+        ];
+    }
+
+    private function buildMarkdown(Crawler $crawler): string
+    {
+        $body = $crawler->filter('main')->first();
+
+        if ($body->count() === 0) {
+            $body = $crawler->filter('body')->first();
+        }
+
+        if ($body->count() === 0) {
+            return '';
+        }
+
+        // Strip noise before converting.
+        foreach (['script', 'style', 'nav', 'footer', 'noscript'] as $selector) {
+            $body->filter($selector)->each(function (Crawler $node) {
+                $domNode = $node->getNode(0);
+                $domNode?->parentNode?->removeChild($domNode);
+            });
+        }
+
+        $html = $body->html();
+        $markdown = (new HtmlConverter(['strip_tags' => true]))->convert($html);
+
+        return Str::limit(trim($markdown), 4000, '');
     }
 
     private function normalizeUrl(string $url): string

@@ -108,6 +108,14 @@ const runAutofill = async () => {
             form.content_language = data.content_language;
         }
 
+        if (data.brand_tone) {
+            form.brand_tone = data.brand_tone;
+        }
+
+        if (data.brand_voice_notes) {
+            form.brand_voice_notes = data.brand_voice_notes;
+        }
+
         if (data.logo_url && data.has_logo) {
             logoPreview.value = data.logo_url;
         }

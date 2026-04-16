@@ -50,6 +50,7 @@
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.9",
         "league/flysystem-aws-s3-v3": "^3.0",
+        "league/html-to-markdown": "^5.1",
         "posthog/posthog-php": "^4.1",
         "predis/predis": "^3.3",
         "sendkit/sendkit-laravel": "^1.1",

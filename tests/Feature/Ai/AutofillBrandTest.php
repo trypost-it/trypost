@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\Ai\AutofillBrand;
+use App\Ai\Agents\BrandAnalyzer;
 use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\User;
@@ -15,6 +16,10 @@ beforeEach(function () {
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
+
+    // Run tests without LLM credentials so the deterministic fallback is exercised.
+    config()->set('services.gemini.api_key', '');
+    config()->set('services.openai.api_key', '');
 });
 
 test('extracts name, description, language, and logo from meta tags', function () {
@@ -126,6 +131,95 @@ test('throws when upstream site returns an error', function () {
 
     expect(fn () => (new AutofillBrand)('https://example.com', $this->workspace))
         ->toThrow(RuntimeException::class, 'HTTP 500');
+});
+
+test('when llm is configured, polishes description/tone/language/voice_notes via BrandAnalyzer', function () {
+    config()->set('services.gemini.api_key', 'fake-key');
+
+    Http::fake([
+        'example.com' => Http::response(<<<'HTML'
+            <html lang="en">
+            <head>
+              <title>Widget Co</title>
+              <meta name="description" content="A very terse seo blurb.">
+            </head>
+            <body>
+              <main>
+                <h1>Build widgets faster</h1>
+                <p>Widget Co helps small teams ship production widgets 10x faster without writing boilerplate.</p>
+              </main>
+            </body>
+            </html>
+        HTML, 200),
+    ]);
+
+    BrandAnalyzer::fake([
+        [
+            'description' => 'Widget Co helps small teams ship production widgets faster.',
+            'tone' => 'friendly',
+            'language' => 'en',
+            'voice_notes' => 'Use short punchy sentences. Focus on developer benefits.',
+        ],
+    ]);
+
+    $result = (new AutofillBrand)('https://example.com', $this->workspace);
+
+    expect($result['brand_description'])->toBe('Widget Co helps small teams ship production widgets faster.');
+    expect($result['brand_tone'])->toBe('friendly');
+    expect($result['content_language'])->toBe('en');
+    expect($result['brand_voice_notes'])->toBe('Use short punchy sentences. Focus on developer benefits.');
+});
+
+test('when llm is not configured, falls back to meta tags only', function () {
+    // beforeEach already cleared api keys.
+    Http::fake([
+        'example.com' => Http::response(<<<'HTML'
+            <html lang="pt-BR">
+            <head>
+              <title>Marca</title>
+              <meta name="description" content="Uma descrição curta.">
+            </head>
+            <body><main><p>hello</p></main></body>
+            </html>
+        HTML, 200),
+    ]);
+
+    // Fail loud if BrandAnalyzer is called.
+    BrandAnalyzer::fake()->preventStrayPrompts();
+
+    $result = (new AutofillBrand)('https://example.com', $this->workspace);
+
+    expect($result['brand_description'])->toBe('Uma descrição curta.');
+    expect($result['content_language'])->toBe('pt-BR');
+    expect($result['brand_tone'])->toBeNull();
+    expect($result['brand_voice_notes'])->toBeNull();
+});
+
+test('falls back to meta tags when BrandAnalyzer throws', function () {
+    config()->set('services.gemini.api_key', 'fake-key');
+
+    Http::fake([
+        'example.com' => Http::response(<<<'HTML'
+            <html lang="en">
+            <head>
+              <title>Acme</title>
+              <meta name="description" content="Fallback desc.">
+            </head>
+            <body><main><p>hi</p></main></body>
+            </html>
+        HTML, 200),
+    ]);
+
+    BrandAnalyzer::fake([
+        fn () => throw new RuntimeException('LLM went down'),
+    ]);
+
+    $result = (new AutofillBrand)('https://example.com', $this->workspace);
+
+    expect($result['brand_description'])->toBe('Fallback desc.');
+    expect($result['content_language'])->toBe('en');
+    expect($result['brand_tone'])->toBeNull();
+    expect($result['brand_voice_notes'])->toBeNull();
 });
 
 test('skips logo that is too large or wrong mime', function () {

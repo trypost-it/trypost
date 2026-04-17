@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\AiMessage\Status;
 use Database\Factories\AiMessageFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -23,6 +24,8 @@ class AiMessage extends Model
         'role',
         'content',
         'attachments',
+        'status',
+        'error_message',
         'metadata',
     ];
 
@@ -31,6 +34,7 @@ class AiMessage extends Model
         return [
             'attachments' => 'array',
             'metadata' => 'array',
+            'status' => Status::class,
         ];
     }
 

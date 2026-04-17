@@ -26,7 +26,7 @@ class UpdatePost
 
         $scheduledAt = $post->scheduled_at;
         if (data_get($data, 'scheduled_at')) {
-            $scheduledAt = Carbon::parse(data_get($data, 'scheduled_at'), $workspace->timezone)->utc();
+            $scheduledAt = Carbon::parse(data_get($data, 'scheduled_at'))->utc();
         }
 
         $status = data_get($data, 'status', $post->status);

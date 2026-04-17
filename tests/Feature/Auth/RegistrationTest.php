@@ -22,7 +22,7 @@ test('new users can register', function () {
     $response->assertRedirect(route('register.success', absolute: false));
 });
 
-test('new users get a default workspace on registration', function () {
+test('new users do not get a default workspace on registration', function () {
     $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
@@ -32,12 +32,12 @@ test('new users get a default workspace on registration', function () {
     $user = User::where('email', 'test@example.com')->first();
 
     expect($user)->not->toBeNull();
-    expect($user->workspaces)->toHaveCount(1);
-    expect($user->workspaces->first()->name)->toBe("Test User's Workspace");
-    expect($user->workspaces->first()->timezone)->toBe('UTC');
+    expect($user->account_id)->not->toBeNull();
+    expect($user->workspaces()->count())->toBe(0);
+    expect($user->current_workspace_id)->toBeNull();
 });
 
-test('new users workspace uses provided timezone', function () {
+test('new users can register with a timezone preference', function () {
     $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
@@ -48,7 +48,7 @@ test('new users workspace uses provided timezone', function () {
     $user = User::where('email', 'test@example.com')->first();
 
     expect($user)->not->toBeNull();
-    expect($user->workspaces->first()->timezone)->toBe('America/Sao_Paulo');
+    expect($user->workspaces()->count())->toBe(0);
 });
 
 test('new users do not have verified email by default', function () {
@@ -64,31 +64,27 @@ test('new users do not have verified email by default', function () {
 });
 
 test('new users can register with deprecated timezone Asia/Calcutta', function () {
-    $this->post(route('register.store'), [
+    $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
         'password' => 'Password123!',
         'timezone' => 'Asia/Calcutta',
     ]);
 
-    $user = User::where('email', 'test@example.com')->first();
-
-    expect($user)->not->toBeNull();
-    expect($user->workspaces->first()->timezone)->toBe('Asia/Calcutta');
+    $response->assertSessionHasNoErrors();
+    expect(User::where('email', 'test@example.com')->exists())->toBeTrue();
 });
 
 test('new users can register with deprecated timezone US/Eastern', function () {
-    $this->post(route('register.store'), [
+    $response = $this->post(route('register.store'), [
         'name' => 'Test User',
         'email' => 'test@example.com',
         'password' => 'Password123!',
         'timezone' => 'US/Eastern',
     ]);
 
-    $user = User::where('email', 'test@example.com')->first();
-
-    expect($user)->not->toBeNull();
-    expect($user->workspaces->first()->timezone)->toBe('US/Eastern');
+    $response->assertSessionHasNoErrors();
+    expect(User::where('email', 'test@example.com')->exists())->toBeTrue();
 });
 
 test('new users cannot register with invalid timezone', function () {

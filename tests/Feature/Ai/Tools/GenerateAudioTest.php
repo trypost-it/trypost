@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Ai\Tools\AttachmentCollector;
 use App\Ai\Tools\GenerateAudio;
 use App\Enums\Ai\UsageType;
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\AiUsageLog;
 use App\Models\Post;
@@ -18,7 +17,7 @@ use Laravel\Ai\Tools\Request as ToolRequest;
 
 beforeEach(function () {
     Storage::fake('public');
-    $this->user = User::factory()->create(['setup' => Setup::Completed]);
+    $this->user = User::factory()->create();
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->post = Post::factory()->create([

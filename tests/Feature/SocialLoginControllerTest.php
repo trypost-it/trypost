@@ -65,7 +65,9 @@ test('google callback creates new user when email does not exist', function () {
     expect($user)->not->toBeNull();
     expect($user->name)->toBe('New User');
     expect($user->email_verified_at)->not->toBeNull();
-    expect($user->currentWorkspace)->not->toBeNull();
+    expect($user->account_id)->not->toBeNull();
+    expect($user->workspaces()->count())->toBe(0);
+    expect($user->current_workspace_id)->toBeNull();
     $this->assertAuthenticatedAs($user);
 });
 

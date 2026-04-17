@@ -23,7 +23,6 @@ class Workspace extends Model
         'account_id',
         'user_id',
         'name',
-        'timezone',
         'brand_website',
         'brand_description',
         'brand_tone',

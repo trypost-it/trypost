@@ -6,6 +6,7 @@ namespace App\Http\Controllers\App;
 
 use App\Actions\Post\CreatePost;
 use App\Actions\Post\DeletePost;
+use App\Actions\Post\SyncPostPlatforms;
 use App\Actions\Post\UpdatePost;
 use App\Enums\Post\Action as PostAction;
 use App\Enums\Post\Status as PostStatus;
@@ -67,7 +68,7 @@ class PostController extends Controller
 
         $this->authorize('view', $workspace);
 
-        $tz = $workspace->timezone;
+        $tz = 'UTC';
         $view = $request->input('view', 'week');
 
         $currentDay = $request->input('day')
@@ -152,6 +153,10 @@ class PostController extends Controller
 
         if ($post->workspace_id !== $workspace->id) {
             abort(404);
+        }
+
+        if (in_array($post->status, [PostStatus::Draft, PostStatus::Scheduled, PostStatus::Failed], true)) {
+            SyncPostPlatforms::execute($post);
         }
 
         $post->load(['postPlatforms.socialAccount', 'labels']);

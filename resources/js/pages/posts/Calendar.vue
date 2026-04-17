@@ -34,7 +34,6 @@ interface Post {
 interface Workspace {
     id: string;
     name: string;
-    timezone: string;
 }
 
 interface Props {

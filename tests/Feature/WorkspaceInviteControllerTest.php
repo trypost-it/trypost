@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use App\Mail\WorkspaceInvite as WorkspaceInviteMail;
 use App\Models\Account;
@@ -17,7 +16,6 @@ beforeEach(function () {
 
     $this->account = Account::factory()->create();
     $this->user = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->account->update(['owner_id' => $this->user->id]);
@@ -51,7 +49,6 @@ test('workspace settings shows members and invites', function () {
         ->has('workspace')
         ->has('members')
         ->has('invitations')
-        ->has('timezones')
     );
 });
 
@@ -99,7 +96,6 @@ test('store invite fails if invite already exists', function () {
 
 test('store invite fails if user is already member', function () {
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
@@ -153,7 +149,6 @@ test('destroy invite returns 404 for other account invite', function () {
 // Remove member tests
 test('remove member requires authentication', function () {
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
@@ -165,7 +160,6 @@ test('remove member requires authentication', function () {
 
 test('remove member removes user from workspace', function () {
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
@@ -185,7 +179,6 @@ test('remove member fails for owner', function () {
 // Update role tests
 test('update role requires authentication', function () {
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
@@ -199,7 +192,6 @@ test('update role requires authentication', function () {
 
 test('update role changes member to admin', function () {
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
@@ -214,7 +206,6 @@ test('update role changes member to admin', function () {
 
 test('update role changes admin to member', function () {
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Admin->value]);
@@ -237,7 +228,6 @@ test('update role fails for workspace owner', function () {
 
 test('update role fails with invalid role', function () {
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
@@ -251,13 +241,11 @@ test('update role fails with invalid role', function () {
 
 test('update role requires authorization', function () {
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => WorkspaceRole::Member->value]);
 
     $nonAdmin = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($nonAdmin->id, ['role' => WorkspaceRole::Member->value]);

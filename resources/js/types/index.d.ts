@@ -7,7 +7,6 @@ export interface Workspace {
     id: string;
     name: string;
     logo_url: string | null;
-    timezone: string;
     role?: WorkspaceRole | null;
     [key: string]: unknown;
 }

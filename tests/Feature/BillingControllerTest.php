@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\Account;
 use App\Models\Plan;
@@ -12,7 +11,6 @@ use App\Models\Workspace;
 beforeEach(function () {
     $this->account = Account::factory()->create();
     $this->user = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->account->update(['owner_id' => $this->user->id]);
@@ -150,7 +148,6 @@ test('non-owner admin cannot access billing index', function () {
     config(['trypost.self_hosted' => false]);
 
     $admin = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($admin->id, ['role' => Role::Admin->value]);
@@ -170,7 +167,6 @@ test('member cannot access billing index', function () {
     config(['trypost.self_hosted' => false]);
 
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 use App\Enums\SocialAccount\Platform;
 use App\Enums\SocialAccount\Status as AccountStatus;
-use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
 use App\Exceptions\TokenExpiredException;
+use App\Models\Account;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -13,8 +14,15 @@ use App\Services\Social\YouTubeAnalytics;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['setup' => Setup::Completed]);
+    $this->user = User::factory()->create([]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
+    $this->user->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
 
     $this->youtubeAccount = SocialAccount::factory()->create([
         'workspace_id' => $this->workspace->id,
@@ -229,8 +237,9 @@ test('youtube analytics show endpoint returns metrics', function () {
 test('youtube analytics show endpoint rejects other workspace accounts', function () {
     config(['trypost.self_hosted' => true]);
 
-    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+    $otherUser = User::factory()->create([]);
     $otherWorkspace = Workspace::factory()->create(['user_id' => $otherUser->id]);
+    $otherWorkspace->members()->attach($otherUser->id, ['role' => Role::Member->value]);
     $otherUser->update(['current_workspace_id' => $otherWorkspace->id]);
 
     $response = $this->actingAs($otherUser)

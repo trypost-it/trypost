@@ -37,12 +37,15 @@ Generate an AI image and attach it to the current post.
 
 Call this when the user asks for an image, photo, carousel slide, or any visual content.
 Pass a detailed visual prompt describing what to generate, and an orientation:
-- "vertical" (9:16) for Instagram Reel/Story, Pinterest, TikTok, YouTube Shorts
-- "horizontal" (16:9) for X/Twitter, LinkedIn, Facebook
+- "square" (1:1) for LinkedIn, Facebook, or when user wants square
+- "portrait" (4:5) for Instagram Feed, Threads
+- "vertical" (9:16) for Instagram Reel/Story, Pinterest Pin, TikTok
+- "horizontal" (16:9) for X/Twitter, YouTube thumbnail
 
-The image is generated, stored on the public disk, registered in the workspace's
-media library, logged in monthly usage tracking, and attached to the assistant's
-response message.
+Choose the orientation that best matches the target platform.
+
+The image is generated, stored, registered in the workspace's media library,
+logged in monthly usage tracking, and attached to the assistant's response message.
 TXT;
     }
 
@@ -57,7 +60,7 @@ TXT;
 
         $prompt = (string) data_get($request, 'prompt', '');
         $orientationString = (string) data_get($request, 'orientation', 'vertical');
-        $orientationEnum = Orientation::tryFrom($orientationString) ?? Orientation::Vertical;
+        $orientationEnum = Orientation::tryFrom($orientationString) ?? Orientation::Portrait;
         $aspectRatio = $orientationEnum->aspectRatio();
 
         $renderedPrompt = view('prompts.assistant.image', [
@@ -73,7 +76,7 @@ TXT;
             ->quality('high')
             ->generate();
 
-        $storedPath = $response->store('medias', 'public');
+        $storedPath = $response->store('medias');
 
         $media = $this->workspace->media()->create([
             'group_id' => Str::uuid()->toString(),
@@ -82,7 +85,7 @@ TXT;
             'path' => $storedPath,
             'original_filename' => 'ai-generated.png',
             'mime_type' => 'image/png',
-            'size' => Storage::disk('public')->size($storedPath),
+            'size' => Storage::size($storedPath),
             'order' => 0,
             'meta' => ['ai_generated' => true, 'prompt' => Str::limit($prompt, 200)],
         ]);
@@ -114,8 +117,8 @@ TXT;
                 ->description('A detailed visual description of the image to generate. Include subject, style, composition, mood, and any text that should appear in the image.')
                 ->required(),
             'orientation' => $schema->string()
-                ->enum(['vertical', 'horizontal'])
-                ->description('"vertical" for 9:16 (Instagram Reel/Story, TikTok, YouTube Shorts, Pinterest). "horizontal" for 16:9 (X/Twitter, LinkedIn, Facebook).')
+                ->enum(['square', 'portrait', 'vertical', 'horizontal'])
+                ->description('"square" (1:1) for LinkedIn, Facebook. "portrait" (4:5) for Instagram Feed, Threads. "vertical" (9:16) for Instagram Reel/Story, Pinterest, TikTok. "horizontal" (16:9) for X/Twitter.')
                 ->required(),
         ];
     }

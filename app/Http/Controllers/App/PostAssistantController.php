@@ -4,23 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
-use App\Ai\Agents\SocialMediaAssistant;
-use App\Ai\Tools\AttachmentCollector;
 use App\Enums\Ai\Intent;
-use App\Enums\Ai\UsageType;
-use App\Features\AiImagesLimit;
-use App\Features\AiVideosLimit;
+use App\Enums\AiMessage\Status;
 use App\Http\Requests\App\Assistant\StoreAssistantMessageRequest;
-use App\Models\AiUsageLog;
+use App\Jobs\Ai\GenerateAssistantResponse;
 use App\Models\Post;
 use App\Services\Ai\IntentDetector;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Laravel\Pennant\Feature;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
-use Throwable;
 
 class PostAssistantController extends Controller
 {
@@ -35,6 +27,7 @@ class PostAssistantController extends Controller
         $messages = $post->aiMessages()
             ->with('user')
             ->oldest()
+            ->orderBy('id')
             ->get();
 
         return response()->json(['messages' => $messages]);
@@ -44,7 +37,6 @@ class PostAssistantController extends Controller
         StoreAssistantMessageRequest $request,
         Post $post,
         IntentDetector $intentDetector,
-        AttachmentCollector $collector,
     ): JsonResponse {
         $workspace = $request->user()->currentWorkspace;
 
@@ -60,6 +52,7 @@ class PostAssistantController extends Controller
             'user_id' => $request->user()->id,
             'role' => 'user',
             'content' => $prompt,
+            'status' => Status::Completed,
         ]);
 
         if ($request->hasFile('image')) {
@@ -78,6 +71,7 @@ class PostAssistantController extends Controller
             $assistantMessage = $post->aiMessages()->create([
                 'role' => 'assistant',
                 'content' => __('assistant.content_blocked'),
+                'status' => Status::Completed,
                 'metadata' => ['intent' => $intent->value, 'error' => true],
             ]);
 
@@ -87,87 +81,22 @@ class PostAssistantController extends Controller
             ], Response::HTTP_CREATED);
         }
 
-        try {
-            $post->loadMissing('postPlatforms');
+        $assistantMessage = $post->aiMessages()->create([
+            'role' => 'assistant',
+            'content' => '',
+            'status' => Status::Pending,
+            'metadata' => ['intent' => $intent->value],
+        ]);
 
-            $assistantMessages = $post->aiMessages()
-                ->where('role', 'assistant')
-                ->get();
+        GenerateAssistantResponse::dispatch(
+            assistantMessage: $assistantMessage,
+            prompt: $prompt,
+            intent: $intent->value,
+        );
 
-            $imagesInThread = $assistantMessages->sum(
-                fn ($m) => collect($m->attachments ?? [])->where('type', 'image')->count()
-            );
-
-            $videosInThread = $assistantMessages->sum(
-                fn ($m) => collect($m->attachments ?? [])->where('type', 'video')->count()
-            );
-
-            $imageLimit = (int) Feature::for($workspace->account)->value(AiImagesLimit::class);
-            $imageUsed = AiUsageLog::monthlyCount($workspace->account_id, UsageType::Image);
-            $imageRemaining = max(0, $imageLimit - $imageUsed);
-
-            $videoLimit = (int) Feature::for($workspace->account)->value(AiVideosLimit::class);
-            $videoUsed = AiUsageLog::monthlyCount($workspace->account_id, UsageType::Video);
-            $videoRemaining = max(0, $videoLimit - $videoUsed);
-
-            $stateContext = sprintf(
-                "[Session state — use this to track progress and respect quotas]\n".
-                "- Images already generated in this conversation: %d\n".
-                "- Videos already generated in this conversation: %d\n".
-                "- Monthly quota remaining: %d images, %d videos\n",
-                $imagesInThread,
-                $videosInThread,
-                $imageRemaining,
-                $videoRemaining,
-            );
-
-            $promptWithState = "{$stateContext}\n{$prompt}";
-
-            $collector->clear();
-
-            $response = (new SocialMediaAssistant(
-                workspace: $workspace,
-                post: $post,
-                userId: $request->user()->id,
-            ))->prompt($promptWithState);
-
-            $responseContent = $response->text;
-            $attachments = $collector->all();
-
-            $generatedIntent = $intent->value;
-            foreach ($attachments as $attachment) {
-                if (isset($attachment['type'])) {
-                    $generatedIntent = $attachment['type'];
-                    break;
-                }
-            }
-
-            $assistantMessage = $post->aiMessages()->create([
-                'role' => 'assistant',
-                'content' => $responseContent,
-                'attachments' => $attachments,
-                'metadata' => ['intent' => $generatedIntent],
-            ]);
-
-            return response()->json([
-                'user_message' => $userMessage,
-                'assistant_message' => $assistantMessage,
-            ], Response::HTTP_CREATED);
-        } catch (Throwable $e) {
-            Log::error('PostAssistantController error', ['error' => $e->getMessage()]);
-
-            $errorMessage = $e instanceof RuntimeException ? $e->getMessage() : __('assistant.error');
-
-            $assistantMessage = $post->aiMessages()->create([
-                'role' => 'assistant',
-                'content' => $errorMessage,
-                'metadata' => ['intent' => $intent->value, 'error' => true],
-            ]);
-
-            return response()->json([
-                'user_message' => $userMessage,
-                'assistant_message' => $assistantMessage,
-            ], Response::HTTP_CREATED);
-        }
+        return response()->json([
+            'user_message' => $userMessage,
+            'assistant_message' => $assistantMessage,
+        ], Response::HTTP_ACCEPTED);
     }
 }

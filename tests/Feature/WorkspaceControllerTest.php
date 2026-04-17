@@ -2,14 +2,16 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
+use App\Models\Account;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Services\Brand\LogoAttacher;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['setup' => Setup::Completed]);
+    $this->user = User::factory()->create([]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
@@ -85,7 +87,7 @@ test('store workspace creates first workspace', function () {
         'name' => 'New Workspace',
     ]);
 
-    $response->assertRedirect(route('app.calendar'));
+    $response->assertRedirect(route('app.accounts'));
 
     $this->assertDatabaseHas('workspaces', [
         'name' => 'New Workspace',
@@ -151,7 +153,7 @@ test('switch workspace changes current workspace', function () {
 });
 
 test('switch workspace returns 403 for workspace user does not belong to', function () {
-    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+    $otherUser = User::factory()->create([]);
     $otherWorkspace = Workspace::factory()->create(['user_id' => $otherUser->id]);
 
     $response = $this->actingAs($this->user)->post(route('app.workspaces.switch', $otherWorkspace));
@@ -173,7 +175,6 @@ test('workspace settings shows settings page with members and invitations', func
     $response->assertInertia(fn ($page) => $page
         ->component('settings/Workspace', false)
         ->has('workspace')
-        ->has('timezones')
         ->has('members')
         ->has('invitations')
     );
@@ -191,7 +192,6 @@ test('workspace settings redirects to create if no workspace', function () {
 test('update workspace settings requires authentication', function () {
     $response = $this->put(route('app.workspace.settings.update'), [
         'name' => 'Updated Name',
-        'timezone' => 'America/New_York',
     ]);
 
     $response->assertRedirect(route('login'));
@@ -200,32 +200,20 @@ test('update workspace settings requires authentication', function () {
 test('update workspace settings updates workspace', function () {
     $response = $this->actingAs($this->user)->put(route('app.workspace.settings.update'), [
         'name' => 'Updated Name',
-        'timezone' => 'America/New_York',
     ]);
 
     $response->assertRedirect(route('app.workspace.settings'));
 
     $this->workspace->refresh();
     expect($this->workspace->name)->toBe('Updated Name');
-    expect($this->workspace->timezone)->toBe('America/New_York');
 });
 
 test('update workspace settings validates required fields', function () {
     $response = $this->actingAs($this->user)->put(route('app.workspace.settings.update'), [
         'name' => '',
-        'timezone' => '',
     ]);
 
-    $response->assertSessionHasErrors(['name', 'timezone']);
-});
-
-test('update workspace settings validates timezone', function () {
-    $response = $this->actingAs($this->user)->put(route('app.workspace.settings.update'), [
-        'name' => 'Valid Name',
-        'timezone' => 'Invalid/Timezone',
-    ]);
-
-    $response->assertSessionHasErrors('timezone');
+    $response->assertSessionHasErrors(['name']);
 });
 
 // Logo upload tests
@@ -266,7 +254,20 @@ test('upload workspace logo validates max size', function () {
 });
 
 test('upload workspace logo requires authorization', function () {
-    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+    $otherUser = User::factory()->create([]);
+    $otherWorkspace = Workspace::factory()->create(['user_id' => $otherUser->id]);
+    $otherWorkspace->members()->attach($otherUser->id, ['role' => Role::Member->value]);
+    $otherUser->update(['current_workspace_id' => $otherWorkspace->id]);
+    $otherUser->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
+
+    // otherUser is account owner of their own account/workspace, so policy 'update' passes for their own workspace.
+    // Switch their current workspace to the original $this->workspace (which they don't own) to trigger forbidden.
+    $otherUser->update(['current_workspace_id' => $this->workspace->id]);
 
     $response = $this->actingAs($otherUser)->post(route('app.workspace.upload-logo'), [
         'photo' => UploadedFile::fake()->image('logo.jpg'),
@@ -300,7 +301,18 @@ test('delete workspace logo succeeds', function () {
 });
 
 test('delete workspace logo requires authorization', function () {
-    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+    $otherUser = User::factory()->create([]);
+    $otherWorkspace = Workspace::factory()->create(['user_id' => $otherUser->id]);
+    $otherWorkspace->members()->attach($otherUser->id, ['role' => Role::Member->value]);
+    $otherUser->update(['current_workspace_id' => $otherWorkspace->id]);
+    $otherUser->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
+
+    $otherUser->update(['current_workspace_id' => $this->workspace->id]);
 
     $response = $this->actingAs($otherUser)->delete(route('app.workspace.delete-logo'));
 
@@ -331,9 +343,133 @@ test('destroy workspace clears current workspace if deleting current', function 
 });
 
 test('destroy workspace returns 403 for non-owner', function () {
-    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+    $otherUser = User::factory()->create([]);
+    $otherWorkspace = Workspace::factory()->create(['user_id' => $otherUser->id]);
+    $otherWorkspace->members()->attach($otherUser->id, ['role' => Role::Member->value]);
+    $otherUser->update(['current_workspace_id' => $otherWorkspace->id]);
+    $otherUser->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
 
     $response = $this->actingAs($otherUser)->delete(route('app.workspaces.destroy', $this->workspace));
 
     $response->assertForbidden();
+});
+
+// Autofill brand tests
+test('autofillBrand returns metadata without persisting anything', function () {
+    $account = Account::factory()->create();
+    $user = User::factory()->create(['account_id' => $account->id]);
+    $account->update(['owner_id' => $user->id]);
+
+    Http::fake([
+        'example.com/*' => Http::response(
+            '<html><head><title>Acme</title><meta name="description" content="We sell rockets." /></head><body></body></html>',
+            200,
+            ['Content-Type' => 'text/html'],
+        ),
+        'example.com' => Http::response(
+            '<html><head><title>Acme</title><meta name="description" content="We sell rockets." /></head><body></body></html>',
+            200,
+            ['Content-Type' => 'text/html'],
+        ),
+    ]);
+
+    $initialWorkspaceCount = Workspace::count();
+
+    $response = $this->actingAs($user)
+        ->postJson(route('app.workspaces.autofill'), ['url' => 'https://example.com']);
+
+    $response->assertOk();
+    $response->assertJsonStructure(['name', 'brand_description', 'brand_tone', 'brand_voice_notes', 'content_language', 'logo_url']);
+
+    expect(Workspace::count())->toBe($initialWorkspaceCount);
+});
+
+test('autofillBrand validates url is required', function () {
+    $account = Account::factory()->create();
+    $user = User::factory()->create(['account_id' => $account->id]);
+
+    $this->actingAs($user)
+        ->postJson(route('app.workspaces.autofill'), [])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('url');
+});
+
+// Brand-aware store tests
+test('store persists brand fields and redirects first workspace to /accounts', function () {
+    $account = Account::factory()->create();
+    $user = User::factory()->create(['account_id' => $account->id]);
+    $account->update(['owner_id' => $user->id]);
+
+    $account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
+
+    $response = $this->actingAs($user)->post(route('app.workspaces.store'), [
+        'name' => 'Acme Inc',
+        'brand_website' => 'https://acme.example',
+        'brand_description' => 'We sell rockets.',
+        'brand_tone' => 'professional',
+        'brand_voice_notes' => 'short, punchy.',
+        'content_language' => 'en',
+    ]);
+
+    $response->assertRedirect(route('app.accounts'));
+
+    $workspace = Workspace::where('name', 'Acme Inc')->sole();
+    expect($workspace->name)->toBe('Acme Inc');
+    expect($workspace->brand_website)->toBe('https://acme.example');
+    expect($workspace->brand_description)->toBe('We sell rockets.');
+});
+
+test('store redirects to /calendar for additional workspace (existing user)', function () {
+    $account = Account::factory()->create();
+    $user = User::factory()->create(['account_id' => $account->id]);
+    $account->update(['owner_id' => $user->id]);
+
+    $account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
+
+    // First workspace already exists
+    $existing = Workspace::factory()->create(['account_id' => $account->id, 'user_id' => $user->id]);
+    $existing->members()->attach($user->id, ['role' => Role::Member->value]);
+
+    $response = $this->actingAs($user)->post(route('app.workspaces.store'), [
+        'name' => 'Second Workspace',
+    ]);
+
+    $response->assertRedirect(route('app.calendar'));
+    expect(Workspace::where('account_id', $account->id)->count())->toBe(2);
+});
+
+test('store attaches logo when logo_url is provided', function () {
+    $account = Account::factory()->create();
+    $user = User::factory()->create(['account_id' => $account->id]);
+    $account->update(['owner_id' => $user->id]);
+
+    $account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
+
+    $logoAttacher = $this->mock(LogoAttacher::class);
+    $logoAttacher->shouldReceive('attach')->once();
+
+    $this->actingAs($user)->post(route('app.workspaces.store'), [
+        'name' => 'Acme',
+        'logo_url' => 'https://example.com/logo.png',
+    ])->assertRedirect();
 });

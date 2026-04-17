@@ -6,6 +6,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Requests\App\Asset\StoreAssetFromUrlRequest;
 use App\Http\Requests\App\Asset\StoreAssetRequest;
+use App\Http\Resources\App\MediaResource;
 use App\Models\Media;
 use App\Services\UnsplashService;
 use Illuminate\Http\JsonResponse;
@@ -39,7 +40,7 @@ class AssetController extends Controller
         ]);
     }
 
-    public function store(StoreAssetRequest $request): JsonResponse
+    public function store(StoreAssetRequest $request): MediaResource
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -47,17 +48,7 @@ class AssetController extends Controller
 
         $media = $workspace->addMedia($request->file('media'), 'assets');
 
-        return response()->json([
-            'id' => $media->id,
-            'path' => $media->path,
-            'url' => $media->url,
-            'type' => $media->type->value,
-            'mime_type' => $media->mime_type,
-            'original_filename' => $media->original_filename,
-            'size' => $media->size,
-            'meta' => $media->meta,
-            'created_at' => $media->created_at->toISOString(),
-        ]);
+        return new MediaResource($media);
     }
 
     public function storeChunked(Request $request): JsonResponse
@@ -124,7 +115,7 @@ class AssetController extends Controller
         ]);
     }
 
-    public function storeFromUrl(StoreAssetFromUrlRequest $request, UnsplashService $unsplash): RedirectResponse
+    public function storeFromUrl(StoreAssetFromUrlRequest $request, UnsplashService $unsplash): MediaResource
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -166,7 +157,7 @@ class AssetController extends Controller
         }
         @unlink($tempFile);
 
-        $workspace->media()->create([
+        $media = $workspace->media()->create([
             'group_id' => Str::uuid()->toString(),
             'collection' => 'assets',
             'type' => 'image',
@@ -178,10 +169,7 @@ class AssetController extends Controller
             'meta' => $meta,
         ]);
 
-        session()->flash('flash.banner', __('assets.saved'));
-        session()->flash('flash.bannerStyle', 'success');
-
-        return back();
+        return new MediaResource($media);
     }
 
     public function destroy(Request $request, Media $media): RedirectResponse

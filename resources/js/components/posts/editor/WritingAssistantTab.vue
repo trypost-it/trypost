@@ -1,7 +1,28 @@
 <script setup lang="ts">
-import { IconCheck, IconLoader2, IconPaperclip, IconPlus, IconSend, IconSparkles, IconX } from '@tabler/icons-vue';
-import { nextTick, onMounted, ref } from 'vue';
+import { useEcho } from '@laravel/echo-vue';
+import {
+    IconBrandBluesky,
+    IconBrandFacebook,
+    IconBrandInstagram,
+    IconBrandLinkedin,
+    IconBrandMastodon,
+    IconBrandPinterest,
+    IconBrandThreads,
+    IconBrandTiktok,
+    IconBrandX,
+    IconBrandYoutube,
+    IconCheck,
+    IconLoader2,
+    IconPaperclip,
+    IconPlus,
+    IconRefresh,
+    IconSend,
+    IconSparkles,
+    IconX,
+} from '@tabler/icons-vue';
+import { type Component, nextTick, onMounted, ref } from 'vue';
 
+import ImagePreviewDialog from '@/components/ImagePreviewDialog.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,16 +38,21 @@ interface Attachment {
     mime_type: string;
 }
 
+type AiMessageStatus = 'pending' | 'generating' | 'completed' | 'failed';
+
 interface AiMessage {
     id: string;
     role: 'user' | 'assistant';
     content: string;
-    content_html?: string;
+    content_html?: string | null;
     attachments?: Attachment[];
+    status?: AiMessageStatus;
+    error_message?: string | null;
     metadata?: {
         intent?: string;
         error?: boolean;
         limit_reached?: boolean;
+        quick_actions?: { label: string; value: string }[];
     };
     created_at: string;
     user?: {
@@ -41,8 +67,29 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-    'add-media': [payload: { id: string; path: string; url: string; type: string; mime_type: string }];
+    'add-media': [payload: {
+        messageId: string;
+        messageContent: string;
+        media: { id: string; path: string; url: string; type: string; mime_type: string };
+    }];
 }>();
+
+const platformIconMap: Record<string, Component> = {
+    instagram: IconBrandInstagram,
+    'instagram-facebook': IconBrandInstagram,
+    linkedin: IconBrandLinkedin,
+    'linkedin-page': IconBrandLinkedin,
+    x: IconBrandX,
+    facebook: IconBrandFacebook,
+    tiktok: IconBrandTiktok,
+    youtube: IconBrandYoutube,
+    threads: IconBrandThreads,
+    pinterest: IconBrandPinterest,
+    bluesky: IconBrandBluesky,
+    mastodon: IconBrandMastodon,
+};
+
+const getQuickActionIcon = (value: string): Component | null => platformIconMap[value] ?? null;
 
 const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 
@@ -51,6 +98,8 @@ const loading = ref(false);
 const sending = ref(false);
 const body = ref('');
 const addedAttachmentIds = ref<Set<string>>(new Set());
+const clickedMessageIds = ref<Set<string>>(new Set());
+const previewImage = ref<string | null>(null);
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const selectedImage = ref<File | null>(null);
@@ -103,6 +152,38 @@ const loadMessages = async () => {
     }
 };
 
+const submitPrompt = async (text: string, imageFile: File | null) => {
+    let fetchOptions: RequestInit;
+
+    if (imageFile) {
+        const formData = new FormData();
+        formData.append('body', text);
+        formData.append('image', imageFile);
+        fetchOptions = {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData,
+        };
+    } else {
+        fetchOptions = {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ body: text }),
+        };
+    }
+
+    return fetch(storeMessage.url(props.postId), fetchOptions);
+};
+
 const sendMessage = async () => {
     const text = body.value.trim();
     if (!text || sending.value) return;
@@ -129,38 +210,9 @@ const sendMessage = async () => {
     scrollToBottom();
 
     try {
-        let fetchOptions: RequestInit;
-
-        if (imageFile) {
-            const formData = new FormData();
-            formData.append('body', text);
-            formData.append('image', imageFile);
-            fetchOptions = {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: formData,
-            };
-        } else {
-            fetchOptions = {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: JSON.stringify({ body: text }),
-            };
-        }
-
-        const response = await fetch(storeMessage.url(props.postId), fetchOptions);
+        const response = await submitPrompt(text, imageFile);
 
         if (!response.ok) {
-            sending.value = false;
             return;
         }
 
@@ -172,7 +224,7 @@ const sendMessage = async () => {
             messages.value[tempIdx] = data.user_message;
         }
 
-        // Add assistant response
+        // Add assistant placeholder (status: pending) — will be updated via Echo broadcast
         messages.value.push(data.assistant_message);
 
         await nextTick();
@@ -182,6 +234,53 @@ const sendMessage = async () => {
     }
 };
 
+const retryMessage = async (failedMessage: AiMessage) => {
+    if (sending.value) return;
+
+    const failedIdx = messages.value.findIndex((m) => m.id === failedMessage.id);
+    const previousUserIdx = failedIdx > 0 ? failedIdx - 1 : -1;
+    const previousUser = previousUserIdx !== -1 ? messages.value[previousUserIdx] : null;
+
+    if (! previousUser || previousUser.role !== 'user') return;
+
+    sending.value = true;
+
+    // Remove the failed assistant message
+    messages.value.splice(failedIdx, 1);
+
+    try {
+        const response = await submitPrompt(previousUser.content, null);
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        messages.value.push(data.assistant_message);
+
+        await nextTick();
+        scrollToBottom();
+    } finally {
+        sending.value = false;
+    }
+};
+
+// Echo: listen for assistant message updates (broadcast when job completes/fails)
+useEcho(`post.${props.postId}`, '.AssistantMessageUpdated', async (e: { message: AiMessage }) => {
+    const idx = messages.value.findIndex((m) => m.id === e.message.id);
+    if (idx === -1) return;
+
+    messages.value[idx] = e.message;
+    await nextTick();
+    scrollToBottom();
+});
+
+const isPendingAssistant = (message: AiMessage): boolean => {
+    return message.role === 'assistant' && (message.status === 'pending' || message.status === 'generating');
+};
+
+const isFailedAssistant = (message: AiMessage): boolean => {
+    return message.role === 'assistant' && message.status === 'failed';
+};
+
 const handleKeydown = (event: KeyboardEvent) => {
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
         event.preventDefault();
@@ -189,13 +288,17 @@ const handleKeydown = (event: KeyboardEvent) => {
     }
 };
 
-const addToPost = (attachment: Attachment) => {
+const addToPost = (message: AiMessage, attachment: Attachment) => {
     emit('add-media', {
-        id: attachment.id,
-        path: attachment.path,
-        url: attachment.url,
-        type: attachment.type,
-        mime_type: attachment.mime_type,
+        messageId: message.id,
+        messageContent: message.content ?? '',
+        media: {
+            id: attachment.id,
+            path: attachment.path,
+            url: attachment.url,
+            type: attachment.type,
+            mime_type: attachment.mime_type,
+        },
     });
     addedAttachmentIds.value.add(attachment.id);
 };
@@ -218,6 +321,13 @@ const isVideo = (attachment: Attachment): boolean => {
 
 const isImage = (attachment: Attachment): boolean => {
     return attachment.mime_type?.startsWith('image/') || attachment.type === 'image';
+};
+
+const clickQuickAction = (message: AiMessage, action: { label: string; value: string }) => {
+    if (clickedMessageIds.value.has(message.id) || sending.value) return;
+    clickedMessageIds.value.add(message.id);
+    body.value = action.label;
+    sendMessage();
 };
 
 
@@ -287,10 +397,38 @@ onMounted(() => {
                     <!-- Assistant message -->
                     <div v-else class="flex justify-start gap-2">
                         <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                            <IconSparkles class="h-3 w-3 text-primary" />
+                            <IconSparkles
+                                :class="['h-3 w-3 text-primary', isPendingAssistant(message) && 'animate-pulse']"
+                            />
                         </div>
                         <div class="max-w-[80%]">
+                            <!-- Pending / generating: thinking dots -->
+                            <div v-if="isPendingAssistant(message)" class="rounded-2xl rounded-bl-sm bg-muted px-4 py-2.5">
+                                <div class="flex items-center gap-1">
+                                    <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:0ms]" />
+                                    <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:150ms]" />
+                                    <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:300ms]" />
+                                </div>
+                            </div>
+
+                            <!-- Failed: error + retry -->
+                            <div v-else-if="isFailedAssistant(message)" class="rounded-2xl rounded-bl-sm bg-destructive/10 px-3 py-2 text-destructive">
+                                <p class="whitespace-pre-wrap text-sm">{{ message.content }}</p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    class="mt-2"
+                                    :disabled="sending"
+                                    @click="retryMessage(message)"
+                                >
+                                    <IconRefresh class="mr-1.5 h-3.5 w-3.5" />
+                                    {{ $t('assistant.retry') }}
+                                </Button>
+                            </div>
+
+                            <!-- Completed -->
                             <div
+                                v-else
                                 :class="[
                                     'rounded-2xl rounded-bl-sm px-3 py-2',
                                     message.metadata?.error ? 'bg-destructive/10 text-destructive' : 'bg-muted',
@@ -309,8 +447,9 @@ onMounted(() => {
                                             v-if="isImage(attachment)"
                                             :src="attachment.url"
                                             :alt="'AI generated image'"
-                                            class="w-full rounded-lg"
+                                            class="w-full cursor-pointer rounded-lg transition-opacity hover:opacity-90"
                                             loading="lazy"
+                                            @click="previewImage = attachment.url"
                                         />
 
                                         <audio
@@ -332,11 +471,33 @@ onMounted(() => {
                                             size="sm"
                                             class="w-full"
                                             :disabled="isAdded(attachment.id)"
-                                            @click="addToPost(attachment)"
+                                            @click="addToPost(message, attachment)"
                                         >
                                             <IconCheck v-if="isAdded(attachment.id)" class="mr-1.5 h-3.5 w-3.5" />
                                             <IconPlus v-else class="mr-1.5 h-3.5 w-3.5" />
                                             {{ isAdded(attachment.id) ? $t('assistant.added') : $t('assistant.add_to_post') }}
+                                        </Button>
+                                    </div>
+                                </template>
+
+                                <template v-if="message.metadata?.quick_actions && message.metadata.quick_actions.length > 0">
+                                    <div class="mt-2 flex flex-wrap gap-1.5">
+                                        <Button
+                                            v-for="action in message.metadata.quick_actions"
+                                            :key="action.value"
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            class="h-auto rounded-full px-3 py-1 text-xs"
+                                            :disabled="clickedMessageIds.has(message.id) || sending"
+                                            @click="clickQuickAction(message, action)"
+                                        >
+                                            <component
+                                                :is="getQuickActionIcon(action.value)"
+                                                v-if="getQuickActionIcon(action.value)"
+                                                class="mr-1 h-3.5 w-3.5"
+                                            />
+                                            {{ action.label }}
                                         </Button>
                                     </div>
                                 </template>
@@ -345,20 +506,6 @@ onMounted(() => {
                         </div>
                     </div>
                 </template>
-
-                <!-- Thinking indicator -->
-                <div v-if="sending" class="flex justify-start gap-2">
-                    <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                        <IconSparkles class="h-3 w-3 animate-pulse text-primary" />
-                    </div>
-                    <div class="rounded-2xl rounded-bl-sm bg-muted px-4 py-2.5">
-                        <div class="flex items-center gap-1">
-                            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:0ms]" />
-                            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:150ms]" />
-                            <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60 [animation-delay:300ms]" />
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -403,4 +550,6 @@ onMounted(() => {
             </div>
         </div>
     </div>
+
+    <ImagePreviewDialog :src="previewImage" @close="previewImage = null" />
 </template>

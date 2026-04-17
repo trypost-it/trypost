@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\Api\AuthenticateApiToken;
-use App\Http\Middleware\App\EnsureSubscribed;
 use App\Http\Middleware\App\HandleAppearance;
 use App\Http\Middleware\App\HandleInertiaRequests;
 use App\Http\Middleware\App\SetLocale;
@@ -36,7 +35,6 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'subscribed' => EnsureSubscribed::class,
             'api.auth' => AuthenticateApiToken::class,
             'mcp.auth' => AuthenticateMcpToken::class,
         ]);

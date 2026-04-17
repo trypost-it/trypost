@@ -30,6 +30,9 @@ class BrandAnalyzer implements Agent, HasStructuredOutput
     public function schema(JsonSchema $schema): array
     {
         return [
+            'name' => $schema->string()
+                ->description('The actual brand or company name (1-4 words, e.g. "Sendkit", "Acme Coffee", "Stripe"). Strip any tagline, slogan, or product descriptor — return only the brand identity itself.')
+                ->required(),
             'description' => $schema->string()
                 ->description('A concise 2-3 sentence brand description summarizing what the company does, who they serve, and what makes them unique. Written in the detected content language.')
                 ->required(),

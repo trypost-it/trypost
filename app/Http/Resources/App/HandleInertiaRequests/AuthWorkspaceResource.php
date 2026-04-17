@@ -17,7 +17,6 @@ class AuthWorkspaceResource
         return [
             'id' => $workspace->id,
             'name' => $workspace->name,
-            'timezone' => $workspace->timezone,
             'logo_url' => $workspace->logo_url,
             'created_at' => $workspace->created_at->toIso8601String(),
             'role' => $user ? self::resolveRole($workspace, $user) : null,

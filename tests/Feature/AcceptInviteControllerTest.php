@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
 use App\Models\Account;
 use App\Models\Invite;
 use App\Models\User;
@@ -11,7 +10,6 @@ use App\Models\Workspace;
 beforeEach(function () {
     $this->account = Account::factory()->create();
     $this->owner = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->account->update(['owner_id' => $this->owner->id]);
@@ -44,7 +42,6 @@ test('show invite displays invite details for guest', function () {
 test('show invite displays invite details for authenticated user', function () {
     $user = User::factory()->create([
         'email' => 'invitee@example.com',
-        'setup' => Setup::Completed,
     ]);
 
     $invite = Invite::factory()->create([
@@ -83,7 +80,6 @@ test('accept invite requires authentication', function () {
 test('accept invite adds user to account and workspaces', function () {
     $user = User::factory()->create([
         'email' => 'invitee@example.com',
-        'setup' => Setup::Completed,
     ]);
 
     $invite = Invite::factory()->create([
@@ -115,7 +111,6 @@ test('accept invite adds user to account and workspaces', function () {
 test('accept invite fails for wrong email', function () {
     $user = User::factory()->create([
         'email' => 'different@example.com',
-        'setup' => Setup::Completed,
     ]);
 
     $invite = Invite::factory()->create([
@@ -138,7 +133,6 @@ test('accept invite fails for wrong email', function () {
 test('accept invite handles already member of account', function () {
     $user = User::factory()->create([
         'email' => 'invitee@example.com',
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
 
@@ -173,7 +167,6 @@ test('decline invite requires authentication', function () {
 test('decline invite deletes the invite', function () {
     $user = User::factory()->create([
         'email' => 'invitee@example.com',
-        'setup' => Setup::Completed,
     ]);
 
     $invite = Invite::factory()->create([
@@ -195,7 +188,6 @@ test('decline invite deletes the invite', function () {
 test('decline invite fails for wrong email', function () {
     $user = User::factory()->create([
         'email' => 'different@example.com',
-        'setup' => Setup::Completed,
     ]);
 
     $invite = Invite::factory()->create([

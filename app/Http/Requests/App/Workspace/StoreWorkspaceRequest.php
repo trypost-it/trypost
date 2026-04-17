@@ -17,6 +17,12 @@ class StoreWorkspaceRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'brand_website' => ['nullable', 'url', 'max:255'],
+            'brand_description' => ['nullable', 'string', 'max:2000'],
+            'brand_tone' => ['nullable', 'string', 'in:professional,casual,friendly,bold,inspirational,humorous,educational'],
+            'brand_voice_notes' => ['nullable', 'string', 'max:2000'],
+            'content_language' => ['nullable', 'string', 'in:en,pt-BR,es'],
+            'logo_url' => ['nullable', 'url', 'max:1024'],
         ];
     }
 

@@ -4,25 +4,32 @@ declare(strict_types=1);
 
 namespace App\Ai\Agents;
 
+use App\Ai\Middleware\DebugGeminiRequest;
 use App\Ai\PlatformRules\Contract;
 use App\Ai\PlatformRules\Registry as PlatformRulesRegistry;
-use App\Ai\Tools\GenerateAudio;
 use App\Ai\Tools\GenerateImage;
 use App\Ai\Tools\GenerateVideo;
 use App\Enums\SocialAccount\Platform;
 use App\Models\AiMessage;
 use App\Models\Post;
 use App\Models\Workspace;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Str;
+use Laravel\Ai\Attributes\MaxSteps;
+use Laravel\Ai\Attributes\Temperature;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
+use Laravel\Ai\Contracts\HasMiddleware;
+use Laravel\Ai\Contracts\HasStructuredOutput;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Messages\Message;
 use Laravel\Ai\Promptable;
 
-class SocialMediaAssistant implements Agent, Conversational, HasTools
+#[Temperature(0.3)]
+#[MaxSteps(1)]
+class SocialMediaAssistant implements Agent, Conversational, HasMiddleware, HasStructuredOutput, HasTools
 {
     use Promptable;
 
@@ -42,6 +49,7 @@ class SocialMediaAssistant implements Agent, Conversational, HasTools
             'voice_notes' => $this->workspace->brand_voice_notes ?? '',
             'content_language' => $this->workspace->content_language ?? 'en',
             'platform_rules' => $this->activePlatformRules(),
+            'connected_platforms' => $this->connectedPlatformLabels(),
         ])->render();
     }
 
@@ -72,6 +80,23 @@ class SocialMediaAssistant implements Agent, Conversational, HasTools
     }
 
     /**
+     * @return array<int, array{slug: string, label: string}>
+     */
+    private function connectedPlatformLabels(): array
+    {
+        return $this->workspace->socialAccounts()
+            ->active()
+            ->get()
+            ->map(fn ($account) => [
+                'slug' => $account->platform->value,
+                'label' => $account->platform->label(),
+            ])
+            ->unique('slug')
+            ->values()
+            ->all();
+    }
+
+    /**
      * @return iterable<Message>
      */
     public function messages(): iterable
@@ -84,6 +109,7 @@ class SocialMediaAssistant implements Agent, Conversational, HasTools
             ->where('post_id', $this->post->id)
             ->whereIn('role', ['user', 'assistant'])
             ->oldest()
+            ->orderBy('id')
             ->limit(20)
             ->get()
             ->map(fn (AiMessage $m) => new Message($m->role, $this->enrichContent($m)))
@@ -98,6 +124,29 @@ class SocialMediaAssistant implements Agent, Conversational, HasTools
         };
     }
 
+    public function middleware(): array
+    {
+        return [
+            new DebugGeminiRequest,
+        ];
+    }
+
+    public function schema(JsonSchema $schema): array
+    {
+        return [
+            'message' => $schema->string()
+                ->description('Your response. 1-2 sentences max. No emojis. No brand pitching.')
+                ->required(),
+            'quick_actions' => $schema->array()
+                ->items($schema->object(fn ($s) => [
+                    'label' => $s->string()->description('Button text, no emojis, max 20 chars.')->required(),
+                    'value' => $s->string()->description('Same as label.')->required(),
+                ]))
+                ->description('Buttons for FINITE choices only (format, platform, confirm). Empty array for open-ended questions. Max 4 items.')
+                ->required(),
+        ];
+    }
+
     /**
      * @return iterable<Tool>
      */
@@ -110,11 +159,6 @@ class SocialMediaAssistant implements Agent, Conversational, HasTools
                 userId: $this->userId,
             ),
             new GenerateVideo(
-                workspace: $this->workspace,
-                post: $this->post,
-                userId: $this->userId,
-            ),
-            new GenerateAudio(
                 workspace: $this->workspace,
                 post: $this->post,
                 userId: $this->userId,

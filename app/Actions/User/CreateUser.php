@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\User;
 
-use App\Enums\User\Setup;
-use App\Enums\UserWorkspace\Role;
 use App\Models\Account;
 use App\Models\User;
-use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
 
 class CreateUser
 {
     /**
-     * @param  array{name: string, email: string, password?: string, timezone?: string, setup?: Setup, email_verified_at?: \DateTimeInterface|null}  $data
+     * @param  array{name: string, email: string, password?: string, email_verified_at?: \DateTimeInterface|null, is_invite?: bool}  $data
      */
     public static function execute(array $data): User
     {
@@ -30,23 +27,11 @@ class CreateUser
                 'name' => data_get($data, 'name'),
                 'email' => data_get($data, 'email'),
                 'password' => data_get($data, 'password'),
-                'setup' => data_get($data, 'setup', $isInviteRegistration ? Setup::Completed : Setup::Role),
                 'email_verified_at' => data_get($data, 'email_verified_at', $isInviteRegistration ? now() : null),
                 'account_id' => $account->id,
             ]);
 
             $account->update(['owner_id' => $user->id]);
-
-            $workspace = Workspace::create([
-                'account_id' => $account->id,
-                'user_id' => $user->id,
-                'name' => $user->name."'s Workspace",
-                'timezone' => data_get($data, 'timezone', 'UTC'),
-            ]);
-
-            $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
-
-            $user->update(['current_workspace_id' => $workspace->id]);
 
             return $user;
         });

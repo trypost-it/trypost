@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Ai\Agents\SocialMediaAssistant;
 use App\Enums\SocialAccount\Platform;
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\AiMessage;
 use App\Models\Post;
@@ -16,7 +15,7 @@ use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Messages\Message;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['setup' => Setup::Completed]);
+    $this->user = User::factory()->create([]);
     $this->workspace = Workspace::factory()->create([
         'user_id' => $this->user->id,
         'name' => 'Paulo Coffee',

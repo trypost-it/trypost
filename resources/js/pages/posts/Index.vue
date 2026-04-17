@@ -65,7 +65,6 @@ interface ScrollPosts {
 interface Workspace {
     id: string;
     name: string;
-    timezone: string;
 }
 
 interface Props {
@@ -139,7 +138,7 @@ const getStatusConfig = (status: string) => {
 
 const formatDateTime = (date: string | null): string => {
     if (!date) return '-';
-    return dayjs.utc(date).tz(props.workspace.timezone).format('D MMM YYYY, HH:mm');
+    return dayjs.utc(date).local().format('D MMM YYYY, HH:mm');
 };
 
 const getEnabledPlatforms = (post: Post) => {

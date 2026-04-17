@@ -5,7 +5,7 @@ import { onMounted } from 'vue';
 
 import { useTracking } from '@/composables/useTracking';
 import AuthBase from '@/layouts/AuthLayout.vue';
-import { role } from '@/routes/app/onboarding';
+import { home } from '@/routes/app';
 
 const props = defineProps<{
     authProvider: string;
@@ -17,7 +17,7 @@ onMounted(() => {
     trackSignUp(props.authProvider);
 
     setTimeout(() => {
-        router.visit(role.url());
+        router.visit(home.url());
     }, 5000);
 });
 </script>

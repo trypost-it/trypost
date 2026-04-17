@@ -12,7 +12,7 @@ use Laravel\Mcp\Server\Tool;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
 #[IsReadOnly]
-#[Description('Get the current workspace details including name and timezone.')]
+#[Description('Get the current workspace details including name.')]
 class GetWorkspaceTool extends Tool
 {
     public function handle(Request $request): ResponseFactory

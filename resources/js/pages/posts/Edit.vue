@@ -2,26 +2,28 @@
 import { Head, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
 import {
+    IconCalendar,
     IconCircleCheck,
     IconCloudUpload,
     IconHash,
     IconLoader2,
-    IconTag,
+    IconMessage2,
+    IconMoodSmile,
+    IconPhoto,
+    IconSparkles,
     IconTrash,
 } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
-import DatePicker from '@/components/DatePicker.vue';
 import HashtagsModal from '@/components/posts/HashtagsModal.vue';
+import PickTimePopover from '@/components/posts/PickTimePopover.vue';
 import CommentsTab from '@/components/posts/editor/CommentsTab.vue';
 import PreviewTab from '@/components/posts/editor/PreviewTab.vue';
 import ScheduleTab from '@/components/posts/editor/ScheduleTab.vue';
 import WritingAssistantTab from '@/components/posts/editor/WritingAssistantTab.vue';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +33,7 @@ import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { store as storeAsset } from '@/routes/app/assets';
 import { destroy as destroyPost, update as updatePost } from '@/routes/app/posts';
+
 interface MediaItem {
     id: string;
     path: string;
@@ -79,7 +82,6 @@ interface Post {
 interface Workspace {
     id: string;
     name: string;
-    timezone: string;
 }
 
 const props = defineProps<{
@@ -108,9 +110,17 @@ const selectedPlatformIds = ref<string[]>(
 // Schedule
 const getLocalSchedule = () => {
     if (!post.value.scheduled_at) return '';
-    return dayjs.utc(post.value.scheduled_at).tz(props.workspace.timezone).format('YYYY-MM-DDTHH:mm:00');
+    return dayjs.utc(post.value.scheduled_at).local().format('YYYY-MM-DDTHH:mm:00');
 };
 const scheduledDateTime = ref(getLocalSchedule());
+const hasPickedTime = ref(post.value.status === 'scheduled' && !! post.value.scheduled_at);
+
+const pickTimeLabel = computed(() => {
+    if (! hasPickedTime.value || ! scheduledDateTime.value) {
+        return trans('posts.edit.pick_time');
+    }
+    return dayjs(scheduledDateTime.value).format('MMM D, HH:mm');
+});
 
 // Labels
 const selectedLabelIds = ref<string[]>(post.value.labels?.map((l) => l.id) || []);
@@ -119,14 +129,17 @@ const selectedLabelIds = ref<string[]>(post.value.labels?.map((l) => l.id) || []
 const isSubmitting = ref(false);
 const isSaving = ref(false);
 const showSaved = ref(false);
+const activeTab = ref('schedule');
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const hashtagsModal = ref<InstanceType<typeof HashtagsModal> | null>(null);
 const commentsTabRef = ref<InstanceType<typeof CommentsTab> | null>(null);
+const emojiOpen = ref(false);
 
-const timezoneAbbr = computed(() => dayjs().tz(props.workspace.timezone).format('z'));
 const fileInput = ref<HTMLInputElement | null>(null);
 const isDragging = ref(false);
 const uploading = ref(false);
+
+const emojiList = ['😀', '😂', '🔥', '💯', '🎉', '👏', '❤️', '🚀', '✨', '💡', '📈', '💪', '🙌', '👀', '😊', '🤝', '💼', '📊', '🎯', '💎', '⚡️', '🎁', '🌟', '📱'];
 
 // Toggle platform
 const togglePlatform = (platformId: string) => {
@@ -209,8 +222,22 @@ const removeMedia = (mediaId: string) => {
     media.value = media.value.filter((m) => m.id !== mediaId);
 };
 
-const addMediaFromAssistant = (mediaItem: { id: string; path: string; url: string; type: string; mime_type: string }) => {
-    media.value = [...media.value, mediaItem];
+const addedTextFromMessageIds = ref<Set<string>>(new Set());
+
+const addMediaFromAssistant = (payload: {
+    messageId: string;
+    messageContent: string;
+    media: { id: string; path: string; url: string; type: string; mime_type: string };
+}) => {
+    media.value = [...media.value, payload.media];
+
+    const text = payload.messageContent.trim();
+    if (text === '' || addedTextFromMessageIds.value.has(payload.messageId)) {
+        return;
+    }
+
+    content.value = content.value.trim() === '' ? text : `${content.value}\n\n${text}`;
+    addedTextFromMessageIds.value.add(payload.messageId);
 };
 
 // Save logic
@@ -227,7 +254,9 @@ const getSubmitData = () => {
         content: content.value,
         media: media.value,
         platforms,
-        scheduled_at: scheduledDateTime.value || null,
+        scheduled_at: scheduledDateTime.value
+            ? dayjs(scheduledDateTime.value).utc().format()
+            : null,
         label_ids: selectedLabelIds.value,
     };
 };
@@ -302,6 +331,16 @@ const appendHashtags = (hashtag: { id: string; name: string; hashtags: string })
     content.value += separator + hashtag.hashtags;
 };
 
+const appendEmoji = (emoji: string) => {
+    if (isReadOnly.value) return;
+    content.value += emoji;
+    emojiOpen.value = false;
+};
+
+const focusAssistant = () => {
+    activeTab.value = 'assistant';
+};
+
 const deletePost = () => {
     if (isReadOnly.value) return;
     deleteModal.value?.open({ url: destroyPost.url(post.value.id) });
@@ -316,119 +355,261 @@ useEcho(`post.${post.value.id}`, '.PostPlatformStatusUpdated', () => {
 useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
     commentsTabRef.value?.addCommentFromBroadcast(e.comment);
 });
-
-const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / 1048576).toFixed(1)} MB`;
-};
 </script>
 
 <template>
     <Head :title="$t('posts.edit.title')" />
 
     <AppLayout :full-width="true">
-        <!-- <template v-if="!isReadOnly" #header-actions>
-            <div class="flex items-center gap-3">
-                <Button type="button" variant="ghost" size="icon" @click="deletePost"
-                    :disabled="isSaving || isSubmitting" class="text-muted-foreground hover:text-destructive">
-                    <IconTrash class="h-4 w-4" />
-                </Button>
-
-                <span class="h-4 w-px bg-border" />
-
-                <Button type="button" variant="secondary" class="shrink-0"
-                    :disabled="isSubmitting || selectedPlatformIds.length === 0" @click="submit('scheduled')">
-                    {{ $t('posts.edit.schedule') }}
-                </Button>
-
-                <Button type="button" class="shrink-0"
-                    :disabled="isSubmitting || selectedPlatformIds.length === 0" @click="submit('publishing')">
-                    {{ $t('posts.edit.post_now') }}
-                </Button>
-            </div>
-        </template> -->
-
         <div class="flex flex-col h-screen">
-            <!-- <div class="relative flex items-center justify-between gap-4 border-b px-4 py-2 bg-background">
+            <!-- Slim status bar -->
+            <div class="flex items-center justify-between gap-4 border-b bg-background px-4 py-2">
                 <div class="flex min-w-0 items-center gap-2">
                     <span v-if="isSaving" class="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <IconLoader2 class="h-4 w-4 animate-spin" />
+                        <IconLoader2 class="h-3.5 w-3.5 animate-spin" />
                         {{ $t('posts.edit.saving') }}
                     </span>
                     <span v-else-if="showSaved" class="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <IconCircleCheck class="h-4 w-4 text-green-500" />
+                        <IconCircleCheck class="h-3.5 w-3.5 text-green-500" />
                         {{ $t('posts.edit.saved') }}
+                    </span>
+                    <span v-else class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <span class="h-2 w-2 rounded-full bg-muted-foreground/50" />
+                        {{ $t('posts.edit.draft') }}
                     </span>
                 </div>
 
-                <div v-if="!isReadOnly" class="hidden lg:flex shrink-0 items-center gap-2">
-                    <Popover>
-                        <PopoverTrigger as-child>
-                            <Button type="button" variant="outline">
-                                <IconTag class="h-4 w-4" />
-                                {{ $t('posts.edit.labels') }}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent class="w-56 p-2" align="end">
-                            <div v-if="labels.length > 0">
-                                <div v-for="label in labels" :key="label.id"
-                                    class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted cursor-pointer"
-                                    @click="toggleLabel(label.id)">
-                                    <Checkbox :model-value="selectedLabelIds.includes(label.id)" />
-                                    <span class="h-3 w-3 rounded-full shrink-0" :style="{ backgroundColor: label.color }" />
-                                    <span class="text-sm truncate">{{ label.name }}</span>
-                                </div>
-                            </div>
-                            <p v-else class="px-2 py-3 text-center text-sm text-muted-foreground">{{ $t('posts.edit.no_labels') }}</p>
-                        </PopoverContent>
-                    </Popover>
+                <div v-if="!isReadOnly" class="flex shrink-0 items-center gap-2">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    class="text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                    :disabled="isSaving || isSubmitting"
+                                    @click="deletePost"
+                                >
+                                    <IconTrash class="h-4 w-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{{ $t('posts.edit.delete') }}</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
 
-                    <Button type="button" variant="outline" size="icon" @click="hashtagsModal?.open()">
-                        <IconHash class="h-4 w-4" />
+                    <span class="h-4 w-px bg-border" />
+
+                    <PickTimePopover
+                        v-model="scheduledDateTime"
+                        :disabled="isSubmitting || selectedPlatformIds.length === 0"
+                        @confirm="hasPickedTime = true"
+                    >
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            :disabled="isSubmitting || selectedPlatformIds.length === 0"
+                        >
+                            <IconCalendar class="h-4 w-4" />
+                            {{ pickTimeLabel }}
+                        </Button>
+                    </PickTimePopover>
+
+                    <Button
+                        type="button"
+                        size="sm"
+                        :disabled="isSubmitting || selectedPlatformIds.length === 0"
+                        @click="submit(hasPickedTime ? 'scheduled' : 'publishing')"
+                    >
+                        {{ hasPickedTime ? $t('posts.edit.schedule') : $t('posts.edit.post_now') }}
                     </Button>
-
-                    <DatePicker v-model="scheduledDateTime" :show-time="true" class="w-auto" />
-                    <span class="whitespace-nowrap text-xs text-muted-foreground">{{ timezoneAbbr }}</span>
                 </div>
-            </div> -->
+            </div>
 
             <div class="flex-1 overflow-hidden">
                 <div class="h-full flex">
-                    <div class="w-full lg:w-2/3 lg:border-r overflow-y-auto relative">
-                        <div class="max-w-lg mx-auto py-8 px-6 space-y-6">
-                            <div>
-                                <Label class="mb-2 block text-sm font-medium">{{ $t('posts.edit.media') }}</Label>
-                                <div v-if="media.length > 0" class="mb-3 grid grid-cols-4 gap-2">
-                                    <div v-for="item in media" :key="item.id" class="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
-                                        <video v-if="item.type === 'video' || item.mime_type?.startsWith('video/')" :src="item.url" class="w-full h-full object-cover" muted />
-                                        <img v-else :src="item.url" :alt="item.original_filename" class="w-full h-full object-cover" loading="lazy" />
-                                        <button v-if="!isReadOnly" type="button" class="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100" @click="removeMedia(item.id)">
-                                            <IconTrash class="h-3 w-3" />
+                    <!-- Composition column -->
+                    <div class="w-full lg:w-2/3 lg:border-r overflow-y-auto">
+                        <div class="max-w-2xl mx-auto py-8 px-6">
+                            <div
+                                class="rounded-lg border bg-card shadow-sm transition-shadow focus-within:shadow-md"
+                                :class="isDragging ? 'border-primary ring-2 ring-primary/20' : ''"
+                                @dragover.prevent="isDragging = true"
+                                @dragleave.prevent="isDragging = false"
+                                @drop.prevent="handleDrop"
+                            >
+                                <!-- Card header -->
+                                <div class="flex items-start gap-3 border-b px-5 py-4">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                        <IconMessage2 class="h-5 w-5" />
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h2 class="text-sm font-semibold text-foreground">{{ $t('posts.edit.compose_title') }}</h2>
+                                        <p class="text-xs text-muted-foreground">{{ $t('posts.edit.compose_subtitle') }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Textarea + counter -->
+                                <div class="relative">
+                                    <Textarea
+                                        v-model="content"
+                                        :placeholder="$t('posts.edit.caption_placeholder')"
+                                        :disabled="isReadOnly"
+                                        class="min-h-[240px] resize-none rounded-none border-0 bg-transparent px-5 py-4 text-sm shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                    />
+                                    <span class="pointer-events-none absolute bottom-2 right-3 text-xs text-muted-foreground/70">
+                                        {{ content.length }}
+                                    </span>
+                                </div>
+
+                                <!-- Inline toolbar -->
+                                <div v-if="!isReadOnly" class="flex items-center gap-1 border-t px-3 py-2">
+                                    <Popover v-model:open="emojiOpen">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger as-child>
+                                                    <PopoverTrigger as-child>
+                                                        <Button type="button" variant="ghost" size="icon-sm" class="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                                            <IconMoodSmile class="h-4 w-4" />
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Emoji</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <PopoverContent class="w-64 p-2" align="start">
+                                            <div class="grid grid-cols-6 gap-1">
+                                                <button
+                                                    v-for="emoji in emojiList"
+                                                    :key="emoji"
+                                                    type="button"
+                                                    class="flex h-8 w-8 items-center justify-center rounded-md text-lg transition-colors hover:bg-muted"
+                                                    @click="appendEmoji(emoji)"
+                                                >{{ emoji }}</button>
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger as-child>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                    @click="hashtagsModal?.open()"
+                                                >
+                                                    <IconHash class="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>{{ $t('posts.edit.hashtags') }}</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger as-child>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                    @click="focusAssistant"
+                                                >
+                                                    <IconSparkles class="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>{{ $t('posts.edit.tabs.writing_assistant') }}</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger as-child>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon-sm"
+                                                    class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                    @click="triggerFileInput"
+                                                >
+                                                    <IconPhoto class="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>{{ $t('posts.edit.add_media') }}</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+
+                                    <div class="flex-1" />
+
+                                    <span v-if="uploading" class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                        <IconLoader2 class="h-3.5 w-3.5 animate-spin" />
+                                    </span>
+                                </div>
+
+                                <!-- Media grid -->
+                                <div v-if="media.length > 0" class="border-t px-5 py-4">
+                                    <div class="grid grid-cols-4 gap-2">
+                                        <div
+                                            v-for="item in media"
+                                            :key="item.id"
+                                            class="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
+                                        >
+                                            <video
+                                                v-if="item.type === 'video' || item.mime_type?.startsWith('video/')"
+                                                :src="item.url"
+                                                class="h-full w-full object-cover"
+                                                muted
+                                            />
+                                            <img
+                                                v-else
+                                                :src="item.url"
+                                                :alt="item.original_filename"
+                                                class="h-full w-full object-cover"
+                                                loading="lazy"
+                                            />
+                                            <button
+                                                v-if="!isReadOnly"
+                                                type="button"
+                                                class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
+                                                @click="removeMedia(item.id)"
+                                            >
+                                                <IconTrash class="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                        <button
+                                            v-if="!isReadOnly"
+                                            type="button"
+                                            class="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                                            @click="triggerFileInput"
+                                        >
+                                            <IconCloudUpload class="h-6 w-6" />
                                         </button>
                                     </div>
-                                    <button v-if="!isReadOnly" type="button" class="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary" @click="triggerFileInput">
-                                        <IconCloudUpload class="h-6 w-6" />
-                                    </button>
                                 </div>
-                                <div v-else-if="!isReadOnly" class="relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors" :class="isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'" @click="triggerFileInput" @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false" @drop.prevent="handleDrop">
-                                    <IconCloudUpload class="mb-2 h-8 w-8 text-muted-foreground" />
-                                    <p class="text-sm text-muted-foreground">{{ $t('posts.edit.drag_drop') }}</p>
-                                    <div v-if="uploading" class="absolute inset-0 flex items-center justify-center rounded-lg bg-background/80">
-                                        <IconLoader2 class="h-5 w-5 animate-spin text-muted-foreground" />
-                                    </div>
+
+                                <!-- Drag overlay hint -->
+                                <div v-if="isDragging && !isReadOnly" class="border-t bg-primary/5 px-5 py-6 text-center text-sm text-primary">
+                                    {{ $t('posts.edit.drag_drop') }}
                                 </div>
-                                <input ref="fileInput" type="file" class="hidden" multiple accept="image/jpeg,image/png,image/gif,image/webp,video/mp4" @change="handleFileSelect" />
-                            </div>
-                            <div>
-                                <Label class="mb-2 block text-sm font-medium">{{ $t('posts.edit.caption') }}</Label>
-                                <Textarea v-model="content" :placeholder="$t('posts.edit.caption_placeholder')" :disabled="isReadOnly" class="min-h-[160px] resize-none" />
-                                <p class="mt-1 text-right text-xs text-muted-foreground">{{ content.length }}</p>
+
+                                <input
+                                    ref="fileInput"
+                                    type="file"
+                                    class="hidden"
+                                    multiple
+                                    accept="image/jpeg,image/png,image/gif,image/webp,video/mp4"
+                                    @change="handleFileSelect"
+                                />
                             </div>
                         </div>
                     </div>
+
+                    <!-- Right sidebar -->
                     <div class="hidden lg:block lg:w-1/3 overflow-hidden">
-                        <Tabs default-value="schedule" class="h-full flex flex-col">
+                        <Tabs v-model="activeTab" class="h-full flex flex-col">
                             <TabsList class="mx-4 mt-4 w-auto shrink-0">
                                 <TabsTrigger value="preview">{{ $t('posts.edit.tabs.preview') }}</TabsTrigger>
                                 <TabsTrigger value="schedule">{{ $t('posts.edit.tabs.schedule') }}</TabsTrigger>
@@ -437,11 +618,26 @@ const formatFileSize = (bytes: number): string => {
                             </TabsList>
 
                             <TabsContent value="preview" class="flex-1 overflow-y-auto">
-                                <PreviewTab v-if="previewPlatform" :platform="previewPlatform.platform" :content="content" :media="media" :social-account="previewPlatform.social_account" :content-type="previewPlatform.content_type" />
+                                <PreviewTab
+                                    v-if="previewPlatform"
+                                    :platform="previewPlatform.platform"
+                                    :content="content"
+                                    :media="media"
+                                    :social-account="previewPlatform.social_account"
+                                    :content-type="previewPlatform.content_type"
+                                />
                             </TabsContent>
 
                             <TabsContent value="schedule" class="flex-1 overflow-y-auto p-4">
-                                <ScheduleTab :post-platforms="post.post_platforms" :selected-platform-ids="selectedPlatformIds" @toggle-platform="togglePlatform" />
+                                <ScheduleTab
+                                    :post-platforms="post.post_platforms"
+                                    :selected-platform-ids="selectedPlatformIds"
+                                    :labels="labels"
+                                    :selected-label-ids="selectedLabelIds"
+                                    :is-read-only="isReadOnly"
+                                    @toggle-platform="togglePlatform"
+                                    @toggle-label="toggleLabel"
+                                />
                             </TabsContent>
 
                             <TabsContent value="comments" class="flex-1 overflow-hidden">
@@ -458,6 +654,12 @@ const formatFileSize = (bytes: number): string => {
         </div>
     </AppLayout>
 
-    <ConfirmDeleteModal ref="deleteModal" :title="$t('posts.delete.title')" :description="$t('posts.delete.description')" :action="$t('posts.delete.confirm')" :cancel="$t('posts.delete.cancel')" />
+    <ConfirmDeleteModal
+        ref="deleteModal"
+        :title="$t('posts.delete.title')"
+        :description="$t('posts.delete.description')"
+        :action="$t('posts.delete.confirm')"
+        :cancel="$t('posts.delete.cancel')"
+    />
     <HashtagsModal ref="hashtagsModal" :hashtags="hashtags" @select="appendHashtags" />
 </template>

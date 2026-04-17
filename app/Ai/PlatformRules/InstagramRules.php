@@ -32,7 +32,7 @@ class InstagramRules implements Contract
     public function summary(): string
     {
         return <<<'TXT'
-Instagram: caption max 2200 chars, up to 30 hashtags (3-5 recommended).
+Instagram: caption max 2200 chars.
 - Feed: square (1:1) or portrait (4:5). Up to 10 images/videos.
 - Carousel: 2-10 slides, all same aspect ratio. First slide is the hook.
 - Reel: vertical 9:16 video only, up to 90s (30-60s performs best). Hook in first 1-3s.

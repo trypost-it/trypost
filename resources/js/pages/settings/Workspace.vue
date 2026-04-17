@@ -11,7 +11,6 @@ import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
 import InviteMemberDialog from '@/components/members/InviteMemberDialog.vue';
 import PhotoUpload from '@/components/PhotoUpload.vue';
-import TimezoneCombobox from '@/components/TimezoneCombobox.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,7 +45,6 @@ import { uploadLogo, deleteLogo } from '@/routes/app/workspace';
 interface Workspace {
     id: string;
     name: string;
-    timezone: string;
     has_logo: boolean;
     logo_url: string | null;
     brand_website: string | null;
@@ -73,10 +71,8 @@ const props = defineProps<{
     workspace: Workspace;
     members: Member[];
     invitations: Invitation[];
-    timezones: Record<string, string>;
 }>();
 
-const timezone = ref(props.workspace.timezone);
 const brandTone = ref(props.workspace.brand_tone ?? 'professional');
 const contentLanguage = ref(props.workspace.content_language ?? 'en');
 
@@ -148,16 +144,6 @@ const changeRole = (member: Member, role: string) => {
                         <InputError :message="errors.name" />
                     </div>
 
-                    <div class="grid gap-2">
-                        <Label for="timezone">{{ $t('settings.workspace.timezone') }}</Label>
-                        <TimezoneCombobox
-                            v-model="timezone"
-                            :timezones="timezones"
-                        />
-                        <input type="hidden" name="timezone" :value="timezone" />
-                        <InputError :message="errors.timezone" />
-                    </div>
-
                     <Button :disabled="processing">{{ $t('settings.workspace.save') }}</Button>
                 </Form>
             </div>
@@ -176,7 +162,6 @@ const changeRole = (member: Member, role: string) => {
                     v-slot="{ errors, processing }"
                 >
                     <input type="hidden" name="name" :value="workspace.name" />
-                    <input type="hidden" name="timezone" :value="workspace.timezone" />
 
                     <div class="grid gap-2">
                         <Label for="brand_website">{{ $t('settings.brand.website') }}</Label>

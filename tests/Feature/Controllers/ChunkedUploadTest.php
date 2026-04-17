@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
+use App\Models\Account;
 use App\Models\Media;
 use App\Models\User;
 use App\Models\Workspace;
@@ -11,11 +12,11 @@ use Illuminate\Support\Facades\Storage;
 beforeEach(function () {
     Storage::fake();
     $this->user = User::factory()->create([
-        'setup' => Setup::Completed,
     ]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->account->subscriptions()->create([
-        'type' => 'default',
+        'type' => Account::SUBSCRIPTION_NAME,
         'stripe_id' => 'sub_123',
         'stripe_status' => 'active',
         'stripe_price' => 'price_123',

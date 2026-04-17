@@ -18,7 +18,6 @@ return new class extends Migration
             $table->foreignUuid('account_id')->constrained()->cascadeOnDelete();
             $table->uuid('user_id')->nullable();
             $table->string('name');
-            $table->string('timezone');
             $table->string('brand_website')->nullable();
             $table->text('brand_description')->nullable();
             $table->string('brand_tone')->default('professional');

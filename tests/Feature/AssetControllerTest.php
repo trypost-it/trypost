@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\Account;
 use App\Models\Media;
@@ -18,7 +17,6 @@ beforeEach(function () {
 
     $this->account = Account::factory()->create();
     $this->user = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->account->update(['owner_id' => $this->user->id]);
@@ -59,7 +57,7 @@ test('can upload an image asset', function () {
     $response = $this->actingAs($this->user)
         ->postJson(route('app.assets.store'), ['media' => $file]);
 
-    $response->assertOk();
+    $response->assertCreated();
     $response->assertJsonStructure(['id', 'url', 'type', 'original_filename', 'size']);
 
     expect($this->workspace->getMedia('assets')->count())->toBe(1);
@@ -111,15 +109,20 @@ test('can store asset from url', function () {
     $unsplash->shouldReceive('trackDownload')->once();
 
     $response = $this->actingAs($this->user)
-        ->post(route('app.assets.store-from-url'), [
+        ->postJson(route('app.assets.store-from-url'), [
             'url' => 'https://images.unsplash.com/photo-test',
             'filename' => 'unsplash-test.jpg',
             'download_location' => 'https://api.unsplash.com/photos/test/download',
         ]);
 
-    $response->assertRedirect();
+    $response->assertCreated();
+    $response->assertJsonStructure(['id', 'path', 'url', 'type', 'mime_type', 'original_filename', 'size']);
 
     expect($this->workspace->getMedia('assets')->count())->toBe(1);
+
+    $media = $this->workspace->getMedia('assets')->first();
+    $response->assertJsonPath('id', $media->id);
+    $response->assertJsonPath('type', 'image');
 });
 
 test('unsplash search returns results', function () {

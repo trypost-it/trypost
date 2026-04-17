@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
+use App\Actions\Ai\AutofillBrand;
 use App\Actions\Workspace\CreateWorkspace;
 use App\Actions\Workspace\DeleteWorkspace;
 use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
 use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
 use App\Models\Workspace;
+use App\Services\Brand\LogoAttacher;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use RuntimeException;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Throwable;
 
 class WorkspaceController extends Controller
 {
@@ -46,19 +53,45 @@ class WorkspaceController extends Controller
         return Inertia::render('workspaces/Create');
     }
 
-    public function store(StoreWorkspaceRequest $request): RedirectResponse
+    public function autofillBrand(Request $request, AutofillBrand $autofill): JsonResponse
+    {
+        $validated = $request->validate([
+            'url' => ['required', 'string', 'max:255'],
+        ]);
+
+        try {
+            $metadata = $autofill(data_get($validated, 'url'));
+        } catch (RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        return response()->json($metadata->toArray());
+    }
+
+    public function store(StoreWorkspaceRequest $request, LogoAttacher $logoAttacher): RedirectResponse
     {
         $user = $request->user();
 
-        if ($user->ownedWorkspacesCount() > 0 && ! $user->account?->hasActiveSubscription()) {
-            return redirect()->route('app.billing.index')
-                ->with('message', 'Subscribe to create more workspaces.');
+        $validated = $request->validated();
+        $isFirstWorkspace = ! $user->workspaces()->exists();
+
+        $workspace = CreateWorkspace::execute($user, $validated);
+
+        if ($logoUrl = data_get($validated, 'logo_url')) {
+            try {
+                $logoAttacher->attach($workspace, $logoUrl);
+            } catch (Throwable $e) {
+                Log::warning('Logo attach failed during workspace creation', [
+                    'workspace_id' => $workspace->id,
+                    'logo_url' => $logoUrl,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
-        CreateWorkspace::execute($user, $request->validated());
-
-        return redirect()->route('app.calendar')
-            ->with('success', 'Workspace created successfully!');
+        return $isFirstWorkspace
+            ? redirect()->route('app.accounts')->with('success', __('workspaces.create.first_workspace_success'))
+            : redirect()->route('app.calendar')->with('success', __('workspaces.create.success'));
     }
 
     public function switch(Request $request, Workspace $workspace): RedirectResponse
@@ -85,10 +118,6 @@ class WorkspaceController extends Controller
 
         $this->authorize('update', $workspace);
 
-        $timezones = collect(timezone_identifiers_list())
-            ->mapWithKeys(fn ($tz) => [$tz => $tz])
-            ->toArray();
-
         $members = $workspace->members()
             ->get()
             ->map(fn ($member) => [
@@ -108,7 +137,6 @@ class WorkspaceController extends Controller
             'workspace' => $workspace,
             'members' => $members,
             'invitations' => $invitations,
-            'timezones' => $timezones,
         ]);
     }
 

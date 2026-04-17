@@ -20,7 +20,7 @@ class VideoGenerationService
 
     private string $model = 'veo-3.1-generate-preview';
 
-    private int $maxPollAttempts = 30;
+    private int $maxPollAttempts = 60;
 
     private int $pollIntervalSeconds = 10;
 

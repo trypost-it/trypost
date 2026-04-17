@@ -75,12 +75,11 @@ return [
         'logo_heading' => 'Logo do workspace',
         'logo_description' => 'Envie um logo para o workspace',
         'heading' => 'Nome do workspace',
-        'description' => 'Atualize o nome e fuso horário do workspace',
+        'description' => 'Atualize o nome do workspace',
         'members_heading' => 'Membros',
         'members_description' => 'Gerencie membros e convites do workspace',
         'name' => 'Nome',
         'name_placeholder' => 'Meu Workspace',
-        'timezone' => 'Fuso horário',
         'save' => 'Salvar',
     ],
 

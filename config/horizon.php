@@ -240,6 +240,21 @@ return [
             'tries' => 1,
             'nice' => 0,
         ],
+
+        'ai-assistant' => [
+            'connection' => 'redis',
+            'queue' => ['ai'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'minProcesses' => 1,
+            'maxProcesses' => 2,
+            'timeout' => 930,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 512,
+            'tries' => 1,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -255,6 +270,12 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+
+            'ai-assistant' => [
+                'maxProcesses' => 5,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
         ],
 
         'local' => [
@@ -264,6 +285,10 @@ return [
 
             'social-publishing' => [
                 'maxProcesses' => 3,
+            ],
+
+            'ai-assistant' => [
+                'maxProcesses' => 2,
             ],
         ],
     ],

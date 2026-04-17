@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Head, InfiniteScroll, router, useHttp } from '@inertiajs/vue3';
 import { IconCloudUpload, IconPencilPlus, IconPhoto, IconPlus, IconSearch, IconTrash } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref } from 'vue';
+import { toast } from 'vue-sonner';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
@@ -65,8 +67,33 @@ const props = defineProps<{
     assets: ScrollAssets;
 }>();
 
-const httpGet = useHttp({});
+interface SavedMedia {
+    id: string;
+    path: string;
+    url: string;
+    type: string;
+    mime_type: string;
+}
+
+interface UnsplashListResponse {
+    results: UnsplashPhoto[];
+    total_pages?: number;
+    total?: number;
+}
+
+interface GiphyListResponse {
+    results: GiphyGif[];
+    total_pages?: number;
+    total?: number;
+}
+
+const httpUnsplash = useHttp<Record<string, never>, UnsplashListResponse>({});
+const httpGiphy = useHttp<Record<string, never>, GiphyListResponse>({});
 const httpUpload = useHttp<{ media: File | null }>({ media: null });
+const httpSaveFromUrl = useHttp<{ url: string; filename: string; download_location?: string }, SavedMedia>({
+    url: '',
+    filename: '',
+});
 
 // Upload
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -151,8 +178,8 @@ const loadTrending = async (page = 1) => {
     unsplashLoading.value = true;
 
     try {
-        const response = await httpGet.get(unsplashTrending.url({ query: { page } }));
-        const results = response.results ?? [];
+        const response = await httpUnsplash.get(unsplashTrending.url({ query: { page } }));
+        const results = response?.results ?? [];
 
         if (page === 1) {
             trendingPhotos.value = results;
@@ -211,9 +238,9 @@ const searchUnsplash = debounce(async () => {
     unsplashPage.value = 1;
 
     try {
-        const response = await httpGet.get(unsplashSearch.url({ query: { query: unsplashQuery.value, page: 1 } }));
-        unsplashResults.value = response.results;
-        unsplashTotalPages.value = response.total_pages;
+        const response = await httpUnsplash.get(unsplashSearch.url({ query: { query: unsplashQuery.value, page: 1 } }));
+        unsplashResults.value = response?.results ?? [];
+        unsplashTotalPages.value = response?.total_pages ?? 0;
     } catch {
         unsplashResults.value = [];
     } finally {
@@ -228,8 +255,8 @@ const loadMoreUnsplash = async () => {
     unsplashPage.value++;
 
     try {
-        const response = await httpGet.get(unsplashSearch.url({ query: { query: unsplashQuery.value, page: unsplashPage.value } }));
-        unsplashResults.value.push(...response.results);
+        const response = await httpUnsplash.get(unsplashSearch.url({ query: { query: unsplashQuery.value, page: unsplashPage.value } }));
+        unsplashResults.value.push(...(response?.results ?? []));
     } catch {
         // ignore
     } finally {
@@ -237,16 +264,51 @@ const loadMoreUnsplash = async () => {
     }
 };
 
-const saveFromUnsplash = (photo: UnsplashPhoto) => {
+const saveMediaFromUrl = async (payload: { url: string; filename: string; download_location?: string }): Promise<SavedMedia | null> => {
+    httpSaveFromUrl.url = payload.url;
+    httpSaveFromUrl.filename = payload.filename;
+    httpSaveFromUrl.download_location = payload.download_location;
+
+    try {
+        return (await httpSaveFromUrl.post(storeFromUrl.url())) ?? null;
+    } catch {
+        return null;
+    }
+};
+
+const saveFromUnsplash = async (photo: UnsplashPhoto) => {
     savingPhotoId.value = photo.id;
 
-    router.post(storeFromUrl.url(), {
+    const media = await saveMediaFromUrl({
         url: photo.url_regular,
         filename: `unsplash-${photo.id}.jpg`,
         download_location: photo.download_location,
-    }, {
-        preserveScroll: true,
-        onFinish: () => { savingPhotoId.value = null; },
+    });
+
+    savingPhotoId.value = null;
+
+    if (media) {
+        toast.success(trans('assets.saved'));
+        router.reload({ only: ['assets'], reset: ['assets'] });
+    }
+};
+
+const createPostFromUnsplash = async (photo: UnsplashPhoto) => {
+    savingPhotoId.value = photo.id;
+
+    const media = await saveMediaFromUrl({
+        url: photo.url_regular,
+        filename: `unsplash-${photo.id}.jpg`,
+        download_location: photo.download_location,
+    });
+
+    if (! media) {
+        savingPhotoId.value = null;
+        return;
+    }
+
+    router.post(storePost.url(), {
+        media: [{ id: media.id, path: media.path, url: media.url, type: media.type, mime_type: media.mime_type }],
     });
 };
 
@@ -286,8 +348,8 @@ const loadGiphyTrending = async (page = 1) => {
     giphyLoading.value = true;
 
     try {
-        const response = await httpGet.get(giphyTrending.url({ query: { page } }));
-        const results = response.results ?? [];
+        const response = await httpGiphy.get(giphyTrending.url({ query: { page } }));
+        const results = response?.results ?? [];
 
         if (page === 1) {
             giphyTrendingPhotos.value = results;
@@ -314,9 +376,9 @@ const searchGiphy = debounce(async () => {
     giphyPage.value = 1;
 
     try {
-        const response = await httpGet.get(giphySearch.url({ query: { query: giphyQuery.value, page: 1 } }));
-        giphyResults.value = response.results;
-        giphyTotalPages.value = response.total_pages;
+        const response = await httpGiphy.get(giphySearch.url({ query: { query: giphyQuery.value, page: 1 } }));
+        giphyResults.value = response?.results ?? [];
+        giphyTotalPages.value = response?.total_pages ?? 0;
     } catch {
         giphyResults.value = [];
     } finally {
@@ -331,8 +393,8 @@ const loadMoreGiphy = async () => {
     giphyPage.value++;
 
     try {
-        const response = await httpGet.get(giphySearch.url({ query: { query: giphyQuery.value, page: giphyPage.value } }));
-        giphyResults.value.push(...response.results);
+        const response = await httpGiphy.get(giphySearch.url({ query: { query: giphyQuery.value, page: giphyPage.value } }));
+        giphyResults.value.push(...(response?.results ?? []));
     } catch {
         // ignore
     } finally {
@@ -367,15 +429,37 @@ const setupGiphyScrollObserver = () => {
     }
 };
 
-const saveFromGiphy = (gif: GiphyGif) => {
+const saveFromGiphy = async (gif: GiphyGif) => {
     savingGifId.value = gif.id;
 
-    router.post(storeFromUrl.url(), {
+    const media = await saveMediaFromUrl({
         url: gif.url_downsized,
         filename: `giphy-${gif.id}.gif`,
-    }, {
-        preserveScroll: true,
-        onFinish: () => { savingGifId.value = null; },
+    });
+
+    savingGifId.value = null;
+
+    if (media) {
+        toast.success(trans('assets.saved'));
+        router.reload({ only: ['assets'], reset: ['assets'] });
+    }
+};
+
+const createPostFromGiphy = async (gif: GiphyGif) => {
+    savingGifId.value = gif.id;
+
+    const media = await saveMediaFromUrl({
+        url: gif.url_downsized,
+        filename: `giphy-${gif.id}.gif`,
+    });
+
+    if (! media) {
+        savingGifId.value = null;
+        return;
+    }
+
+    router.post(storePost.url(), {
+        media: [{ id: media.id, path: media.path, url: media.url, type: media.type, mime_type: media.mime_type }],
     });
 };
 
@@ -534,7 +618,23 @@ const formatFileSize = (bytes: number): string => {
 
                                 <!-- Hover overlay -->
                                 <div class="absolute inset-0 flex flex-col justify-between bg-black/60 p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                    <div class="flex justify-end">
+                                    <div class="flex justify-end gap-1">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger as-child>
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="icon"
+                                                        class="size-7"
+                                                        :disabled="savingPhotoId === photo.id"
+                                                        @click="createPostFromUnsplash(photo)"
+                                                    >
+                                                        <IconPencilPlus class="size-3.5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>{{ $t('assets.create_post') }}</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger as-child>
@@ -624,7 +724,23 @@ const formatFileSize = (bytes: number): string => {
 
                                 <!-- Hover overlay -->
                                 <div class="absolute inset-0 flex flex-col justify-between bg-black/60 p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                    <div class="flex justify-end">
+                                    <div class="flex justify-end gap-1">
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger as-child>
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="icon"
+                                                        class="size-7"
+                                                        :disabled="savingGifId === gif.id"
+                                                        @click="createPostFromGiphy(gif)"
+                                                    >
+                                                        <IconPencilPlus class="size-3.5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>{{ $t('assets.create_post') }}</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger as-child>

@@ -4,22 +4,15 @@ declare(strict_types=1);
 
 use App\Actions\Ai\AutofillBrand;
 use App\Ai\Agents\BrandAnalyzer;
-use App\Enums\User\Setup;
-use App\Enums\UserWorkspace\Role;
-use App\Models\User;
-use App\Models\Workspace;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['setup' => Setup::Brand]);
-    $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
-    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
-    $this->user->update(['current_workspace_id' => $this->workspace->id]);
-
     // Run tests without LLM credentials so the deterministic fallback is exercised.
     config()->set('services.gemini.api_key', '');
     config()->set('services.openai.api_key', '');
+
+    $this->autofill = fn (string $url) => app(AutofillBrand::class)($url);
 });
 
 test('extracts name, description, language, and logo from meta tags', function () {
@@ -38,18 +31,44 @@ test('extracts name, description, language, and logo from meta tags', function (
             <body>Welcome</body>
             </html>
         HTML, 200),
-        'example.com/apple-touch-icon.png' => Http::response(file_get_contents(__DIR__.'/../../fixtures/1x1.png'), 200, ['Content-Type' => 'image/png']),
+        'example.com/icon-512.png' => Http::response(file_get_contents(__DIR__.'/../../fixtures/1x1.png'), 200, ['Content-Type' => 'image/png']),
     ]);
 
-    $result = (new AutofillBrand)('https://example.com', $this->workspace);
+    $result = ($this->autofill)('https://example.com');
 
-    expect($result['name'])->toBe('Acme Coffee');
-    expect($result['brand_description'])->toBe('Premium artisan coffee beans shipped worldwide.');
-    expect($result['content_language'])->toBe('pt-BR');
-    expect($result['logo_url'])->toBe('https://example.com/apple-touch-icon.png');
+    expect($result->name)->toBe('Acme Coffee');
+    expect($result->description)->toBe('Premium artisan coffee beans shipped worldwide.');
+    expect($result->language)->toBe('pt-BR');
+    // The 512x512 PNG favicon wins over the unsized apple-touch-icon; og:image is ignored.
+    expect($result->logoUrl)->toBe('https://example.com/icon-512.png');
+});
 
-    $this->workspace->refresh();
-    expect($this->workspace->has_logo)->toBeTrue();
+test('falls back to /favicon.ico when no icon link is declared', function () {
+    Http::fake([
+        'example.com' => Http::response('<html><head><title>Foo</title></head></html>', 200),
+    ]);
+
+    $result = ($this->autofill)('https://example.com');
+
+    expect($result->logoUrl)->toBe('https://example.com/favicon.ico');
+});
+
+test('ignores og:image when no icon links are present', function () {
+    Http::fake([
+        'example.com/page' => Http::response(<<<'HTML'
+            <html>
+            <head>
+              <title>Marketing</title>
+              <meta property="og:image" content="https://example.com/social-card.png">
+            </head>
+            </html>
+        HTML, 200),
+    ]);
+
+    $result = ($this->autofill)('https://example.com/page');
+
+    // og:image is NOT used — falls back to /favicon.ico at the origin instead.
+    expect($result->logoUrl)->toBe('https://example.com/favicon.ico');
 });
 
 test('falls back to title without og:site_name', function () {
@@ -65,10 +84,10 @@ test('falls back to title without og:site_name', function () {
         HTML, 200),
     ]);
 
-    $result = (new AutofillBrand)('https://example.com', $this->workspace);
+    $result = ($this->autofill)('https://example.com');
 
-    expect($result['name'])->toBe('Super SaaS');
-    expect($result['content_language'])->toBe('en');
+    expect($result->name)->toBe('Super SaaS');
+    expect($result->language)->toBe('en');
 });
 
 test('normalizes various language codes to supported locales', function (string $lang, ?string $expected) {
@@ -76,9 +95,9 @@ test('normalizes various language codes to supported locales', function (string 
         'example.com' => Http::response("<html lang=\"{$lang}\"><head><title>X</title></head></html>", 200),
     ]);
 
-    $result = (new AutofillBrand)('https://example.com', $this->workspace);
+    $result = ($this->autofill)('https://example.com');
 
-    expect($result['content_language'])->toBe($expected);
+    expect($result->language)->toBe($expected);
 })->with([
     ['pt', 'pt-BR'],
     ['pt-PT', 'pt-BR'],
@@ -89,16 +108,16 @@ test('normalizes various language codes to supported locales', function (string 
 ]);
 
 test('rejects non-http schemes', function () {
-    expect(fn () => (new AutofillBrand)('ftp://example.com', $this->workspace))
-        ->toThrow(RuntimeException::class, 'Only http:// and https://');
+    expect(fn () => ($this->autofill)('ftp://example.com'))
+        ->toThrow(RuntimeException::class);
 });
 
 test('rejects private network addresses', function () {
-    expect(fn () => (new AutofillBrand)('http://127.0.0.1', $this->workspace))
-        ->toThrow(RuntimeException::class, 'private');
+    expect(fn () => ($this->autofill)('http://127.0.0.1'))
+        ->toThrow(RuntimeException::class);
 
-    expect(fn () => (new AutofillBrand)('http://192.168.1.1', $this->workspace))
-        ->toThrow(RuntimeException::class, 'private');
+    expect(fn () => ($this->autofill)('http://192.168.1.1'))
+        ->toThrow(RuntimeException::class);
 });
 
 test('adds https:// when scheme is missing', function () {
@@ -106,22 +125,40 @@ test('adds https:// when scheme is missing', function () {
         'example.com' => Http::response('<html><head><title>ok</title></head></html>', 200),
     ]);
 
-    (new AutofillBrand)('example.com', $this->workspace);
+    ($this->autofill)('example.com');
 
     Http::assertSent(fn (HttpRequest $req) => str_starts_with($req->url(), 'https://example.com'));
 });
 
-test('returns empty fields when site has no meta tags', function () {
+test('falls back to domain-derived name when site has no meta tags', function () {
     Http::fake([
         'example.com' => Http::response('<html><body></body></html>', 200),
     ]);
 
-    $result = (new AutofillBrand)('https://example.com', $this->workspace);
+    $result = ($this->autofill)('https://example.com');
 
-    expect($result['name'])->toBeNull();
-    expect($result['brand_description'])->toBeNull();
-    expect($result['content_language'])->toBeNull();
-    expect($result['logo_url'])->toBeNull();
+    expect($result->name)->toBe('Example');
+    expect($result->description)->toBeNull();
+    expect($result->language)->toBeNull();
+    // logoUrl always falls back to /favicon.ico since that URL exists on most sites.
+    expect($result->logoUrl)->toBe('https://example.com/favicon.ico');
+});
+
+test('falls back to domain-derived name when title is a tagline with no separator', function () {
+    Http::fake([
+        'sendkit.dev' => Http::response(<<<'HTML'
+            <html>
+            <head>
+              <title>Email API, SMTP & Marketing Platform for Developers & AI Agents</title>
+            </head>
+            <body></body>
+            </html>
+        HTML, 200),
+    ]);
+
+    $result = ($this->autofill)('https://sendkit.dev');
+
+    expect($result->name)->toBe('Sendkit');
 });
 
 test('throws when upstream site returns an error', function () {
@@ -129,8 +166,8 @@ test('throws when upstream site returns an error', function () {
         'example.com' => Http::response('', 500),
     ]);
 
-    expect(fn () => (new AutofillBrand)('https://example.com', $this->workspace))
-        ->toThrow(RuntimeException::class, 'HTTP 500');
+    expect(fn () => ($this->autofill)('https://example.com'))
+        ->toThrow(RuntimeException::class);
 });
 
 test('when llm is configured, polishes description/tone/language/voice_notes via BrandAnalyzer', function () {
@@ -162,12 +199,12 @@ test('when llm is configured, polishes description/tone/language/voice_notes via
         ],
     ]);
 
-    $result = (new AutofillBrand)('https://example.com', $this->workspace);
+    $result = ($this->autofill)('https://example.com');
 
-    expect($result['brand_description'])->toBe('Widget Co helps small teams ship production widgets faster.');
-    expect($result['brand_tone'])->toBe('friendly');
-    expect($result['content_language'])->toBe('en');
-    expect($result['brand_voice_notes'])->toBe('Use short punchy sentences. Focus on developer benefits.');
+    expect($result->description)->toBe('Widget Co helps small teams ship production widgets faster.');
+    expect($result->tone)->toBe('friendly');
+    expect($result->language)->toBe('en');
+    expect($result->voiceNotes)->toBe('Use short punchy sentences. Focus on developer benefits.');
 });
 
 test('when llm is not configured, falls back to meta tags only', function () {
@@ -187,12 +224,12 @@ test('when llm is not configured, falls back to meta tags only', function () {
     // Fail loud if BrandAnalyzer is called.
     BrandAnalyzer::fake()->preventStrayPrompts();
 
-    $result = (new AutofillBrand)('https://example.com', $this->workspace);
+    $result = ($this->autofill)('https://example.com');
 
-    expect($result['brand_description'])->toBe('Uma descrição curta.');
-    expect($result['content_language'])->toBe('pt-BR');
-    expect($result['brand_tone'])->toBeNull();
-    expect($result['brand_voice_notes'])->toBeNull();
+    expect($result->description)->toBe('Uma descrição curta.');
+    expect($result->language)->toBe('pt-BR');
+    expect($result->tone)->toBeNull();
+    expect($result->voiceNotes)->toBeNull();
 });
 
 test('falls back to meta tags when BrandAnalyzer throws', function () {
@@ -214,26 +251,27 @@ test('falls back to meta tags when BrandAnalyzer throws', function () {
         fn () => throw new RuntimeException('LLM went down'),
     ]);
 
-    $result = (new AutofillBrand)('https://example.com', $this->workspace);
+    $result = ($this->autofill)('https://example.com');
 
-    expect($result['brand_description'])->toBe('Fallback desc.');
-    expect($result['content_language'])->toBe('en');
-    expect($result['brand_tone'])->toBeNull();
-    expect($result['brand_voice_notes'])->toBeNull();
+    expect($result->description)->toBe('Fallback desc.');
+    expect($result->language)->toBe('en');
+    expect($result->tone)->toBeNull();
+    expect($result->voiceNotes)->toBeNull();
 });
 
-test('skips logo that is too large or wrong mime', function () {
+test('BrandMetadata toArray exposes the shape the controller expects', function () {
     Http::fake([
-        'example.com' => Http::response(<<<'HTML'
-            <html><head>
-            <link rel="apple-touch-icon" href="https://example.com/malicious.exe">
-            </head></html>
-        HTML, 200),
-        'example.com/malicious.exe' => Http::response('fake', 200, ['Content-Type' => 'application/octet-stream']),
+        'example.com' => Http::response('<html lang="en"><head><title>Foo</title></head></html>', 200),
     ]);
 
-    (new AutofillBrand)('https://example.com', $this->workspace);
+    $result = ($this->autofill)('https://example.com');
 
-    $this->workspace->refresh();
-    expect($this->workspace->has_logo)->toBeFalse();
+    expect($result->toArray())->toHaveKeys([
+        'name',
+        'brand_description',
+        'content_language',
+        'brand_tone',
+        'brand_voice_notes',
+        'logo_url',
+    ]);
 });

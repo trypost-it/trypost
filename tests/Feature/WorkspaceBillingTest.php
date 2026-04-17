@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Enums\Plan\Slug as PlanSlug;
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\Account;
 use App\Models\Plan;
@@ -15,7 +14,6 @@ beforeEach(function () {
 
     $this->account = Account::factory()->create();
     $this->user = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->account->update(['owner_id' => $this->user->id]);
@@ -81,7 +79,6 @@ test('billing page is not accessible by non-owner member', function () {
     config(['trypost.self_hosted' => false]);
 
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);

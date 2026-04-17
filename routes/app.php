@@ -9,7 +9,6 @@ use App\Http\Controllers\App\BillingController;
 use App\Http\Controllers\App\GiphyController;
 use App\Http\Controllers\App\MediaController;
 use App\Http\Controllers\App\NotificationController;
-use App\Http\Controllers\App\OnboardingController;
 use App\Http\Controllers\App\PostAssistantController;
 use App\Http\Controllers\App\PostCommentController;
 use App\Http\Controllers\App\PostController;
@@ -36,7 +35,7 @@ use App\Http\Controllers\Auth\ThreadsController;
 use App\Http\Controllers\Auth\TikTokController;
 use App\Http\Controllers\Auth\XController;
 use App\Http\Controllers\Auth\YouTubeController;
-use App\Http\Middleware\App\EnsureUserSetupIsComplete;
+use App\Http\Middleware\App\EnsureAccountReady;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -48,21 +47,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('subscribe', [BillingController::class, 'subscribe'])->name('app.subscribe');
     Route::post('billing/checkout/{plan}', [BillingController::class, 'checkout'])->name('app.billing.checkout');
     Route::get('billing/processing', [BillingController::class, 'processing'])->name('app.billing.processing');
-});
 
-// Onboarding routes
-Route::middleware(['auth', 'verified'])->prefix('onboarding')->group(function () {
-    Route::get('/', fn () => redirect()->route('app.onboarding.role'));
-    Route::get('role', [OnboardingController::class, 'role'])->name('app.onboarding.role');
-    Route::post('role', [OnboardingController::class, 'storeRole'])->name('app.onboarding.role.store');
-    Route::get('brand', [OnboardingController::class, 'brand'])->name('app.onboarding.brand');
-    Route::post('brand', [OnboardingController::class, 'storeBrand'])->name('app.onboarding.brand.store');
-    Route::post('brand/skip', [OnboardingController::class, 'skipBrand'])->name('app.onboarding.brand.skip');
-    Route::post('brand/autofill', [OnboardingController::class, 'autofillBrand'])
+    Route::get('workspaces/create', [WorkspaceController::class, 'create'])->name('app.workspaces.create');
+    Route::post('workspaces', [WorkspaceController::class, 'store'])->name('app.workspaces.store');
+    Route::post('workspaces/autofill', [WorkspaceController::class, 'autofillBrand'])
         ->middleware('throttle:10,1')
-        ->name('app.onboarding.brand.autofill');
-    Route::get('account', [OnboardingController::class, 'account'])->name('app.onboarding.account');
-    Route::post('account', [OnboardingController::class, 'storeAccount'])->name('app.onboarding.account.store');
+        ->name('app.workspaces.autofill');
 });
 
 // Social Connect routes
@@ -116,11 +106,9 @@ Route::middleware(['auth', 'verified', 'throttle:6,1'])->group(function () {
 });
 
 // Routes that require active subscription and completed onboarding
-Route::middleware(['auth', 'verified', 'subscribed', EnsureUserSetupIsComplete::class])->group(function () {
+Route::middleware(['auth', 'verified', EnsureAccountReady::class])->group(function () {
     // Workspaces
     Route::get('workspaces', [WorkspaceController::class, 'index'])->name('app.workspaces.index');
-    Route::get('workspaces/create', [WorkspaceController::class, 'create'])->name('app.workspaces.create');
-    Route::post('workspaces', [WorkspaceController::class, 'store'])->name('app.workspaces.store');
     Route::post('workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('app.workspaces.switch');
     Route::delete('workspaces/{workspace}', [WorkspaceController::class, 'destroy'])->name('app.workspaces.destroy');
 

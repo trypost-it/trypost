@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Events\SubscriptionCreated;
 use App\Listeners\StripeEventListener;
@@ -19,7 +18,6 @@ beforeEach(function () {
         'stripe_id' => 'cus_test_'.fake()->uuid(),
     ]);
     $this->user = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->account->update(['owner_id' => $this->user->id]);

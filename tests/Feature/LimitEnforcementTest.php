@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\Account;
 use App\Models\Plan;
@@ -20,7 +19,6 @@ beforeEach(function () {
 
     $this->account = Account::factory()->create(['plan_id' => $this->plan->id]);
     $this->user = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->account->id,
     ]);
     $this->account->update(['owner_id' => $this->user->id]);

@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
+use App\Enums\UserWorkspace\Role;
+use App\Models\Account;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\PostPlatform;
@@ -14,8 +15,15 @@ use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     Storage::fake('local');
-    $this->user = User::factory()->create(['setup' => Setup::Completed]);
+    $this->user = User::factory()->create([]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
+    $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
+    $this->user->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 
     $this->socialAccount = SocialAccount::factory()->create(['workspace_id' => $this->workspace->id]);
@@ -167,7 +175,7 @@ test('reorder media updates order', function () {
 });
 
 test('reorder media rejects media from other workspace', function () {
-    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+    $otherUser = User::factory()->create([]);
     $otherWorkspace = Workspace::factory()->create(['user_id' => $otherUser->id]);
     $otherUser->update(['current_workspace_id' => $otherWorkspace->id]);
 

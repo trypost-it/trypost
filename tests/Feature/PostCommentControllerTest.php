@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\Post;
 use App\Models\PostComment;
@@ -10,7 +9,7 @@ use App\Models\User;
 use App\Models\Workspace;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['setup' => Setup::Completed]);
+    $this->user = User::factory()->create([]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
@@ -121,7 +120,7 @@ test('update own comment', function () {
 });
 
 test('cannot update other user comment', function () {
-    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+    $otherUser = User::factory()->create([]);
     $this->workspace->members()->attach($otherUser->id, ['role' => Role::Member->value]);
     $otherUser->update(['current_workspace_id' => $this->workspace->id]);
 
@@ -156,7 +155,7 @@ test('delete own comment', function () {
 });
 
 test('cannot delete other user comment', function () {
-    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+    $otherUser = User::factory()->create([]);
     $this->workspace->members()->attach($otherUser->id, ['role' => Role::Member->value]);
     $otherUser->update(['current_workspace_id' => $this->workspace->id]);
 
@@ -201,7 +200,7 @@ test('react toggles emoji', function () {
 });
 
 test('cannot comment on post from other workspace', function () {
-    $otherUser = User::factory()->create(['setup' => Setup::Completed]);
+    $otherUser = User::factory()->create([]);
     $otherWorkspace = Workspace::factory()->create(['user_id' => $otherUser->id]);
     $otherWorkspace->members()->attach($otherUser->id, ['role' => Role::Member->value]);
     $otherUser->update(['current_workspace_id' => $otherWorkspace->id]);

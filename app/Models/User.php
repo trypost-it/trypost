@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\Notification\Type as NotificationType;
-use App\Enums\User\Persona;
-use App\Enums\User\Setup;
 use App\Models\Traits\HasMedia;
 use App\Models\Traits\HasWorkspace;
 use Database\Factories\UserFactory;
@@ -31,8 +29,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
-        'setup',
-        'persona',
         'account_id',
         'current_workspace_id',
         'email_verified_at',
@@ -69,8 +65,6 @@ class User extends Authenticatable implements MustVerifyEmail
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
-            'setup' => Setup::class,
-            'persona' => Persona::class,
         ];
     }
 

@@ -40,6 +40,7 @@ return [
         'connections' => 'Conexões',
         'hashtags' => 'Hashtags',
         'labels' => 'Etiquetas',
+        'assets' => 'Mídias',
         'api_keys' => 'API Keys',
         'settings' => 'Configurações',
     ],

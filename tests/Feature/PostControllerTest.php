@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
-use App\Enums\User\Setup;
 use App\Enums\UserWorkspace\Role;
 use App\Models\Post;
 use App\Models\PostPlatform;
@@ -16,7 +15,7 @@ use App\Models\WorkspaceLabel;
 use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['setup' => Setup::Completed]);
+    $this->user = User::factory()->create([]);
     $this->workspace = Workspace::factory()->create(['user_id' => $this->user->id]);
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
@@ -511,7 +510,6 @@ test('update post validates label_ids exist', function () {
 // Member authorization tests
 test('member can view posts index', function () {
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->workspace->account_id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);
@@ -524,7 +522,6 @@ test('member can view posts index', function () {
 
 test('member can create post', function () {
     $member = User::factory()->create([
-        'setup' => Setup::Completed,
         'account_id' => $this->workspace->account_id,
     ]);
     $this->workspace->members()->attach($member->id, ['role' => Role::Member->value]);

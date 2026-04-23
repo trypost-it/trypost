@@ -177,6 +177,29 @@ enum Platform: string
     }
 
     /**
+     * Static, platform-specific data exposed to the frontend (e.g. TikTok privacy options,
+     * compliance URLs). Returns an empty array for platforms with no extra config.
+     *
+     * @return array<string, mixed>
+     */
+    public function publishConfig(): array
+    {
+        return match ($this) {
+            self::TikTok => [
+                'privacyLevelOptions' => [
+                    'PUBLIC_TO_EVERYONE',
+                    'MUTUAL_FOLLOW_FRIENDS',
+                    'FOLLOWER_OF_CREATOR',
+                    'SELF_ONLY',
+                ],
+                'musicUsageConfirmationUrl' => 'https://www.tiktok.com/legal/page/global/music-usage-confirmation/en',
+                'brandedContentPolicyUrl' => 'https://www.tiktok.com/legal/page/global/bc-policy/en',
+            ],
+            default => [],
+        };
+    }
+
+    /**
      * Get all enabled platforms.
      *
      * @return array<self>

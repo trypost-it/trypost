@@ -12,8 +12,10 @@ use App\Enums\Post\Action as PostAction;
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\SocialAccount\Platform;
 use App\Http\Requests\App\Post\UpdatePostRequest;
+use App\Http\Resources\App\PlatformConfigResource;
 use App\Models\Post;
 use App\Services\Social\PinterestPublisher;
+use App\Services\Social\TikTokCreatorInfo;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -165,13 +167,7 @@ class PostController extends Controller
         $hashtags = $workspace->hashtags;
 
         $platformConfigs = $socialAccounts->mapWithKeys(fn ($account) => [
-            $account->id => [
-                'maxContentLength' => $account->platform->maxContentLength(),
-                'maxImages' => $account->platform->maxImages(),
-                'allowedMediaTypes' => array_map(fn ($type) => $type->value, $account->platform->allowedMediaTypes()),
-                'supportsTextOnly' => $account->platform->supportsTextOnly(),
-                'requiresContent' => $account->platform->requiresContent(),
-            ],
+            $account->id => new PlatformConfigResource($account),
         ]);
 
         $pinterestBoards = [];
@@ -184,12 +180,21 @@ class PostController extends Controller
             }
         }
 
+        $tiktokAccounts = $socialAccounts->where('platform', Platform::TikTok);
+
         return Inertia::render('posts/Edit', [
             'workspace' => $workspace,
             'post' => $post,
             'socialAccounts' => $socialAccounts,
             'platformConfigs' => $platformConfigs,
             'pinterestBoards' => $pinterestBoards,
+            'tiktokCreatorInfos' => Inertia::defer(fn () => $tiktokAccounts->mapWithKeys(fn ($account) => [
+                $account->id => rescue(
+                    fn () => app(TikTokCreatorInfo::class)->fetch($account),
+                    null,
+                    report: false,
+                ),
+            ])->filter()),
             'labels' => $labels,
             'hashtags' => $hashtags,
             'authUserId' => $request->user()->id,

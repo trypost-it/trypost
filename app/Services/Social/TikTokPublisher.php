@@ -63,19 +63,10 @@ class TikTokPublisher
         return $this->socialHttp()->asJson()->withToken($this->accessToken);
     }
 
-    private function queryCreatorInfo(): array
+    private function queryCreatorInfo(SocialAccount $account): array
     {
-        $response = $this->getHttpClient()
-            ->post("{$this->baseUrl}/post/publish/creator_info/query/", []);
-
-        if ($response->failed()) {
-            Log::warning('TikTok creator_info query failed', ['body' => $this->redactResponseBody($response->body())]);
-
-            return ['privacy_level' => 'SELF_ONLY'];
-        }
-
-        $data = data_get($response->json(), 'data', []);
-        $privacyOptions = data_get($data, 'privacy_level_options', ['SELF_ONLY']);
+        $info = app(TikTokCreatorInfo::class)->fetch($account);
+        $privacyOptions = data_get($info, 'privacy_level_options') ?: ['SELF_ONLY'];
 
         // Prefer PUBLIC_TO_EVERYONE > MUTUAL_FOLLOW_FRIENDS > FOLLOWER_OF_CREATOR > SELF_ONLY
         $preferred = ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'FOLLOWER_OF_CREATOR', 'SELF_ONLY'];
@@ -90,7 +81,7 @@ class TikTokPublisher
 
         return [
             'privacy_level' => $privacyLevel,
-            'max_video_post_duration_sec' => data_get($data, 'max_video_post_duration_sec'),
+            'max_video_post_duration_sec' => data_get($info, 'max_video_post_duration_sec'),
         ];
     }
 
@@ -126,7 +117,7 @@ class TikTokPublisher
 
     private function publishVideo(PostPlatform $postPlatform, $media, ?string $content): array
     {
-        $creatorInfo = $this->queryCreatorInfo();
+        $creatorInfo = $this->queryCreatorInfo($postPlatform->socialAccount);
 
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/video/init/", [
@@ -175,7 +166,7 @@ class TikTokPublisher
             throw new \Exception('No valid images found for TikTok photo post');
         }
 
-        $creatorInfo = $this->queryCreatorInfo();
+        $creatorInfo = $this->queryCreatorInfo($postPlatform->socialAccount);
 
         $postInfo = $this->buildPostInfo($postPlatform, $content, $creatorInfo);
         // Photos don't support duet/stitch/is_aigc

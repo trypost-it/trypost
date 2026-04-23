@@ -84,12 +84,24 @@ interface Workspace {
     name: string;
 }
 
+interface TikTokCreatorInfo {
+    creator_nickname: string | null;
+    creator_username: string | null;
+    creator_avatar_url: string | null;
+    privacy_level_options: string[];
+    comment_disabled: boolean;
+    duet_disabled: boolean;
+    stitch_disabled: boolean;
+    max_video_post_duration_sec: number | null;
+}
+
 const props = defineProps<{
     workspace: Workspace;
     post: Post;
     socialAccounts: SocialAccount[];
     platformConfigs: Record<string, any>;
     pinterestBoards: any[];
+    tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
     labels: { id: string; name: string; color: string }[];
     hashtags: { id: string; name: string; hashtags: string }[];
     authUserId: string;
@@ -106,6 +118,30 @@ const media = ref<MediaItem[]>(post.value.media || []);
 const selectedPlatformIds = ref<string[]>(
     post.value.post_platforms.filter((pp) => pp.enabled).map((pp) => pp.id),
 );
+
+// Per-platform meta (TikTok settings, Pinterest board, etc.)
+const platformMeta = ref<Record<string, Record<string, any>>>(
+    Object.fromEntries(post.value.post_platforms.map((pp) => [pp.id, { ...(pp.meta ?? {}) }])),
+);
+
+const updatePlatformMeta = (platformId: string, meta: Record<string, any>) => {
+    platformMeta.value = { ...platformMeta.value, [platformId]: meta };
+};
+
+// TikTok compliance per docs:
+// - privacy_level must be explicitly selected
+// - if disclosure toggle is ON, at least one sub-toggle must be selected
+const tiktokComplianceValid = computed(() => {
+    const tiktokPlatforms = post.value.post_platforms.filter(
+        (pp) => pp.platform === 'tiktok' && selectedPlatformIds.value.includes(pp.id),
+    );
+    return tiktokPlatforms.every((pp) => {
+        const meta = platformMeta.value[pp.id] ?? {};
+        if (!meta.privacy_level) return false;
+        if (meta.disclose && !meta.brand_organic_toggle && !meta.brand_content_toggle) return false;
+        return true;
+    });
+});
 
 // Schedule
 const getLocalSchedule = () => {
@@ -247,7 +283,7 @@ const getSubmitData = () => {
         .map((pp) => ({
             id: pp.id,
             content_type: pp.content_type,
-            meta: pp.meta || {},
+            meta: platformMeta.value[pp.id] ?? pp.meta ?? {},
         }));
 
     return {
@@ -295,7 +331,7 @@ const triggerAutosave = () => {
     }
 };
 
-watch([content, media, selectedPlatformIds, scheduledDateTime, selectedLabelIds], triggerAutosave, { deep: true });
+watch([content, media, selectedPlatformIds, scheduledDateTime, selectedLabelIds, platformMeta], triggerAutosave, { deep: true });
 
 onUnmounted(() => {
     debouncedSave.cancel();
@@ -402,14 +438,15 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
 
                     <PickTimePopover
                         v-model="scheduledDateTime"
-                        :disabled="isSubmitting || selectedPlatformIds.length === 0"
+                        :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid"
                         @confirm="hasPickedTime = true"
                     >
                         <Button
                             type="button"
                             variant="secondary"
                             size="sm"
-                            :disabled="isSubmitting || selectedPlatformIds.length === 0"
+                            :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid"
+                            :title="!tiktokComplianceValid ? $t('posts.form.tiktok.compliance_incomplete') : ''"
                         >
                             <IconCalendar class="h-4 w-4" />
                             {{ pickTimeLabel }}
@@ -419,7 +456,8 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                     <Button
                         type="button"
                         size="sm"
-                        :disabled="isSubmitting || selectedPlatformIds.length === 0"
+                        :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid"
+                        :title="!tiktokComplianceValid ? $t('posts.form.tiktok.compliance_incomplete') : ''"
                         @click="submit(hasPickedTime ? 'scheduled' : 'publishing')"
                     >
                         {{ hasPickedTime ? $t('posts.edit.schedule') : $t('posts.edit.post_now') }}
@@ -635,8 +673,13 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                                     :labels="labels"
                                     :selected-label-ids="selectedLabelIds"
                                     :is-read-only="isReadOnly"
+                                    :platform-configs="platformConfigs"
+                                    :platform-meta="platformMeta"
+                                    :tiktok-creator-infos="tiktokCreatorInfos"
+                                    :media="media"
                                     @toggle-platform="togglePlatform"
                                     @toggle-label="toggleLabel"
+                                    @update:platformMeta="updatePlatformMeta"
                                 />
                             </TabsContent>
 

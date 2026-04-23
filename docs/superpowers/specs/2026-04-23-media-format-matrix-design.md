@@ -188,7 +188,7 @@ Path strategy: `converted/{original_media_id}/{original_file_sha256_prefix}/{con
 2. Detect real MIME via finfo
 3. If MIME is an image AND format ≠ JPEG AND format ≠ GIF:
    a. Load into Intervention\Image (keeps original dimensions + aspect)
-   b. Encode as JPEG q90 with SAME dimensions
+   b. Encode as JPEG q100 (no quality loss — format conversion only) with SAME dimensions
    c. Overwrite the original file at `medias/{uuid}.jpg`
    d. Save Media row with mime_type='image/jpeg'
 4. GIFs: keep as GIF (for X/Bluesky/Mastodon only). Frontend blocks incompatible platforms.
@@ -203,7 +203,7 @@ All publishers pass the **single CDN URL** stored on the Media row. No temporary
 | Platform | Handling at publish |
 |----------|---------------------|
 | Instagram, Facebook, LinkedIn, X, Threads, Pinterest, TikTok Photo, YouTube thumb, Mastodon | Pass `media.url` as-is to the platform API. If the platform rejects for dimensions/size, the error surfaces to the user via `post_platform.error_message`. |
-| **Bluesky (only exception)** | Bluesky's API accepts raw bytes (not URL). Before upload, check byte size: if > 976 KB, do Postiz-style iterative 10 %-shrink loop **in memory**, then upload bytes. No CDN round-trip, no temp files. |
+| **Bluesky (only exception)** | Bluesky's API accepts raw bytes (not URL). Before upload, check byte size: if > 976 KB, do Postiz-style iterative 10 %-shrink loop **in memory** — shrinks only dimensions (not quality — keeps q100). Loops until ≤ 976 KB. Then upload bytes. No CDN round-trip, no temp files. |
 
 ### Filename preservation
 

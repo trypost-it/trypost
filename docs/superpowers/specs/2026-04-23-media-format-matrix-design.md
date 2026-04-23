@@ -179,28 +179,41 @@ Path strategy: `converted/{original_media_id}/{original_file_sha256_prefix}/{con
 
 ## Revised pipeline
 
+**Principle:** upload-time touches **only the format** (pixel-perfect). Dimensions and bytes are preserved for maximum platform flexibility (9:16 Reel, 4:5 carousel, etc.). Per-platform size/dimension constraints are handled at publish time in memory, without mutating the CDN original.
+
 ### At upload time (asset controller)
 
 ```
 1. Receive upload
 2. Detect real MIME via finfo
-3. If MIME is an image (any format):
-   a. Load into Intervention\Image
-   b. If dims > 1920×1080 → resize keeping aspect
-   c. Encode as JPEG q90
-   d. Store at `medias/{uuid}.jpg`
-   e. Save Media row with mime_type='image/jpeg'
-4. GIFs: keep as GIF (for X/Bluesky/Mastodon). Don't convert — frontend will block incompatible platforms.
-5. Videos: unchanged v1 (passthrough).
+3. If MIME is an image AND format ≠ JPEG AND format ≠ GIF:
+   a. Load into Intervention\Image (keeps original dimensions + aspect)
+   b. Encode as JPEG q90 with SAME dimensions
+   c. Overwrite the original file at `medias/{uuid}.jpg`
+   d. Save Media row with mime_type='image/jpeg'
+4. GIFs: keep as GIF (for X/Bluesky/Mastodon only). Frontend blocks incompatible platforms.
+5. JPEG already: no-op, store as-is.
+6. Videos: unchanged v1 (passthrough).
 ```
 
-This means: by the time any post reaches a publisher, the CDN already has a JPEG (or a GIF, for the 3 platforms that accept it).
+### At publish time (minimal — no resize except Bluesky)
 
-### At publish time (per publisher)
+All publishers pass the **single CDN URL** stored on the Media row. No temporary variants, no resize-for-Graph-API dance, no cleanup jobs.
 
-- **Instagram, Facebook, TikTok Photo, LinkedIn, Threads, Pinterest, YouTube thumbnail, Mastodon:** already have compatible image, no converter call needed.
-- **X:** already has compatible image (native GIF/PNG/WebP also work; we normalize to JPEG but X accepts both).
-- **Bluesky (only):** if JPEG > 976 KB, run in-memory iterative resize (Postiz style) and upload bytes directly to Bluesky's blob endpoint. No CDN round-trip.
+| Platform | Handling at publish |
+|----------|---------------------|
+| Instagram, Facebook, LinkedIn, X, Threads, Pinterest, TikTok Photo, YouTube thumb, Mastodon | Pass `media.url` as-is to the platform API. If the platform rejects for dimensions/size, the error surfaces to the user via `post_platform.error_message`. |
+| **Bluesky (only exception)** | Bluesky's API accepts raw bytes (not URL). Before upload, check byte size: if > 976 KB, do Postiz-style iterative 10 %-shrink loop **in memory**, then upload bytes. No CDN round-trip, no temp files. |
+
+### Filename preservation
+
+- UUID stays the same (`abc-123...`)
+- Only the extension changes when the real format changes (`.png` → `.jpg`, `.webp` → `.jpg`)
+- The DB `media.path` updates (`medias/abc-123.png` → `medias/abc-123.jpg`)
+- Old file is deleted from CDN after the new one is written
+- Frontend's `Media` object is returned with the updated URL so the editor displays the right image
+
+Why the extension must change: some platform APIs check extension in addition to Content-Type. Keeping `.png` on a file with JPEG bytes risks inconsistent behavior.
 
 ### Frontend validation additions
 

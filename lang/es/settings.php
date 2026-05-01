@@ -71,6 +71,11 @@ return [
     ],
 
     'workspace' => [
+        'tabs' => [
+            'workspace' => 'Workspace',
+            'brand' => 'Marca',
+            'users' => 'Usuarios',
+        ],
         'title' => 'Configuración del workspace',
         'logo_heading' => 'Logo del workspace',
         'logo_description' => 'Sube un logo para tu workspace',
@@ -152,6 +157,7 @@ return [
             'owner' => 'Propietario',
             'admin' => 'Administrador',
             'member' => 'Miembro',
+            'viewer' => 'Espectador',
         ],
 
         'flash' => [

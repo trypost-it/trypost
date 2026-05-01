@@ -22,6 +22,11 @@ class AcceptInviteController extends Controller
     {
         $invite->load('account');
 
+        $firstWorkspaceId = collect($invite->workspaces ?? [])->first();
+        $workspace = $firstWorkspaceId ? Workspace::find($firstWorkspaceId) : null;
+
+        $role = $invite->role ?? Role::Member;
+
         return Inertia::render('auth/AcceptInvite', [
             'invite' => [
                 'id' => $invite->id,
@@ -30,7 +35,14 @@ class AcceptInviteController extends Controller
                     'id' => $invite->account->id,
                     'name' => $invite->account->name,
                 ],
-                'workspaces' => $invite->workspaces,
+                'workspace' => $workspace ? [
+                    'id' => $workspace->id,
+                    'name' => $workspace->name,
+                ] : null,
+                'role' => [
+                    'value' => $role->value,
+                    'label' => $role->label(),
+                ],
             ],
         ]);
     }

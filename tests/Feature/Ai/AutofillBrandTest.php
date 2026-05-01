@@ -172,6 +172,7 @@ test('throws when upstream site returns an error', function () {
 
 test('when llm is configured, polishes description/tone/language/voice_notes via BrandAnalyzer', function () {
     config()->set('services.gemini.api_key', 'fake-key');
+    config()->set('ai.default', 'gemini');
 
     Http::fake([
         'example.com' => Http::response(<<<'HTML'
@@ -234,6 +235,7 @@ test('when llm is not configured, falls back to meta tags only', function () {
 
 test('falls back to meta tags when BrandAnalyzer throws', function () {
     config()->set('services.gemini.api_key', 'fake-key');
+    config()->set('ai.default', 'gemini');
 
     Http::fake([
         'example.com' => Http::response(<<<'HTML'

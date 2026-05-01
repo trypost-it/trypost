@@ -19,6 +19,10 @@ const props = defineProps<{
         workspace: {
             id: string;
             name: string;
+        } | null;
+        account: {
+            id: string;
+            name: string;
         };
     };
 }>();
@@ -48,12 +52,12 @@ const inviteUrl = computed(() => `/invites/${props.invite.id}`);
                     <CardHeader class="text-center">
                         <CardTitle class="text-xl">{{ $t('auth.accept_invite.title') }}</CardTitle>
                         <CardDescription>
-                            {{ $t('auth.accept_invite.description', { workspace: invite.workspace.name }) }}
+                            {{ $t('auth.accept_invite.description', { workspace: invite.workspace?.name ?? invite.account.name }) }}
                         </CardDescription>
                     </CardHeader>
                     <CardContent class="space-y-6">
                         <div class="rounded-lg bg-muted p-4 space-y-2">
-                            <div class="flex justify-between text-sm">
+                            <div v-if="invite.workspace" class="flex justify-between text-sm">
                                 <span class="text-muted-foreground">{{ $t('auth.accept_invite.workspace') }}</span>
                                 <span class="font-medium">{{ invite.workspace.name }}</span>
                             </div>
@@ -87,12 +91,12 @@ const inviteUrl = computed(() => `/invites/${props.invite.id}`);
                                 {{ $t('auth.accept_invite.login_prompt') }}
                             </p>
                             <Button as-child size="lg" class="w-full">
-                                <Link :href="login({ query: { redirect: inviteUrl } })">
+                                <Link :href="login({ query: { redirect: inviteUrl, email: invite.email } })">
                                     {{ $t('auth.accept_invite.log_in') }}
                                 </Link>
                             </Button>
                             <Button as-child variant="outline" size="lg" class="w-full">
-                                <Link :href="register({ query: { redirect: inviteUrl } })">
+                                <Link :href="register({ query: { redirect: inviteUrl, email: invite.email } })">
                                     {{ $t('auth.accept_invite.create_account') }}
                                 </Link>
                             </Button>

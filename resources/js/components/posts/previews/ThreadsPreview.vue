@@ -1,19 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import { isVideoMedia, type MediaItem } from '@/composables/useMedia';
+
 interface SocialAccount {
     id: string;
     platform: string;
     display_name: string;
     username: string;
     avatar_url: string | null;
-}
-
-interface MediaItem {
-    id: string;
-    url: string;
-    type: string;
-    original_filename: string;
 }
 
 interface Props {
@@ -100,7 +95,7 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
                                 'aspect-[4/3]': media.length === 1,
                                 'aspect-square': media.length > 1,
                             }">
-                            <img v-if="item.type === 'image'" :src="item.url" :alt="item.original_filename"
+                            <img v-if="!isVideoMedia(item)" :src="item.url" :alt="item.original_filename"
                                 class="w-full h-full object-cover" />
                             <video v-else :src="item.url" class="w-full h-full object-cover bg-black" muted loop
                                 playsinline />

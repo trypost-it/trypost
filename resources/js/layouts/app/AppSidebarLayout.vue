@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
+import { useHttp, usePage } from '@inertiajs/vue3';
+import { onBeforeUnmount, onMounted } from 'vue';
 
 import AppHeader from '@/components/AppHeader.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import Toast from '@/components/Toast.vue';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { heartbeat as heartbeatRoute } from '@/routes/app/presence';
 
 const page = usePage();
 const isOpen = page.props.sidebarOpen;
@@ -17,6 +19,24 @@ type Props = {
 withDefaults(defineProps<Props>(), {
     title: '',
     fullWidth: false,
+});
+
+const heartbeatHttp = useHttp<Record<string, never>, { ok: boolean }>({});
+
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+
+const sendHeartbeat = () => {
+    if (typeof document === 'undefined' || document.hidden) return;
+    void heartbeatHttp.post(heartbeatRoute.url()).catch(() => undefined);
+};
+
+onMounted(() => {
+    sendHeartbeat();
+    heartbeatTimer = setInterval(sendHeartbeat, 30_000);
+});
+
+onBeforeUnmount(() => {
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
 });
 </script>
 

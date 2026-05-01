@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use Database\Factories\InviteFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -19,6 +20,7 @@ class Invite extends Model
         'account_id',
         'invited_by',
         'email',
+        'role',
         'workspaces',
         'accepted_at',
     ];
@@ -26,6 +28,7 @@ class Invite extends Model
     protected function casts(): array
     {
         return [
+            'role' => WorkspaceRole::class,
             'workspaces' => 'array',
             'accepted_at' => 'datetime',
         ];

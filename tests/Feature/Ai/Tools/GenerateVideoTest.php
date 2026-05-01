@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Services\Ai\VideoGenerationService;
 use Illuminate\JsonSchema\JsonSchemaTypeFactory;
+use Illuminate\Support\Str;
 use Laravel\Ai\Tools\Request as ToolRequest;
 
 beforeEach(function () {
@@ -25,16 +26,19 @@ beforeEach(function () {
 });
 
 test('tool delegates to VideoGenerationService and pushes attachment to collector', function () {
-    $expected = [
-        'id' => 'video-uuid',
-        'path' => 'medias/video.mp4',
-        'url' => 'https://example.com/medias/video.mp4',
-        'mime_type' => 'video/mp4',
+    $media = $this->workspace->media()->create([
+        'group_id' => Str::uuid()->toString(),
+        'collection' => 'assets',
         'type' => 'video',
-    ];
+        'path' => 'medias/video.mp4',
+        'original_filename' => 'ai-generated.mp4',
+        'mime_type' => 'video/mp4',
+        'size' => 1024,
+        'order' => 0,
+    ]);
 
     $mock = $this->mock(VideoGenerationService::class);
-    $mock->shouldReceive('generate')->once()->andReturn($expected);
+    $mock->shouldReceive('generate')->once()->andReturn($media);
 
     $tool = new GenerateVideo(
         workspace: $this->workspace,
@@ -49,7 +53,8 @@ test('tool delegates to VideoGenerationService and pushes attachment to collecto
 
     expect((string) $summary)->toContain('video');
     expect(app(AttachmentCollector::class)->all())->toHaveCount(1);
-    expect(app(AttachmentCollector::class)->all()[0])->toBe($expected);
+    expect(app(AttachmentCollector::class)->all()[0]['id'])->toBe($media->id);
+    expect(app(AttachmentCollector::class)->all()[0]['type'])->toBe('video');
 });
 
 test('tool refuses to generate when monthly video quota is exhausted', function () {

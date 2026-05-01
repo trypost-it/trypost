@@ -238,7 +238,13 @@ const selectedLabelIds = ref<string[]>(post.value.labels?.map((l) => l.id) || []
 const isSubmitting = ref(false);
 const isSaving = ref(false);
 const showSaved = ref(false);
-const activeTab = ref('schedule');
+const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+const initialTabFromQuery = (() => {
+    const tab = queryParams?.get('tab');
+    return ['preview', 'schedule', 'comments', 'assistant'].includes(tab ?? '') ? (tab as string) : 'schedule';
+})();
+const initialHighlightCommentId = queryParams?.get('comment') ?? null;
+const activeTab = ref(initialTabFromQuery);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const hashtagsModal = ref<InstanceType<typeof HashtagsModal> | null>(null);
 const mediaPickerDialog = ref<InstanceType<typeof MediaPickerDialog> | null>(null);
@@ -461,12 +467,15 @@ const deletePost = () => {
 // Full reload of the post prop so the new status + post_platforms propagate and
 // the overlay dismisses.
 useEcho(`post.${post.value.id}`, '.PostPlatformStatusUpdated', () => {
-    router.reload({ only: ['post'], preserveScroll: true });
+    router.reload({ only: ['post'] });
 });
 
 
 // Echo: listen for real-time comments
 useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
+    if (e.mentioned_users) {
+        commentsTabRef.value?.registerMentionedUsers(e.mentioned_users);
+    }
     commentsTabRef.value?.addCommentFromBroadcast(e.comment);
 });
 </script>
@@ -767,7 +776,12 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                             </TabsContent>
 
                             <TabsContent value="comments" class="flex-1 overflow-hidden">
-                                <CommentsTab ref="commentsTabRef" :post-id="post.id" :current-user-id="authUserId" />
+                                <CommentsTab
+                                    ref="commentsTabRef"
+                                    :post-id="post.id"
+                                    :current-user-id="authUserId"
+                                    :highlight-comment-id="initialHighlightCommentId"
+                                />
                             </TabsContent>
 
                             <TabsContent value="assistant" class="flex-1 overflow-hidden">

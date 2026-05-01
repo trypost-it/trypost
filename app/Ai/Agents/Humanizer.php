@@ -23,7 +23,7 @@ class Humanizer implements Agent
 
     public function provider(): Lab
     {
-        return match (config('trypost.ai.text_provider')) {
+        return match (config('ai.default')) {
             'openai' => Lab::OpenAI,
             default => Lab::Gemini,
         };

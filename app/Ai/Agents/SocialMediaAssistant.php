@@ -28,7 +28,7 @@ use Laravel\Ai\Messages\Message;
 use Laravel\Ai\Promptable;
 
 #[Temperature(0.3)]
-#[MaxSteps(1)]
+#[MaxSteps(3)]
 class SocialMediaAssistant implements Agent, Conversational, HasMiddleware, HasStructuredOutput, HasTools
 {
     use Promptable;
@@ -118,7 +118,7 @@ class SocialMediaAssistant implements Agent, Conversational, HasMiddleware, HasS
 
     public function provider(): Lab
     {
-        return match (config('trypost.ai.text_provider')) {
+        return match (config('ai.default')) {
             'openai' => Lab::OpenAI,
             default => Lab::Gemini,
         };

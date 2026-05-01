@@ -25,6 +25,11 @@ class UpdatePostRequest extends FormRequest
             'media.*.id' => ['required', 'string'],
             'media.*.path' => ['required', 'string', 'max:500'],
             'media.*.url' => ['required', 'string', 'max:2048'],
+            'media.*.type' => ['sometimes', 'nullable', 'string', 'max:32'],
+            'media.*.mime_type' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'media.*.original_filename' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'media.*.size' => ['sometimes', 'nullable', 'integer'],
+            'media.*.meta' => ['sometimes', 'nullable', 'array'],
             'scheduled_at' => [
                 'sometimes',
                 'nullable',

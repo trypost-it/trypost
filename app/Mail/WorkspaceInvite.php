@@ -29,12 +29,16 @@ class WorkspaceInvite extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
+        $accountName = $this->invite->account->name;
+        $roleLabel = $this->invite->role?->label() ?? '';
+
         return new Content(
             view: 'mail.workspace-invite',
             with: [
-                'title' => "You've been invited to join {$this->invite->account->name}",
-                'previewText' => "You've been invited to join {$this->invite->account->name}",
-                'invite' => $this->invite,
+                'title' => "You've been invited to join {$accountName}",
+                'previewText' => "You've been invited to join {$accountName}",
+                'accountName' => $accountName,
+                'roleLabel' => $roleLabel,
                 'url' => route('app.invites.show', $this->invite),
             ],
         );

@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'mentioned' => [
+        'subject' => ':name mencionou você no TryPost',
+        'title' => ':name mencionou você',
+        'intro' => ':name mencionou você num comentário.',
+        'cta' => 'Ver comentário',
+    ],
+
     'workspace_connections_disconnected' => [
         'subject' => '{1} :count conta precisa ser reconectada em :workspace|[2,*] :count contas precisam ser reconectadas em :workspace',
         'title' => 'Contas Precisam ser Reconectadas',

@@ -127,12 +127,12 @@ test('instructions include no platform rules section when post has no platforms'
     expect($instructions)->not->toContain('ACTIVE PLATFORMS FOR THIS POST');
 });
 
-test('provider honors trypost.ai.text_provider config', function () {
-    config()->set('trypost.ai.text_provider', 'openai');
+test('provider honors ai.default config', function () {
+    config()->set('ai.default', 'openai');
 
     expect((new SocialMediaAssistant($this->workspace))->provider())->toBe(Lab::OpenAI);
 
-    config()->set('trypost.ai.text_provider', 'gemini');
+    config()->set('ai.default', 'gemini');
 
     expect((new SocialMediaAssistant($this->workspace))->provider())->toBe(Lab::Gemini);
 });

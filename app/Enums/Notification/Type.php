@@ -13,4 +13,5 @@ enum Type: string
     case InviteReceived = 'invite_received';
     case MemberJoined = 'member_joined';
     case MemberRemoved = 'member_removed';
+    case MentionedInComment = 'mentioned_in_comment';
 }

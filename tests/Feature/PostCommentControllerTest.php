@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use App\Enums\UserWorkspace\Role;
+use App\Jobs\SendNotification;
 use App\Models\Post;
 use App\Models\PostComment;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
     $this->user = User::factory()->create([]);
@@ -77,6 +79,67 @@ test('store creates a reply', function () {
         'parent_id' => $parent->id,
         'body' => 'This is a reply.',
     ]);
+});
+
+test('index returns mentioned_users map for chip rendering', function () {
+    $other = User::factory()->create(['name' => 'Other Member']);
+    $this->workspace->members()->attach($other->id, ['role' => Role::Member->value]);
+
+    PostComment::factory()->create([
+        'post_id' => $this->post->id,
+        'user_id' => $this->user->id,
+        'body' => "Ping @[{$other->id}] please",
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->getJson(route('app.posts.comments.index', $this->post));
+
+    $response->assertOk();
+    $response->assertJsonPath("mentioned_users.{$other->id}", 'Other Member');
+});
+
+test('store dispatches a mention notification to a workspace member', function () {
+    Queue::fake();
+
+    $other = User::factory()->create();
+    $this->workspace->members()->attach($other->id, ['role' => Role::Member->value]);
+
+    $response = $this->actingAs($this->user)
+        ->postJson(route('app.posts.comments.store', $this->post), [
+            'body' => "Hey @[{$other->id}] please review",
+        ]);
+
+    $response->assertCreated();
+
+    Queue::assertPushed(
+        SendNotification::class,
+        fn ($job) => $job->user->id === $other->id
+    );
+});
+
+test('update with newly added mention dispatches a notification', function () {
+    Queue::fake();
+
+    $other = User::factory()->create();
+    $this->workspace->members()->attach($other->id, ['role' => Role::Member->value]);
+
+    $comment = PostComment::factory()->create([
+        'post_id' => $this->post->id,
+        'user_id' => $this->user->id,
+        'body' => 'Plain body, no mention.',
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->putJson(route('app.posts.comments.update', [$this->post, $comment]), [
+            'body' => "Updated to mention @[{$other->id}]",
+        ]);
+
+    $response->assertOk();
+
+    Queue::assertPushed(
+        SendNotification::class,
+        fn ($job) => $job->user->id === $other->id
+    );
 });
 
 test('store rejects reply to a reply', function () {

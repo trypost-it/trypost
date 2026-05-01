@@ -9,11 +9,13 @@ use App\Actions\Workspace\CreateWorkspace;
 use App\Actions\Workspace\DeleteWorkspace;
 use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
 use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
+use App\Http\Resources\App\WorkspaceMemberResource;
 use App\Models\Workspace;
 use App\Services\Brand\LogoAttacher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,6 +25,26 @@ use Throwable;
 
 class WorkspaceController extends Controller
 {
+    public function searchMembers(Request $request): AnonymousResourceCollection
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        abort_if(! $workspace, SymfonyResponse::HTTP_FORBIDDEN);
+
+        $this->authorize('view', $workspace);
+
+        $term = trim((string) $request->input('q', ''));
+
+        $members = $workspace->members()
+            ->where('users.id', '!=', $request->user()->id)
+            ->when($term !== '', fn ($query) => $query->where('users.name', 'ilike', '%'.$term.'%'))
+            ->orderBy('users.name')
+            ->limit(50)
+            ->get(['users.id', 'users.name', 'users.email']);
+
+        return WorkspaceMemberResource::collection($members);
+    }
+
     public function index(Request $request): Response
     {
         $user = $request->user();

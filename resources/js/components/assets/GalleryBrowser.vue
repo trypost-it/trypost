@@ -7,6 +7,7 @@ import { toast } from 'vue-sonner';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import ImagePreviewDialog from '@/components/ImagePreviewDialog.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -79,6 +80,18 @@ const props = defineProps<{
 const selected = defineModel<PickedMedia[]>('selected', { default: () => [] });
 
 const isPicker = computed(() => props.mode === 'picker');
+
+const previewImage = ref<string | null>(null);
+
+const handleAssetClick = (asset: { id: string; url: string; type?: string }) => {
+    if (isPicker.value) {
+        toggleSelect(asset as AssetMedia);
+        return;
+    }
+    if (asset.type !== 'video') {
+        previewImage.value = asset.url;
+    }
+};
 
 const selectedIds = computed(() => new Set(selected.value.map((m) => m.id)));
 const isSelected = (id: string) => selectedIds.value.has(id);
@@ -593,12 +606,12 @@ onUnmounted(() => {
                         :key="asset.id"
                         class="group relative overflow-hidden rounded-lg border-2 bg-muted transition-all"
                         :class="[
-                            isPicker ? 'cursor-pointer' : '',
+                            (isPicker || asset.type !== 'video') ? 'cursor-pointer' : '',
                             isPicker && isSelected(asset.id)
                                 ? 'border-primary ring-2 ring-primary/30'
                                 : 'border-transparent',
                         ]"
-                        @click="isPicker ? toggleSelect(asset) : null"
+                        @click="handleAssetClick(asset)"
                     >
                         <div class="aspect-square">
                             <video
@@ -632,14 +645,14 @@ onUnmounted(() => {
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger as-child>
-                                            <Button variant="secondary" size="icon" class="size-7" @click="createPostFromAsset(asset)">
+                                            <Button variant="secondary" size="icon" class="size-7" @click.stop="createPostFromAsset(asset)">
                                                 <IconPencilPlus class="size-3.5" />
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>{{ trans('assets.create_post') }}</TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
-                                <Button variant="destructive" size="icon" class="size-7" @click="handleDelete(asset.id)">
+                                <Button variant="destructive" size="icon" class="size-7" @click.stop="handleDelete(asset.id)">
                                     <IconTrash class="size-3.5" />
                                 </Button>
                             </div>
@@ -677,7 +690,8 @@ onUnmounted(() => {
                         <div
                             v-for="photo in displayedPhotos"
                             :key="photo.id"
-                            class="group relative overflow-hidden rounded-lg bg-muted"
+                            class="group relative cursor-pointer overflow-hidden rounded-lg bg-muted"
+                            @click="previewImage = photo.url_regular"
                         >
                             <div class="aspect-[4/3]">
                                 <img
@@ -698,7 +712,7 @@ onUnmounted(() => {
                                                     size="icon"
                                                     class="size-7"
                                                     :disabled="savingPhotoId === photo.id"
-                                                    @click="createPostFromUnsplash(photo)"
+                                                    @click.stop="createPostFromUnsplash(photo)"
                                                 >
                                                     <IconPencilPlus class="size-3.5" />
                                                 </Button>
@@ -714,7 +728,7 @@ onUnmounted(() => {
                                                     size="icon"
                                                     class="size-7"
                                                     :disabled="savingPhotoId === photo.id"
-                                                    @click="saveAndPickUnsplash(photo)"
+                                                    @click.stop="saveAndPickUnsplash(photo)"
                                                 >
                                                     <IconLoader2 v-if="savingPhotoId === photo.id" class="size-3.5 animate-spin" />
                                                     <IconPlus v-else class="size-3.5" />
@@ -727,11 +741,11 @@ onUnmounted(() => {
                                     </TooltipProvider>
                                 </div>
                                 <p class="text-xs text-white/80">
-                                    <a :href="photo.author.url + '?utm_source=trypost&utm_medium=referral'" target="_blank" rel="noopener noreferrer" class="hover:text-white">
+                                    <a :href="photo.author.url + '?utm_source=trypost&utm_medium=referral'" target="_blank" rel="noopener noreferrer" class="hover:text-white" @click.stop>
                                         {{ photo.author.name }}
                                     </a>
                                     <span class="text-white/50"> / </span>
-                                    <a href="https://unsplash.com/?utm_source=trypost&utm_medium=referral" target="_blank" rel="noopener noreferrer" class="hover:text-white">
+                                    <a href="https://unsplash.com/?utm_source=trypost&utm_medium=referral" target="_blank" rel="noopener noreferrer" class="hover:text-white" @click.stop>
                                         Unsplash
                                     </a>
                                 </p>
@@ -772,7 +786,12 @@ onUnmounted(() => {
                     </p>
 
                     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                        <div v-for="gif in displayedGifs" :key="gif.id" class="group relative overflow-hidden rounded-lg bg-muted">
+                        <div
+                            v-for="gif in displayedGifs"
+                            :key="gif.id"
+                            class="group relative cursor-pointer overflow-hidden rounded-lg bg-muted"
+                            @click="previewImage = gif.url_original"
+                        >
                             <div class="aspect-[4/3]">
                                 <img :src="gif.url_preview" :alt="gif.title || 'GIF'" class="size-full object-cover" loading="lazy" />
                             </div>
@@ -787,7 +806,7 @@ onUnmounted(() => {
                                                     size="icon"
                                                     class="size-7"
                                                     :disabled="savingGifId === gif.id"
-                                                    @click="createPostFromGiphy(gif)"
+                                                    @click.stop="createPostFromGiphy(gif)"
                                                 >
                                                     <IconPencilPlus class="size-3.5" />
                                                 </Button>
@@ -803,7 +822,7 @@ onUnmounted(() => {
                                                     size="icon"
                                                     class="size-7"
                                                     :disabled="savingGifId === gif.id"
-                                                    @click="saveAndPickGiphy(gif)"
+                                                    @click.stop="saveAndPickGiphy(gif)"
                                                 >
                                                     <IconLoader2 v-if="savingGifId === gif.id" class="size-3.5 animate-spin" />
                                                     <IconPlus v-else class="size-3.5" />
@@ -849,5 +868,7 @@ onUnmounted(() => {
             :action="trans('assets.delete.confirm')"
             :cancel="trans('assets.delete.cancel')"
         />
+
+        <ImagePreviewDialog :src="previewImage" @close="previewImage = null" />
     </div>
 </template>

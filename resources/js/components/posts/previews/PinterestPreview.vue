@@ -2,19 +2,14 @@
 import { IconPhoto, IconStack2 } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
+import { isVideoMedia, type MediaItem } from '@/composables/useMedia';
+
 interface SocialAccount {
     id: string;
     platform: string;
     display_name: string;
     username: string;
     avatar_url: string | null;
-}
-
-interface MediaItem {
-    id: string;
-    url: string;
-    type: string;
-    original_filename: string;
 }
 
 interface Props {
@@ -51,7 +46,7 @@ const isCarousel = computed(() => props.contentType === 'pinterest_carousel');
                             <!-- Single Image or Video -->
                             <div v-if="!isCarousel || media.length === 1" class="relative">
                                 <img
-                                    v-if="media[0].type === 'image'"
+                                    v-if="!isVideoMedia(media[0])"
                                     :src="media[0].url"
                                     :alt="media[0].original_filename"
                                     class="w-full aspect-[2/3] object-cover"
@@ -65,7 +60,7 @@ const isCarousel = computed(() => props.contentType === 'pinterest_carousel');
                                     playsinline
                                 />
                                 <!-- Video indicator -->
-                                <div v-if="media[0].type === 'video'" class="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <div v-if="isVideoMedia(media[0])" class="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
                                     <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="currentColor">
                                         <polygon points="5,3 19,12 5,21"/>
                                     </svg>

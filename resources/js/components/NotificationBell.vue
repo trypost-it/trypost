@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
+import { useEcho } from '@laravel/echo-vue';
 import { IconArchive, IconBell, IconCheck, IconChecks, IconInbox, IconX } from '@tabler/icons-vue';
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +14,7 @@ import dayjs from '@/dayjs';
 import { accounts } from '@/routes/app';
 import { index, read, readAll, archiveAll } from '@/routes/app/notifications';
 import { edit as editPost } from '@/routes/app/posts';
+import type { SharedData } from '@/types';
 
 interface Notification {
     id: string;
@@ -30,6 +32,28 @@ const unreadCount = ref(0);
 const loading = ref(false);
 const show = ref(false);
 const panel = ref<HTMLElement | null>(null);
+
+const page = usePage<SharedData>();
+const currentUserId = computed(() => page.props.auth?.user?.id ?? null);
+const currentWorkspaceId = computed(() => page.props.auth?.currentWorkspace?.id ?? null);
+
+const channelName = computed(() =>
+    currentUserId.value && currentWorkspaceId.value
+        ? `workspace.${currentWorkspaceId.value}.user.${currentUserId.value}`
+        : null,
+);
+
+if (channelName.value) {
+    useEcho(channelName.value, '.NotificationCreated', (e: { notification: Notification }) => {
+        const exists = notifications.value.some((n) => n.id === e.notification.id);
+        if (exists) return;
+
+        notifications.value = [e.notification, ...notifications.value];
+        if (! e.notification.read_at) {
+            unreadCount.value += 1;
+        }
+    });
+}
 
 const csrfToken = () =>
     document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
@@ -94,6 +118,16 @@ const handleNotificationClick = (notification: Notification) => {
     }
 
     close();
+
+    if (notification.type === 'mentioned_in_comment' && notification.data?.post_id) {
+        const url = new URL(editPost.url(notification.data.post_id), window.location.origin);
+        url.searchParams.set('tab', 'comments');
+        if (notification.data?.comment_id) {
+            url.searchParams.set('comment', notification.data.comment_id);
+        }
+        router.visit(url.toString());
+        return;
+    }
 
     if (notification.data?.post_id) {
         router.visit(editPost.url(notification.data.post_id));

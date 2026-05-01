@@ -16,6 +16,7 @@ return new class extends Migration
             $table->boolean('post_published')->default(true);
             $table->boolean('post_failed')->default(true);
             $table->boolean('account_disconnected')->default(true);
+            $table->boolean('mentioned_in_comment')->default(true);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();

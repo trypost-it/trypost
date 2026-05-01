@@ -6,6 +6,7 @@ namespace App\Jobs;
 
 use App\Enums\Notification\Channel;
 use App\Enums\Notification\Type;
+use App\Events\NotificationCreated;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,7 +41,7 @@ class SendNotification implements ShouldQueue
     {
         // Save in-app notification
         if ($this->channel !== Channel::Email) {
-            Notification::create([
+            $notification = Notification::create([
                 'user_id' => $this->user->id,
                 'workspace_id' => $this->workspaceId,
                 'type' => $this->type,
@@ -49,6 +50,8 @@ class SendNotification implements ShouldQueue
                 'body' => $this->body,
                 'data' => $this->data,
             ]);
+
+            NotificationCreated::dispatch($notification);
         }
 
         // Send email (respects user preferences)

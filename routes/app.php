@@ -12,6 +12,7 @@ use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\PostAssistantController;
 use App\Http\Controllers\App\PostCommentController;
 use App\Http\Controllers\App\PostController;
+use App\Http\Controllers\App\PresenceController;
 use App\Http\Controllers\App\Settings\AccountController;
 use App\Http\Controllers\App\Settings\NotificationPreferenceController;
 use App\Http\Controllers\App\Settings\PasswordController;
@@ -53,6 +54,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('workspaces/autofill', [WorkspaceController::class, 'autofillBrand'])
         ->middleware('throttle:10,1')
         ->name('app.workspaces.autofill');
+
+    Route::get('workspace/members/search', [WorkspaceController::class, 'searchMembers'])
+        ->middleware('throttle:60,1')
+        ->name('app.workspace.members.search');
+
+    Route::post('presence/heartbeat', [PresenceController::class, 'heartbeat'])
+        ->name('app.presence.heartbeat');
 });
 
 // Social Connect routes

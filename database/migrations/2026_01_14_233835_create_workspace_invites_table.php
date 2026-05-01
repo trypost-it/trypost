@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,6 +16,7 @@ return new class extends Migration
             $table->foreignUuid('account_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('invited_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('email');
+            $table->string('role')->default(WorkspaceRole::Member->value);
             $table->json('workspaces');
             $table->timestamp('accepted_at')->nullable();
             $table->timestamps();

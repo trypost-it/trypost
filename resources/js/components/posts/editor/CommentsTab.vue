@@ -10,9 +10,10 @@ import {
 } from '@tabler/icons-vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
+import CommentBody from '@/components/CommentBody.vue';
+import MentionTextarea from '@/components/MentionTextarea.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import date from '@/date';
 import dayjs from '@/dayjs';
@@ -53,11 +54,13 @@ interface PaginatedResponse {
     current_page: number;
     last_page: number;
     next_page_url: string | null;
+    mentioned_users?: Record<string, string>;
 }
 
 const props = defineProps<{
     postId: string;
     currentUserId: string;
+    highlightCommentId?: string | null;
 }>();
 
 const EMOJIS = ['👍', '❤️', '😂', '🎉', '🔥', '👏', '😍', '🤔', '👀', '💯'];
@@ -78,7 +81,7 @@ const hoveredCommentId = ref<string | null>(null);
 const emojiPickerCommentId = ref<string | null>(null);
 
 const scrollContainer = ref<HTMLDivElement | null>(null);
-const textareaRef = ref<InstanceType<typeof Textarea> | null>(null);
+const textareaRef = ref<InstanceType<typeof MentionTextarea> | null>(null);
 
 const hasOlderComments = computed(() => currentPage.value < lastPage.value);
 
@@ -145,6 +148,10 @@ const loadComments = async (page = 1) => {
         const data: PaginatedResponse = await response.json();
         currentPage.value = data.current_page;
         lastPage.value = data.last_page;
+
+        if (data.mentioned_users) {
+            memberNames.value = { ...memberNames.value, ...data.mentioned_users };
+        }
 
         if (page === 1) {
             // Reverse so newest is at bottom
@@ -412,11 +419,44 @@ const addCommentFromBroadcast = (comment: Comment) => {
     }
 };
 
-defineExpose({ addCommentFromBroadcast });
+const memberNames = ref<Record<string, string>>({});
 
-onMounted(() => {
-    loadComments(1);
+const registerMention = (member: { id: string; name: string }) => {
+    memberNames.value = { ...memberNames.value, [member.id]: member.name };
+};
+
+const registerMentionedUsers = (users: Record<string, string>) => {
+    memberNames.value = { ...memberNames.value, ...users };
+};
+
+defineExpose({ addCommentFromBroadcast, registerMentionedUsers });
+
+const highlightedId = ref<string | null>(null);
+
+const focusComment = async (commentId: string) => {
+    await nextTick();
+    const el = document.querySelector<HTMLElement>(`[data-comment-id="${commentId}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    highlightedId.value = commentId;
+    setTimeout(() => {
+        if (highlightedId.value === commentId) highlightedId.value = null;
+    }, 4000);
+};
+
+onMounted(async () => {
+    await loadComments(1);
+    if (props.highlightCommentId) {
+        await focusComment(props.highlightCommentId);
+    }
 });
+
+watch(
+    () => props.highlightCommentId,
+    (id) => {
+        if (id) void focusComment(id);
+    },
+);
 
 watch(() => props.postId, () => {
     comments.value = [];
@@ -450,16 +490,20 @@ watch(() => props.postId, () => {
                 <template v-for="comment in group.comments" :key="comment.id">
                     <!-- Top-level comment -->
                     <div
-                        class="group relative rounded-lg py-1.5 px-2 hover:bg-muted/50"
+                        :data-comment-id="comment.id"
+                        class="group relative rounded-lg py-1.5 px-2 transition-colors"
+                        :class="highlightedId === comment.id ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/50'"
                         @mouseenter="hoveredCommentId = comment.id"
                         @mouseleave="hoveredCommentId = null; emojiPickerCommentId = null"
                     >
                         <!-- Editing mode -->
                         <div v-if="editingComment?.id === comment.id" class="space-y-2">
-                            <Textarea
+                            <MentionTextarea
                                 v-model="editBody"
+                                :member-names="memberNames"
                                 class="min-h-[60px] resize-none text-sm"
                                 @keydown="handleEditKeydown"
+                                @mention="registerMention"
                             />
                             <div class="flex items-center gap-1.5">
                                 <Button size="sm" variant="default" @click="saveEdit">{{ $t('comments.save') }}</Button>
@@ -489,7 +533,7 @@ watch(() => props.postId, () => {
                                         </TooltipProvider>
                                         <span v-if="comment.updated_at !== comment.created_at" class="text-[10px] text-muted-foreground italic">({{ $t('comments.edited') }})</span>
                                     </div>
-                                    <p class="mt-0.5 whitespace-pre-wrap text-sm">{{ comment.body }}</p>
+                                    <CommentBody :body="comment.body" :members="memberNames" />
 
                                     <!-- Reactions -->
                                     <div v-if="groupedReactions(comment.reactions).length > 0" class="mt-1.5 flex flex-wrap gap-1">
@@ -557,16 +601,20 @@ watch(() => props.postId, () => {
                         <div
                             v-for="reply in comment.replies"
                             :key="reply.id"
-                            class="group relative ml-8 rounded-lg py-1.5 px-2 hover:bg-muted/50"
+                            :data-comment-id="reply.id"
+                            class="group relative ml-8 rounded-lg py-1.5 px-2 transition-colors"
+                            :class="highlightedId === reply.id ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/50'"
                             @mouseenter="hoveredCommentId = reply.id"
                             @mouseleave="hoveredCommentId = null; emojiPickerCommentId = null"
                         >
                             <!-- Editing reply -->
                             <div v-if="editingComment?.id === reply.id" class="space-y-2">
-                                <Textarea
+                                <MentionTextarea
                                     v-model="editBody"
+                                    :member-names="memberNames"
                                     class="min-h-[60px] resize-none text-sm"
                                     @keydown="handleEditKeydown"
+                                    @mention="registerMention"
                                 />
                                 <div class="flex items-center gap-1.5">
                                     <Button size="sm" variant="default" @click="saveEdit">{{ $t('comments.save') }}</Button>
@@ -596,7 +644,7 @@ watch(() => props.postId, () => {
                                             </TooltipProvider>
                                             <span v-if="reply.updated_at !== reply.created_at" class="text-[10px] text-muted-foreground italic">({{ $t('comments.edited') }})</span>
                                         </div>
-                                        <p class="mt-0.5 whitespace-pre-wrap text-sm">{{ reply.body }}</p>
+                                        <CommentBody :body="reply.body" :members="memberNames" />
 
                                         <!-- Reply reactions -->
                                         <div v-if="groupedReactions(reply.reactions).length > 0" class="mt-1.5 flex flex-wrap gap-1">
@@ -675,13 +723,15 @@ watch(() => props.postId, () => {
             </div>
 
             <div class="flex items-end gap-1.5">
-                <Textarea
+                <MentionTextarea
                     ref="textareaRef"
                     v-model="newBody"
+                    :member-names="memberNames"
                     :placeholder="replyingTo ? $t('comments.reply_placeholder') : $t('comments.placeholder')"
                     class="min-h-[36px] max-h-[120px] flex-1 resize-none text-sm"
-                    rows="1"
+                    :rows="1"
                     @keydown="handleKeydown"
+                    @mention="registerMention"
                 />
                 <Button
                     size="icon"

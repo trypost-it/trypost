@@ -4,19 +4,15 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Actions\Ai\GenerateImage as GenerateImageAction;
 use App\Enums\Ai\Orientation;
-use App\Enums\Ai\UsageType;
-use App\Features\AiImagesLimit;
-use App\Models\AiUsageLog;
+use App\Enums\Media\Type as MediaType;
+use App\Exceptions\Ai\QuotaExhaustedException;
 use App\Models\Post;
 use App\Models\Workspace;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Laravel\Ai\Contracts\Tool;
-use Laravel\Ai\Image;
 use Laravel\Ai\Tools\Request;
-use Laravel\Pennant\Feature;
 use Stringable;
 
 class GenerateImage implements Tool
@@ -51,60 +47,28 @@ TXT;
 
     public function handle(Request $request): Stringable|string
     {
-        $limit = (int) Feature::for($this->workspace->account)->value(AiImagesLimit::class);
-        $used = AiUsageLog::monthlyCount($this->workspace->account_id, UsageType::Image);
-
-        if ($used >= $limit) {
-            return "Image quota exhausted this month ({$used} of {$limit} used). Ask the user to upgrade their plan or wait until next month.";
-        }
-
         $prompt = (string) data_get($request, 'prompt', '');
         $orientationString = (string) data_get($request, 'orientation', 'vertical');
-        $orientationEnum = Orientation::tryFrom($orientationString) ?? Orientation::Portrait;
-        $aspectRatio = $orientationEnum->aspectRatio();
+        $orientation = Orientation::tryFrom($orientationString) ?? Orientation::Portrait;
 
-        $renderedPrompt = view('prompts.assistant.image', [
-            'prompt' => $prompt,
-            'brand_name' => $this->workspace->name ?? '',
-            'tone' => $this->workspace->brand_tone ?? 'professional',
-            'aspect_ratio' => $aspectRatio,
-            'content_language' => $this->workspace->content_language ?? 'en',
-        ])->render();
-
-        $response = Image::of($renderedPrompt)
-            ->size($aspectRatio)
-            ->quality('high')
-            ->generate();
-
-        $storedPath = $response->store('medias');
-
-        $media = $this->workspace->media()->create([
-            'group_id' => Str::uuid()->toString(),
-            'collection' => 'assets',
-            'type' => 'image',
-            'path' => $storedPath,
-            'original_filename' => 'ai-generated.png',
-            'mime_type' => 'image/png',
-            'size' => Storage::size($storedPath),
-            'order' => 0,
-            'meta' => ['ai_generated' => true, 'prompt' => Str::limit($prompt, 200)],
-        ]);
-
-        AiUsageLog::create([
-            'account_id' => $this->workspace->account_id,
-            'workspace_id' => $this->workspace->id,
-            'user_id' => $this->userId,
-            'post_id' => $this->post?->id,
-            'type' => UsageType::Image,
-            'provider' => 'gemini',
-        ]);
+        try {
+            $media = GenerateImageAction::execute(
+                workspace: $this->workspace,
+                prompt: $prompt,
+                orientation: $orientation,
+                userId: $this->userId,
+                postId: $this->post?->id,
+            );
+        } catch (QuotaExhaustedException $e) {
+            return "Image quota exhausted this month ({$e->used} of {$e->limit} used). Ask the user to upgrade their plan or wait until next month.";
+        }
 
         $this->collector->push([
             'id' => $media->id,
             'path' => $media->path,
             'url' => $media->url,
             'mime_type' => 'image/png',
-            'type' => 'image',
+            'type' => MediaType::Image->value,
         ]);
 
         return "Generated a {$orientationString} image (id: {$media->id}) and attached it to the post.";

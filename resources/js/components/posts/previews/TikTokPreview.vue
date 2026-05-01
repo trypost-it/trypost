@@ -2,19 +2,14 @@
 import { IconPlus } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
+import { isVideoMedia, type MediaItem } from '@/composables/useMedia';
+
 interface SocialAccount {
     id: string;
     platform: string;
     display_name: string;
     username: string;
     avatar_url: string | null;
-}
-
-interface MediaItem {
-    id: string;
-    url: string;
-    type: string;
-    original_filename: string;
 }
 
 interface Props {
@@ -44,10 +39,10 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
         <!-- Video/Media Area - Full screen -->
         <div class="absolute inset-0">
             <!-- Video content -->
-            <div v-if="media.length > 0 && media[0].type === 'video'" class="w-full h-full">
+            <div v-if="media.length > 0 && isVideoMedia(media[0])" class="w-full h-full">
                 <video :src="media[0].url" class="w-full h-full object-cover" muted loop playsinline />
             </div>
-            <div v-else-if="media.length > 0 && media[0].type === 'image'" class="w-full h-full">
+            <div v-else-if="media.length > 0" class="w-full h-full">
                 <img :src="media[0].url" :alt="media[0].original_filename" class="w-full h-full object-cover" />
             </div>
             <div v-else class="w-full h-full flex items-center justify-center bg-[#161823]">

@@ -56,7 +56,7 @@ test('tool generates image, pushes attachment to collector, creates usage log', 
     $this->assertDatabaseHas('workspace_ai_usages', [
         'workspace_id' => $this->workspace->id,
         'type' => UsageType::Image->value,
-        'provider' => 'gemini',
+        'provider' => config('ai.default_for_images'),
     ]);
 });
 

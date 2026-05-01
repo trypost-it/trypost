@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace App\Ai\Tools;
 
+use App\Actions\Ai\GenerateVideo as GenerateVideoAction;
 use App\Enums\Ai\Orientation;
-use App\Enums\Ai\UsageType;
-use App\Features\AiVideosLimit;
-use App\Models\AiUsageLog;
+use App\Enums\Media\Type as MediaType;
+use App\Exceptions\Ai\QuotaExhaustedException;
 use App\Models\Post;
 use App\Models\Workspace;
-use App\Services\Ai\VideoGenerationService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
-use Laravel\Pennant\Feature;
 use Stringable;
 
 class GenerateVideo implements Tool
@@ -46,30 +44,31 @@ TXT;
 
     public function handle(Request $request): Stringable|string
     {
-        $limit = (int) Feature::for($this->workspace->account)->value(AiVideosLimit::class);
-        $used = AiUsageLog::monthlyCount($this->workspace->account_id, UsageType::Video);
-
-        if ($used >= $limit) {
-            return "Video quota exhausted this month ({$used} of {$limit} used). Ask the user to upgrade their plan or wait until next month.";
-        }
-
         $prompt = (string) data_get($request, 'prompt', '');
         $orientationString = (string) data_get($request, 'orientation', 'vertical');
-        $orientationEnum = Orientation::tryFrom($orientationString) ?? Orientation::Vertical;
+        $orientation = Orientation::tryFrom($orientationString) ?? Orientation::Vertical;
 
-        $service = app(VideoGenerationService::class);
+        try {
+            $media = GenerateVideoAction::execute(
+                workspace: $this->workspace,
+                prompt: $prompt,
+                orientation: $orientation,
+                userId: $this->userId,
+                postId: $this->post?->id,
+            );
+        } catch (QuotaExhaustedException $e) {
+            return "Video quota exhausted this month ({$e->used} of {$e->limit} used). Ask the user to upgrade their plan or wait until next month.";
+        }
 
-        $attachment = $service->generate(
-            prompt: $prompt,
-            workspace: $this->workspace,
-            userId: $this->userId,
-            postId: $this->post?->id,
-            orientation: $orientationEnum,
-        );
+        $this->collector->push([
+            'id' => $media->id,
+            'path' => $media->path,
+            'url' => $media->url,
+            'mime_type' => 'video/mp4',
+            'type' => MediaType::Video->value,
+        ]);
 
-        $this->collector->push($attachment);
-
-        return "Generated a {$orientationString} video (id: {$attachment['id']}) and attached it to the post.";
+        return "Generated a {$orientationString} video (id: {$media->id}) and attached it to the post.";
     }
 
     public function schema(JsonSchema $schema): array

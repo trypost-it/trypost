@@ -16,7 +16,7 @@ final class BrandAnalyzerRunner
 
     public function isAvailable(): bool
     {
-        return match (config('trypost.ai.text_provider')) {
+        return match (config('ai.default')) {
             'openai' => ! empty(config('services.openai.api_key')),
             'gemini' => ! empty(config('services.gemini.api_key')),
             default => false,

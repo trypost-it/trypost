@@ -6,13 +6,16 @@ namespace App\Services\Ai;
 
 use App\Enums\Ai\Orientation;
 use App\Enums\Ai\UsageType;
+use App\Enums\Media\Type as MediaType;
 use App\Models\AiUsageLog;
+use App\Models\Media;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class VideoGenerationService
 {
@@ -31,13 +34,10 @@ class VideoGenerationService
         $this->apiKey = config('services.gemini.api_key') ?? '';
     }
 
-    /**
-     * @return array{id: string, path: string, url: string, mime_type: string, type: string}
-     */
-    public function generate(string $prompt, Workspace $workspace, ?string $userId = null, ?string $postId = null, Orientation $orientation = Orientation::Vertical): array
+    public function generate(string $prompt, Workspace $workspace, ?string $userId = null, ?string $postId = null, Orientation $orientation = Orientation::Vertical): Media
     {
         if (empty($this->apiKey)) {
-            throw new \RuntimeException('Gemini API key is not configured. Please set GEMINI_API_KEY in your .env file.');
+            throw new RuntimeException('Gemini API key is not configured. Please set GEMINI_API_KEY in your .env file.');
         }
 
         $aspectRatio = $orientation->aspectRatio();
@@ -63,7 +63,7 @@ class VideoGenerationService
             $media = $workspace->media()->create([
                 'group_id' => Str::uuid()->toString(),
                 'collection' => 'assets',
-                'type' => 'video',
+                'type' => MediaType::Video,
                 'path' => $path,
                 'original_filename' => 'ai-generated.mp4',
                 'mime_type' => 'video/mp4',
@@ -81,13 +81,7 @@ class VideoGenerationService
                 'provider' => 'veo',
             ]);
 
-            return [
-                'id' => $media->id,
-                'path' => $media->path,
-                'url' => $media->url,
-                'mime_type' => 'video/mp4',
-                'type' => 'video',
-            ];
+            return $media;
         });
     }
 
@@ -108,13 +102,13 @@ class VideoGenerationService
         if ($response->failed()) {
             Log::error('VideoGenerationService start failed', ['body' => $response->body()]);
 
-            throw new \RuntimeException('Failed to start video generation. Please try again.');
+            throw new RuntimeException('Failed to start video generation. Please try again.');
         }
 
         $operationName = data_get($response->json(), 'name');
 
         if (! $operationName) {
-            throw new \RuntimeException('No operation returned from video generation API.');
+            throw new RuntimeException('No operation returned from video generation API.');
         }
 
         return $operationName;
@@ -144,6 +138,6 @@ class VideoGenerationService
             }
         }
 
-        throw new \RuntimeException('Video generation timed out. Please try again.');
+        throw new RuntimeException('Video generation timed out. Please try again.');
     }
 }

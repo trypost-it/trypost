@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Events;
 
 use App\Models\PostComment;
+use App\Models\User;
+use App\Support\MentionParser;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -23,8 +25,22 @@ class PostCommentCreated implements ShouldBroadcastNow
         ];
     }
 
+    public function broadcastAs(): string
+    {
+        return 'PostCommentCreated';
+    }
+
     public function broadcastWith(): array
     {
+        $mentionedIds = MentionParser::extractUserIds($this->comment->body ?? '');
+        $mentionedUsers = empty($mentionedIds)
+            ? []
+            : User::query()
+                ->whereIn('id', $mentionedIds)
+                ->get(['id', 'name'])
+                ->mapWithKeys(fn ($u) => [$u->id => $u->name])
+                ->all();
+
         return [
             'comment' => [
                 'id' => $this->comment->id,
@@ -40,6 +56,7 @@ class PostCommentCreated implements ShouldBroadcastNow
                     'photo_url' => $this->comment->user->photo_url,
                 ],
             ],
+            'mentioned_users' => $mentionedUsers,
         ];
     }
 }

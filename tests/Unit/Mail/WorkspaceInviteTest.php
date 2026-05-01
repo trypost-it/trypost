@@ -30,7 +30,8 @@ test('workspace invite mail has correct content', function () {
     expect($content->view)->toBe('mail.workspace-invite');
     expect($content->with['title'])->toBe("You've been invited to join My Team");
     expect($content->with['previewText'])->toBe("You've been invited to join My Team");
-    expect($content->with['invite'])->toBe($invite);
+    expect($content->with['accountName'])->toBe('My Team');
+    expect($content->with['roleLabel'])->toBeString();
     expect($content->with['url'])->toBe(route('app.invites.show', $invite->id));
 });
 

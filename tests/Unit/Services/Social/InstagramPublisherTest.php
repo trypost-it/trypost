@@ -59,16 +59,16 @@ test('instagram publisher can publish single image', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'container-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'media-123456789',
         ], 200),
-        'https://graph.instagram.com/v24.0/media-123456789*' => Http::response([
+        'https://graph.instagram.com/v25.0/media-123456789*' => Http::response([
             'permalink' => 'https://www.instagram.com/p/ABC123/',
         ], 200),
     ]);
@@ -103,16 +103,16 @@ test('instagram publisher can publish reel', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'container-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'reel-123456789',
         ], 200),
-        'https://graph.instagram.com/v24.0/reel-123456789*' => Http::response([
+        'https://graph.instagram.com/v25.0/reel-123456789*' => Http::response([
             'permalink' => 'https://www.instagram.com/reel/ABC123/',
         ], 200),
     ]);
@@ -146,16 +146,16 @@ test('instagram publisher can publish image story', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'story-container-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/story-container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/story-container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'story-123456789',
         ], 200),
-        'https://graph.instagram.com/v24.0/story-123456789*' => Http::response([
+        'https://graph.instagram.com/v25.0/story-123456789*' => Http::response([
             'permalink' => 'https://www.instagram.com/stories/testuser/123/',
         ], 200),
     ]);
@@ -187,16 +187,16 @@ test('instagram publisher can publish video story', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'story-container-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/story-container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/story-container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'story-video-123456789',
         ], 200),
-        'https://graph.instagram.com/v24.0/story-video-123456789*' => Http::response([
+        'https://graph.instagram.com/v25.0/story-video-123456789*' => Http::response([
             'permalink' => 'https://www.instagram.com/stories/testuser/456/',
         ], 200),
     ]);
@@ -221,18 +221,18 @@ test('instagram publisher can publish carousel', function () {
         'media' => $mediaItems]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::sequence()
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::sequence()
             ->push(['id' => 'child-1'], 200)
             ->push(['id' => 'child-2'], 200)
             ->push(['id' => 'child-3'], 200)
             ->push(['id' => 'carousel-container-123'], 200),
-        'https://graph.instagram.com/v24.0/carousel-container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/carousel-container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'carousel-123456789',
         ], 200),
-        'https://graph.instagram.com/v24.0/carousel-123456789*' => Http::response([
+        'https://graph.instagram.com/v25.0/carousel-123456789*' => Http::response([
             'permalink' => 'https://www.instagram.com/p/CAROUSEL123/',
         ], 200),
     ]);
@@ -264,20 +264,20 @@ test('instagram publisher can publish carousel with videos', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::sequence()
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::sequence()
             ->push(['id' => 'child-1'], 200)
             ->push(['id' => 'child-2'], 200)
             ->push(['id' => 'carousel-container-123'], 200),
-        'https://graph.instagram.com/v24.0/child-2*' => Http::response([
+        'https://graph.instagram.com/v25.0/child-2*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/carousel-container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/carousel-container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'carousel-mix-123456789',
         ], 200),
-        'https://graph.instagram.com/v24.0/carousel-mix-123456789*' => Http::response([
+        'https://graph.instagram.com/v25.0/carousel-mix-123456789*' => Http::response([
             'permalink' => 'https://www.instagram.com/p/CAROUSELMIX/',
         ], 200),
     ]);
@@ -301,7 +301,7 @@ test('instagram publisher throws exception on api error', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'error' => [
                 'message' => 'Invalid parameter',
                 'type' => 'GraphMethodException',
@@ -328,7 +328,7 @@ test('instagram publisher throws token expired exception on oauth error', functi
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'error' => [
                 'message' => 'Error validating access token',
                 'type' => 'OAuthException',
@@ -355,7 +355,7 @@ test('instagram publisher throws token expired exception on session expired subc
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'error' => [
                 'message' => 'Session has expired',
                 'type' => 'OAuthException',
@@ -402,7 +402,7 @@ test('instagram publisher throws exception when no container id returned', funct
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'success' => true,
             // No id returned
         ], 200),
@@ -426,10 +426,10 @@ test('instagram publisher handles media processing error', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'container-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/container-123*' => Http::response([
             'status_code' => 'ERROR',
         ], 200),
     ]);
@@ -452,17 +452,17 @@ test('instagram publisher waits for media processing', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'container-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/container-123*' => Http::sequence()
+        'https://graph.instagram.com/v25.0/container-123*' => Http::sequence()
             ->push(['status_code' => 'IN_PROGRESS'], 200)
             ->push(['status_code' => 'IN_PROGRESS'], 200)
             ->push(['status_code' => 'FINISHED'], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'media-123456789',
         ], 200),
-        'https://graph.instagram.com/v24.0/media-123456789*' => Http::response([
+        'https://graph.instagram.com/v25.0/media-123456789*' => Http::response([
             'permalink' => 'https://www.instagram.com/p/ABC123/',
         ], 200),
     ]);
@@ -487,7 +487,7 @@ test('instagram publisher throws exception when all carousel items fail', functi
         'media' => $mediaItems]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'error' => ['message' => 'Upload failed'],
         ], 400),
     ]);
@@ -511,16 +511,16 @@ test('instagram publisher can publish single image with null content', function 
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'container-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'media-null-content',
         ], 200),
-        'https://graph.instagram.com/v24.0/media-null-content*' => Http::response([
+        'https://graph.instagram.com/v25.0/media-null-content*' => Http::response([
             'permalink' => 'https://www.instagram.com/p/NULL123/',
         ], 200),
     ]);
@@ -547,16 +547,16 @@ test('instagram publisher can publish reel with null content', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'container-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'reel-null-content',
         ], 200),
-        'https://graph.instagram.com/v24.0/reel-null-content*' => Http::response([
+        'https://graph.instagram.com/v25.0/reel-null-content*' => Http::response([
             'permalink' => 'https://www.instagram.com/reel/NULL123/',
         ], 200),
     ]);
@@ -588,17 +588,17 @@ test('instagram publisher can publish carousel with null content', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::sequence()
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::sequence()
             ->push(['id' => 'child-1'], 200)
             ->push(['id' => 'child-2'], 200)
             ->push(['id' => 'carousel-container-123'], 200),
-        'https://graph.instagram.com/v24.0/carousel-container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/carousel-container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'carousel-null-content',
         ], 200),
-        'https://graph.instagram.com/v24.0/carousel-null-content*' => Http::response([
+        'https://graph.instagram.com/v25.0/carousel-null-content*' => Http::response([
             'permalink' => 'https://www.instagram.com/p/CAROUSELNULL/',
         ], 200),
     ]);
@@ -623,16 +623,16 @@ test('instagram publisher can publish single image with empty string content', f
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'container-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'media-empty-content',
         ], 200),
-        'https://graph.instagram.com/v24.0/media-empty-content*' => Http::response([
+        'https://graph.instagram.com/v25.0/media-empty-content*' => Http::response([
             'permalink' => 'https://www.instagram.com/p/EMPTY123/',
         ], 200),
     ]);
@@ -657,16 +657,16 @@ test('instagram publisher routes feed video to reel', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'reel-container-999',
         ], 200),
-        'https://graph.instagram.com/v24.0/reel-container-999*' => Http::response([
+        'https://graph.instagram.com/v25.0/reel-container-999*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'id' => 'feed-reel-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/feed-reel-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/feed-reel-123*' => Http::response([
             'permalink' => 'https://www.instagram.com/reel/FEEDVID/',
         ], 200),
     ]);
@@ -696,13 +696,13 @@ test('instagram publisher handles publish failure', function () {
     ]);
 
     Http::fake([
-        'https://graph.instagram.com/v24.0/ig_123456789/media' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response([
             'id' => 'container-123',
         ], 200),
-        'https://graph.instagram.com/v24.0/container-123*' => Http::response([
+        'https://graph.instagram.com/v25.0/container-123*' => Http::response([
             'status_code' => 'FINISHED',
         ], 200),
-        'https://graph.instagram.com/v24.0/ig_123456789/media_publish' => Http::response([
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response([
             'error' => [
                 'message' => 'Publish failed',
                 'type' => 'GraphMethodException',

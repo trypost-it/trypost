@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getPlatformLogo } from '@/composables/usePlatformLogo';
 
 export interface AnalyticsAccount {
     id: string;
@@ -17,24 +18,6 @@ defineProps<{
 const emit = defineEmits<{
     select: [accountId: string];
 }>();
-
-const getPlatformLogo = (platform: string): string => {
-    const logos: Record<string, string> = {
-        tiktok: '/images/accounts/tiktok.png',
-        instagram: '/images/accounts/instagram.png',
-        'instagram-facebook': '/images/accounts/instagram.png',
-        facebook: '/images/accounts/facebook.png',
-        youtube: '/images/accounts/youtube.png',
-        linkedin: '/images/accounts/linkedin.png',
-        'linkedin-page': '/images/accounts/linkedin.png',
-        x: '/images/accounts/x.png',
-        threads: '/images/accounts/threads.png',
-        pinterest: '/images/accounts/pinterest.png',
-        bluesky: '/images/accounts/bluesky.png',
-        mastodon: '/images/accounts/mastodon.png',
-    };
-    return logos[platform] || '/images/accounts/default.png';
-};
 </script>
 
 <template>

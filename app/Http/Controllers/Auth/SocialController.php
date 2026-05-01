@@ -56,6 +56,7 @@ class SocialController extends Controller
         $this->authorize('view', $workspace);
 
         $connectedAccounts = $workspace->socialAccounts()
+            ->orderBy('id')
             ->get();
 
         $platforms = collect(SocialPlatform::enabled())->map(fn ($platform) => [

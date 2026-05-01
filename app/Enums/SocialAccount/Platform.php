@@ -165,9 +165,9 @@ enum Platform: string
     public function instagramGraphBaseUrl(): string
     {
         return match ($this) {
-            self::InstagramFacebook => 'https://graph.facebook.com/v20.0',
-            self::Instagram => 'https://graph.instagram.com/v24.0',
-            default => 'https://graph.instagram.com/v24.0',
+            self::InstagramFacebook => 'https://graph.facebook.com/v25.0',
+            self::Instagram => 'https://graph.instagram.com/v25.0',
+            default => 'https://graph.instagram.com/v25.0',
         };
     }
 

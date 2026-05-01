@@ -56,7 +56,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Social Connect routes
-Route::middleware(['auth', 'verified', 'throttle:6,1'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('connect/linkedin', [LinkedInController::class, 'connect'])->name('app.social.linkedin.connect');
     Route::get('accounts/linkedin/callback', [LinkedInController::class, 'callback'])->name('app.social.linkedin.callback');
 
@@ -172,6 +172,7 @@ Route::middleware(['auth', 'verified', EnsureAccountReady::class])->group(functi
 
     // Assets
     Route::get('assets', [AssetController::class, 'index'])->name('app.assets.index');
+    Route::get('assets/search', [AssetController::class, 'search'])->name('app.assets.search');
     Route::post('assets', [AssetController::class, 'store'])->name('app.assets.store');
     Route::post('assets/chunked', [AssetController::class, 'storeChunked'])->name('app.assets.store-chunked');
     Route::post('assets/from-url', [AssetController::class, 'storeFromUrl'])->name('app.assets.store-from-url');

@@ -76,6 +76,40 @@ return [
                 'branded_policy' => 'Branded Content Policy',
             ],
         ],
+        'instagram' => [
+            'settings' => 'Instagram Settings',
+            'posting_to' => 'Posting to',
+            'variant_label' => 'Post type',
+            'variant' => [
+                'feed' => 'Feed Post',
+                'reel' => 'Reel',
+                'story' => 'Story',
+            ],
+        ],
+        'facebook' => [
+            'settings' => 'Facebook Settings',
+            'posting_to' => 'Posting to',
+            'variant_label' => 'Post type',
+            'variant' => [
+                'post' => 'Post',
+                'reel' => 'Reel',
+                'story' => 'Story',
+            ],
+        ],
+        'warnings' => [
+            'no_variant' => 'Pick a post type to continue.',
+            'requires_media' => 'This post type requires at least one image or video.',
+            'max_files_exceeded' => 'This post type accepts up to :max media files (you have :current).',
+            'min_files_required' => 'This post type requires at least :min media files (you have :current).',
+            'no_video_allowed' => 'This post type does not accept videos.',
+            'no_image_allowed' => 'This post type accepts only videos.',
+            'gif_not_allowed' => 'This platform does not accept GIF. Remove the GIF or choose a different network.',
+            'image_too_large' => 'Image exceeds the :max limit for this post type (yours is :current).',
+            'video_too_large' => 'Video exceeds the :max limit for this post type (yours is :current).',
+            'video_too_long' => 'Video is :current long, but this post type allows up to :max.',
+            'aspect_ratio_too_narrow' => 'Aspect ratio :current is too tall for this post type (min :min).',
+            'aspect_ratio_too_wide' => 'Aspect ratio :current is too wide for this post type (max :max).',
+        ],
     ],
 
     'status' => [
@@ -123,6 +157,10 @@ return [
         'hashtags' => 'Hashtags',
         'view_on_platform' => 'View on platform',
         'platform_status' => 'Platform status',
+        'compliance_incomplete' => 'Some platform settings are incomplete or incompatible with the attached media.',
+        'publishing' => 'Publishing...',
+        'publishing_overlay_title' => 'Your post is being published',
+        'publishing_overlay_subtitle' => 'This can take a few moments. You can safely leave this page.',
 
         'tabs' => [
             'preview' => 'Preview',
@@ -131,6 +169,30 @@ return [
             'comments_empty' => 'No comments yet.',
             'writing_assistant' => 'AI Assistant',
             'writing_assistant_empty' => 'AI writing assistant coming soon.',
+        ],
+
+        'media_picker' => [
+            'title' => 'Pick from gallery',
+            'search' => 'Search media...',
+            'empty' => 'No media in your gallery yet',
+            'cancel' => 'Cancel',
+            'add' => 'Add',
+            'add_count' => 'Add :count',
+        ],
+
+        'emoji_picker' => [
+            'search' => 'Search emoji',
+            'empty' => 'No emojis found',
+            'recent' => 'Frequently used',
+            'smileys' => 'Smileys & emotion',
+            'people' => 'People & body',
+            'nature' => 'Animals & nature',
+            'food' => 'Food & drink',
+            'activities' => 'Activities',
+            'travel' => 'Travel & places',
+            'objects' => 'Objects',
+            'symbols' => 'Symbols',
+            'flags' => 'Flags',
         ],
 
         'status' => [

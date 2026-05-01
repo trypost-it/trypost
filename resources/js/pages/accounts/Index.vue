@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getPlatformLogo } from '@/composables/usePlatformLogo';
 import date from '@/date';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { disconnect as disconnectAccount, toggle as toggleAccount } from '@/routes/app/accounts';
@@ -36,24 +37,6 @@ const props = defineProps<Props>();
 
 const isAddDialogOpen = ref(false);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
-
-const getPlatformLogo = (platform: string): string => {
-    const logos: Record<string, string> = {
-        'linkedin': '/images/accounts/linkedin.png',
-        'linkedin-page': '/images/accounts/linkedin.png',
-        'x': '/images/accounts/x.png',
-        'tiktok': '/images/accounts/tiktok.png',
-        'instagram': '/images/accounts/instagram.png',
-        'instagram-facebook': '/images/accounts/instagram.png',
-        'facebook': '/images/accounts/facebook.png',
-        'youtube': '/images/accounts/youtube.png',
-        'threads': '/images/accounts/threads.png',
-        'bluesky': '/images/accounts/bluesky.png',
-        'pinterest': '/images/accounts/pinterest.png',
-        'mastodon': '/images/accounts/mastodon.png',
-    };
-    return logos[platform] || '/images/accounts/linkedin.png';
-};
 
 const getProfileUrl = (platform: string, username: string | null, platformUserId: string | null = null): string | null => {
     if (platform === 'facebook') {

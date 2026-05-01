@@ -6,6 +6,8 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import DatePicker from '@/components/DatePicker.vue';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 import date from '@/date';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -21,6 +23,7 @@ interface PostPlatform {
         id: string;
         platform: string;
         display_name: string;
+        username: string | null;
     };
 }
 
@@ -225,23 +228,6 @@ const getStatusColor = (status: string): string => {
     return colors[status] || 'bg-neutral-100 border-neutral-300 text-neutral-700 dark:bg-neutral-800 dark:border-neutral-600 dark:text-neutral-300';
 };
 
-const getPlatformLogo = (platform: string): string => {
-    const logos: Record<string, string> = {
-        'linkedin': '/images/accounts/linkedin.png',
-        'linkedin-page': '/images/accounts/linkedin.png',
-        'x': '/images/accounts/x.png',
-        'tiktok': '/images/accounts/tiktok.png',
-        'youtube': '/images/accounts/youtube.png',
-        'facebook': '/images/accounts/facebook.png',
-        'instagram': '/images/accounts/instagram.png',
-        'threads': '/images/accounts/threads.png',
-        'pinterest': '/images/accounts/pinterest.png',
-        'bluesky': '/images/accounts/bluesky.png',
-        'mastodon': '/images/accounts/mastodon.png',
-    };
-    return logos[platform];
-};
-
 const getPostUrl = (post: Post): string => {
     return editPost.url(post.id);
 };
@@ -316,9 +302,19 @@ const formatTime = (scheduledAt: string): string => {
 
                                         <!-- Platforms -->
                                         <div class="flex -space-x-1 mb-2">
-                                            <img v-for="pp in post.post_platforms.slice(0, 5)" :key="pp.id"
-                                                :src="getPlatformLogo(pp.platform)" :alt="pp.platform"
-                                                class="h-6 w-6 rounded-full ring-2 ring-background" />
+                                            <TooltipProvider v-for="pp in post.post_platforms.slice(0, 5)" :key="pp.id" :delay-duration="200">
+                                                <Tooltip>
+                                                    <TooltipTrigger as-child>
+                                                        <img :src="getPlatformLogo(pp.platform)" :alt="pp.platform" class="h-6 w-6 rounded-full ring-2 ring-background" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <div class="space-y-0.5 text-xs">
+                                                            <p class="font-semibold">{{ pp.social_account?.display_name ?? pp.platform }}<span v-if="pp.social_account?.username" class="font-normal opacity-80">&nbsp;·&nbsp;@{{ pp.social_account.username }}</span></p>
+                                                            <p class="opacity-70">{{ getPlatformLabel(pp.platform) }}</p>
+                                                        </div>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
                                             <span v-if="post.post_platforms.length > 5"
                                                 class="flex items-center justify-center h-6 w-6 rounded-full bg-muted text-xs font-medium ring-2 ring-background">
                                                 +{{ post.post_platforms.length - 5 }}
@@ -378,9 +374,19 @@ const formatTime = (scheduledAt: string): string => {
 
                                 <!-- Platforms -->
                                 <div class="flex -space-x-1 mb-1.5">
-                                    <img v-for="pp in post.post_platforms.slice(0, 4)" :key="pp.id"
-                                        :src="getPlatformLogo(pp.platform)" :alt="pp.platform"
-                                        class="h-5 w-5 rounded-full ring-2 ring-background" />
+                                    <TooltipProvider v-for="pp in post.post_platforms.slice(0, 4)" :key="pp.id" :delay-duration="200">
+                                        <Tooltip>
+                                            <TooltipTrigger as-child>
+                                                <img :src="getPlatformLogo(pp.platform)" :alt="pp.platform" class="h-5 w-5 rounded-full ring-2 ring-background" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <div class="space-y-0.5 text-xs">
+                                                    <p class="font-semibold">{{ pp.social_account?.display_name ?? pp.platform }}<span v-if="pp.social_account?.username" class="font-normal opacity-80">&nbsp;·&nbsp;@{{ pp.social_account.username }}</span></p>
+                                                    <p class="opacity-70">{{ getPlatformLabel(pp.platform) }}</p>
+                                                </div>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                     <span v-if="post.post_platforms.length > 4"
                                         class="flex items-center justify-center h-5 w-5 rounded-full bg-muted text-[10px] font-medium ring-2 ring-background">
                                         +{{ post.post_platforms.length - 4 }}
@@ -441,9 +447,23 @@ const formatTime = (scheduledAt: string): string => {
                                         :class="getStatusColor(post.status)">
                                         <span class="font-medium shrink-0">{{ formatTime(post.scheduled_at) }}</span>
                                         <div class="flex -space-x-1 shrink-0">
-                                            <img v-for="pp in post.post_platforms.slice(0, post.post_platforms.length > 4 ? 3 : 4)"
-                                                :key="pp.id" :src="getPlatformLogo(pp.platform)" :alt="pp.platform"
-                                                class="h-4 w-4 rounded-full ring-1 ring-background" />
+                                            <TooltipProvider
+                                                v-for="pp in post.post_platforms.slice(0, post.post_platforms.length > 4 ? 3 : 4)"
+                                                :key="pp.id"
+                                                :delay-duration="200"
+                                            >
+                                                <Tooltip>
+                                                    <TooltipTrigger as-child>
+                                                        <img :src="getPlatformLogo(pp.platform)" :alt="pp.platform" class="h-4 w-4 rounded-full ring-1 ring-background" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <div class="space-y-0.5 text-xs">
+                                                            <p class="font-semibold">{{ pp.social_account?.display_name ?? pp.platform }}<span v-if="pp.social_account?.username" class="font-normal opacity-80">&nbsp;·&nbsp;@{{ pp.social_account.username }}</span></p>
+                                                            <p class="opacity-70">{{ getPlatformLabel(pp.platform) }}</p>
+                                                        </div>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
                                             <span v-if="post.post_platforms.length > 4"
                                                 class="flex items-center justify-center h-4 w-4 rounded-full bg-muted text-[9px] font-medium ring-1 ring-background">
                                                 +{{ post.post_platforms.length - 3 }}

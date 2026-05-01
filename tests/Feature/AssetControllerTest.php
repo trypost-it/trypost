@@ -39,16 +39,55 @@ test('assets index shows assets page', function () {
     $response = $this->actingAs($this->user)->get(route('app.assets.index'));
 
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('assets/Index', false)
-        ->has('assets')
-    );
+    $response->assertInertia(fn ($page) => $page->component('assets/Index', false));
 });
 
 test('assets index requires authentication', function () {
     $response = $this->get(route('app.assets.index'));
 
     $response->assertRedirect(route('login'));
+});
+
+test('assets search returns paginated json filtered by name', function () {
+    $matching = $this->workspace->addMedia(UploadedFile::fake()->image('vacation-beach.jpg'), 'assets');
+    $this->workspace->addMedia(UploadedFile::fake()->image('office-shot.jpg'), 'assets');
+
+    $response = $this->actingAs($this->user)
+        ->getJson(route('app.assets.search', ['search' => 'vacation']));
+
+    $response->assertOk();
+    $response->assertJsonCount(1, 'data');
+    $response->assertJsonPath('data.0.id', $matching->id);
+});
+
+test('assets search filters by type', function () {
+    $this->workspace->addMedia(UploadedFile::fake()->image('photo.jpg'), 'assets');
+    $this->workspace->addMedia(UploadedFile::fake()->create('clip.mp4', 100, 'video/mp4'), 'assets');
+
+    $response = $this->actingAs($this->user)
+        ->getJson(route('app.assets.search', ['type' => 'video']));
+
+    $response->assertOk();
+    $response->assertJsonCount(1, 'data');
+    $response->assertJsonPath('data.0.type', 'video');
+});
+
+test('assets search only returns the current workspace assets', function () {
+    $this->workspace->addMedia(UploadedFile::fake()->image('mine.jpg'), 'assets');
+
+    $otherAccount = Account::factory()->create();
+    $otherUser = User::factory()->create(['account_id' => $otherAccount->id]);
+    $otherWorkspace = Workspace::factory()->create([
+        'account_id' => $otherAccount->id,
+        'user_id' => $otherUser->id,
+    ]);
+    $otherWorkspace->addMedia(UploadedFile::fake()->image('theirs.jpg'), 'assets');
+
+    $response = $this->actingAs($this->user)
+        ->getJson(route('app.assets.search'));
+
+    $response->assertOk();
+    $response->assertJsonCount(1, 'data');
 });
 
 test('can upload an image asset', function () {

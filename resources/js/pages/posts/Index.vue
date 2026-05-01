@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -102,23 +103,6 @@ const pageTitle = computed(() => {
     }
     return trans('posts.all_posts');
 });
-
-const getPlatformLogo = (platform: string): string => {
-    const logos: Record<string, string> = {
-        'linkedin': '/images/accounts/linkedin.png',
-        'linkedin-page': '/images/accounts/linkedin.png',
-        'x': '/images/accounts/x.png',
-        'tiktok': '/images/accounts/tiktok.png',
-        'youtube': '/images/accounts/youtube.png',
-        'facebook': '/images/accounts/facebook.png',
-        'instagram': '/images/accounts/instagram.png',
-        'threads': '/images/accounts/threads.png',
-        'pinterest': '/images/accounts/pinterest.png',
-        'bluesky': '/images/accounts/bluesky.png',
-        'mastodon': '/images/accounts/mastodon.png',
-    };
-    return logos[platform] || '/images/accounts/default.png';
-};
 
 const getStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; icon: typeof IconFileText }> = {
@@ -230,9 +214,25 @@ const handleDelete = (post: Post) => {
                             <div class="flex items-center justify-between mt-auto">
                                 <div class="flex items-center gap-2">
                                     <div class="flex -space-x-2">
-                                        <img v-for="pp in getEnabledPlatforms(post).slice(0, 4)" :key="pp.id"
-                                            :src="getPlatformLogo(pp.platform)" :alt="pp.platform"
-                                            class="h-6 w-6 rounded-full ring-2 ring-background" />
+                                        <TooltipProvider v-for="pp in getEnabledPlatforms(post).slice(0, 4)" :key="pp.id" :delay-duration="200">
+                                            <Tooltip>
+                                                <TooltipTrigger as-child>
+                                                    <img
+                                                        :src="getPlatformLogo(pp.platform)"
+                                                        :alt="pp.platform"
+                                                        class="h-6 w-6 rounded-full ring-2 ring-background"
+                                                    />
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <div class="space-y-0.5 text-xs">
+                                                        <p class="font-semibold">
+                                                            {{ pp.social_account?.display_name ?? pp.platform }}<span v-if="pp.social_account?.username" class="font-normal opacity-80">&nbsp;·&nbsp;@{{ pp.social_account.username }}</span>
+                                                        </p>
+                                                        <p class="opacity-70">{{ getPlatformLabel(pp.platform) }}</p>
+                                                    </div>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     </div>
                                     <span v-if="getEnabledPlatforms(post).length > 4"
                                         class="text-xs text-muted-foreground">

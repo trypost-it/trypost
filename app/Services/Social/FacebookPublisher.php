@@ -15,7 +15,7 @@ class FacebookPublisher
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://graph.facebook.com/v24.0';
+    private string $baseUrl = 'https://graph.facebook.com/v25.0';
 
     public function publish(PostPlatform $postPlatform): array
     {

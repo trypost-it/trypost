@@ -377,7 +377,7 @@ class ConnectionVerifier
 
     private function verifyInstagram(SocialAccount $account): bool
     {
-        $response = Http::get('https://graph.instagram.com/v24.0/me', [
+        $response = Http::get('https://graph.instagram.com/v25.0/me', [
             'fields' => 'id,username',
             'access_token' => $account->access_token,
         ]);
@@ -398,7 +398,7 @@ class ConnectionVerifier
 
     private function verifyFacebook(SocialAccount $account): bool
     {
-        $response = Http::get('https://graph.facebook.com/v24.0/me', [
+        $response = Http::get('https://graph.facebook.com/v25.0/me', [
             'fields' => 'id,name',
             'access_token' => $account->access_token,
         ]);

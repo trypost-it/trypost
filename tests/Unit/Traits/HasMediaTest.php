@@ -254,3 +254,58 @@ test('mp4 with quicktime mime still detected as video by path', function () {
     $media = new Media(['path' => 'medias/test.mp4', 'mime_type' => 'video/quicktime']);
     expect($media->isVideo())->toBeTrue();
 });
+
+test('PNG upload is converted to JPEG at upload time', function () {
+    $workspace = Workspace::factory()->create();
+    $file = UploadedFile::fake()->image('photo.png', 200, 150);
+
+    $media = $workspace->addMedia($file, 'assets');
+
+    expect($media->mime_type)->toBe('image/jpeg')
+        ->and($media->path)->toEndWith('.jpg')
+        ->and(pathinfo($media->path, PATHINFO_EXTENSION))->toBe('jpg');
+
+    $bytes = Storage::get($media->path);
+    expect(substr($bytes, 0, 3))->toBe("\xFF\xD8\xFF"); // JPEG SOI marker
+});
+
+test('JPEG upload stays as JPEG (no-op)', function () {
+    $workspace = Workspace::factory()->create();
+    $file = UploadedFile::fake()->image('photo.jpg', 200, 150);
+
+    $media = $workspace->addMedia($file, 'assets');
+
+    expect($media->mime_type)->toBe('image/jpeg')
+        ->and(pathinfo($media->path, PATHINFO_EXTENSION))->toBe('jpg');
+});
+
+test('GIF upload preserves GIF format for animation', function () {
+    $workspace = Workspace::factory()->create();
+    $file = UploadedFile::fake()->image('anim.gif', 200, 150);
+
+    $media = $workspace->addMedia($file, 'assets');
+
+    expect($media->mime_type)->toBe('image/gif')
+        ->and(pathinfo($media->path, PATHINFO_EXTENSION))->toBe('gif');
+});
+
+test('WebP upload is converted to JPEG', function () {
+    $workspace = Workspace::factory()->create();
+    $file = UploadedFile::fake()->image('photo.webp', 200, 150);
+
+    $media = $workspace->addMedia($file, 'assets');
+
+    expect($media->mime_type)->toBe('image/jpeg')
+        ->and(pathinfo($media->path, PATHINFO_EXTENSION))->toBe('jpg');
+});
+
+test('client meta is merged into media meta', function () {
+    $workspace = Workspace::factory()->create();
+    $file = UploadedFile::fake()->image('photo.jpg', 640, 480);
+
+    $media = $workspace->addMedia($file, 'assets', ['duration' => 12.5]);
+
+    expect($media->meta)->toHaveKey('duration', 12.5)
+        ->and($media->meta)->toHaveKey('width')
+        ->and($media->meta)->toHaveKey('height');
+});

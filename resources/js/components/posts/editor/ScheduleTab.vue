@@ -1,24 +1,14 @@
 <script setup lang="ts">
-import {
-    IconBrandBluesky,
-    IconBrandFacebook,
-    IconBrandInstagram,
-    IconBrandLinkedin,
-    IconBrandMastodon,
-    IconBrandPinterest,
-    IconBrandThreads,
-    IconBrandTiktok,
-    IconBrandX,
-    IconBrandYoutube,
-    IconCircleCheck,
-    IconExternalLink,
-    IconLoader2,
-} from '@tabler/icons-vue';
-import { computed, type Component } from 'vue';
+import { IconCircleCheck, IconExternalLink, IconLoader2 } from '@tabler/icons-vue';
+import { computed } from 'vue';
 
+import FacebookSettings from '@/components/posts/editor/FacebookSettings.vue';
+import InstagramSettings from '@/components/posts/editor/InstagramSettings.vue';
 import TikTokSettings from '@/components/posts/editor/TikTokSettings.vue';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 
 interface SocialAccount {
     id: string;
@@ -89,6 +79,7 @@ const props = defineProps<{
     isReadOnly: boolean;
     platformConfigs: Record<string, PlatformConfig>;
     platformMeta: Record<string, Record<string, any>>;
+    platformContentTypes: Record<string, string>;
     tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
     media?: MediaItem[];
 }>();
@@ -97,11 +88,25 @@ const emit = defineEmits<{
     togglePlatform: [platformId: string];
     toggleLabel: [labelId: string];
     'update:platformMeta': [platformId: string, meta: Record<string, any>];
+    'update:platformContentType': [platformId: string, contentType: string];
 }>();
 
 const selectedTikTokPlatforms = computed(() =>
     props.postPlatforms.filter(
         (pp) => pp.platform === 'tiktok' && props.selectedPlatformIds.includes(pp.id),
+    ),
+);
+
+const selectedInstagramPlatforms = computed(() =>
+    props.postPlatforms.filter(
+        (pp) => ['instagram', 'instagram-facebook'].includes(pp.platform)
+            && props.selectedPlatformIds.includes(pp.id),
+    ),
+);
+
+const selectedFacebookPlatforms = computed(() =>
+    props.postPlatforms.filter(
+        (pp) => pp.platform === 'facebook' && props.selectedPlatformIds.includes(pp.id),
     ),
 );
 
@@ -116,23 +121,6 @@ const videoDurationSec = computed(() => {
     const duration = video?.meta?.duration;
     return typeof duration === 'number' ? Math.ceil(duration) : null;
 });
-
-const platformIcons: Record<string, Component> = {
-    linkedin: IconBrandLinkedin,
-    'linkedin-page': IconBrandLinkedin,
-    x: IconBrandX,
-    tiktok: IconBrandTiktok,
-    youtube: IconBrandYoutube,
-    facebook: IconBrandFacebook,
-    instagram: IconBrandInstagram,
-    'instagram-facebook': IconBrandInstagram,
-    threads: IconBrandThreads,
-    pinterest: IconBrandPinterest,
-    bluesky: IconBrandBluesky,
-    mastodon: IconBrandMastodon,
-};
-
-const getPlatformIcon = (platform: string): Component => platformIcons[platform] || IconBrandX;
 
 const getPlatformDisplayName = (pp: PostPlatform): string =>
     pp.social_account?.display_name ?? pp.platform_name ?? pp.platform;
@@ -149,26 +137,38 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                 {{ $t('posts.edit.publish_to') }}
             </p>
             <div class="flex flex-wrap gap-3">
-                <button
-                    v-for="pp in postPlatforms"
-                    :key="pp.id"
-                    type="button"
-                    class="flex w-20 flex-col items-center gap-1.5 transition-opacity"
-                    :class="selectedPlatformIds.includes(pp.id) ? 'opacity-100' : 'opacity-40 hover:opacity-70'"
-                    @click="emit('togglePlatform', pp.id)"
-                >
-                    <div class="relative">
-                        <Avatar :src="getPlatformAvatar(pp)" :name="getPlatformDisplayName(pp)" class="h-10 w-10 shrink-0 rounded-full ring-2 ring-offset-2" :class="selectedPlatformIds.includes(pp.id) ? 'ring-primary' : 'ring-transparent'" />
-                        <span class="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-background ring-1 ring-border">
-                            <component :is="getPlatformIcon(pp.platform)" class="h-3 w-3" />
-                        </span>
-                        <Badge v-if="pp.status === 'published'" variant="default" class="absolute -top-1 -right-1 h-4 w-4 p-0">
-                            <IconCircleCheck class="h-2.5 w-2.5" />
-                        </Badge>
-                        <Badge v-else-if="pp.status === 'failed'" variant="destructive" class="absolute -top-1 -right-1 h-4 w-4 p-0 text-[9px]">!</Badge>
-                    </div>
-                    <span class="line-clamp-2 text-center text-xs leading-tight">{{ getPlatformDisplayName(pp) }}</span>
-                </button>
+                <TooltipProvider v-for="pp in postPlatforms" :key="pp.id" :delay-duration="200">
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <button
+                                type="button"
+                                class="flex w-20 flex-col items-center gap-1.5 transition-opacity"
+                                :class="selectedPlatformIds.includes(pp.id) ? 'opacity-100' : 'opacity-40 hover:opacity-70'"
+                                @click="emit('togglePlatform', pp.id)"
+                            >
+                                <div class="relative">
+                                    <Avatar :src="getPlatformAvatar(pp)" :name="getPlatformDisplayName(pp)" class="h-10 w-10 shrink-0 rounded-full ring-2 ring-offset-2" :class="selectedPlatformIds.includes(pp.id) ? 'ring-primary' : 'ring-transparent'" />
+                                    <img
+                                        :src="getPlatformLogo(pp.platform)"
+                                        :alt="pp.platform"
+                                        class="absolute -bottom-1.5 -right-1.5 h-5 w-5 rounded-full bg-background object-contain ring-1 ring-border"
+                                    />
+                                    <Badge v-if="pp.status === 'published'" variant="default" class="absolute -top-1 -right-1 h-4 w-4 p-0">
+                                        <IconCircleCheck class="h-2.5 w-2.5" />
+                                    </Badge>
+                                    <Badge v-else-if="pp.status === 'failed'" variant="destructive" class="absolute -top-1 -right-1 h-4 w-4 p-0 text-[9px]">!</Badge>
+                                </div>
+                                <span class="line-clamp-2 text-center text-xs leading-tight">{{ getPlatformDisplayName(pp) }}</span>
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <div class="space-y-0.5 text-xs">
+                                <p class="font-semibold">{{ getPlatformDisplayName(pp) }}<span v-if="pp.social_account?.username" class="font-normal opacity-80">&nbsp;·&nbsp;@{{ pp.social_account.username }}</span></p>
+                                <p class="opacity-70">{{ getPlatformLabel(pp.platform) }}</p>
+                            </div>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
         </div>
 
@@ -179,7 +179,7 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
             <div class="space-y-2">
                 <div v-for="pp in postPlatforms.filter(p => p.enabled)" :key="pp.id" class="flex items-center justify-between rounded-lg border p-3">
                     <div class="flex items-center gap-2">
-                        <component :is="getPlatformIcon(pp.platform)" class="h-4 w-4 text-muted-foreground" />
+                        <img :src="getPlatformLogo(pp.platform)" :alt="pp.platform" class="h-4 w-4 object-contain" />
                         <span class="text-sm">{{ getPlatformDisplayName(pp) }}</span>
                     </div>
                     <div class="flex items-center gap-2">
@@ -210,6 +210,30 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                 :meta="platformMeta[pp.id] ?? {}"
                 :disabled="isReadOnly"
                 @update:meta="emit('update:platformMeta', pp.id, $event)"
+            />
+        </div>
+
+        <div v-if="selectedInstagramPlatforms.length > 0" class="space-y-4">
+            <InstagramSettings
+                v-for="pp in selectedInstagramPlatforms"
+                :key="pp.id"
+                :social-account="pp.social_account"
+                :content-type="platformContentTypes[pp.id] ?? ''"
+                :media="media ?? []"
+                :disabled="isReadOnly"
+                @update:content-type="emit('update:platformContentType', pp.id, $event)"
+            />
+        </div>
+
+        <div v-if="selectedFacebookPlatforms.length > 0" class="space-y-4">
+            <FacebookSettings
+                v-for="pp in selectedFacebookPlatforms"
+                :key="pp.id"
+                :social-account="pp.social_account"
+                :content-type="platformContentTypes[pp.id] ?? ''"
+                :media="media ?? []"
+                :disabled="isReadOnly"
+                @update:content-type="emit('update:platformContentType', pp.id, $event)"
             />
         </div>
 

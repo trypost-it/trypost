@@ -269,7 +269,7 @@ class FacebookController extends SocialController
     private function fetchPages(string $userToken): array
     {
         try {
-            $response = Http::get('https://graph.facebook.com/v24.0/me/accounts', [
+            $response = Http::get('https://graph.facebook.com/v25.0/me/accounts', [
                 'access_token' => $userToken,
                 'fields' => 'id,name,username,picture{url},access_token',
             ]);

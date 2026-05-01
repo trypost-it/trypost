@@ -406,7 +406,7 @@ test('facebook publisher can publish single image with null content', function (
     ]);
 
     Http::fake([
-        'https://graph.facebook.com/v24.0/page_123/photos' => Http::response([
+        'https://graph.facebook.com/v25.0/page_123/photos' => Http::response([
             'id' => 'photo-123',
             'post_id' => 'post-123',
         ], 200),

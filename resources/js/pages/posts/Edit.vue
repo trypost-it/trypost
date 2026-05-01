@@ -4,12 +4,11 @@ import { useEcho } from '@laravel/echo-vue';
 import {
     IconCalendar,
     IconCircleCheck,
-    IconCloudUpload,
     IconHash,
+    IconLibraryPhoto,
     IconLoader2,
     IconMessage2,
     IconMoodSmile,
-    IconPhoto,
     IconSparkles,
     IconTrash,
 } from '@tabler/icons-vue';
@@ -17,17 +16,21 @@ import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
-import HashtagsModal from '@/components/posts/HashtagsModal.vue';
-import PickTimePopover from '@/components/posts/PickTimePopover.vue';
 import CommentsTab from '@/components/posts/editor/CommentsTab.vue';
 import PreviewTab from '@/components/posts/editor/PreviewTab.vue';
 import ScheduleTab from '@/components/posts/editor/ScheduleTab.vue';
 import WritingAssistantTab from '@/components/posts/editor/WritingAssistantTab.vue';
+import EmojiPicker from '@/components/posts/EmojiPicker.vue';
+import HashtagsModal from '@/components/posts/HashtagsModal.vue';
+import MediaPickerDialog from '@/components/posts/MediaPickerDialog.vue';
+import PickTimePopover from '@/components/posts/PickTimePopover.vue';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { readFileMetadata } from '@/composables/useMedia';
+import { getMediaRulesForContentType } from '@/composables/useMediaRules';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -41,6 +44,8 @@ interface MediaItem {
     type?: string;
     mime_type?: string;
     original_filename?: string;
+    size?: number;
+    meta?: { width?: number; height?: number; duration?: number };
 }
 
 interface SocialAccount {
@@ -108,7 +113,9 @@ const props = defineProps<{
 }>();
 
 const post = computed(() => props.post);
-const isReadOnly = computed(() => ['published', 'partially_published'].includes(post.value.status));
+const isReadOnly = computed(() => ['publishing', 'published', 'partially_published'].includes(post.value.status));
+const isPublishing = computed(() => post.value.status === 'publishing');
+const isPublished = computed(() => ['published', 'partially_published'].includes(post.value.status));
 
 // Content
 const content = ref(post.value.content || '');
@@ -127,6 +134,72 @@ const platformMeta = ref<Record<string, Record<string, any>>>(
 const updatePlatformMeta = (platformId: string, meta: Record<string, any>) => {
     platformMeta.value = { ...platformMeta.value, [platformId]: meta };
 };
+
+// Per-platform content_type (Instagram Feed/Reel/Story, Facebook Post/Reel/Story, etc.)
+const platformContentTypes = ref<Record<string, string>>(
+    Object.fromEntries(post.value.post_platforms.map((pp) => [pp.id, pp.content_type ?? ''])),
+);
+
+const updatePlatformContentType = (platformId: string, contentType: string) => {
+    platformContentTypes.value = { ...platformContentTypes.value, [platformId]: contentType };
+};
+
+const isMediaValidForContentType = (contentType: string, mediaItems: MediaItem[]): boolean => {
+    const rules = getMediaRulesForContentType(contentType);
+    const videos = mediaItems.filter((m) => m.type === 'video' || m.mime_type?.startsWith('video/'));
+    const images = mediaItems.filter((m) => m.type === 'image' || m.mime_type?.startsWith('image/'));
+    const gifs = mediaItems.filter((m) => m.mime_type === 'image/gif');
+    const total = mediaItems.length;
+
+    if (rules.requiresMedia && total === 0) return false;
+    if (total > rules.maxFiles) return false;
+    if (rules.minFiles && total < rules.minFiles) return false;
+    if (! rules.acceptVideos && videos.length > 0) return false;
+    if (! rules.acceptImages && images.length > 0) return false;
+    if (! rules.acceptsGif && gifs.length > 0) return false;
+
+    // Size / duration / aspect checks — only when metadata is available.
+    for (const m of mediaItems) {
+        const isVideo = m.type === 'video' || m.mime_type?.startsWith('video/');
+        const size = m.size ?? 0;
+        const width = m.meta?.width ?? 0;
+        const height = m.meta?.height ?? 0;
+        const duration = m.meta?.duration ?? 0;
+
+        if (isVideo) {
+            if (rules.maxVideoBytes && size > 0 && size > rules.maxVideoBytes) return false;
+            if (rules.maxVideoDurationSec && duration > 0 && duration > rules.maxVideoDurationSec) return false;
+        } else {
+            if (rules.maxImageBytes && size > 0 && size > rules.maxImageBytes) return false;
+        }
+
+        if (width > 0 && height > 0 && (rules.aspectRatioMin || rules.aspectRatioMax)) {
+            const ratio = width / height;
+            if (rules.aspectRatioMin && ratio < rules.aspectRatioMin) return false;
+            if (rules.aspectRatioMax && ratio > rules.aspectRatioMax) return false;
+        }
+    }
+
+    return true;
+};
+
+const instagramComplianceValid = computed(() =>
+    post.value.post_platforms
+        .filter((pp) => ['instagram', 'instagram-facebook'].includes(pp.platform) && selectedPlatformIds.value.includes(pp.id))
+        .every((pp) => {
+            const contentType = platformContentTypes.value[pp.id];
+            return Boolean(contentType) && isMediaValidForContentType(contentType, media.value);
+        }),
+);
+
+const facebookComplianceValid = computed(() =>
+    post.value.post_platforms
+        .filter((pp) => pp.platform === 'facebook' && selectedPlatformIds.value.includes(pp.id))
+        .every((pp) => {
+            const contentType = platformContentTypes.value[pp.id];
+            return Boolean(contentType) && isMediaValidForContentType(contentType, media.value);
+        }),
+);
 
 // TikTok compliance per docs:
 // - privacy_level must be explicitly selected
@@ -168,14 +241,12 @@ const showSaved = ref(false);
 const activeTab = ref('schedule');
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const hashtagsModal = ref<InstanceType<typeof HashtagsModal> | null>(null);
+const mediaPickerDialog = ref<InstanceType<typeof MediaPickerDialog> | null>(null);
 const commentsTabRef = ref<InstanceType<typeof CommentsTab> | null>(null);
 const emojiOpen = ref(false);
 
-const fileInput = ref<HTMLInputElement | null>(null);
 const isDragging = ref(false);
 const uploading = ref(false);
-
-const emojiList = ['😀', '😂', '🔥', '💯', '🎉', '👏', '❤️', '🚀', '✨', '💡', '📈', '💪', '🙌', '👀', '😊', '🤝', '💼', '📊', '🎯', '💎', '⚡️', '🎁', '🌟', '📱'];
 
 // Toggle platform
 const togglePlatform = (platformId: string) => {
@@ -188,24 +259,13 @@ const togglePlatform = (platformId: string) => {
     }
 };
 
-// First enabled platform for preview
-const previewPlatform = computed(() => {
-    const enabledId = selectedPlatformIds.value[0];
-    return post.value.post_platforms.find((pp) => pp.id === enabledId) || post.value.post_platforms[0];
+const previewablePlatforms = computed(() => {
+    const selected = post.value.post_platforms.filter((pp) => selectedPlatformIds.value.includes(pp.id));
+    return selected.length > 0 ? selected : post.value.post_platforms.slice(0, 1);
 });
 
 // Media upload
 const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-
-const triggerFileInput = () => fileInput.value?.click();
-
-const handleFileSelect = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    if (target.files) {
-        uploadFiles(Array.from(target.files));
-        target.value = '';
-    }
-};
 
 const handleDrop = (event: DragEvent) => {
     isDragging.value = false;
@@ -218,8 +278,13 @@ const uploadFiles = async (files: File[]) => {
     uploading.value = true;
 
     for (const file of files) {
+        const clientMeta = await readFileMetadata(file);
+
         const formData = new FormData();
         formData.append('media', file);
+        if (clientMeta.width) formData.append('meta[width]', String(clientMeta.width));
+        if (clientMeta.height) formData.append('meta[height]', String(clientMeta.height));
+        if (clientMeta.duration) formData.append('meta[duration]', String(clientMeta.duration));
 
         try {
             const response = await fetch(storeAsset.url(), {
@@ -244,6 +309,8 @@ const uploadFiles = async (files: File[]) => {
                     type: data.type,
                     mime_type: data.mime_type,
                     original_filename: data.original_filename,
+                    size: data.size,
+                    meta: data.meta,
                 },
             ];
         } catch {
@@ -256,6 +323,13 @@ const uploadFiles = async (files: File[]) => {
 
 const removeMedia = (mediaId: string) => {
     media.value = media.value.filter((m) => m.id !== mediaId);
+};
+
+const addMediaFromGallery = (picked: MediaItem[]) => {
+    const existingIds = new Set(media.value.map((m) => m.id));
+    const additions = picked.filter((m) => !existingIds.has(m.id));
+    if (additions.length === 0) return;
+    media.value = [...media.value, ...additions];
 };
 
 const addedTextFromMessageIds = ref<Set<string>>(new Set());
@@ -282,7 +356,7 @@ const getSubmitData = () => {
         .filter((pp) => selectedPlatformIds.value.includes(pp.id))
         .map((pp) => ({
             id: pp.id,
-            content_type: pp.content_type,
+            content_type: platformContentTypes.value[pp.id] ?? pp.content_type,
             meta: platformMeta.value[pp.id] ?? pp.meta ?? {},
         }));
 
@@ -331,7 +405,7 @@ const triggerAutosave = () => {
     }
 };
 
-watch([content, media, selectedPlatformIds, scheduledDateTime, selectedLabelIds, platformMeta], triggerAutosave, { deep: true });
+watch([content, media, selectedPlatformIds, scheduledDateTime, selectedLabelIds, platformMeta, platformContentTypes], triggerAutosave, { deep: true });
 
 onUnmounted(() => {
     debouncedSave.cancel();
@@ -382,10 +456,14 @@ const deletePost = () => {
     deleteModal.value?.open({ url: destroyPost.url(post.value.id) });
 };
 
-// Echo: listen for real-time platform status updates
+// Echo: listen for real-time platform status updates.
+// Event fires when any post_platform completes publishing (success or fail).
+// Full reload of the post prop so the new status + post_platforms propagate and
+// the overlay dismisses.
 useEcho(`post.${post.value.id}`, '.PostPlatformStatusUpdated', () => {
     router.reload({ only: ['post'], preserveScroll: true });
 });
+
 
 // Echo: listen for real-time comments
 useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
@@ -408,6 +486,10 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                     <span v-else-if="showSaved" class="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <IconCircleCheck class="h-3.5 w-3.5 text-green-500" />
                         {{ $t('posts.edit.saved') }}
+                    </span>
+                    <span v-else-if="isPublished" class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <IconCircleCheck class="h-3.5 w-3.5 text-green-500" />
+                        {{ $t('posts.edit.status.published') }}
                     </span>
                     <span v-else class="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <span class="h-2 w-2 rounded-full bg-muted-foreground/50" />
@@ -438,15 +520,15 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
 
                     <PickTimePopover
                         v-model="scheduledDateTime"
-                        :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid"
+                        :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid || !instagramComplianceValid || !facebookComplianceValid"
                         @confirm="hasPickedTime = true"
                     >
                         <Button
                             type="button"
                             variant="secondary"
                             size="sm"
-                            :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid"
-                            :title="!tiktokComplianceValid ? $t('posts.form.tiktok.compliance_incomplete') : ''"
+                            :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid || !instagramComplianceValid || !facebookComplianceValid"
+                            :title="!tiktokComplianceValid || !instagramComplianceValid || !facebookComplianceValid ? $t('posts.edit.compliance_incomplete') : ''"
                         >
                             <IconCalendar class="h-4 w-4" />
                             {{ pickTimeLabel }}
@@ -456,8 +538,8 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                     <Button
                         type="button"
                         size="sm"
-                        :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid"
-                        :title="!tiktokComplianceValid ? $t('posts.form.tiktok.compliance_incomplete') : ''"
+                        :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid || !instagramComplianceValid || !facebookComplianceValid"
+                        :title="!tiktokComplianceValid || !instagramComplianceValid || !facebookComplianceValid ? $t('posts.edit.compliance_incomplete') : ''"
                         @click="submit(hasPickedTime ? 'scheduled' : 'publishing')"
                     >
                         {{ hasPickedTime ? $t('posts.edit.schedule') : $t('posts.edit.post_now') }}
@@ -465,7 +547,17 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                 </div>
             </div>
 
-            <div class="flex-1 overflow-hidden">
+            <div class="relative flex-1 overflow-hidden">
+                <div
+                    v-if="isPublishing"
+                    class="absolute inset-0 z-40 flex flex-col items-center justify-center gap-3 bg-background/80 backdrop-blur-sm"
+                >
+                    <IconLoader2 class="h-8 w-8 animate-spin text-primary" />
+                    <div class="text-center">
+                        <p class="text-sm font-medium">{{ $t('posts.edit.publishing_overlay_title') }}</p>
+                        <p class="text-xs text-muted-foreground">{{ $t('posts.edit.publishing_overlay_subtitle') }}</p>
+                    </div>
+                </div>
                 <div class="h-full flex">
                     <!-- Composition column -->
                     <div class="w-full lg:w-2/3 lg:border-r overflow-y-auto">
@@ -504,28 +596,26 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                                 <!-- Inline toolbar -->
                                 <div v-if="!isReadOnly" class="flex items-center gap-1 border-t px-3 py-2">
                                     <Popover v-model:open="emojiOpen">
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger as-child>
-                                                    <PopoverTrigger as-child>
-                                                        <Button type="button" variant="ghost" size="icon-sm" class="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                        <PopoverAnchor as-child>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger as-child>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon-sm"
+                                                            class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                            @click="emojiOpen = !emojiOpen"
+                                                        >
                                                             <IconMoodSmile class="h-4 w-4" />
                                                         </Button>
-                                                    </PopoverTrigger>
-                                                </TooltipTrigger>
-                                                <TooltipContent>Emoji</TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                        <PopoverContent class="w-64 p-2" align="start">
-                                            <div class="grid grid-cols-6 gap-1">
-                                                <button
-                                                    v-for="emoji in emojiList"
-                                                    :key="emoji"
-                                                    type="button"
-                                                    class="flex h-8 w-8 items-center justify-center rounded-md text-lg transition-colors hover:bg-muted"
-                                                    @click="appendEmoji(emoji)"
-                                                >{{ emoji }}</button>
-                                            </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>{{ $t('posts.edit.emoji_picker.search') }}</TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </PopoverAnchor>
+                                        <PopoverContent class="w-auto p-0" align="start">
+                                            <EmojiPicker @select="appendEmoji" />
                                         </PopoverContent>
                                     </Popover>
 
@@ -571,9 +661,9 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                                                     variant="ghost"
                                                     size="icon-sm"
                                                     class="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                                    @click="triggerFileInput"
+                                                    @click="mediaPickerDialog?.open()"
                                                 >
-                                                    <IconPhoto class="h-4 w-4" />
+                                                    <IconLibraryPhoto class="h-4 w-4" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>{{ $t('posts.edit.add_media') }}</TooltipContent>
@@ -621,9 +711,9 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                                             v-if="!isReadOnly"
                                             type="button"
                                             class="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
-                                            @click="triggerFileInput"
+                                            @click="mediaPickerDialog?.open()"
                                         >
-                                            <IconCloudUpload class="h-6 w-6" />
+                                            <IconLibraryPhoto class="h-6 w-6" />
                                         </button>
                                     </div>
                                 </div>
@@ -633,14 +723,6 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                                     {{ $t('posts.edit.drag_drop') }}
                                 </div>
 
-                                <input
-                                    ref="fileInput"
-                                    type="file"
-                                    class="hidden"
-                                    multiple
-                                    accept="image/jpeg,image/png,image/gif,image/webp,video/mp4"
-                                    @change="handleFileSelect"
-                                />
                             </div>
                         </div>
                     </div>
@@ -657,12 +739,11 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
 
                             <TabsContent value="preview" class="flex-1 overflow-y-auto">
                                 <PreviewTab
-                                    v-if="previewPlatform"
-                                    :platform="previewPlatform.platform"
+                                    :platforms="previewablePlatforms"
                                     :content="content"
                                     :media="media"
-                                    :social-account="previewPlatform.social_account"
-                                    :content-type="previewPlatform.content_type"
+                                    :platform-content-types="platformContentTypes"
+                                    @update:platform-content-type="updatePlatformContentType"
                                 />
                             </TabsContent>
 
@@ -675,11 +756,13 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                                     :is-read-only="isReadOnly"
                                     :platform-configs="platformConfigs"
                                     :platform-meta="platformMeta"
+                                    :platform-content-types="platformContentTypes"
                                     :tiktok-creator-infos="tiktokCreatorInfos"
                                     :media="media"
                                     @toggle-platform="togglePlatform"
                                     @toggle-label="toggleLabel"
                                     @update:platformMeta="updatePlatformMeta"
+                                    @update:platformContentType="updatePlatformContentType"
                                 />
                             </TabsContent>
 
@@ -705,4 +788,5 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
         :cancel="$t('posts.delete.cancel')"
     />
     <HashtagsModal ref="hashtagsModal" :hashtags="hashtags" @select="appendHashtags" />
+    <MediaPickerDialog ref="mediaPickerDialog" @select="addMediaFromGallery" />
 </template>

@@ -3,7 +3,6 @@ import { router } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { onMounted, onUnmounted } from 'vue';
 
-import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -11,6 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { getPlatformLogo } from '@/composables/usePlatformLogo';
 
 export interface AvailablePlatform {
     value: string;
@@ -23,24 +23,6 @@ defineProps<{
 }>();
 
 const open = defineModel<boolean>('open', { default: false });
-
-const getPlatformLogo = (platform: string): string => {
-    const logos: Record<string, string> = {
-        'linkedin': '/images/accounts/linkedin.png',
-        'linkedin-page': '/images/accounts/linkedin.png',
-        'x': '/images/accounts/x.png',
-        'tiktok': '/images/accounts/tiktok.png',
-        'instagram': '/images/accounts/instagram.png',
-        'instagram-facebook': '/images/accounts/instagram.png',
-        'facebook': '/images/accounts/facebook.png',
-        'youtube': '/images/accounts/youtube.png',
-        'threads': '/images/accounts/threads.png',
-        'bluesky': '/images/accounts/bluesky.png',
-        'pinterest': '/images/accounts/pinterest.png',
-        'mastodon': '/images/accounts/mastodon.png',
-    };
-    return logos[platform] || '/images/accounts/linkedin.png';
-};
 
 const getPlatformDescription = (platform: string): string => {
     return trans(`accounts.descriptions.${platform}`);

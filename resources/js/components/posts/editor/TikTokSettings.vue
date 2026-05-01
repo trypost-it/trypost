@@ -186,7 +186,8 @@ watch(
         >
             <span class="flex items-center gap-2">
                 <IconBrandTiktok class="h-4 w-4" />
-                {{ $t('posts.form.tiktok.settings') }}
+                <span>{{ $t('posts.form.tiktok.settings') }}</span>
+                <span v-if="socialAccount" class="text-muted-foreground">·&nbsp;@{{ socialAccount.username }}</span>
             </span>
             <IconChevronUp v-if="open" class="h-4 w-4 text-muted-foreground" />
             <IconChevronDown v-else class="h-4 w-4 text-muted-foreground" />

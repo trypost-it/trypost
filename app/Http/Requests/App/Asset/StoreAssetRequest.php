@@ -17,6 +17,10 @@ class StoreAssetRequest extends FormRequest
     {
         return [
             'media' => ['required', 'file', 'max:1048576', 'mimetypes:image/jpeg,image/png,image/gif,image/webp,video/mp4'],
+            'meta' => ['sometimes', 'array'],
+            'meta.width' => ['sometimes', 'integer', 'min:1'],
+            'meta.height' => ['sometimes', 'integer', 'min:1'],
+            'meta.duration' => ['sometimes', 'numeric', 'min:0'],
         ];
     }
 }

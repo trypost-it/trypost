@@ -63,14 +63,31 @@ class MediaOptimizer
             $image->scaleDown(width: $maxWidth);
         }
 
-        // Encode to target format
+        // Encode to target format at the target quality (never reduced)
         $tempFile = tempnam(sys_get_temp_dir(), 'media_opt_');
         $encoded = $image->encodeUsingMediaType($format, quality: $quality);
         file_put_contents($tempFile, (string) $encoded);
 
-        // Reduce quality iteratively if file still too large
-        while (filesize($tempFile) > $maxSize && $quality > 30) {
-            $quality -= 10;
+        // If still above the platform size budget, iteratively shrink DIMENSIONS
+        // (not quality) by 10 % per step until it fits. Postiz-style, preserves
+        // pixel quality while lowering the byte count.
+        while (filesize($tempFile) > $maxSize) {
+            $newWidth = (int) ($image->width() * 0.9);
+            $newHeight = (int) ($image->height() * 0.9);
+
+            // Safety floor: don't shrink below 100 px on the longer side.
+            if ($newWidth < 100 || $newHeight < 100) {
+                Log::warning('MediaOptimizer: image cannot fit platform size budget', [
+                    'platform' => $platform->value,
+                    'final_width' => $image->width(),
+                    'final_height' => $image->height(),
+                    'final_bytes' => filesize($tempFile),
+                    'budget_bytes' => $maxSize,
+                ]);
+                break;
+            }
+
+            $image->scale(width: $newWidth, height: $newHeight);
             $encoded = $image->encodeUsingMediaType($format, quality: $quality);
             file_put_contents($tempFile, (string) $encoded);
         }
@@ -88,55 +105,55 @@ class MediaOptimizer
                 'max_width' => 1440,
                 'max_size' => 8 * 1024 * 1024,
                 'format' => 'image/jpeg',
-                'quality' => 90,
+                'quality' => 100,
             ],
             Platform::Facebook => [
                 'max_width' => 2048,
                 'max_size' => 4 * 1024 * 1024,
                 'format' => 'image/jpeg',
-                'quality' => 90,
+                'quality' => 100,
             ],
             Platform::X => [
                 'max_width' => 2048,
                 'max_size' => 5 * 1024 * 1024,
                 'format' => 'image/jpeg',
-                'quality' => 90,
+                'quality' => 100,
             ],
             Platform::TikTok => [
                 'max_width' => 1080,
                 'max_size' => 20 * 1024 * 1024,
                 'format' => 'image/jpeg',
-                'quality' => 95,
+                'quality' => 100,
             ],
             Platform::LinkedIn, Platform::LinkedInPage => [
                 'max_width' => 2048,
                 'max_size' => 10 * 1024 * 1024,
                 'format' => 'image/jpeg',
-                'quality' => 90,
+                'quality' => 100,
             ],
             Platform::Pinterest => [
                 'max_width' => 1000,
                 'max_size' => 20 * 1024 * 1024,
                 'format' => 'image/jpeg',
-                'quality' => 90,
+                'quality' => 100,
             ],
             Platform::Bluesky => [
                 'max_width' => 2048,
                 'max_size' => 976 * 1024,
                 'format' => 'image/jpeg',
-                'quality' => 85,
+                'quality' => 100,
             ],
             Platform::Mastodon => [
                 'max_width' => 2048,
                 'max_size' => 10 * 1024 * 1024,
                 'format' => 'image/jpeg',
-                'quality' => 90,
+                'quality' => 100,
             ],
             Platform::YouTube => [
                 'max_width' => 1920,
                 'max_size' => 2 * 1024 * 1024,
                 'format' => 'image/jpeg',
-                'quality' => 90,
+                'quality' => 100,
             ],
         };
     }

@@ -76,6 +76,40 @@ return [
                 'branded_policy' => 'Política de Conteúdo Patrocinado',
             ],
         ],
+        'instagram' => [
+            'settings' => 'Configurações do Instagram',
+            'posting_to' => 'Publicando em',
+            'variant_label' => 'Tipo de publicação',
+            'variant' => [
+                'feed' => 'Post',
+                'reel' => 'Reel',
+                'story' => 'Story',
+            ],
+        ],
+        'facebook' => [
+            'settings' => 'Configurações do Facebook',
+            'posting_to' => 'Publicando em',
+            'variant_label' => 'Tipo de publicação',
+            'variant' => [
+                'post' => 'Post',
+                'reel' => 'Reel',
+                'story' => 'Story',
+            ],
+        ],
+        'warnings' => [
+            'no_variant' => 'Escolha um tipo de publicação para continuar.',
+            'requires_media' => 'Este tipo exige pelo menos uma imagem ou vídeo.',
+            'max_files_exceeded' => 'Este tipo aceita até :max arquivos (você tem :current).',
+            'min_files_required' => 'Este tipo exige pelo menos :min arquivos (você tem :current).',
+            'no_video_allowed' => 'Este tipo não aceita vídeos.',
+            'no_image_allowed' => 'Este tipo aceita apenas vídeos.',
+            'gif_not_allowed' => 'Esta rede não aceita GIF. Remova o GIF ou escolha outra rede.',
+            'image_too_large' => 'A imagem passa do limite de :max (a sua tem :current).',
+            'video_too_large' => 'O vídeo passa do limite de :max (o seu tem :current).',
+            'video_too_long' => 'O vídeo dura :current, mas este tipo permite no máximo :max.',
+            'aspect_ratio_too_narrow' => 'A proporção :current está muito alta (mínimo :min).',
+            'aspect_ratio_too_wide' => 'A proporção :current está muito larga (máximo :max).',
+        ],
     ],
 
     'status' => [
@@ -131,6 +165,10 @@ return [
         'schedule_date' => 'Data de agendamento',
         'view_on_platform' => 'Ver na plataforma',
         'platform_status' => 'Status da plataforma',
+        'compliance_incomplete' => 'Algumas configurações de plataforma estão incompletas ou incompatíveis com a mídia anexada.',
+        'publishing' => 'Publicando...',
+        'publishing_overlay_title' => 'Seu post está sendo publicado',
+        'publishing_overlay_subtitle' => 'Isso pode levar alguns instantes. Você pode sair desta página sem problemas.',
 
         'tabs' => [
             'preview' => 'Pré-visualização',
@@ -139,6 +177,30 @@ return [
             'comments_empty' => 'Nenhum comentário ainda.',
             'writing_assistant' => 'Assistente IA',
             'writing_assistant_empty' => 'Assistente de escrita em breve.',
+        ],
+
+        'media_picker' => [
+            'title' => 'Escolher da galeria',
+            'search' => 'Buscar mídia...',
+            'empty' => 'Sua galeria ainda está vazia',
+            'cancel' => 'Cancelar',
+            'add' => 'Adicionar',
+            'add_count' => 'Adicionar :count',
+        ],
+
+        'emoji_picker' => [
+            'search' => 'Buscar emoji',
+            'empty' => 'Nenhum emoji encontrado',
+            'recent' => 'Usados recentemente',
+            'smileys' => 'Sorrisos e emoções',
+            'people' => 'Pessoas e corpo',
+            'nature' => 'Animais e natureza',
+            'food' => 'Comidas e bebidas',
+            'activities' => 'Atividades',
+            'travel' => 'Viagens e lugares',
+            'objects' => 'Objetos',
+            'symbols' => 'Símbolos',
+            'flags' => 'Bandeiras',
         ],
 
         'status' => [

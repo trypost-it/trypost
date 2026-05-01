@@ -18,12 +18,15 @@ class InstagramProvider extends AbstractProvider implements ProviderInterface
 
     protected function getAuthUrl($state): string
     {
-        return 'https://www.instagram.com/oauth/authorize?'.http_build_query([
+        // enable_fb_login=0 forces the pure Instagram Login flow (without
+        // delegating to Facebook OAuth). Tokens issued from the FB-delegated
+        // path can't be exchanged via graph.instagram.com/access_token.
+        return 'https://www.instagram.com/oauth/authorize?enable_fb_login=0&'.http_build_query([
             'client_id' => $this->clientId,
             'redirect_uri' => $this->redirectUrl,
             'response_type' => 'code',
-            'state' => $state,
             'scope' => implode(',', $this->getScopes()),
+            'state' => $state,
         ]);
     }
 
@@ -34,7 +37,7 @@ class InstagramProvider extends AbstractProvider implements ProviderInterface
 
     protected function getUserByToken($token): array
     {
-        $response = $this->getHttpClient()->get('https://graph.instagram.com/v22.0/me', [
+        $response = $this->getHttpClient()->get('https://graph.instagram.com/v25.0/me', [
             RequestOptions::QUERY => [
                 'access_token' => $token,
                 'fields' => 'id,username,account_type,name,profile_picture_url',
@@ -56,21 +59,29 @@ class InstagramProvider extends AbstractProvider implements ProviderInterface
 
     public function getAccessTokenResponse($code): array
     {
+        // Meta's docs document this endpoint with curl -F flags (multipart/form-data).
+        $multipart = [];
+        foreach ($this->getTokenFields($code) as $name => $contents) {
+            $multipart[] = ['name' => $name, 'contents' => (string) $contents];
+        }
+
         $response = $this->getHttpClient()->post($this->getTokenUrl(), [
-            RequestOptions::FORM_PARAMS => $this->getTokenFields($code),
+            RequestOptions::MULTIPART => $multipart,
         ]);
 
         $data = json_decode((string) $response->getBody(), true);
 
-        // Exchange short-lived token for long-lived token
         return $this->exchangeForLongLivedToken($data);
     }
 
     protected function exchangeForLongLivedToken(array $data): array
     {
+        // Although Meta's docs don't list `client_id` as a required parameter,
+        // the API in practice rejects the request without it.
         $response = $this->getHttpClient()->get('https://graph.instagram.com/access_token', [
             RequestOptions::QUERY => [
                 'grant_type' => 'ig_exchange_token',
+                'client_id' => $this->clientId,
                 'client_secret' => $this->clientSecret,
                 'access_token' => data_get($data, 'access_token'),
             ],

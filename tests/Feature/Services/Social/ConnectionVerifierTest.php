@@ -243,7 +243,7 @@ test('refreshes instagram token when expired', function () {
             'token_type' => 'bearer',
             'expires_in' => 5184000,
         ], 200),
-        'graph.instagram.com/v24.0/me*' => Http::response(['id' => '123', 'username' => 'test'], 200),
+        'graph.instagram.com/v25.0/me*' => Http::response(['id' => '123', 'username' => 'test'], 200),
     ]);
 
     $account = SocialAccount::factory()->instagram()->create([

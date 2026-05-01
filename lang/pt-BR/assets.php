@@ -25,6 +25,8 @@ return [
     'save_to_assets' => 'Salvar na biblioteca',
     'saved' => 'Salvo na sua biblioteca!',
     'create_post' => 'Criar post',
+    'add_to_post' => 'Adicionar ao post',
+    'search_placeholder' => 'Buscar mídia...',
 
     'delete' => [
         'title' => 'Excluir mídia',

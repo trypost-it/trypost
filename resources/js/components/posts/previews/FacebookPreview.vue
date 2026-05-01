@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { IconDots } from '@tabler/icons-vue';
-import { computed, ref, watch } from 'vue';
+import { IconDots, IconPhoto } from '@tabler/icons-vue';
+import { computed } from 'vue';
+
+import PostMediaPreview from '@/components/posts/previews/PostMediaPreview.vue';
+import type { MediaItem } from '@/composables/useMedia';
 
 interface SocialAccount {
     id: string;
@@ -8,13 +11,6 @@ interface SocialAccount {
     display_name: string;
     username: string;
     avatar_url: string | null;
-}
-
-interface MediaItem {
-    id: string;
-    url: string;
-    type: string;
-    original_filename: string;
 }
 
 interface Props {
@@ -34,16 +30,6 @@ const props = defineProps<Props>();
 const isReel = computed(() => props.contentType === 'facebook_reel');
 const isStory = computed(() => props.contentType === 'facebook_story');
 const isFeed = computed(() => !isReel.value && !isStory.value);
-
-// Carousel state
-const currentIndex = ref(0);
-
-// Reset carousel index when media changes
-watch(() => props.media.length, () => {
-    if (currentIndex.value >= props.media.length) {
-        currentIndex.value = Math.max(0, props.media.length - 1);
-    }
-});
 
 // Format numbers like Facebook
 const formatNumber = (num: number): string => {
@@ -138,25 +124,12 @@ const displayName = computed(() => props.socialAccount.display_name || props.soc
 
                     <!-- Post Media -->
                     <div class="flex-1 relative bg-black min-h-0">
-                        <template v-if="media.length > 0">
-                            <img v-if="media[currentIndex]?.type === 'image'" :src="media[currentIndex].url"
-                                :alt="media[currentIndex].original_filename" class="w-full h-full object-cover" />
-                            <video v-else-if="media[currentIndex]" :src="media[currentIndex].url"
-                                class="w-full h-full object-cover" muted loop playsinline />
-                            <!-- Multiple images indicator -->
-                            <div v-if="media.length > 1"
-                                class="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
-                                {{ currentIndex + 1 }}/{{ media.length }}
-                            </div>
-                        </template>
-                        <div v-else
-                            class="w-full h-full flex items-center justify-center bg-[#f0f2f5] dark:bg-[#3a3b3c]">
-                            <svg class="w-12 h-12 text-[#bcc0c4] dark:text-[#4e4f50]" viewBox="0 0 24 24"
-                                fill="currentColor">
-                                <path
-                                    d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                            </svg>
-                        </div>
+                        <PostMediaPreview
+                            :media="media"
+                            :placeholder-icon="IconPhoto"
+                            dot-active-class="bg-[#1877f2]"
+                            placeholder-class="w-full h-full flex items-center justify-center bg-[#f0f2f5] dark:bg-[#3a3b3c]"
+                        />
                     </div>
 
                     <!-- Reactions Bar -->
@@ -224,15 +197,13 @@ const displayName = computed(() => props.socialAccount.display_name || props.soc
             <div class="relative flex-1 bg-black overflow-hidden">
                 <!-- Video/Media - Full screen -->
                 <div class="absolute inset-0">
-                    <template v-if="media.length > 0">
-                        <img v-if="media[0].type === 'image'" :src="media[0].url" class="w-full h-full object-cover" />
-                        <video v-else :src="media[0].url" class="w-full h-full object-cover" muted loop playsinline />
-                    </template>
-                    <div v-else class="w-full h-full flex items-center justify-center bg-[#18191a]">
-                        <svg class="w-12 h-12 text-white/30" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M8 5v14l11-7z" />
-                        </svg>
-                    </div>
+                    <PostMediaPreview
+                        :media="media"
+                        :placeholder-icon="IconPhoto"
+                        :show-arrows="false"
+                        :show-dots="false"
+                        placeholder-class="w-full h-full flex items-center justify-center bg-[#18191a]"
+                    />
                 </div>
 
                 <!-- Gradient overlay -->
@@ -365,17 +336,13 @@ const displayName = computed(() => props.socialAccount.display_name || props.soc
             <div class="relative flex-1 bg-black overflow-hidden">
                 <!-- Media - Full screen -->
                 <div class="absolute inset-0">
-                    <template v-if="media.length > 0">
-                        <img v-if="media[0].type === 'image'" :src="media[0].url" class="w-full h-full object-cover" />
-                        <video v-else :src="media[0].url" class="w-full h-full object-cover" muted loop playsinline />
-                    </template>
-                    <div v-else
-                        class="w-full h-full flex items-center justify-center bg-gradient-to-b from-[#1877f2]/50 to-[#833ab4]/50">
-                        <svg class="w-12 h-12 text-white/30" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                        </svg>
-                    </div>
+                    <PostMediaPreview
+                        :media="media"
+                        :placeholder-icon="IconPhoto"
+                        :show-arrows="false"
+                        :show-dots="false"
+                        placeholder-class="w-full h-full flex items-center justify-center bg-gradient-to-b from-[#1877f2]/50 to-[#833ab4]/50"
+                    />
                 </div>
 
                 <!-- Progress Bars -->

@@ -12,6 +12,7 @@ use App\Services\UnsplashService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -31,13 +32,25 @@ class AssetController extends Controller
 
         $this->authorize('createPost', $workspace);
 
+        return Inertia::render('assets/Index');
+    }
+
+    public function search(Request $request): AnonymousResourceCollection
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        $this->authorize('createPost', $workspace);
+
+        $term = trim((string) $request->input('search', ''));
+        $type = $request->input('type');
+
         $assets = $workspace->getMedia('assets')
+            ->when($term !== '', fn ($query) => $query->where('original_filename', 'ilike', '%'.$term.'%'))
+            ->when(in_array($type, ['image', 'video'], true), fn ($query) => $query->where('type', $type))
             ->latest()
             ->paginate(config('app.pagination.default'));
 
-        return Inertia::render('assets/Index', [
-            'assets' => Inertia::scroll(fn () => $assets),
-        ]);
+        return MediaResource::collection($assets);
     }
 
     public function store(StoreAssetRequest $request): MediaResource
@@ -46,7 +59,9 @@ class AssetController extends Controller
 
         $this->authorize('createPost', $workspace);
 
-        $media = $workspace->addMedia($request->file('media'), 'assets');
+        $clientMeta = (array) $request->input('meta', []);
+
+        $media = $workspace->addMedia($request->file('media'), 'assets', $clientMeta);
 
         return new MediaResource($media);
     }

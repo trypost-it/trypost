@@ -86,7 +86,7 @@ class InstagramFacebookController extends SocialController
                 ->user();
 
             // Trigger public_profile API call for Meta app review verification
-            Http::get('https://graph.facebook.com/v20.0/me', [
+            Http::get('https://graph.facebook.com/v25.0/me', [
                 'fields' => 'id,name',
                 'access_token' => $socialUser->token,
             ]);
@@ -238,7 +238,7 @@ class InstagramFacebookController extends SocialController
     private function fetchPagesWithInstagram(string $userToken): array
     {
         try {
-            $response = Http::get('https://graph.facebook.com/v20.0/me/accounts', [
+            $response = Http::get('https://graph.facebook.com/v25.0/me/accounts', [
                 'access_token' => $userToken,
                 'fields' => 'id,name,username,picture{url},access_token,instagram_business_account',
             ]);
@@ -263,7 +263,7 @@ class InstagramFacebookController extends SocialController
                 }
 
                 // Fetch IG account details
-                $igResponse = Http::get("https://graph.facebook.com/v20.0/{$igAccountId}", [
+                $igResponse = Http::get("https://graph.facebook.com/v25.0/{$igAccountId}", [
                     'access_token' => data_get($page, 'access_token'),
                     'fields' => 'username,name,profile_picture_url',
                 ]);

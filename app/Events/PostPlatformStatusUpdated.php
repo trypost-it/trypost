@@ -17,6 +17,11 @@ class PostPlatformStatusUpdated implements ShouldBroadcastNow
 
     public function __construct(public PostPlatform $postPlatform) {}
 
+    public function broadcastAs(): string
+    {
+        return 'PostPlatformStatusUpdated';
+    }
+
     public function broadcastOn(): array
     {
         return [

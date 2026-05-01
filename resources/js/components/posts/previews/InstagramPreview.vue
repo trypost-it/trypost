@@ -10,10 +10,11 @@ import {
     IconCamera,
     IconPlayerPlayFilled,
     IconPhoto,
-    IconChevronLeft,
-    IconChevronRight,
 } from '@tabler/icons-vue';
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
+
+import PostMediaPreview from '@/components/posts/previews/PostMediaPreview.vue';
+import type { MediaItem } from '@/composables/useMedia';
 
 interface SocialAccount {
     id: string;
@@ -21,13 +22,6 @@ interface SocialAccount {
     display_name: string;
     username: string;
     avatar_url: string | null;
-}
-
-interface MediaItem {
-    id: string;
-    url: string;
-    type: string;
-    original_filename: string;
 }
 
 interface ContentTypeOption {
@@ -55,16 +49,6 @@ const isReel = computed(() => props.contentType === 'instagram_reel');
 const isStory = computed(() => props.contentType === 'instagram_story');
 const isFeed = computed(() => !isReel.value && !isStory.value);
 
-// Carousel state
-const currentIndex = ref(0);
-
-// Reset carousel index when media changes
-watch(() => props.media.length, () => {
-    if (currentIndex.value >= props.media.length) {
-        currentIndex.value = Math.max(0, props.media.length - 1);
-    }
-});
-
 // Format numbers like Instagram
 const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -84,23 +68,6 @@ const truncatedCaption = computed(() => {
 });
 
 const username = computed(() => props.socialAccount.username || props.socialAccount.display_name);
-
-// Carousel navigation
-const goToPrevious = () => {
-    if (currentIndex.value > 0) {
-        currentIndex.value--;
-    }
-};
-
-const goToNext = () => {
-    if (currentIndex.value < props.media.length - 1) {
-        currentIndex.value++;
-    }
-};
-
-const goToSlide = (index: number) => {
-    currentIndex.value = index;
-};
 </script>
 
 <template>
@@ -142,35 +109,12 @@ const goToSlide = (index: number) => {
 
                 <!-- Post Media - Fixed height to prevent overflow -->
                 <div class="flex-1 relative bg-black min-h-0">
-                    <template v-if="media.length > 0">
-                        <img v-if="media[currentIndex]?.type === 'image'" :src="media[currentIndex].url"
-                            :alt="media[currentIndex].original_filename" class="w-full h-full object-cover" />
-                        <video v-else-if="media[currentIndex]" :src="media[currentIndex].url"
-                            class="w-full h-full object-cover" muted loop playsinline />
-
-                        <!-- Carousel navigation arrows -->
-                        <template v-if="media.length > 1">
-                            <!-- Previous arrow -->
-                            <button v-if="currentIndex > 0" @click="goToPrevious"
-                                class="absolute left-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors z-10">
-                                <IconChevronLeft class="w-4 h-4 text-[#262626]" />
-                            </button>
-                            <!-- Next arrow -->
-                            <button v-if="currentIndex < media.length - 1" @click="goToNext"
-                                class="absolute right-1.5 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center shadow-sm hover:bg-white transition-colors z-10">
-                                <IconChevronRight class="w-4 h-4 text-[#262626]" />
-                            </button>
-                            <!-- Carousel dots -->
-                            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                                <button v-for="(_, i) in media" :key="i" @click="goToSlide(i)"
-                                    class="w-[6px] h-[6px] rounded-full transition-colors"
-                                    :class="i === currentIndex ? 'bg-[#0095f6]' : 'bg-white/50 hover:bg-white/70'" />
-                            </div>
-                        </template>
-                    </template>
-                    <div v-else class="w-full h-full flex items-center justify-center bg-[#fafafa] dark:bg-[#121212]">
-                        <IconPhoto class="w-12 h-12 text-[#dbdbdb] dark:text-[#363636]" />
-                    </div>
+                    <PostMediaPreview
+                        :media="media"
+                        :placeholder-icon="IconPhoto"
+                        dot-active-class="bg-[#0095f6]"
+                        placeholder-class="w-full h-full flex items-center justify-center bg-[#fafafa] dark:bg-[#121212]"
+                    />
                 </div>
 
                 <!-- Action Buttons -->
@@ -203,13 +147,13 @@ const goToSlide = (index: number) => {
             <div class="relative flex-1 bg-[#fafafa] dark:bg-black overflow-hidden">
                 <!-- Video/Media - Full screen -->
                 <div class="absolute inset-0">
-                    <template v-if="media.length > 0">
-                        <img v-if="media[0].type === 'image'" :src="media[0].url" class="w-full h-full object-cover" />
-                        <video v-else :src="media[0].url" class="w-full h-full object-cover" muted loop playsinline />
-                    </template>
-                    <div v-else class="w-full h-full flex items-center justify-center">
-                        <IconPlayerPlayFilled class="w-12 h-12 text-[#dbdbdb] dark:text-white/30" />
-                    </div>
+                    <PostMediaPreview
+                        :media="media"
+                        :placeholder-icon="IconPlayerPlayFilled"
+                        :show-arrows="false"
+                        :show-dots="false"
+                        placeholder-class="w-full h-full flex items-center justify-center"
+                    />
                 </div>
 
                 <!-- Top Bar - below status bar -->
@@ -269,13 +213,13 @@ const goToSlide = (index: number) => {
             <div class="relative flex-1 bg-[#fafafa] dark:bg-black overflow-hidden">
                 <!-- Media - Full screen -->
                 <div class="absolute inset-0">
-                    <template v-if="media.length > 0">
-                        <img v-if="media[0].type === 'image'" :src="media[0].url" class="w-full h-full object-cover" />
-                        <video v-else :src="media[0].url" class="w-full h-full object-cover" muted loop playsinline />
-                    </template>
-                    <div v-else class="w-full h-full flex items-center justify-center">
-                        <IconPhoto class="w-12 h-12 text-[#dbdbdb] dark:text-white/30" />
-                    </div>
+                    <PostMediaPreview
+                        :media="media"
+                        :placeholder-icon="IconPhoto"
+                        :show-arrows="false"
+                        :show-dots="false"
+                        placeholder-class="w-full h-full flex items-center justify-center"
+                    />
                 </div>
 
                 <!-- Progress Bars - below status bar -->

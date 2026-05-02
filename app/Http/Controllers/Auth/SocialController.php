@@ -10,6 +10,7 @@ use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\SocialAccount\Status;
 use App\Features\SocialAccountLimit;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\App\SocialAccountResource;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
@@ -56,9 +57,17 @@ class SocialController extends Controller
 
         $this->authorize('view', $workspace);
 
-        $connectedAccounts = $workspace->socialAccounts()
+        $accounts = $workspace->socialAccounts()
+            ->when(
+                $request->input('search'),
+                fn ($query, $search) => $query->where(function ($q) use ($search): void {
+                    $q->where('display_name', 'ilike', "%{$search}%")
+                        ->orWhere('username', 'ilike', "%{$search}%")
+                        ->orWhere('platform', 'ilike', "%{$search}%");
+                }),
+            )
             ->orderBy('id')
-            ->get();
+            ->paginate(config('app.pagination.default'));
 
         $platforms = collect(SocialPlatform::enabled())->map(fn ($platform) => [
             'value' => $platform->value,
@@ -68,8 +77,11 @@ class SocialController extends Controller
 
         return Inertia::render('accounts/Index', [
             'workspace' => $workspace,
-            'accounts' => $connectedAccounts,
+            'accounts' => Inertia::scroll(fn () => SocialAccountResource::collection($accounts)),
             'platforms' => $platforms,
+            'filters' => [
+                'search' => $request->input('search', ''),
+            ],
         ]);
     }
 

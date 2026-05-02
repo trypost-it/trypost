@@ -9,6 +9,9 @@ return [
     'add_social_description' => 'Conecta una cuenta social a TryPost para empezar a publicar',
     'no_accounts' => 'No hay cuentas conectadas todavía',
     'no_accounts_description' => 'Conecta tus redes sociales para empezar a programar y publicar posts',
+    'no_search_results' => 'Ninguna cuenta coincide con tu búsqueda',
+    'try_different_search' => 'Prueba otra palabra clave o limpia la búsqueda.',
+    'search' => 'Buscar cuentas...',
     'added' => 'Agregada :date',
 
     'limit_reached' => 'Has alcanzado el límite de cuentas sociales de tu plan.',
@@ -19,6 +22,20 @@ return [
     'reconnect_account' => 'Reconectar cuenta',
     'view_profile' => 'Ver perfil',
     'disconnect' => 'Desconectar',
+
+    'table' => [
+        'account' => 'Cuenta',
+        'platform' => 'Plataforma',
+        'status' => 'Estado',
+        'last_used' => 'Último uso',
+        'added' => 'Añadida',
+        'active' => 'Activa',
+    ],
+    'never_used' => 'Nunca usada',
+    'status' => [
+        'connected' => 'Conectada',
+        'disconnected' => 'Desconectada',
+    ],
 
     'descriptions' => [
         'linkedin' => 'Conecta tu perfil personal de LinkedIn',

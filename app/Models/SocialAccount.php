@@ -42,6 +42,7 @@ class SocialAccount extends Model
         'is_active',
         'error_message',
         'disconnected_at',
+        'last_used_at',
     ];
 
     protected $hidden = [
@@ -59,6 +60,7 @@ class SocialAccount extends Model
             'refresh_token' => 'encrypted',
             'token_expires_at' => 'datetime',
             'disconnected_at' => 'datetime',
+            'last_used_at' => 'datetime',
             'scopes' => 'array',
             'meta' => 'array',
         ];
@@ -92,6 +94,37 @@ class SocialAccount extends Model
     {
         return Attribute::make(
             get: fn (?string $value) => $value ? Storage::url($value) : null,
+        );
+    }
+
+    protected function profileUrl(): Attribute
+    {
+        return Attribute::make(
+            get: function (): ?string {
+                $username = $this->username;
+                $platformUserId = $this->platform_user_id;
+
+                return match ($this->platform) {
+                    SocialPlatform::Facebook => ($username || $platformUserId)
+                        ? 'https://facebook.com/'.($username ?: $platformUserId)
+                        : null,
+                    SocialPlatform::LinkedIn => $username ? "https://linkedin.com/in/{$username}" : null,
+                    SocialPlatform::LinkedInPage => $username ? "https://linkedin.com/company/{$username}" : null,
+                    SocialPlatform::X => $username ? "https://x.com/{$username}" : null,
+                    SocialPlatform::TikTok => $username ? "https://tiktok.com/@{$username}" : null,
+                    SocialPlatform::Instagram, SocialPlatform::InstagramFacebook => $username
+                        ? "https://instagram.com/{$username}"
+                        : null,
+                    SocialPlatform::YouTube => $username ? "https://youtube.com/@{$username}" : null,
+                    SocialPlatform::Threads => $username ? "https://threads.net/@{$username}" : null,
+                    SocialPlatform::Bluesky => $username ? "https://bsky.app/profile/{$username}" : null,
+                    SocialPlatform::Pinterest => $username ? "https://pinterest.com/{$username}" : null,
+                    SocialPlatform::Mastodon => ($username && data_get($this->meta, 'instance'))
+                        ? rtrim((string) data_get($this->meta, 'instance'), '/')."/@{$username}"
+                        : null,
+                    default => null,
+                };
+            },
         );
     }
 

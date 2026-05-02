@@ -26,6 +26,7 @@ class LinkedInController extends SocialController
         'openid',
         'profile',
         'email',
+        'r_basicprofile',
         'w_member_social',
     ];
 

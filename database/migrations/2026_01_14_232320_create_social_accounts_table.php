@@ -29,6 +29,7 @@ return new class extends Migration
             $table->string('status');
             $table->text('error_message')->nullable();
             $table->timestamp('disconnected_at')->nullable();
+            $table->timestamp('last_used_at')->nullable();
             $table->timestamps();
 
             $table->foreign('workspace_id')->references('id')->on('workspaces')->cascadeOnDelete();

@@ -95,12 +95,16 @@ class PostPlatform extends Model
 
     public function markAsPublished(string $platformPostId, ?string $platformUrl = null): void
     {
+        $now = now();
+
         $this->update([
             'status' => Status::Published,
             'platform_post_id' => $platformPostId,
             'platform_url' => $platformUrl,
-            'published_at' => now(),
+            'published_at' => $now,
         ]);
+
+        $this->socialAccount?->update(['last_used_at' => $now]);
     }
 
     public function markAsFailed(string $errorMessage, ?array $errorContext = null): void

@@ -16,9 +16,14 @@ class TikTokAnalytics
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://open.tiktokapis.com/v2';
+    private string $baseUrl;
 
     private string $accessToken;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('trypost.platforms.tiktok.api');
+    }
 
     public function getMetrics(SocialAccount $account): array
     {
@@ -161,7 +166,7 @@ class TikTokAnalytics
             throw new TokenExpiredException('No refresh token available for TikTok account');
         }
 
-        $response = Http::asForm()->post('https://open.tiktokapis.com/v2/oauth/token/', [
+        $response = Http::asForm()->post(config('trypost.platforms.tiktok.api').'/oauth/token/', [
             'client_key' => config('services.tiktok.client_id'),
             'client_secret' => config('services.tiktok.client_secret'),
             'grant_type' => 'refresh_token',

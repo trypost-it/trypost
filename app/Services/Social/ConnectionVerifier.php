@@ -116,7 +116,7 @@ class ConnectionVerifier
 
         $response = Http::asForm()
             ->withBasicAuth(config('services.x.client_id'), config('services.x.client_secret'))
-            ->post('https://api.x.com/2/oauth2/token', [
+            ->post(config('trypost.platforms.x.api').'/oauth2/token', [
                 'grant_type' => 'refresh_token',
                 'refresh_token' => $account->refresh_token,
             ]);
@@ -225,7 +225,7 @@ class ConnectionVerifier
             throw new TokenExpiredException('No refresh token available for TikTok account');
         }
 
-        $response = Http::asForm()->post('https://open.tiktokapis.com/v2/oauth/token/', [
+        $response = Http::asForm()->post(config('trypost.platforms.tiktok.api').'/oauth/token/', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $account->refresh_token,
             'client_key' => config('services.tiktok.client_id'),
@@ -259,7 +259,7 @@ class ConnectionVerifier
         $response = Http::withHeaders([
             'Authorization' => "Basic {$credentials}",
             'Content-Type' => 'application/x-www-form-urlencoded',
-        ])->asForm()->post('https://api.pinterest.com/v5/oauth/token', [
+        ])->asForm()->post(config('trypost.platforms.pinterest.api').'/oauth/token', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $account->refresh_token,
         ]);
@@ -283,7 +283,7 @@ class ConnectionVerifier
     private function refreshThreadsToken(SocialAccount $account): void
     {
         // Threads uses long-lived tokens that can be refreshed
-        $response = Http::get('https://graph.threads.net/refresh_access_token', [
+        $response = Http::get(config('trypost.platforms.threads.auth_api').'/refresh_access_token', [
             'grant_type' => 'th_refresh_token',
             'access_token' => $account->access_token,
         ]);
@@ -307,7 +307,7 @@ class ConnectionVerifier
 
     private function refreshInstagramToken(SocialAccount $account): void
     {
-        $response = Http::get('https://graph.instagram.com/refresh_access_token', [
+        $response = Http::get(config('trypost.platforms.instagram.auth_api').'/refresh_access_token', [
             'grant_type' => 'ig_refresh_token',
             'access_token' => $account->access_token,
         ]);
@@ -336,7 +336,7 @@ class ConnectionVerifier
                 'X-Restli-Protocol-Version' => '2.0.0',
                 'LinkedIn-Version' => '202601',
             ])
-            ->get('https://api.linkedin.com/rest/userinfo');
+            ->get(config('trypost.platforms.linkedin.api').'/rest/userinfo');
 
         if ($response->status() === 401) {
             throw new TokenExpiredException('LinkedIn access token is invalid or expired');
@@ -352,7 +352,7 @@ class ConnectionVerifier
                 'X-Restli-Protocol-Version' => '2.0.0',
                 'LinkedIn-Version' => '202601',
             ])
-            ->get('https://api.linkedin.com/rest/organizationAcls', [
+            ->get(config('trypost.platforms.linkedin-page.api').'/rest/organizationAcls', [
                 'q' => 'roleAssignee',
             ]);
 
@@ -366,7 +366,7 @@ class ConnectionVerifier
     private function verifyX(SocialAccount $account): bool
     {
         $response = Http::withToken($account->access_token)
-            ->get('https://api.x.com/2/users/me');
+            ->get(config('trypost.platforms.x.api').'/users/me');
 
         if ($response->status() === 401) {
             throw new TokenExpiredException('X access token is invalid or expired');
@@ -377,7 +377,7 @@ class ConnectionVerifier
 
     private function verifyInstagram(SocialAccount $account): bool
     {
-        $response = Http::get('https://graph.instagram.com/v25.0/me', [
+        $response = Http::get(config('trypost.platforms.instagram.graph_api').'/me', [
             'fields' => 'id,username',
             'access_token' => $account->access_token,
         ]);
@@ -398,7 +398,7 @@ class ConnectionVerifier
 
     private function verifyFacebook(SocialAccount $account): bool
     {
-        $response = Http::get('https://graph.facebook.com/v25.0/me', [
+        $response = Http::get(config('trypost.platforms.facebook.graph_api').'/me', [
             'fields' => 'id,name',
             'access_token' => $account->access_token,
         ]);
@@ -419,7 +419,7 @@ class ConnectionVerifier
 
     private function verifyThreads(SocialAccount $account): bool
     {
-        $response = Http::get('https://graph.threads.net/v1.0/me', [
+        $response = Http::get(config('trypost.platforms.threads.graph_api').'/me', [
             'fields' => 'id,username',
             'access_token' => $account->access_token,
         ]);
@@ -444,7 +444,7 @@ class ConnectionVerifier
             ->withHeaders([
                 'Content-Type' => 'application/json',
             ])
-            ->get('https://open.tiktokapis.com/v2/user/info/', [
+            ->get(config('trypost.platforms.tiktok.api').'/user/info/', [
                 'fields' => 'open_id,display_name',
             ]);
 
@@ -461,7 +461,7 @@ class ConnectionVerifier
     private function verifyYouTube(SocialAccount $account): bool
     {
         $response = Http::withToken($account->access_token)
-            ->get('https://www.googleapis.com/youtube/v3/channels', [
+            ->get(config('trypost.platforms.youtube.data_api').'/channels', [
                 'part' => 'id',
                 'mine' => 'true',
             ]);
@@ -476,7 +476,7 @@ class ConnectionVerifier
     private function verifyPinterest(SocialAccount $account): bool
     {
         $response = Http::withToken($account->access_token)
-            ->get('https://api.pinterest.com/v5/user_account');
+            ->get(config('trypost.platforms.pinterest.api').'/user_account');
 
         if ($response->status() === 401) {
             throw new TokenExpiredException('Pinterest access token is invalid or expired');

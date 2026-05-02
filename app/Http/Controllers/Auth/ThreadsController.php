@@ -84,7 +84,7 @@ class ThreadsController extends SocialController
 
         try {
             // Exchange code for short-lived token
-            $tokenResponse = Http::asForm()->post('https://graph.threads.net/oauth/access_token', [
+            $tokenResponse = Http::asForm()->post(config('trypost.platforms.threads.auth_api').'/oauth/access_token', [
                 'client_id' => config('services.threads.client_id'),
                 'client_secret' => config('services.threads.client_secret'),
                 'grant_type' => 'authorization_code',
@@ -105,7 +105,7 @@ class ThreadsController extends SocialController
             $userId = $tokenData['user_id'];
 
             // Exchange for long-lived token
-            $longLivedResponse = Http::get('https://graph.threads.net/access_token', [
+            $longLivedResponse = Http::get(config('trypost.platforms.threads.auth_api').'/access_token', [
                 'grant_type' => 'th_exchange_token',
                 'client_secret' => config('services.threads.client_secret'),
                 'access_token' => $shortLivedToken,
@@ -121,7 +121,7 @@ class ThreadsController extends SocialController
             }
 
             // Fetch user profile
-            $profileResponse = Http::get("https://graph.threads.net/v1.0/{$userId}", [
+            $profileResponse = Http::get(config('trypost.platforms.threads.graph_api')."/{$userId}", [
                 'access_token' => $longLivedToken,
                 'fields' => 'id,username,name,threads_profile_picture_url',
             ]);

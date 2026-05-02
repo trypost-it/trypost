@@ -89,7 +89,7 @@ class InstagramAnalytics
 
     private function fetchMetricsFromApi(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array
     {
-        $this->baseUrl = preg_replace('#/v[\d.]+$#', '', $account->platform->instagramGraphBaseUrl());
+        $this->baseUrl = $account->platform->instagramGraphBaseUrl();
 
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
             $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
@@ -112,7 +112,7 @@ class InstagramAnalytics
     private function fetchTimeSeriesMetrics(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array
     {
         $response = $this->getHttpClient()
-            ->get("{$this->baseUrl}/v21.0/{$account->platform_user_id}/insights", [
+            ->get("{$this->baseUrl}/{$account->platform_user_id}/insights", [
                 'metric' => 'reach,follower_count',
                 'period' => 'day',
                 'since' => $since->startOfDay()->unix(),
@@ -156,7 +156,7 @@ class InstagramAnalytics
     private function fetchTotalValueMetrics(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array
     {
         $response = $this->getHttpClient()
-            ->get("{$this->baseUrl}/v21.0/{$account->platform_user_id}/insights", [
+            ->get("{$this->baseUrl}/{$account->platform_user_id}/insights", [
                 'metric' => 'likes,comments,shares,saves,views,total_interactions',
                 'metric_type' => 'total_value',
                 'period' => 'day',
@@ -206,7 +206,7 @@ class InstagramAnalytics
             throw new TokenExpiredException('No refresh token available for Instagram account');
         }
 
-        $response = Http::get('https://graph.instagram.com/refresh_access_token', [
+        $response = Http::get(config('trypost.platforms.instagram.auth_api').'/refresh_access_token', [
             'grant_type' => 'ig_refresh_token',
             'access_token' => $account->access_token,
         ]);

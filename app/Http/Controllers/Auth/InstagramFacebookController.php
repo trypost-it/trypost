@@ -53,7 +53,7 @@ class InstagramFacebookController extends SocialController
         ]);
 
         $url = Socialite::driver($this->driver)
-            ->usingGraphVersion('v20.0')
+            ->usingGraphVersion($this->graphVersion())
             ->setScopes($this->scopes)
             ->redirectUrl(route('app.social.instagram-facebook.callback'))
             ->redirect()
@@ -81,12 +81,12 @@ class InstagramFacebookController extends SocialController
 
         try {
             $socialUser = Socialite::driver($this->driver)
-                ->usingGraphVersion('v20.0')
+                ->usingGraphVersion($this->graphVersion())
                 ->redirectUrl(route('app.social.instagram-facebook.callback'))
                 ->user();
 
             // Trigger public_profile API call for Meta app review verification
-            Http::get('https://graph.facebook.com/v25.0/me', [
+            Http::get(config('trypost.platforms.instagram-facebook.graph_api').'/me', [
                 'fields' => 'id,name',
                 'access_token' => $socialUser->token,
             ]);
@@ -238,7 +238,9 @@ class InstagramFacebookController extends SocialController
     private function fetchPagesWithInstagram(string $userToken): array
     {
         try {
-            $response = Http::get('https://graph.facebook.com/v25.0/me/accounts', [
+            $graphApi = (string) config('trypost.platforms.instagram-facebook.graph_api');
+
+            $response = Http::get($graphApi.'/me/accounts', [
                 'access_token' => $userToken,
                 'fields' => 'id,name,username,picture{url},access_token,instagram_business_account',
             ]);
@@ -263,7 +265,7 @@ class InstagramFacebookController extends SocialController
                 }
 
                 // Fetch IG account details
-                $igResponse = Http::get("https://graph.facebook.com/v25.0/{$igAccountId}", [
+                $igResponse = Http::get("{$graphApi}/{$igAccountId}", [
                     'access_token' => data_get($page, 'access_token'),
                     'fields' => 'username,name,profile_picture_url',
                 ]);
@@ -288,5 +290,10 @@ class InstagramFacebookController extends SocialController
 
             return [];
         }
+    }
+
+    private function graphVersion(): string
+    {
+        return basename((string) parse_url((string) config('trypost.platforms.instagram-facebook.graph_api'), PHP_URL_PATH));
     }
 }

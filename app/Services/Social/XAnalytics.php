@@ -17,9 +17,14 @@ class XAnalytics
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://api.x.com/2';
+    private string $baseUrl;
 
     private string $accessToken;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('trypost.platforms.x.api');
+    }
 
     public function getMetrics(SocialAccount $account, ?CarbonInterface $since = null, ?CarbonInterface $until = null): array
     {
@@ -204,7 +209,7 @@ class XAnalytics
         $response = $this->socialHttp()
             ->withBasicAuth(config('services.x.client_id'), config('services.x.client_secret'))
             ->asForm()
-            ->post('https://api.x.com/2/oauth2/token', [
+            ->post(config('trypost.platforms.x.api').'/oauth2/token', [
                 'grant_type' => 'refresh_token',
                 'refresh_token' => $account->refresh_token,
             ]);

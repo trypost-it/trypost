@@ -21,11 +21,16 @@ class LinkedInPublisher
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://api.linkedin.com';
+    private string $baseUrl;
 
     private string $apiVersion = '202601';
 
     private string $accessToken;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('trypost.platforms.linkedin.api');
+    }
 
     private SocialAccount $account;
 

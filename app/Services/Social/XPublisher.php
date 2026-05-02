@@ -20,9 +20,14 @@ class XPublisher
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://api.x.com';
+    private string $baseUrl;
 
     private string $accessToken;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('trypost.platforms.x.api');
+    }
 
     public function publish(PostPlatform $postPlatform): array
     {
@@ -72,7 +77,7 @@ class XPublisher
         }
 
         $response = $this->getHttpClient()
-            ->post("{$this->baseUrl}/2/tweets", $data);
+            ->post("{$this->baseUrl}/tweets", $data);
 
         if ($response->failed()) {
             Log::error('X post creation failed', [
@@ -150,7 +155,7 @@ class XPublisher
                 $formParams['media_category'] = $mediaCategory;
             }
 
-            $response = $response->post("{$this->baseUrl}/2/media/upload", $formParams);
+            $response = $response->post("{$this->baseUrl}/media/upload", $formParams);
 
             if ($response->failed()) {
                 Log::error('X media upload error', [
@@ -179,7 +184,7 @@ class XPublisher
         // INIT
         $initResponse = $this->socialHttp()->withToken($this->accessToken)
             ->timeout(60)
-            ->post("{$this->baseUrl}/2/media/upload/initialize", [
+            ->post("{$this->baseUrl}/media/upload/initialize", [
                 'media_type' => $mimeType,
                 'media_category' => $mediaCategory,
                 'total_bytes' => $totalBytes,
@@ -216,7 +221,7 @@ class XPublisher
                 $appendResponse = $this->socialHttp()->withToken($this->accessToken)
                     ->timeout(300)
                     ->attach('media', $chunk, 'chunk'.$index)
-                    ->post("{$this->baseUrl}/2/media/upload/{$mediaId}/append", [
+                    ->post("{$this->baseUrl}/media/upload/{$mediaId}/append", [
                         'segment_index' => $index,
                     ]);
 
@@ -238,7 +243,7 @@ class XPublisher
         // FINALIZE - Use the new v2 endpoint
         $finalizeResponse = $this->socialHttp()->withToken($this->accessToken)
             ->timeout(60)
-            ->post("{$this->baseUrl}/2/media/upload/{$mediaId}/finalize");
+            ->post("{$this->baseUrl}/media/upload/{$mediaId}/finalize");
 
         if ($finalizeResponse->failed()) {
             Log::error('X chunked upload FINALIZE error', [
@@ -284,7 +289,7 @@ class XPublisher
     {
         for ($i = 0; $i < $maxAttempts; $i++) {
             $response = $this->getHttpClient()
-                ->get("{$this->baseUrl}/2/media/{$mediaId}");
+                ->get("{$this->baseUrl}/media/{$mediaId}");
 
             if ($response->failed()) {
                 Log::error('X media status check error', ['body' => $this->redactResponseBody($response->body())]);
@@ -329,7 +334,7 @@ class XPublisher
 
         $response = Http::asForm()
             ->withBasicAuth(config('services.x.client_id'), config('services.x.client_secret'))
-            ->post("{$this->baseUrl}/2/oauth2/token", [
+            ->post("{$this->baseUrl}/oauth2/token", [
                 'grant_type' => 'refresh_token',
                 'refresh_token' => $account->refresh_token,
             ]);

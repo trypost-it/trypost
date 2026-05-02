@@ -16,9 +16,14 @@ class FacebookAnalytics
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://graph.facebook.com/v25.0';
+    private string $baseUrl;
 
     private string $accessToken;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('trypost.platforms.facebook.graph_api');
+    }
 
     public function getMetrics(SocialAccount $account, ?CarbonInterface $since = null, ?CarbonInterface $until = null): array
     {

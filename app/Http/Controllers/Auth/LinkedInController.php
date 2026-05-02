@@ -109,7 +109,7 @@ class LinkedInController extends SocialController
         try {
             $response = Http::withToken($accessToken)
                 ->withHeaders(['X-RestLi-Protocol-Version' => '2.0.0'])
-                ->get('https://api.linkedin.com/v2/me', [
+                ->get(config('trypost.platforms.linkedin.api').'/v2/me', [
                     'projection' => '(id,vanityName,localizedFirstName,localizedLastName)',
                 ]);
 

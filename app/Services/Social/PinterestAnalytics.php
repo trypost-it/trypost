@@ -18,7 +18,12 @@ class PinterestAnalytics
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://api.pinterest.com/v5';
+    private string $baseUrl;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('trypost.platforms.pinterest.api');
+    }
 
     private string $accessToken;
 
@@ -165,7 +170,7 @@ class PinterestAnalytics
         $response = Http::withBasicAuth(
             config('services.pinterest.client_id'),
             config('services.pinterest.client_secret'),
-        )->asForm()->post('https://api.pinterest.com/v5/oauth/token', [
+        )->asForm()->post(config('trypost.platforms.pinterest.api').'/oauth/token', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $account->refresh_token,
         ]);

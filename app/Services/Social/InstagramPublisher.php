@@ -403,7 +403,7 @@ class InstagramPublisher
             return;
         }
 
-        $response = Http::get('https://graph.instagram.com/refresh_access_token', [
+        $response = Http::get(config('trypost.platforms.instagram.auth_api').'/refresh_access_token', [
             'grant_type' => 'ig_refresh_token',
             'access_token' => $account->access_token,
         ]);

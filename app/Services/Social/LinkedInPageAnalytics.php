@@ -18,9 +18,14 @@ class LinkedInPageAnalytics
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://api.linkedin.com/v2';
+    private string $baseUrl;
 
     private string $accessToken;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('trypost.platforms.linkedin-page.api').'/v2';
+    }
 
     public function getMetrics(SocialAccount $account, ?CarbonInterface $since = null, ?CarbonInterface $until = null): array
     {

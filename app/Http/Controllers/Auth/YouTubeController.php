@@ -279,7 +279,7 @@ class YouTubeController extends SocialController
     {
         try {
             $response = Http::withToken($accessToken)
-                ->get('https://www.googleapis.com/youtube/v3/channels', [
+                ->get(config('trypost.platforms.youtube.data_api').'/channels', [
                     'part' => 'snippet,contentDetails,statistics',
                     'mine' => 'true',
                 ]);

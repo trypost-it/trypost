@@ -18,9 +18,14 @@ class YouTubeAnalytics
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://youtubeanalytics.googleapis.com/v2';
+    private string $baseUrl;
 
     private string $accessToken;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('trypost.platforms.youtube.analytics_api');
+    }
 
     public function getMetrics(SocialAccount $account, ?CarbonInterface $since = null, ?CarbonInterface $until = null): array
     {

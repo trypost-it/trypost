@@ -16,7 +16,12 @@ class ThreadsPublisher
 {
     use HasSocialHttpClient;
 
-    private string $baseUrl = 'https://graph.threads.net/v1.0';
+    private string $baseUrl;
+
+    public function __construct()
+    {
+        $this->baseUrl = config('trypost.platforms.threads.graph_api');
+    }
 
     public function publish(PostPlatform $postPlatform): array
     {
@@ -300,7 +305,7 @@ class ThreadsPublisher
     private function refreshToken(SocialAccount $account): void
     {
         // Threads uses long-lived tokens that can be refreshed
-        $response = Http::get('https://graph.threads.net/refresh_access_token', [
+        $response = Http::get(config('trypost.platforms.threads.auth_api').'/refresh_access_token', [
             'grant_type' => 'th_refresh_token',
             'access_token' => $account->access_token,
         ]);

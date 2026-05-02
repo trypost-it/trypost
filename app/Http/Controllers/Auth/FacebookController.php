@@ -52,7 +52,7 @@ class FacebookController extends SocialController
 
         return Inertia::location(
             Socialite::driver($this->driver)
-                ->usingGraphVersion('v25.0')
+                ->usingGraphVersion($this->graphVersion())
                 ->setScopes($this->scopes)
                 ->redirect()
                 ->getTargetUrl()
@@ -74,11 +74,11 @@ class FacebookController extends SocialController
         }
 
         try {
-            $socialUser = Socialite::driver($this->driver)->usingGraphVersion('v25.0')->user();
+            $socialUser = Socialite::driver($this->driver)->usingGraphVersion($this->graphVersion())->user();
 
             // Trigger public_profile and pages_show_list API calls
             // These calls are needed for Meta app review permission verification
-            Http::get('https://graph.facebook.com/v25.0/me', [
+            Http::get(config('trypost.platforms.facebook.graph_api').'/me', [
                 'fields' => 'id,name',
                 'access_token' => $socialUser->token,
             ]);
@@ -269,7 +269,7 @@ class FacebookController extends SocialController
     private function fetchPages(string $userToken): array
     {
         try {
-            $response = Http::get('https://graph.facebook.com/v25.0/me/accounts', [
+            $response = Http::get(config('trypost.platforms.facebook.graph_api').'/me/accounts', [
                 'access_token' => $userToken,
                 'fields' => 'id,name,username,picture{url},access_token',
             ]);
@@ -299,5 +299,10 @@ class FacebookController extends SocialController
 
             return [];
         }
+    }
+
+    private function graphVersion(): string
+    {
+        return basename((string) parse_url((string) config('trypost.platforms.facebook.graph_api'), PHP_URL_PATH));
     }
 }

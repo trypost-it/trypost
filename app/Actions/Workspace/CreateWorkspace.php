@@ -21,6 +21,9 @@ class CreateWorkspace
             'brand_description' => data_get($data, 'brand_description'),
             'brand_tone' => data_get($data, 'brand_tone'),
             'brand_voice_notes' => data_get($data, 'brand_voice_notes'),
+            'brand_color' => data_get($data, 'brand_color'),
+            'background_color' => data_get($data, 'background_color'),
+            'text_color' => data_get($data, 'text_color'),
             'content_language' => data_get($data, 'content_language'),
         ], static fn ($value): bool => $value !== null);
 

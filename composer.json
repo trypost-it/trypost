@@ -49,6 +49,7 @@
         "laravel/socialite": "^5.24",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.9",
+        "league/color-extractor": "^0.4.0",
         "league/flysystem-aws-s3-v3": "^3.0",
         "league/html-to-markdown": "^5.1",
         "posthog/posthog-php": "^4.1",

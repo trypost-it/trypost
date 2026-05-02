@@ -205,12 +205,14 @@ test('update workspace settings requires authentication', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('update workspace settings updates workspace', function () {
-    $response = $this->actingAs($this->user)->put(route('app.workspace.settings.update'), [
-        'name' => 'Updated Name',
-    ]);
+test('update workspace settings updates workspace and redirects back', function () {
+    $response = $this->actingAs($this->user)
+        ->from(route('app.workspace.brand'))
+        ->put(route('app.workspace.settings.update'), [
+            'name' => 'Updated Name',
+        ]);
 
-    $response->assertRedirect(route('app.workspace.settings'));
+    $response->assertRedirect(route('app.workspace.brand'));
 
     $this->workspace->refresh();
     expect($this->workspace->name)->toBe('Updated Name');

@@ -22,6 +22,9 @@ return new class extends Migration
             $table->text('brand_description')->nullable();
             $table->string('brand_tone')->default('professional');
             $table->text('brand_voice_notes')->nullable();
+            $table->string('brand_color', 9)->nullable();
+            $table->string('background_color', 9)->nullable();
+            $table->string('text_color', 9)->nullable();
             $table->string('content_language', 10)->default('en');
             $table->timestamps();
 

@@ -25,4 +25,10 @@ From the provided markdown content of the homepage, produce:
    - "Use technical but approachable language. Reference specific features by name. Avoid generic marketing buzzwords."
    - "Keep sentences short and punchy. Use emojis sparingly. Address the reader as 'you'."
 
-Be accurate and specific to what the page actually shows. Do not invent features or claims that aren't on the page.
+6. **brand_color** — the primary brand color as a hex string starting with `#`, lowercase, 6 digits (e.g. `#0ea5e9`). This is the accent color most prominently used in CTAs, primary buttons, links, or the logo. Return an empty string if you can't confidently identify it.
+
+7. **background_color** — the dominant page background color as a hex string starting with `#`, lowercase, 6 digits (e.g. `#ffffff` for light themes, `#0b0f19` for dark themes). Return an empty string if you can't confidently identify it.
+
+8. **text_color** — the dominant body text color as a hex string starting with `#`, lowercase, 6 digits (e.g. `#0f172a`). Return an empty string if you can't confidently identify it.
+
+Be accurate and specific to what the page actually shows. Do not invent features or claims that aren't on the page. For colors, prefer values visible in the markup/CSS; never guess.

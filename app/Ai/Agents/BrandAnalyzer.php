@@ -47,6 +47,12 @@ class BrandAnalyzer implements Agent, HasStructuredOutput
             'voice_notes' => $schema->string()
                 ->description('2-3 sentences of concrete writing guidelines inferred from the site style (e.g. "Use technical but approachable language", "Avoid marketing buzzwords"). Written in the detected content language.')
                 ->required(),
+            'brand_color' => $schema->string()
+                ->description('The primary brand color as a hex string starting with # (e.g. "#0ea5e9"). Pick the most prominent accent color used in CTAs, links, or logos. Return empty string if not confidently identifiable.'),
+            'background_color' => $schema->string()
+                ->description('The dominant page background color as a hex string starting with # (e.g. "#ffffff" or "#0b0f19"). Return empty string if not confidently identifiable.'),
+            'text_color' => $schema->string()
+                ->description('The dominant body text color as a hex string starting with # (e.g. "#0f172a"). Return empty string if not confidently identifiable.'),
         ];
     }
 }

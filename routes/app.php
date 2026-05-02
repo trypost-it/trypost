@@ -38,12 +38,13 @@ use App\Http\Controllers\Auth\YouTubeController;
 use App\Http\Middleware\App\EnsureAccountReady;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('app.calendar');
-})->name('app.home')->middleware(['auth', 'verified']);
-
 // Subscription selection (requires auth but not subscription)
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
+
+    Route::get('/', function () {
+        return redirect()->route('app.calendar');
+    })->name('app.home');
+
     Route::get('subscribe', [BillingController::class, 'subscribe'])->name('app.subscribe');
     Route::post('billing/checkout/{plan}', [BillingController::class, 'checkout'])->name('app.billing.checkout');
     Route::get('billing/processing', [BillingController::class, 'processing'])->name('app.billing.processing');
@@ -63,7 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Social Connect routes
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('connect/linkedin', [LinkedInController::class, 'connect'])->name('app.social.linkedin.connect');
     Route::get('accounts/linkedin/callback', [LinkedInController::class, 'callback'])->name('app.social.linkedin.callback');
 
@@ -113,7 +114,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 // Routes that require active subscription and completed onboarding
-Route::middleware(['auth', 'verified', EnsureAccountReady::class])->group(function () {
+Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     // Workspaces
     Route::get('workspaces', [WorkspaceController::class, 'index'])->name('app.workspaces.index');
     Route::post('workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('app.workspaces.switch');
@@ -227,7 +228,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('settings/language', [ProfileController::class, 'updateLanguage'])->name('app.profile.language');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('app.profile.destroy');
     Route::get('settings/password', [PasswordController::class, 'edit'])->name('app.user-password.edit');
     Route::put('settings/password', [PasswordController::class, 'update'])

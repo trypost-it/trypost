@@ -5,6 +5,7 @@ import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 
+import HexColorInput from '@/components/HexColorInput.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,9 @@ const form = useForm({
     brand_description: '',
     brand_tone: 'professional',
     brand_voice_notes: '',
+    brand_color: null as string | null,
+    background_color: null as string | null,
+    text_color: null as string | null,
     content_language: 'en',
     logo_url: '' as string | null,
 });
@@ -39,6 +43,9 @@ interface AutofillResponse {
     content_language: string | null;
     brand_tone: string | null;
     brand_voice_notes: string | null;
+    brand_color: string | null;
+    background_color: string | null;
+    text_color: string | null;
     logo_url: string | null;
 }
 
@@ -81,6 +88,9 @@ const runAutofill = async () => {
         if (data?.content_language) form.content_language = data.content_language;
         if (data?.brand_tone) form.brand_tone = data.brand_tone;
         if (data?.brand_voice_notes) form.brand_voice_notes = data.brand_voice_notes;
+        if (data?.brand_color) form.brand_color = data.brand_color;
+        if (data?.background_color) form.background_color = data.background_color;
+        if (data?.text_color) form.text_color = data.text_color;
 
         if (data?.logo_url) {
             form.logo_url = data.logo_url;
@@ -197,6 +207,24 @@ const runAutofill = async () => {
                 <p class="-mt-2 text-xs text-muted-foreground">
                     {{ $t('workspaces.create.content_language_description') }}
                 </p>
+
+                <div class="grid gap-4 sm:grid-cols-3">
+                    <div class="grid gap-2">
+                        <Label for="brand_color">{{ $t('workspaces.create.brand_color') }}</Label>
+                        <HexColorInput v-model="form.brand_color" />
+                        <InputError :message="form.errors.brand_color" />
+                    </div>
+                    <div class="grid gap-2">
+                        <Label for="background_color">{{ $t('workspaces.create.background_color') }}</Label>
+                        <HexColorInput v-model="form.background_color" />
+                        <InputError :message="form.errors.background_color" />
+                    </div>
+                    <div class="grid gap-2">
+                        <Label for="text_color">{{ $t('workspaces.create.text_color') }}</Label>
+                        <HexColorInput v-model="form.text_color" />
+                        <InputError :message="form.errors.text_color" />
+                    </div>
+                </div>
 
                 <div class="grid gap-2">
                     <Label for="brand_voice_notes">{{ $t('workspaces.create.voice_notes') }}</Label>

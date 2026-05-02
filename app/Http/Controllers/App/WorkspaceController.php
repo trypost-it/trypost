@@ -212,7 +212,7 @@ class WorkspaceController extends Controller
         session()->flash('flash.banner', __('settings.flash.workspace_updated'));
         session()->flash('flash.bannerStyle', 'success');
 
-        return redirect()->route('app.workspace.settings');
+        return back();
     }
 
     public function destroy(Request $request, Workspace $workspace): RedirectResponse

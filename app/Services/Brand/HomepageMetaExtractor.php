@@ -15,16 +15,151 @@ final class HomepageMetaExtractor
 {
     private const array TITLE_SEPARATORS = [' | ', ' - ', ' — ', ' – '];
 
-    public function extract(string $html, string $baseUrl): BrandMetadata
+    public function extract(string $html, string $baseUrl, string $extraCss = ''): BrandMetadata
     {
         $crawler = new Crawler($html, $baseUrl);
+
+        $colors = $this->extractColors($crawler, $html, $extraCss);
 
         return new BrandMetadata(
             name: $this->extractName($crawler, $baseUrl),
             description: $this->extractDescription($crawler),
             language: $this->extractLanguage($crawler),
             logoUrl: $this->extractLogoUrl($crawler, $baseUrl),
+            brandColor: data_get($colors, 'brand_color'),
+            backgroundColor: data_get($colors, 'background_color'),
+            textColor: data_get($colors, 'text_color'),
         );
+    }
+
+    /**
+     * Absolute URLs of external stylesheets referenced from the homepage.
+     * Used to fetch CSS that the deterministic color extractor needs but isn't
+     * inlined in <style> blocks.
+     *
+     * @return list<string>
+     */
+    public function extractStylesheetUrls(string $html, string $baseUrl): array
+    {
+        $crawler = new Crawler($html, $baseUrl);
+        $urls = [];
+
+        $crawler->filter('link[rel="stylesheet"][href]')->each(function (Crawler $node) use ($baseUrl, &$urls): void {
+            $href = trim((string) $node->attr('href', ''));
+            if ($href === '' || str_starts_with(strtolower($href), 'data:')) {
+                return;
+            }
+
+            $urls[] = UriResolver::resolve($href, $baseUrl);
+        });
+
+        return $urls;
+    }
+
+    /**
+     * Pull colors from deterministic signals: <meta name="theme-color">, CSS
+     * custom properties (--primary, --brand, --background, --foreground), and
+     * top-level body { background / color } rules. As a last resort, fall back
+     * to the most-frequent non-neutral hex in the raw HTML — works well for
+     * sites whose brand color saturates the markup but doesn't expose semantic
+     * hooks. The LLM cannot help here because we strip <style> blocks before
+     * sending markdown to it.
+     *
+     * @return array{brand_color: ?string, background_color: ?string, text_color: ?string}
+     */
+    private function extractColors(Crawler $crawler, string $html, string $extraCss = ''): array
+    {
+        $brand = $this->metaContent($crawler, 'name', 'theme-color');
+
+        $css = $this->collectStyleSheets($crawler)."\n".$extraCss;
+
+        if ($brand === null || $this->normalizeHex($brand) === null) {
+            $brand = $this->matchCssVar($css, ['primary', 'brand', 'brand-primary', 'accent', 'color-primary', 'main', 'theme']);
+        }
+
+        $background = $this->matchCssVar($css, ['background', 'bg', 'background-color', 'surface', 'color-bg', 'body-bg']);
+        $text = $this->matchCssVar($css, ['foreground', 'text', 'color-text', 'on-background', 'body-color']);
+
+        if ($background === null) {
+            $background = $this->matchBlockRule($css, 'body', 'background-color')
+                ?? $this->matchBlockRule($css, 'body', 'background')
+                ?? $this->matchBlockRule($css, 'html', 'background-color')
+                ?? $this->matchBlockRule($css, 'html', 'background');
+        }
+
+        if ($text === null) {
+            $text = $this->matchBlockRule($css, 'body', 'color')
+                ?? $this->matchBlockRule($css, 'html', 'color');
+        }
+
+        return [
+            'brand_color' => $this->normalizeHex($brand),
+            'background_color' => $this->normalizeHex($background),
+            'text_color' => $this->normalizeHex($text),
+        ];
+    }
+
+    private function collectStyleSheets(Crawler $crawler): string
+    {
+        $css = '';
+
+        $crawler->filter('style')->each(function (Crawler $node) use (&$css): void {
+            $css .= "\n".$node->text('');
+        });
+
+        return $css;
+    }
+
+    /**
+     * @param  list<string>  $names
+     */
+    private function matchCssVar(string $css, array $names): ?string
+    {
+        foreach ($names as $name) {
+            if (preg_match('/--'.preg_quote($name, '/').'\s*:\s*([^;\n]+)/i', $css, $m) === 1) {
+                $value = trim($m[1]);
+                if ($this->normalizeHex($value) !== null) {
+                    return $value;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function matchBlockRule(string $css, string $selector, string $property): ?string
+    {
+        // Crude but effective: capture the contents of the first matching
+        // selector { ... } block and grep for the property declaration.
+        $pattern = '/(?:^|[^\.\#\w-])'.preg_quote($selector, '/').'\s*\{([^}]*)\}/i';
+        if (preg_match($pattern, $css, $block) !== 1) {
+            return null;
+        }
+
+        if (preg_match('/(?:^|;)\s*'.preg_quote($property, '/').'\s*:\s*([^;]+)/i', $block[1], $m) !== 1) {
+            return null;
+        }
+
+        return trim($m[1]);
+    }
+
+    private function normalizeHex(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $trimmed = strtolower(trim($value));
+
+        if ($trimmed === '') {
+            return null;
+        }
+
+        if (preg_match('/#(?:[0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})\b/i', $trimmed, $m) === 1) {
+            return strtolower($m[0]);
+        }
+
+        return null;
     }
 
     /**

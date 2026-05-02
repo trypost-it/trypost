@@ -5,6 +5,7 @@ import { computed, ref } from 'vue';
 
 import WorkspaceController from '@/actions/App/Http/Controllers/App/WorkspaceController';
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import HexColorInput from '@/components/HexColorInput.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,9 @@ interface Workspace {
     brand_description: string | null;
     brand_tone: string;
     brand_voice_notes: string | null;
+    brand_color: string | null;
+    background_color: string | null;
+    text_color: string | null;
     content_language: string;
 }
 
@@ -34,6 +38,9 @@ const props = defineProps<{
 
 const brandTone = ref(props.workspace.brand_tone ?? 'professional');
 const contentLanguage = ref(props.workspace.content_language ?? 'en');
+const brandColor = ref<string | null>(props.workspace.brand_color);
+const backgroundColor = ref<string | null>(props.workspace.background_color);
+const textColor = ref<string | null>(props.workspace.text_color);
 
 const toneLabel = computed(() =>
     brandTone.value ? trans(`settings.brand.tone_${brandTone.value}`) : '',
@@ -132,6 +139,24 @@ const languageLabel = computed(() => {
             <p class="-mt-4 text-xs text-muted-foreground">
                 {{ $t('settings.brand.content_language_description') }}
             </p>
+
+            <div class="grid gap-4 sm:grid-cols-3">
+                <div class="grid gap-2">
+                    <Label for="brand_color">{{ $t('settings.brand.brand_color') }}</Label>
+                    <HexColorInput v-model="brandColor" name="brand_color" />
+                    <InputError :message="errors.brand_color" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="background_color">{{ $t('settings.brand.background_color') }}</Label>
+                    <HexColorInput v-model="backgroundColor" name="background_color" />
+                    <InputError :message="errors.background_color" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="text_color">{{ $t('settings.brand.text_color') }}</Label>
+                    <HexColorInput v-model="textColor" name="text_color" />
+                    <InputError :message="errors.text_color" />
+                </div>
+            </div>
 
             <div class="grid gap-2">
                 <Label for="brand_voice_notes">{{ $t('settings.brand.voice_notes') }}</Label>

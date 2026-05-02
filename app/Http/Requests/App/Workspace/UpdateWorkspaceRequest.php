@@ -15,12 +15,17 @@ class UpdateWorkspaceRequest extends FormRequest
 
     public function rules(): array
     {
+        $hex = ['nullable', 'string', 'regex:/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/'];
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'brand_website' => ['nullable', 'url', 'max:255'],
             'brand_description' => ['nullable', 'string', 'max:2000'],
             'brand_tone' => ['nullable', 'string', 'in:professional,casual,friendly,bold,inspirational,humorous,educational'],
             'brand_voice_notes' => ['nullable', 'string', 'max:2000'],
+            'brand_color' => $hex,
+            'background_color' => $hex,
+            'text_color' => $hex,
             'content_language' => ['sometimes', 'string', 'in:en,pt-BR,es'],
         ];
     }

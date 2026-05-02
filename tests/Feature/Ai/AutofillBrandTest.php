@@ -161,6 +161,146 @@ test('falls back to domain-derived name when title is a tagline with no separato
     expect($result->name)->toBe('Sendkit');
 });
 
+test('extracts brand color from theme-color meta', function () {
+    Http::fake([
+        'example.com' => Http::response(<<<'HTML'
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Acme</title>
+              <meta name="theme-color" content="#0ea5e9">
+            </head>
+            <body></body>
+            </html>
+        HTML, 200),
+    ]);
+
+    $result = ($this->autofill)('https://example.com');
+
+    expect($result->brandColor)->toBe('#0ea5e9');
+});
+
+test('extracts colors from CSS custom properties', function () {
+    Http::fake([
+        'example.com' => Http::response(<<<'HTML'
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Acme</title>
+              <style>
+                :root {
+                    --primary: #ff5722;
+                    --background: #0b0f19;
+                    --foreground: #e2e8f0;
+                }
+              </style>
+            </head>
+            <body></body>
+            </html>
+        HTML, 200),
+    ]);
+
+    $result = ($this->autofill)('https://example.com');
+
+    expect($result->brandColor)->toBe('#ff5722');
+    expect($result->backgroundColor)->toBe('#0b0f19');
+    expect($result->textColor)->toBe('#e2e8f0');
+});
+
+test('falls back to body { background } and body { color } rules', function () {
+    Http::fake([
+        'example.com' => Http::response(<<<'HTML'
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Acme</title>
+              <style>
+                body {
+                    background-color: #ffffff;
+                    color: #1f2937;
+                }
+              </style>
+            </head>
+            <body></body>
+            </html>
+        HTML, 200),
+    ]);
+
+    $result = ($this->autofill)('https://example.com');
+
+    expect($result->backgroundColor)->toBe('#ffffff');
+    expect($result->textColor)->toBe('#1f2937');
+});
+
+test('extracts colors from external stylesheets', function () {
+    Http::fake([
+        'example.com' => Http::response(<<<'HTML'
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Acme</title>
+              <link rel="stylesheet" href="/app.css">
+            </head>
+            <body></body>
+            </html>
+        HTML, 200),
+        'example.com/app.css' => Http::response(':root { --primary: #1d4ed8; --background: #f8fafc; }', 200),
+    ]);
+
+    $result = ($this->autofill)('https://example.com');
+
+    expect($result->brandColor)->toBe('#1d4ed8');
+    expect($result->backgroundColor)->toBe('#f8fafc');
+});
+
+test('falls back to dominant logo color when CSS has no signal', function () {
+    // Logo fixture is a solid blue PNG. CSS in the page has no semantic hooks,
+    // so AutofillBrand should reach into the logo and grab #1e6fff via
+    // LogoColorExtractor.
+    Http::fake([
+        'example.com' => Http::response(<<<'HTML'
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Acme</title>
+              <link rel="icon" sizes="32x32" href="/logo.png">
+            </head>
+            <body>Hello</body>
+            </html>
+        HTML, 200),
+        'example.com/logo.png' => Http::response(
+            file_get_contents(__DIR__.'/../../fixtures/blue-logo.png'),
+            200,
+            ['Content-Type' => 'image/png'],
+        ),
+    ]);
+
+    $result = ($this->autofill)('https://example.com');
+
+    expect($result->brandColor)->toBe('#1e6fff');
+});
+
+test('rejects malformed color values', function () {
+    Http::fake([
+        'example.com' => Http::response(<<<'HTML'
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Acme</title>
+              <meta name="theme-color" content="rgb(255, 0, 0)">
+              <style>:root { --primary: hsl(200 50% 50%); --background: red; }</style>
+            </head>
+            <body></body>
+            </html>
+        HTML, 200),
+    ]);
+
+    $result = ($this->autofill)('https://example.com');
+
+    expect($result->brandColor)->toBeNull();
+    expect($result->backgroundColor)->toBeNull();
+});
+
 test('throws when upstream site returns an error', function () {
     Http::fake([
         'example.com' => Http::response('', 500),

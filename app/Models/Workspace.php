@@ -27,6 +27,9 @@ class Workspace extends Model
         'brand_description',
         'brand_tone',
         'brand_voice_notes',
+        'brand_color',
+        'background_color',
+        'text_color',
         'content_language',
     ];
 

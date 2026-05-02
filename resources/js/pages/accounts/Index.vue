@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { IconAffiliate, IconAlertCircle, IconCheck, IconExternalLink, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-vue';
-import { ref } from 'vue';
+import { trans } from 'laravel-vue-i18n';
+import { computed, ref } from 'vue';
 
 import AddSocialDialog, { type AvailablePlatform } from '@/components/accounts/AddSocialDialog.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +17,9 @@ import { getPlatformLogo } from '@/composables/usePlatformLogo';
 import date from '@/date';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { disconnect as disconnectAccount, toggle as toggleAccount } from '@/routes/app/accounts';
+import type { BreadcrumbItem } from '@/types';
+
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: trans('accounts.page_title') }]);
 interface SocialAccount {
     id: string;
     platform: string;
@@ -95,14 +100,16 @@ const handleDisconnect = (accountId: string) => {
 <template>
     <Head :title="$t('accounts.page_title')" />
 
-    <AppLayout :title="$t('accounts.page_title')">
-        <template #header-actions>
-            <Button @click="isAddDialogOpen = true">
-                {{ $t('accounts.add_social') }}
-            </Button>
-        </template>
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+            <PageHeader :title="$t('accounts.page_title')" />
 
-        <div class="flex flex-col gap-6 p-6">
+            <div class="flex items-center justify-end gap-3">
+                <Button @click="isAddDialogOpen = true">
+                    {{ $t('accounts.add_social') }}
+                </Button>
+            </div>
+
             <EmptyState
                 v-if="props.accounts.length === 0"
                 :icon="IconAffiliate"

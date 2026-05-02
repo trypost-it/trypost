@@ -1,22 +1,33 @@
 <script setup lang="ts">
-import { Head, Link, InfiniteScroll, router } from '@inertiajs/vue3';
-import { IconClock, IconCircleCheck, IconAlertCircle, IconLoader2, IconFileText, IconEye, IconSearch, IconTrash } from '@tabler/icons-vue';
+import { Head, InfiniteScroll, Link, router } from '@inertiajs/vue3';
+import { IconFileText, IconSearch, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
-import { index as postsIndex, store as storePost, edit as editPost, destroy as destroyPost } from '@/actions/App/Http/Controllers/App/PostController';
+import { destroy as destroyPost, edit as editPost, index as postsIndex, show as showPost, store as storePost } from '@/actions/App/Http/Controllers/App/PostController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableLoadMore,
+    TableRow,
+} from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
+import { getPostStatusConfig } from '@/composables/usePostStatus';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
+import type { BreadcrumbItem } from '@/types';
+
 interface SocialAccount {
     id: string;
     platform: string;
@@ -35,11 +46,6 @@ interface PostPlatform {
     social_account: SocialAccount;
 }
 
-interface User {
-    id: string;
-    name: string;
-}
-
 interface Label {
     id: string;
     name: string;
@@ -52,7 +58,6 @@ interface Post {
     scheduled_at: string | null;
     published_at: string | null;
     post_platforms: PostPlatform[];
-    user: User;
     labels: Label[];
 }
 
@@ -89,7 +94,7 @@ const search = debounce(() => {
         {
             preserveState: true,
             preserveScroll: true,
-            reset: ['posts'],
+            replace: true,
         },
     );
 }, 300);
@@ -98,213 +103,190 @@ watch(searchQuery, () => search());
 
 const pageTitle = computed(() => {
     if (props.currentStatus) {
-        const statusLabel = trans(`posts.status.${props.currentStatus}`);
-        return `${trans('posts.title')} - ${statusLabel}`;
+        return trans(`posts.status.${props.currentStatus}`);
     }
     return trans('posts.all_posts');
 });
 
-const getStatusConfig = (status: string) => {
-    const configs: Record<string, { color: string; icon: typeof IconFileText }> = {
-        'draft': { color: 'bg-neutral-100 text-neutral-800', icon: IconFileText },
-        'scheduled': { color: 'bg-blue-100 text-blue-800', icon: IconClock },
-        'publishing': { color: 'bg-yellow-100 text-yellow-800', icon: IconLoader2 },
-        'published': { color: 'bg-green-100 text-green-800', icon: IconCircleCheck },
-        'partially_published': { color: 'bg-orange-100 text-orange-800', icon: IconAlertCircle },
-        'failed': { color: 'bg-red-100 text-red-800', icon: IconAlertCircle },
-    };
-    const config = configs[status] || configs['draft'];
-    return {
-        ...config,
-        label: trans(`posts.status.${status}`),
-    };
-};
+const breadcrumbs = computed<BreadcrumbItem[]>(() => {
+    const items: BreadcrumbItem[] = [{ title: trans('posts.title'), href: postsIndex.url() }];
+    if (props.currentStatus) {
+        items.push({ title: trans(`posts.status.${props.currentStatus}`) });
+    }
+    return items;
+});
 
 const formatDateTime = (date: string | null): string => {
-    if (!date) return '-';
+    if (!date) return '—';
     return dayjs.utc(date).local().format('D MMM YYYY, HH:mm');
 };
 
-const getEnabledPlatforms = (post: Post) => {
-    return post.post_platforms.filter(pp => pp.enabled);
-};
+const getEnabledPlatforms = (post: Post) => post.post_platforms.filter((pp) => pp.enabled);
 
 const getPostPreview = (post: Post): string => {
-    const enabledPlatforms = getEnabledPlatforms(post);
-    const noContent = trans('calendar.no_content');
-    if (enabledPlatforms.length === 0) return noContent;
-    const firstPlatform = enabledPlatforms[0];
-    const content = firstPlatform.content || '';
-    return content.length > 100 ? content.substring(0, 100) + '...' : content || noContent;
+    const enabled = getEnabledPlatforms(post);
+    if (enabled.length === 0) return trans('calendar.no_content');
+    return enabled[0].content || trans('calendar.no_content');
 };
 
-const canEdit = (post: Post): boolean => {
-    return ['draft', 'scheduled'].includes(post.status);
-};
+const canEdit = (post: Post): boolean => ['draft', 'scheduled', 'failed'].includes(post.status);
+
+const postUrl = (post: Post): string =>
+    canEdit(post) ? editPost.url(post.id) : showPost.url(post.id);
 
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 
 const handleDelete = (post: Post) => {
-    deleteModal.value?.open({
-        url: destroyPost.url(post.id),
-    });
+    deleteModal.value?.open({ url: destroyPost.url(post.id) });
 };
+
+const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 </script>
 
 <template>
-
     <Head :title="pageTitle" />
 
-    <AppLayout :title="pageTitle">
-        <template #header-actions>
-            <div class="relative">
-                <IconSearch class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    v-model="searchQuery"
-                    :placeholder="trans('posts.search')"
-                    class="w-64 pl-9"
-                />
-            </div>
-            <Link :href="storePost.url()" method="post">
-                <Button>
-                    {{ $t('posts.new_post') }}
-                </Button>
-            </Link>
-        </template>
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+            <PageHeader :title="pageTitle" />
 
-        <div class="flex flex-col gap-6 p-6">
+            <!-- Toolbar -->
+            <div class="flex items-center justify-between gap-3">
+                <div class="relative">
+                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        v-model="searchQuery"
+                        :placeholder="trans('posts.search')"
+                        class="w-64 pl-9"
+                    />
+                </div>
+
+                <Link :href="storePost.url()" method="post">
+                    <Button>{{ $t('posts.new_post') }}</Button>
+                </Link>
+            </div>
 
             <EmptyState
                 v-if="posts.data.length === 0"
                 :icon="IconFileText"
-                :title="$t('posts.no_posts')"
-                :description="$t('posts.start_creating')"
+                :title="hasActiveSearch ? $t('posts.no_search_results') : $t('posts.no_posts')"
+                :description="hasActiveSearch ? $t('posts.try_different_search') : $t('posts.start_creating')"
             />
 
-            <div v-else>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <Card v-for="post in posts.data" :key="post.id" class="flex flex-col py-0">
-                        <CardContent class="p-4 flex-1 flex flex-col">
-                            <div class="flex items-center justify-between gap-2 mb-3">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <Badge :class="getStatusConfig(post.status).color">
-                                        <component :is="getStatusConfig(post.status).icon" class="mr-1 h-3 w-3" />
-                                        {{ getStatusConfig(post.status).label }}
+            <div v-else class="rounded-md border">
+                <InfiniteScroll data="posts" items-element="#posts-body" preserve-url>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>{{ $t('posts.table.status') }}</TableHead>
+                                <TableHead>{{ $t('posts.table.content') }}</TableHead>
+                                <TableHead>{{ $t('posts.table.platforms') }}</TableHead>
+                                <TableHead>{{ $t('posts.table.labels') }}</TableHead>
+                                <TableHead>{{ $t('posts.table.scheduled_at') }}</TableHead>
+                                <TableHead class="text-right">{{ $t('posts.table.actions') }}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody id="posts-body">
+                            <TableRow
+                                v-for="post in posts.data"
+                                :key="post.id"
+                                class="cursor-pointer"
+                                @click="router.visit(postUrl(post))"
+                            >
+                                <TableCell>
+                                    <Badge :class="getPostStatusConfig(post.status).color">
+                                        <component :is="getPostStatusConfig(post.status).icon" class="mr-1 h-3 w-3" />
+                                        {{ getPostStatusConfig(post.status).label }}
                                     </Badge>
-                                    <div v-if="post.labels?.length" class="flex items-center gap-1">
-                                        <span v-for="label in post.labels.slice(0, 2)" :key="label.id"
-                                            class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
-                                            :style="{ backgroundColor: label.color + '20', color: label.color }">
-                                            {{ label.name }}
-                                        </span>
+                                </TableCell>
+                                <TableCell class="max-w-md">
+                                    <p class="truncate text-sm">{{ getPostPreview(post) }}</p>
+                                </TableCell>
+                                <TableCell>
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex -space-x-2">
+                                            <TooltipProvider
+                                                v-for="pp in getEnabledPlatforms(post).slice(0, 4)"
+                                                :key="pp.id"
+                                                :delay-duration="200"
+                                            >
+                                                <Tooltip>
+                                                    <TooltipTrigger as-child>
+                                                        <img
+                                                            :src="getPlatformLogo(pp.platform)"
+                                                            :alt="pp.platform"
+                                                            class="size-6 rounded-full ring-2 ring-background"
+                                                        />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <div class="space-y-0.5 text-xs">
+                                                            <p class="font-semibold">
+                                                                {{ pp.social_account?.display_name ?? pp.platform }}<span
+                                                                    v-if="pp.social_account?.username"
+                                                                    class="font-normal opacity-80"
+                                                                >&nbsp;·&nbsp;@{{ pp.social_account.username }}</span>
+                                                            </p>
+                                                            <p class="opacity-70">{{ getPlatformLabel(pp.platform) }}</p>
+                                                        </div>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                        </div>
+                                        <span
+                                            v-if="getEnabledPlatforms(post).length > 4"
+                                            class="text-xs text-muted-foreground"
+                                        >+{{ getEnabledPlatforms(post).length - 4 }}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div v-if="post.labels?.length" class="flex flex-wrap items-center gap-1">
+                                        <span
+                                            v-for="label in post.labels.slice(0, 2)"
+                                            :key="label.id"
+                                            class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium"
+                                            :style="{ backgroundColor: label.color + '20', color: label.color }"
+                                        >{{ label.name }}</span>
                                         <span v-if="post.labels.length > 2" class="text-xs text-muted-foreground">
                                             +{{ post.labels.length - 2 }}
                                         </span>
                                     </div>
-                                </div>
-                                <span class="text-xs text-muted-foreground shrink-0">
-                                    {{ formatDateTime(post.scheduled_at) }}
-                                </span>
-                            </div>
+                                    <span v-else class="text-xs text-muted-foreground">—</span>
+                                </TableCell>
+                                <TableCell class="text-muted-foreground">
+                                    {{ formatDateTime(post.scheduled_at ?? post.published_at) }}
+                                </TableCell>
+                                <TableCell class="text-right" @click.stop>
+                                    <Tooltip v-if="canEdit(post)">
+                                        <TooltipTrigger as-child>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                class="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                                @click.stop="handleDelete(post)"
+                                            >
+                                                <IconTrash class="h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>{{ $t('posts.actions.delete') }}</TooltipContent>
+                                    </Tooltip>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
 
-                            <p class="text-sm text-foreground line-clamp-3 mb-4 flex-1">
-                                {{ getPostPreview(post) }}
-                            </p>
-
-                            <div class="flex items-center justify-between mt-auto">
-                                <div class="flex items-center gap-2">
-                                    <div class="flex -space-x-2">
-                                        <TooltipProvider v-for="pp in getEnabledPlatforms(post).slice(0, 4)" :key="pp.id" :delay-duration="200">
-                                            <Tooltip>
-                                                <TooltipTrigger as-child>
-                                                    <img
-                                                        :src="getPlatformLogo(pp.platform)"
-                                                        :alt="pp.platform"
-                                                        class="h-6 w-6 rounded-full ring-2 ring-background"
-                                                    />
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <div class="space-y-0.5 text-xs">
-                                                        <p class="font-semibold">
-                                                            {{ pp.social_account?.display_name ?? pp.platform }}<span v-if="pp.social_account?.username" class="font-normal opacity-80">&nbsp;·&nbsp;@{{ pp.social_account.username }}</span>
-                                                        </p>
-                                                        <p class="opacity-70">{{ getPlatformLabel(pp.platform) }}</p>
-                                                    </div>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                    </div>
-                                    <span v-if="getEnabledPlatforms(post).length > 4"
-                                        class="text-xs text-muted-foreground">
-                                        +{{ getEnabledPlatforms(post).length - 4 }}
-                                    </span>
-                                </div>
-
-                                <TooltipProvider>
-                                    <div class="flex items-center gap-1">
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Link :href="editPost.url(post.id)">
-                                                    <Button variant="ghost" size="icon" class="h-8 w-8">
-                                                        <IconEye class="h-4 w-4" />
-                                                    </Button>
-                                                </Link>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                {{ $t('posts.actions.view') }}
-                                            </TooltipContent>
-                                        </Tooltip>
-                                        <Tooltip v-if="canEdit(post)">
-                                            <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon" class="h-8 w-8"
-                                                    @click="handleDelete(post)">
-                                                    <IconTrash class="h-4 w-4 text-red-500" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                {{ $t('posts.actions.delete') }}
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </div>
-                                </TooltipProvider>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <InfiniteScroll data="posts" #default="{ loading }">
-                    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                        <Card v-for="i in 3" :key="i">
-                            <CardContent class="p-4">
-                                <div class="space-y-3">
-                                    <div class="flex items-center justify-between">
-                                        <Skeleton class="h-5 w-20" />
-                                        <Skeleton class="h-4 w-24" />
-                                    </div>
-                                    <Skeleton class="h-4 w-full" />
-                                    <Skeleton class="h-4 w-full" />
-                                    <Skeleton class="h-4 w-3/4" />
-                                    <div class="flex items-center justify-between pt-2">
-                                        <div class="flex -space-x-2">
-                                            <Skeleton class="h-6 w-6 rounded-full" />
-                                            <Skeleton class="h-6 w-6 rounded-full" />
-                                            <Skeleton class="h-6 w-6 rounded-full" />
-                                        </div>
-                                        <div class="flex gap-1">
-                                            <Skeleton class="h-8 w-8" />
-                                            <Skeleton class="h-8 w-8" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                    <template #next="{ loading }">
+                        <TableLoadMore v-if="loading" />
+                    </template>
                 </InfiniteScroll>
             </div>
         </div>
     </AppLayout>
 
-    <ConfirmDeleteModal ref="deleteModal" :title="$t('posts.edit.delete_modal.title')"
-        :description="$t('posts.edit.delete_modal.description')" :action="$t('posts.edit.delete_modal.action')"
-        :cancel="$t('posts.edit.delete_modal.cancel')" />
+    <ConfirmDeleteModal
+        ref="deleteModal"
+        :title="$t('posts.edit.delete_modal.title')"
+        :description="$t('posts.edit.delete_modal.description')"
+        :action="$t('posts.edit.delete_modal.action')"
+        :cancel="$t('posts.edit.delete_modal.cancel')"
+    />
 </template>

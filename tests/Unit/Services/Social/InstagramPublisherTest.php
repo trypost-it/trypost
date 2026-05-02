@@ -12,6 +12,17 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Services\Social\InstagramPublisher;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
+
+function fakeJpegBytes(int $width = 1200, int $height = 800): string
+{
+    $manager = new ImageManager(Driver::class);
+    $image = $manager->createImage($width, $height)->fill('888888');
+
+    return (string) $image->encodeUsingMediaType('image/jpeg', quality: 80);
+}
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -713,4 +724,166 @@ test('instagram publisher handles publish failure', function () {
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
         ->toThrow(Exception::class);
+});
+
+test('feed image is cropped to chosen aspect ratio before publishing', function () {
+    Storage::fake();
+
+    $this->postPlatform->update(['meta' => ['aspect_ratio' => '4:5']]);
+
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/test.jpg',
+                'url' => 'https://example.com/media/test.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
+    ]);
+
+    Http::fake([
+        'https://example.com/media/test.jpg' => Http::response(fakeJpegBytes(1200, 800), 200),
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response(['id' => 'container-123'], 200),
+        'https://graph.instagram.com/v25.0/container-123*' => Http::response(['status_code' => 'FINISHED'], 200),
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response(['id' => 'media-1'], 200),
+        'https://graph.instagram.com/v25.0/media-1*' => Http::response(['permalink' => 'https://www.instagram.com/p/X/'], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    $cropped = collect(Storage::allFiles())->first(fn (string $path) => str_starts_with($path, 'instagram-crops/'));
+    expect($cropped)->not->toBeNull();
+
+    $manager = new ImageManager(Driver::class);
+    $tempFile = tempnam(sys_get_temp_dir(), 'verify_');
+    file_put_contents($tempFile, Storage::get($cropped));
+    $image = $manager->decodePath($tempFile);
+    $ratio = $image->width() / $image->height();
+    expect(abs($ratio - 0.8))->toBeLessThan(0.01);
+    @unlink($tempFile);
+
+    Http::assertSent(function ($request) {
+        if (! str_ends_with($request->url(), '/ig_123456789/media')) {
+            return false;
+        }
+        $imageUrl = $request['image_url'] ?? '';
+
+        return str_contains($imageUrl, 'instagram-crops/')
+            && ! str_contains($imageUrl, 'example.com/media/test.jpg');
+    });
+});
+
+test('feed image with original aspect ratio bypasses crop', function () {
+    Storage::fake();
+
+    $this->postPlatform->update(['meta' => ['aspect_ratio' => 'original']]);
+
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/test.jpg',
+                'url' => 'https://example.com/media/test.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
+    ]);
+
+    Http::fake([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response(['id' => 'container-123'], 200),
+        'https://graph.instagram.com/v25.0/container-123*' => Http::response(['status_code' => 'FINISHED'], 200),
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response(['id' => 'media-1'], 200),
+        'https://graph.instagram.com/v25.0/media-1*' => Http::response(['permalink' => 'https://www.instagram.com/p/X/'], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    expect(Storage::allFiles())->toBeEmpty();
+
+    Http::assertSent(function ($request) {
+        if (! str_ends_with($request->url(), '/ig_123456789/media')) {
+            return false;
+        }
+
+        return ($request['image_url'] ?? '') === 'https://example.com/media/test.jpg';
+    });
+});
+
+test('feed image without aspect_ratio meta uses original URL', function () {
+    Storage::fake();
+
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/test.jpg',
+                'url' => 'https://example.com/media/test.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'test.jpg',
+            ],
+        ],
+    ]);
+
+    Http::fake([
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::response(['id' => 'container-123'], 200),
+        'https://graph.instagram.com/v25.0/container-123*' => Http::response(['status_code' => 'FINISHED'], 200),
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response(['id' => 'media-1'], 200),
+        'https://graph.instagram.com/v25.0/media-1*' => Http::response(['permalink' => 'https://www.instagram.com/p/X/'], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    expect(Storage::allFiles())->toBeEmpty();
+
+    Http::assertSent(function ($request) {
+        if (! str_ends_with($request->url(), '/ig_123456789/media')) {
+            return false;
+        }
+
+        return ($request['image_url'] ?? '') === 'https://example.com/media/test.jpg';
+    });
+});
+
+test('carousel applies aspect ratio crop to every image', function () {
+    Storage::fake();
+
+    $this->postPlatform->update(['meta' => ['aspect_ratio' => '1:1']]);
+
+    $this->post->update([
+        'media' => [
+            ['id' => 'm1', 'path' => 'media/a.jpg', 'url' => 'https://example.com/media/a.jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'a.jpg'],
+            ['id' => 'm2', 'path' => 'media/b.jpg', 'url' => 'https://example.com/media/b.jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'b.jpg'],
+        ],
+    ]);
+
+    Http::fake([
+        'https://example.com/media/a.jpg' => Http::response(fakeJpegBytes(1600, 900), 200),
+        'https://example.com/media/b.jpg' => Http::response(fakeJpegBytes(900, 1600), 200),
+        'https://graph.instagram.com/v25.0/ig_123456789/media' => Http::sequence()
+            ->push(['id' => 'child-1'], 200)
+            ->push(['id' => 'child-2'], 200)
+            ->push(['id' => 'carousel-1'], 200),
+        'https://graph.instagram.com/v25.0/child-1*' => Http::response(['status_code' => 'FINISHED'], 200),
+        'https://graph.instagram.com/v25.0/child-2*' => Http::response(['status_code' => 'FINISHED'], 200),
+        'https://graph.instagram.com/v25.0/carousel-1*' => Http::response(['status_code' => 'FINISHED'], 200),
+        'https://graph.instagram.com/v25.0/ig_123456789/media_publish' => Http::response(['id' => 'media-1'], 200),
+        'https://graph.instagram.com/v25.0/media-1*' => Http::response(['permalink' => 'https://www.instagram.com/p/X/'], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    $crops = collect(Storage::allFiles())->filter(fn (string $path) => str_starts_with($path, 'instagram-crops/'));
+    expect($crops)->toHaveCount(2);
+
+    $manager = new ImageManager(Driver::class);
+    foreach ($crops as $cropPath) {
+        $tempFile = tempnam(sys_get_temp_dir(), 'verify_');
+        file_put_contents($tempFile, Storage::get($cropPath));
+        $image = $manager->decodePath($tempFile);
+        expect($image->width())->toBe($image->height());
+        @unlink($tempFile);
+    }
 });

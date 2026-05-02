@@ -3,7 +3,8 @@ import { IconAlertTriangle, IconBrandInstagram, IconChevronDown, IconChevronUp }
 import { computed, ref } from 'vue';
 
 import { Avatar } from '@/components/ui/avatar';
-import { getMediaValidationWarning } from '@/composables/useMedia';
+import { getMediaValidationWarning, type MediaItem } from '@/composables/useMedia';
+import { ContentType } from '@/enums/content-type';
 
 interface SocialAccount {
     id: string;
@@ -13,38 +14,50 @@ interface SocialAccount {
     avatar_url: string | null;
 }
 
-interface MediaItem {
-    id: string;
-    type?: string;
-    mime_type?: string;
-}
-
 interface Props {
     socialAccount: SocialAccount | null;
     contentType: string;
     media: MediaItem[];
+    meta?: Record<string, any>;
     disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     disabled: false,
+    meta: () => ({}),
 });
 
 const emit = defineEmits<{
     'update:contentType': [value: string];
+    'update:meta': [meta: Record<string, any>];
 }>();
 
 const open = ref(false);
 
 const variants = [
-    { value: 'instagram_feed', labelKey: 'posts.form.instagram.variant.feed' },
-    { value: 'instagram_reel', labelKey: 'posts.form.instagram.variant.reel' },
-    { value: 'instagram_story', labelKey: 'posts.form.instagram.variant.story' },
+    { value: ContentType.InstagramFeed, labelKey: 'posts.form.instagram.variant.feed' },
+    { value: ContentType.InstagramReel, labelKey: 'posts.form.instagram.variant.reel' },
+    { value: ContentType.InstagramStory, labelKey: 'posts.form.instagram.variant.story' },
 ];
+
+const aspectRatios = [
+    { value: '1:1', labelKey: 'posts.form.instagram.aspect.square' },
+    { value: '4:5', labelKey: 'posts.form.instagram.aspect.portrait' },
+    { value: '16:9', labelKey: 'posts.form.instagram.aspect.landscape' },
+    { value: 'original', labelKey: 'posts.form.instagram.aspect.original' },
+];
+
+const isFeed = computed(() => props.contentType === ContentType.InstagramFeed);
+const selectedAspectRatio = computed(() => props.meta.aspect_ratio ?? '1:1');
 
 const pickVariant = (value: string) => {
     if (props.disabled) return;
     emit('update:contentType', value);
+};
+
+const pickAspectRatio = (value: string) => {
+    if (props.disabled) return;
+    emit('update:meta', { ...props.meta, aspect_ratio: value });
 };
 
 const warning = computed(() => getMediaValidationWarning(props.contentType, props.media));
@@ -97,6 +110,25 @@ const warning = computed(() => getMediaValidationWarning(props.contentType, prop
                         @click="pickVariant(variant.value)"
                     >
                         {{ $t(variant.labelKey) }}
+                    </button>
+                </div>
+            </div>
+
+            <div v-if="isFeed" class="space-y-2">
+                <p class="text-sm font-medium">{{ $t('posts.form.instagram.aspect_label') }}</p>
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        v-for="ratio in aspectRatios"
+                        :key="ratio.value"
+                        type="button"
+                        class="rounded-full border px-3 py-1.5 text-xs transition-colors"
+                        :class="selectedAspectRatio === ratio.value
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border text-muted-foreground hover:text-foreground'"
+                        :disabled="disabled"
+                        @click="pickAspectRatio(ratio.value)"
+                    >
+                        {{ $t(ratio.labelKey) }}
                     </button>
                 </div>
             </div>

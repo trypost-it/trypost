@@ -144,61 +144,68 @@ const updatePlatformContentType = (platformId: string, contentType: string) => {
     platformContentTypes.value = { ...platformContentTypes.value, [platformId]: contentType };
 };
 
-const isMediaValidForContentType = (contentType: string, mediaItems: MediaItem[]): boolean => {
+const getMediaIncompatibilityReason = (contentType: string, mediaItems: MediaItem[]): string | null => {
     const rules = getMediaRulesForContentType(contentType);
     const videos = mediaItems.filter((m) => m.type === 'video' || m.mime_type?.startsWith('video/'));
     const images = mediaItems.filter((m) => m.type === 'image' || m.mime_type?.startsWith('image/'));
     const gifs = mediaItems.filter((m) => m.mime_type === 'image/gif');
     const total = mediaItems.length;
 
-    if (rules.requiresMedia && total === 0) return false;
-    if (total > rules.maxFiles) return false;
-    if (rules.minFiles && total < rules.minFiles) return false;
-    if (! rules.acceptVideos && videos.length > 0) return false;
-    if (! rules.acceptImages && images.length > 0) return false;
-    if (! rules.acceptsGif && gifs.length > 0) return false;
+    // Order matters: type-mismatch errors (image vs video vs gif) are more
+    // fundamental than count errors. Telling the user "YouTube doesn't accept
+    // images" is more actionable than "too many files" when they're mixing types.
+    if (rules.requiresMedia && total === 0) return trans('posts.edit.compliance.requires_media');
+    if (!rules.acceptVideos && videos.length > 0) return trans('posts.edit.compliance.no_videos');
+    if (!rules.acceptImages && images.length > 0) return trans('posts.edit.compliance.no_images');
+    if (!rules.acceptsGif && gifs.length > 0) return trans('posts.edit.compliance.no_gifs');
+    if (total > rules.maxFiles) return trans('posts.edit.compliance.too_many_files', { max: rules.maxFiles });
+    if (rules.minFiles && total < rules.minFiles) return trans('posts.edit.compliance.too_few_files', { min: rules.minFiles });
 
-    // Size / duration / aspect checks — only when metadata is available.
     for (const m of mediaItems) {
         const isVideo = m.type === 'video' || m.mime_type?.startsWith('video/');
         const size = m.size ?? 0;
+        const duration = m.meta?.duration ?? 0;
         const width = m.meta?.width ?? 0;
         const height = m.meta?.height ?? 0;
-        const duration = m.meta?.duration ?? 0;
 
         if (isVideo) {
-            if (rules.maxVideoBytes && size > 0 && size > rules.maxVideoBytes) return false;
-            if (rules.maxVideoDurationSec && duration > 0 && duration > rules.maxVideoDurationSec) return false;
-        } else {
-            if (rules.maxImageBytes && size > 0 && size > rules.maxImageBytes) return false;
+            if (rules.maxVideoBytes && size > 0 && size > rules.maxVideoBytes) return trans('posts.edit.compliance.video_too_large');
+            if (rules.maxVideoDurationSec && duration > 0 && duration > rules.maxVideoDurationSec) {
+                return trans('posts.edit.compliance.video_too_long', { seconds: rules.maxVideoDurationSec });
+            }
+        } else if (rules.maxImageBytes && size > 0 && size > rules.maxImageBytes) {
+            return trans('posts.edit.compliance.image_too_large');
         }
 
         if (width > 0 && height > 0 && (rules.aspectRatioMin || rules.aspectRatioMax)) {
             const ratio = width / height;
-            if (rules.aspectRatioMin && ratio < rules.aspectRatioMin) return false;
-            if (rules.aspectRatioMax && ratio > rules.aspectRatioMax) return false;
+            if (rules.aspectRatioMin && ratio < rules.aspectRatioMin) return trans('posts.edit.compliance.aspect_ratio_invalid');
+            if (rules.aspectRatioMax && ratio > rules.aspectRatioMax) return trans('posts.edit.compliance.aspect_ratio_invalid');
         }
     }
 
-    return true;
+    return null;
 };
 
-const instagramComplianceValid = computed(() =>
-    post.value.post_platforms
-        .filter((pp) => ['instagram', 'instagram-facebook'].includes(pp.platform) && selectedPlatformIds.value.includes(pp.id))
-        .every((pp) => {
-            const contentType = platformContentTypes.value[pp.id];
-            return Boolean(contentType) && isMediaValidForContentType(contentType, media.value);
-        }),
-);
+const platformIssues = computed<Record<string, string>>(() => {
+    const issues: Record<string, string> = {};
 
-const facebookComplianceValid = computed(() =>
-    post.value.post_platforms
-        .filter((pp) => pp.platform === 'facebook' && selectedPlatformIds.value.includes(pp.id))
-        .every((pp) => {
-            const contentType = platformContentTypes.value[pp.id];
-            return Boolean(contentType) && isMediaValidForContentType(contentType, media.value);
-        }),
+    for (const pp of post.value.post_platforms) {
+        const contentType = platformContentTypes.value[pp.id];
+        if (!contentType) {
+            issues[pp.id] = trans('posts.edit.compliance.no_content_type');
+            continue;
+        }
+
+        const reason = getMediaIncompatibilityReason(contentType, media.value);
+        if (reason) issues[pp.id] = reason;
+    }
+
+    return issues;
+});
+
+const mediaCompliancePerPlatformValid = computed(
+    () => selectedPlatformIds.value.every((id) => !platformIssues.value[id]),
 );
 
 // TikTok compliance per docs:
@@ -214,6 +221,22 @@ const tiktokComplianceValid = computed(() => {
         if (meta.disclose && !meta.brand_organic_toggle && !meta.brand_content_toggle) return false;
         return true;
     });
+});
+
+const canSchedule = computed(
+    () => mediaCompliancePerPlatformValid.value && tiktokComplianceValid.value,
+);
+
+const postActionTooltip = computed(() => {
+    if (canSchedule.value) return '';
+
+    const reasons = post.value.post_platforms
+        .filter((pp) => selectedPlatformIds.value.includes(pp.id) && platformIssues.value[pp.id])
+        .map((pp) => `${pp.platform_name ?? pp.platform}: ${platformIssues.value[pp.id]}`);
+
+    if (reasons.length === 0) return trans('posts.edit.compliance_incomplete');
+
+    return reasons.join('\n');
 });
 
 // Schedule
@@ -238,6 +261,10 @@ const selectedLabelIds = ref<string[]>(post.value.labels?.map((l) => l.id) || []
 const isSubmitting = ref(false);
 const isSaving = ref(false);
 const showSaved = ref(false);
+
+const isPostActionDisabled = computed(
+    () => isSubmitting.value || selectedPlatformIds.value.length === 0 || !canSchedule.value,
+);
 const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 const initialTabFromQuery = (() => {
     const tab = queryParams?.get('tab');
@@ -529,15 +556,15 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
 
                     <PickTimePopover
                         v-model="scheduledDateTime"
-                        :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid || !instagramComplianceValid || !facebookComplianceValid"
+                        :disabled="isPostActionDisabled"
                         @confirm="hasPickedTime = true"
                     >
                         <Button
                             type="button"
                             variant="secondary"
                             size="sm"
-                            :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid || !instagramComplianceValid || !facebookComplianceValid"
-                            :title="!tiktokComplianceValid || !instagramComplianceValid || !facebookComplianceValid ? $t('posts.edit.compliance_incomplete') : ''"
+                            :disabled="isPostActionDisabled"
+                            :title="postActionTooltip"
                         >
                             <IconCalendar class="h-4 w-4" />
                             {{ pickTimeLabel }}
@@ -547,8 +574,8 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                     <Button
                         type="button"
                         size="sm"
-                        :disabled="isSubmitting || selectedPlatformIds.length === 0 || !tiktokComplianceValid || !instagramComplianceValid || !facebookComplianceValid"
-                        :title="!tiktokComplianceValid || !instagramComplianceValid || !facebookComplianceValid ? $t('posts.edit.compliance_incomplete') : ''"
+                        :disabled="isPostActionDisabled"
+                        :title="postActionTooltip"
                         @click="submit(hasPickedTime ? 'scheduled' : 'publishing')"
                     >
                         {{ hasPickedTime ? $t('posts.edit.schedule') : $t('posts.edit.post_now') }}
@@ -752,6 +779,7 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                                     :content="content"
                                     :media="media"
                                     :platform-content-types="platformContentTypes"
+                                    :platform-meta="platformMeta"
                                     @update:platform-content-type="updatePlatformContentType"
                                 />
                             </TabsContent>
@@ -766,6 +794,7 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                                     :platform-configs="platformConfigs"
                                     :platform-meta="platformMeta"
                                     :platform-content-types="platformContentTypes"
+                                    :platform-issues="platformIssues"
                                     :tiktok-creator-infos="tiktokCreatorInfos"
                                     :media="media"
                                     @toggle-platform="togglePlatform"

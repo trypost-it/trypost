@@ -12,7 +12,7 @@ import date from '@/date';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { calendar } from '@/routes/app';
-import { store as storePost, edit as editPost } from '@/routes/app/posts';
+import { edit as editPost, show as showPost, store as storePost } from '@/routes/app/posts';
 
 interface PostPlatform {
     id: string;
@@ -229,7 +229,9 @@ const getStatusColor = (status: string): string => {
 };
 
 const getPostUrl = (post: Post): string => {
-    return editPost.url(post.id);
+    return ['draft', 'scheduled', 'failed'].includes(post.status)
+        ? editPost.url(post.id)
+        : showPost.url(post.id);
 };
 
 const formatTime = (scheduledAt: string): string => {

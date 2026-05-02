@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Exceptions\Social\ErrorCategory;
 use App\Exceptions\Social\TikTokPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
@@ -40,7 +41,10 @@ class TikTokPublisher
         $media = $postPlatform->post->mediaItems;
 
         if ($media->isEmpty()) {
-            throw new \Exception('TikTok requires media (video or photos) to publish.');
+            throw new TikTokPublishException(
+                userMessage: 'TikTok requires media (video or photos) to publish.',
+                category: ErrorCategory::MediaFormat,
+            );
         }
 
         $firstMedia = $media->first();
@@ -55,7 +59,10 @@ class TikTokPublisher
             return $this->publishPhotos($postPlatform, $media, $content);
         }
 
-        throw new \Exception('TikTok only supports video or image content.');
+        throw new TikTokPublishException(
+            userMessage: 'TikTok only supports video or image content.',
+            category: ErrorCategory::MediaFormat,
+        );
     }
 
     private function getHttpClient(): PendingRequest
@@ -141,7 +148,10 @@ class TikTokPublisher
         $publishId = data_get($data, 'data.publish_id');
 
         if (! $publishId) {
-            throw new \Exception('TikTok did not return a publish_id');
+            throw new TikTokPublishException(
+                userMessage: 'TikTok did not return a publish_id',
+                category: ErrorCategory::ServerError,
+            );
         }
 
         // Wait for processing and get final status
@@ -163,7 +173,10 @@ class TikTokPublisher
             ->toArray();
 
         if (empty($photoUrls)) {
-            throw new \Exception('No valid images found for TikTok photo post');
+            throw new TikTokPublishException(
+                userMessage: 'No valid images found for TikTok photo post',
+                category: ErrorCategory::MediaFormat,
+            );
         }
 
         $creatorInfo = $this->queryCreatorInfo($postPlatform->socialAccount);
@@ -203,7 +216,10 @@ class TikTokPublisher
         $publishId = data_get($data, 'data.publish_id');
 
         if (! $publishId) {
-            throw new \Exception('TikTok did not return a publish_id');
+            throw new TikTokPublishException(
+                userMessage: 'TikTok did not return a publish_id',
+                category: ErrorCategory::ServerError,
+            );
         }
 
         // Wait for processing and get final status

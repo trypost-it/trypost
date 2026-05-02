@@ -7,8 +7,16 @@ return [
     'new_group' => 'Novo Grupo',
     'no_groups_yet' => 'Nenhum grupo de hashtags ainda',
     'no_groups_description' => 'Crie grupos de hashtags para adicionar rapidamente hashtags populares aos seus posts',
+    'no_search_results' => 'Nenhum grupo corresponde à sua busca',
+    'try_different_search' => 'Tente outra palavra-chave ou limpe a busca.',
     'create_first_group' => 'Crie seu primeiro grupo',
     'hashtags_count' => ':count hashtags',
+    'table' => [
+        'name' => 'Nome',
+        'tags' => 'Hashtags',
+        'count' => 'Quantidade',
+        'created_at' => 'Criado',
+    ],
 
     'create' => [
         'title' => 'Criar Grupo de Hashtags',

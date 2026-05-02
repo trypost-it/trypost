@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Carbon\CarbonInterface;
@@ -30,6 +31,39 @@ class FacebookAnalytics
         return Cache::remember($cacheKey, $cacheTtl, function () use ($account, $since, $until) {
             return $this->fetchMetricsFromApi($account, $since, $until);
         });
+    }
+
+    public function fetchPostMetrics(PostPlatform $postPlatform): array
+    {
+        $account = $postPlatform->socialAccount;
+
+        if (! $account || ! $postPlatform->platform_post_id) {
+            return ['unsupported' => true, 'reason' => 'missing_post_id'];
+        }
+
+        $response = $this->socialHttp()
+            ->get("{$this->baseUrl}/{$postPlatform->platform_post_id}/insights", [
+                'metric' => 'post_impressions,post_impressions_unique,post_reactions_like_total,post_clicks',
+                'access_token' => $account->access_token,
+            ]);
+
+        if ($response->failed()) {
+            Log::warning('Facebook post metrics fetch failed', [
+                'body' => $this->redactResponseBody($response->body()),
+            ]);
+
+            return ['unsupported' => true, 'reason' => 'api_error'];
+        }
+
+        $insights = data_get($response->json(), 'data', []);
+
+        return collect($insights)
+            ->map(fn (array $item) => [
+                'label' => ucfirst(str_replace('_', ' ', data_get($item, 'name', ''))),
+                'value' => (int) data_get($item, 'values.0.value', 0),
+            ])
+            ->values()
+            ->all();
     }
 
     private function fetchMetricsFromApi(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array

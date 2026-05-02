@@ -74,7 +74,8 @@ return [
         'tabs' => [
             'workspace' => 'Workspace',
             'brand' => 'Marca',
-            'users' => 'Usuários',
+            'users' => 'Membros',
+            'api_keys' => 'API Keys',
         ],
         'title' => 'Configurações do workspace',
         'logo_heading' => 'Logo do workspace',

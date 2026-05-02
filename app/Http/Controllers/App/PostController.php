@@ -14,11 +14,23 @@ use App\Enums\SocialAccount\Platform;
 use App\Http\Requests\App\Post\UpdatePostRequest;
 use App\Http\Resources\App\PlatformConfigResource;
 use App\Models\Post;
+use App\Models\PostPlatform;
+use App\Services\Social\BlueskyAnalytics;
+use App\Services\Social\FacebookAnalytics;
+use App\Services\Social\InstagramAnalytics;
+use App\Services\Social\LinkedInPageAnalytics;
+use App\Services\Social\MastodonAnalytics;
+use App\Services\Social\PinterestAnalytics;
 use App\Services\Social\PinterestPublisher;
+use App\Services\Social\ThreadsAnalytics;
 use App\Services\Social\TikTokCreatorInfo;
+use App\Services\Social\XAnalytics;
+use App\Services\Social\YouTubeAnalytics;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -143,7 +155,43 @@ class PostController extends Controller
         return Inertia::location(route('app.posts.edit', $post));
     }
 
-    public function edit(Request $request, Post $post): Response|RedirectResponse
+    public function platformMetrics(Request $request, Post $post, PostPlatform $postPlatform): JsonResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace || $post->workspace_id !== $workspace->id) {
+            abort(404);
+        }
+
+        $this->authorize('view', $workspace);
+
+        if ($postPlatform->post_id !== $post->id) {
+            abort(404);
+        }
+
+        if ($postPlatform->status->value !== 'published' || ! $postPlatform->platform_post_id) {
+            return response()->json(['unsupported' => true, 'reason' => 'not_published']);
+        }
+
+        $cacheKey = "post_metrics:{$postPlatform->id}";
+
+        $metrics = Cache::remember($cacheKey, 300, fn () => match ($postPlatform->platform) {
+            Platform::X => app(XAnalytics::class)->fetchPostMetrics($postPlatform),
+            Platform::Bluesky => app(BlueskyAnalytics::class)->fetchPostMetrics($postPlatform),
+            Platform::Mastodon => app(MastodonAnalytics::class)->fetchPostMetrics($postPlatform),
+            Platform::Instagram, Platform::InstagramFacebook => app(InstagramAnalytics::class)->fetchPostMetrics($postPlatform),
+            Platform::Facebook => app(FacebookAnalytics::class)->fetchPostMetrics($postPlatform),
+            Platform::Threads => app(ThreadsAnalytics::class)->fetchPostMetrics($postPlatform),
+            Platform::LinkedInPage => app(LinkedInPageAnalytics::class)->fetchPostMetrics($postPlatform),
+            Platform::YouTube => app(YouTubeAnalytics::class)->fetchPostMetrics($postPlatform),
+            Platform::Pinterest => app(PinterestAnalytics::class)->fetchPostMetrics($postPlatform),
+            default => ['unsupported' => true, 'reason' => 'platform_not_supported'],
+        });
+
+        return response()->json($metrics);
+    }
+
+    public function show(Request $request, Post $post): Response|RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -158,8 +206,36 @@ class PostController extends Controller
         }
 
         if (in_array($post->status, [PostStatus::Draft, PostStatus::Scheduled, PostStatus::Failed], true)) {
-            SyncPostPlatforms::execute($post);
+            return redirect()->route('app.posts.edit', $post);
         }
+
+        $post->load(['postPlatforms.socialAccount', 'labels']);
+
+        return Inertia::render('posts/Show', [
+            'workspace' => $workspace,
+            'post' => $post,
+        ]);
+    }
+
+    public function edit(Request $request, Post $post): Response|RedirectResponse
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('app.workspaces.create');
+        }
+
+        $this->authorize('view', $workspace);
+
+        if ($post->workspace_id !== $workspace->id) {
+            abort(404);
+        }
+
+        if (in_array($post->status, [PostStatus::Publishing, PostStatus::Published, PostStatus::PartiallyPublished], true)) {
+            return redirect()->route('app.posts.show', $post);
+        }
+
+        SyncPostPlatforms::execute($post);
 
         $post->load(['postPlatforms.socialAccount', 'labels']);
         $socialAccounts = $workspace->socialAccounts()->active()->get();
@@ -230,14 +306,14 @@ class PostController extends Controller
             session()->flash('flash.banner', __('posts.flash.publishing'));
             session()->flash('flash.bannerStyle', 'success');
 
-            return redirect()->route('app.posts.edit', $post);
+            return redirect()->route('app.posts.show', $post);
         }
 
         if ($action === PostAction::Scheduled) {
             session()->flash('flash.banner', __('posts.flash.scheduled'));
             session()->flash('flash.bannerStyle', 'success');
 
-            return redirect()->route('app.posts.edit', $post);
+            return redirect()->route('app.posts.show', $post);
         }
 
         return back();
@@ -255,6 +331,13 @@ class PostController extends Controller
 
         if ($post->workspace_id !== $workspace->id) {
             abort(404);
+        }
+
+        if (in_array($post->status, [PostStatus::Publishing, PostStatus::Published, PostStatus::PartiallyPublished], true)) {
+            session()->flash('flash.banner', __('posts.flash.cannot_delete_published'));
+            session()->flash('flash.bannerStyle', 'danger');
+
+            return back();
         }
 
         DeletePost::execute($post);

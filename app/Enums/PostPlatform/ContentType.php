@@ -178,6 +178,7 @@ enum ContentType: string
     {
         return match ($this) {
             self::LinkedInPost, self::LinkedInPagePost => false,
+            self::FacebookPost => false,
             self::XPost => false,
             self::ThreadsPost => false,
             self::BlueskyPost => false,

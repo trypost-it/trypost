@@ -6,6 +6,7 @@ namespace App\Http\Requests\App\Post;
 
 use App\Enums\Post\Status;
 use App\Enums\PostPlatform\ContentType;
+use App\Rules\ContentTypeCompatibleWithMedia;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -18,6 +19,12 @@ class UpdatePostRequest extends FormRequest
 
     public function rules(): array
     {
+        $enforcesMediaCompatibility = in_array(
+            $this->input('status'),
+            [Status::Scheduled->value, Status::Publishing->value],
+            true,
+        );
+
         return [
             'status' => ['required', 'string', Rule::in([Status::Draft->value, Status::Scheduled->value, Status::Publishing->value])],
             'content' => ['nullable', 'string', 'max:63206'],
@@ -40,9 +47,15 @@ class UpdatePostRequest extends FormRequest
                 ),
             ],
             'platforms' => ['sometimes', 'array'],
-            'platforms.*.id' => ['required', 'uuid', Rule::exists('post_platforms', 'id')->where('post_id', $this->route('post')->id ?? $this->route('post'))],
-            'platforms.*.content_type' => ['sometimes', 'string', Rule::in(array_column(ContentType::cases(), 'value'))],
+            'platforms.*.id' => ['required', 'uuid', Rule::exists('post_platforms', 'id')->where('post_id', $this->route('post')->id)],
+            'platforms.*.content_type' => [
+                $enforcesMediaCompatibility ? 'required' : 'sometimes',
+                'string',
+                Rule::in(array_column(ContentType::cases(), 'value')),
+                Rule::when($enforcesMediaCompatibility, [new ContentTypeCompatibleWithMedia]),
+            ],
             'platforms.*.meta' => ['nullable', 'array'],
+            'platforms.*.meta.aspect_ratio' => ['sometimes', 'nullable', 'string', Rule::in(['1:1', '4:5', '16:9', 'original'])],
             'platforms.*.meta.privacy_level' => ['sometimes', 'nullable', 'string', Rule::in(['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'FOLLOWER_OF_CREATOR', 'SELF_ONLY'])],
             'platforms.*.meta.auto_add_music' => ['sometimes', 'boolean'],
             'platforms.*.meta.allow_comments' => ['sometimes', 'boolean'],

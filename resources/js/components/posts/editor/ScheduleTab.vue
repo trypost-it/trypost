@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconCircleCheck, IconExternalLink, IconLoader2 } from '@tabler/icons-vue';
+import { IconAlertCircle, IconCircleCheck, IconExternalLink, IconLoader2 } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
 import FacebookSettings from '@/components/posts/editor/FacebookSettings.vue';
@@ -80,6 +80,7 @@ const props = defineProps<{
     platformConfigs: Record<string, PlatformConfig>;
     platformMeta: Record<string, Record<string, any>>;
     platformContentTypes: Record<string, string>;
+    platformIssues?: Record<string, string>;
     tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
     media?: MediaItem[];
 }>();
@@ -143,17 +144,38 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                             <button
                                 type="button"
                                 class="flex w-20 flex-col items-center gap-1.5 transition-opacity"
-                                :class="selectedPlatformIds.includes(pp.id) ? 'opacity-100' : 'opacity-40 hover:opacity-70'"
+                                :class="[
+                                    platformIssues?.[pp.id] && !selectedPlatformIds.includes(pp.id) ? 'cursor-not-allowed opacity-40' : '',
+                                    platformIssues?.[pp.id] && selectedPlatformIds.includes(pp.id) ? 'opacity-100' : '',
+                                    !platformIssues?.[pp.id] ? 'opacity-100 hover:opacity-90' : '',
+                                ]"
+                                :disabled="Boolean(platformIssues?.[pp.id]) && !selectedPlatformIds.includes(pp.id)"
                                 @click="emit('togglePlatform', pp.id)"
                             >
                                 <div class="relative">
-                                    <Avatar :src="getPlatformAvatar(pp)" :name="getPlatformDisplayName(pp)" class="h-10 w-10 shrink-0 rounded-full ring-2 ring-offset-2" :class="selectedPlatformIds.includes(pp.id) ? 'ring-primary' : 'ring-transparent'" />
+                                    <Avatar
+                                        :src="getPlatformAvatar(pp)"
+                                        :name="getPlatformDisplayName(pp)"
+                                        class="h-10 w-10 shrink-0 rounded-full ring-2 ring-offset-2"
+                                        :class="[
+                                            platformIssues?.[pp.id] && selectedPlatformIds.includes(pp.id) ? 'ring-destructive' : '',
+                                            !platformIssues?.[pp.id] && selectedPlatformIds.includes(pp.id) ? 'ring-primary' : '',
+                                            !selectedPlatformIds.includes(pp.id) ? 'ring-transparent' : '',
+                                        ]"
+                                    />
                                     <img
                                         :src="getPlatformLogo(pp.platform)"
                                         :alt="pp.platform"
                                         class="absolute -bottom-1.5 -right-1.5 h-5 w-5 rounded-full bg-background object-contain ring-1 ring-border"
                                     />
-                                    <Badge v-if="pp.status === 'published'" variant="default" class="absolute -top-1 -right-1 h-4 w-4 p-0">
+                                    <Badge
+                                        v-if="platformIssues?.[pp.id] && selectedPlatformIds.includes(pp.id)"
+                                        variant="destructive"
+                                        class="absolute -top-1 -right-1 h-4 w-4 p-0"
+                                    >
+                                        <IconAlertCircle class="h-2.5 w-2.5" />
+                                    </Badge>
+                                    <Badge v-else-if="pp.status === 'published'" variant="default" class="absolute -top-1 -right-1 h-4 w-4 p-0">
                                         <IconCircleCheck class="h-2.5 w-2.5" />
                                     </Badge>
                                     <Badge v-else-if="pp.status === 'failed'" variant="destructive" class="absolute -top-1 -right-1 h-4 w-4 p-0 text-[9px]">!</Badge>
@@ -165,6 +187,9 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                             <div class="space-y-0.5 text-xs">
                                 <p class="font-semibold">{{ getPlatformDisplayName(pp) }}<span v-if="pp.social_account?.username" class="font-normal opacity-80">&nbsp;·&nbsp;@{{ pp.social_account.username }}</span></p>
                                 <p class="opacity-70">{{ getPlatformLabel(pp.platform) }}</p>
+                                <p v-if="platformIssues?.[pp.id]" class="mt-1 max-w-xs text-destructive-foreground/90">
+                                    {{ platformIssues[pp.id] }}
+                                </p>
                             </div>
                         </TooltipContent>
                     </Tooltip>
@@ -220,8 +245,10 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                 :social-account="pp.social_account"
                 :content-type="platformContentTypes[pp.id] ?? ''"
                 :media="media ?? []"
+                :meta="platformMeta[pp.id] ?? {}"
                 :disabled="isReadOnly"
                 @update:content-type="emit('update:platformContentType', pp.id, $event)"
+                @update:meta="emit('update:platformMeta', pp.id, $event)"
             />
         </div>
 

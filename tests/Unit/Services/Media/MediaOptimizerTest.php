@@ -137,3 +137,63 @@ it('returns valid temp file path', function () use (&$tempFiles) {
     expect(file_exists($result))->toBeTrue()
         ->and(filesize($result))->toBeGreaterThan(0);
 });
+
+it('crops a wide image to a 1:1 square', function () use (&$tempFiles) {
+    $source = createTestImage(1920, 1080);
+    $tempFiles[] = $source;
+
+    $optimizer = new MediaOptimizer;
+    $result = $optimizer->cropToAspectRatio($source, 1.0);
+    $tempFiles[] = $result;
+
+    $manager = new ImageManager(Driver::class);
+    $cropped = $manager->decodePath($result);
+
+    expect($cropped->width())->toBe($cropped->height());
+    expect($cropped->height())->toBe(1080);
+});
+
+it('crops a tall image to a 4:5 portrait', function () use (&$tempFiles) {
+    $source = createTestImage(1000, 2000);
+    $tempFiles[] = $source;
+
+    $optimizer = new MediaOptimizer;
+    $result = $optimizer->cropToAspectRatio($source, 4 / 5);
+    $tempFiles[] = $result;
+
+    $manager = new ImageManager(Driver::class);
+    $cropped = $manager->decodePath($result);
+
+    $ratio = $cropped->width() / $cropped->height();
+    expect(abs($ratio - 0.8))->toBeLessThan(0.01);
+});
+
+it('crops a square image to a 16:9 landscape', function () use (&$tempFiles) {
+    $source = createTestImage(1080, 1080);
+    $tempFiles[] = $source;
+
+    $optimizer = new MediaOptimizer;
+    $result = $optimizer->cropToAspectRatio($source, 16 / 9);
+    $tempFiles[] = $result;
+
+    $manager = new ImageManager(Driver::class);
+    $cropped = $manager->decodePath($result);
+
+    $ratio = $cropped->width() / $cropped->height();
+    expect(abs($ratio - 16 / 9))->toBeLessThan(0.01);
+});
+
+it('returns a copy when image already matches the target ratio', function () use (&$tempFiles) {
+    $source = createTestImage(800, 800);
+    $tempFiles[] = $source;
+
+    $optimizer = new MediaOptimizer;
+    $result = $optimizer->cropToAspectRatio($source, 1.0);
+    $tempFiles[] = $result;
+
+    $manager = new ImageManager(Driver::class);
+    $cropped = $manager->decodePath($result);
+
+    expect($cropped->width())->toBe(800);
+    expect($cropped->height())->toBe(800);
+});

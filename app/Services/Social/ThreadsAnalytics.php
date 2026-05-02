@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Exceptions\TokenExpiredException;
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Carbon\CarbonInterface;
@@ -32,6 +33,44 @@ class ThreadsAnalytics
         return Cache::remember($cacheKey, $cacheTtl, function () use ($account, $since, $until) {
             return $this->fetchMetricsFromApi($account, $since, $until);
         });
+    }
+
+    public function fetchPostMetrics(PostPlatform $postPlatform): array
+    {
+        $account = $postPlatform->socialAccount;
+
+        if (! $account || ! $postPlatform->platform_post_id) {
+            return ['unsupported' => true, 'reason' => 'missing_post_id'];
+        }
+
+        if ($account->is_token_expired || $account->is_token_expiring_soon) {
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
+            $account->refresh();
+        }
+
+        $response = $this->socialHttp()
+            ->withToken($account->access_token)
+            ->get("{$this->baseUrl}/{$postPlatform->platform_post_id}/insights", [
+                'metric' => 'views,likes,replies,reposts,quotes',
+            ]);
+
+        if ($response->failed()) {
+            Log::warning('Threads post metrics fetch failed', [
+                'body' => $this->redactResponseBody($response->body()),
+            ]);
+
+            return ['unsupported' => true, 'reason' => 'api_error'];
+        }
+
+        $data = data_get($response->json(), 'data', []);
+
+        return collect($data)
+            ->map(fn (array $item) => [
+                'label' => ucfirst(str_replace('_', ' ', data_get($item, 'name', ''))),
+                'value' => (int) data_get($item, 'values.0.value', 0),
+            ])
+            ->values()
+            ->all();
     }
 
     private function fetchMetricsFromApi(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array

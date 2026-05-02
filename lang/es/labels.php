@@ -6,7 +6,13 @@ return [
     'search' => 'Buscar etiquetas...',
     'new_label' => 'Nueva etiqueta',
     'no_labels_yet' => 'Aún no hay etiquetas',
+    'no_search_results' => 'Ninguna etiqueta coincide con tu búsqueda',
+    'try_different_search' => 'Prueba otra palabra clave o limpia la búsqueda.',
     'create_first_label' => 'Crea tu primera etiqueta',
+    'table' => [
+        'name' => 'Nombre',
+        'created_at' => 'Creado',
+    ],
 
     'create' => [
         'title' => 'Crear etiqueta',

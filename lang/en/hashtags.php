@@ -7,8 +7,16 @@ return [
     'new_group' => 'New Group',
     'no_groups_yet' => 'No hashtag groups yet',
     'no_groups_description' => 'Create hashtag groups to quickly add popular hashtags to your posts',
+    'no_search_results' => 'No groups match your search',
+    'try_different_search' => 'Try a different keyword or clear the search.',
     'create_first_group' => 'Create your first group',
     'hashtags_count' => ':count hashtags',
+    'table' => [
+        'name' => 'Name',
+        'tags' => 'Tags',
+        'count' => 'Count',
+        'created_at' => 'Created',
+    ],
 
     'create' => [
         'title' => 'Create Hashtag Group',

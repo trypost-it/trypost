@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Enums\Post\Status;
 use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
+use App\Models\Post;
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -62,6 +65,43 @@ test('disconnect removes social account', function () {
 
     $response->assertRedirect();
     expect(SocialAccount::find($account->id))->toBeNull();
+});
+
+test('disconnect deletes pending platform rows from drafts and keeps published history', function () {
+    $account = SocialAccount::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $draftPost = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => Status::Draft,
+    ]);
+    $publishedPost = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => Status::Published,
+    ]);
+
+    $pendingPlatform = PostPlatform::factory()->create([
+        'post_id' => $draftPost->id,
+        'social_account_id' => $account->id,
+        'status' => App\Enums\PostPlatform\Status::Pending,
+    ]);
+    $publishedPlatform = PostPlatform::factory()->create([
+        'post_id' => $publishedPost->id,
+        'social_account_id' => $account->id,
+        'status' => App\Enums\PostPlatform\Status::Published,
+        'platform_name' => 'Snapshot Name',
+        'platform_avatar' => 'avatars/snapshot.jpg',
+    ]);
+
+    $this->actingAs($this->user)->delete(route('app.accounts.disconnect', $account));
+
+    expect(PostPlatform::find($pendingPlatform->id))->toBeNull();
+
+    $publishedPlatform->refresh();
+    expect($publishedPlatform->social_account_id)->toBeNull();
+    expect($publishedPlatform->platform_name)->toBe('Snapshot Name');
+    expect($publishedPlatform->display_avatar)->toContain('avatars/snapshot.jpg');
 });
 
 test('disconnect returns 403 for other workspace account', function () {

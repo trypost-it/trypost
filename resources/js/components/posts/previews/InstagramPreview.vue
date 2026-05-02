@@ -15,6 +15,7 @@ import { computed } from 'vue';
 
 import PostMediaPreview from '@/components/posts/previews/PostMediaPreview.vue';
 import type { MediaItem } from '@/composables/useMedia';
+import { ContentType } from '@/enums/content-type';
 
 interface SocialAccount {
     id: string;
@@ -36,6 +37,7 @@ interface Props {
     media: MediaItem[];
     contentType?: string;
     contentTypeOptions?: ContentTypeOption[];
+    meta?: Record<string, any>;
     charCount?: number;
     maxLength?: number;
     isValid?: boolean;
@@ -45,9 +47,16 @@ interface Props {
 const props = defineProps<Props>();
 
 // Content type helpers
-const isReel = computed(() => props.contentType === 'instagram_reel');
-const isStory = computed(() => props.contentType === 'instagram_story');
+const isReel = computed(() => props.contentType === ContentType.InstagramReel);
+const isStory = computed(() => props.contentType === ContentType.InstagramStory);
 const isFeed = computed(() => !isReel.value && !isStory.value);
+
+// Aspect ratio for the feed media frame. Instagram defaults to 1:1.
+const feedAspectStyle = computed(() => {
+    const ratio = props.meta?.aspect_ratio ?? '1:1';
+    const value = ratio === '4:5' ? '4 / 5' : ratio === '16:9' ? '16 / 9' : ratio === 'original' ? 'auto' : '1 / 1';
+    return { aspectRatio: value };
+});
 
 // Format numbers like Instagram
 const formatNumber = (num: number): string => {
@@ -107,8 +116,8 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
                     <IconDots class="w-4 h-4 flex-shrink-0" />
                 </div>
 
-                <!-- Post Media - Fixed height to prevent overflow -->
-                <div class="flex-1 relative bg-black min-h-0">
+                <!-- Post Media - Aspect ratio matches user's chosen crop -->
+                <div class="relative w-full bg-black" :style="feedAspectStyle">
                     <PostMediaPreview
                         :media="media"
                         :placeholder-icon="IconPhoto"

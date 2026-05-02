@@ -83,9 +83,14 @@ test('content type requires media correctly', function () {
     expect(ContentType::InstagramFeed->requiresMedia())->toBeTrue();
     expect(ContentType::InstagramReel->requiresMedia())->toBeTrue();
     expect(ContentType::TikTokVideo->requiresMedia())->toBeTrue();
+    expect(ContentType::YouTubeShort->requiresMedia())->toBeTrue();
+    expect(ContentType::PinterestPin->requiresMedia())->toBeTrue();
     expect(ContentType::LinkedInPost->requiresMedia())->toBeFalse();
+    expect(ContentType::FacebookPost->requiresMedia())->toBeFalse();
     expect(ContentType::XPost->requiresMedia())->toBeFalse();
+    expect(ContentType::ThreadsPost->requiresMedia())->toBeFalse();
     expect(ContentType::BlueskyPost->requiresMedia())->toBeFalse();
+    expect(ContentType::MastodonPost->requiresMedia())->toBeFalse();
 });
 
 test('can get content types for platform', function () {

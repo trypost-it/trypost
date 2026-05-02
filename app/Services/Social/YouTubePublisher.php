@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Exceptions\Social\ErrorCategory;
 use App\Exceptions\Social\YouTubePublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Google\Client as GoogleClient;
+use Google\Service\Exception;
 use Google\Service\YouTube;
 use Google\Service\YouTube\Video;
 use Google\Service\YouTube\VideoSnippet;
@@ -40,13 +42,19 @@ class YouTubePublisher
         $media = $postPlatform->post->mediaItems;
 
         if ($media->isEmpty()) {
-            throw new \Exception('YouTube Shorts requires a video to publish.');
+            throw new YouTubePublishException(
+                userMessage: 'YouTube Shorts requires a video to publish.',
+                category: ErrorCategory::MediaFormat,
+            );
         }
 
         $firstMedia = $media->first();
 
         if (! $firstMedia->isVideo()) {
-            throw new \Exception('YouTube Shorts only supports video content.');
+            throw new YouTubePublishException(
+                userMessage: 'YouTube Shorts only supports video content.',
+                category: ErrorCategory::MediaFormat,
+            );
         }
 
         return $this->publishShort($postPlatform, $firstMedia, $account, $content);
@@ -80,7 +88,10 @@ class YouTubePublisher
     private function publishShort(PostPlatform $postPlatform, $media, SocialAccount $account, ?string $content): array
     {
         if (empty($content)) {
-            throw new \Exception('YouTube Shorts require a title. Please add text to your post.');
+            throw new YouTubePublishException(
+                userMessage: 'YouTube Shorts require a title. Please add text to your post.',
+                category: ErrorCategory::ContentPolicy,
+            );
         }
 
         $title = $this->buildTitle($content);
@@ -96,13 +107,19 @@ class YouTubePublisher
                 ->get($media->url);
 
             if ($downloadResponse->failed()) {
-                throw new \Exception('Failed to download video for YouTube upload: HTTP '.$downloadResponse->status());
+                throw new YouTubePublishException(
+                    userMessage: 'Failed to download video for YouTube upload: HTTP '.$downloadResponse->status(),
+                    category: ErrorCategory::ServerError,
+                );
             }
 
             $fileSize = filesize($tempFile);
 
             if ($fileSize === false || $fileSize < 1024) {
-                throw new \Exception('Downloaded video is too small or empty ('.$fileSize.' bytes), aborting upload');
+                throw new YouTubePublishException(
+                    userMessage: 'Downloaded video is too small or empty ('.$fileSize.' bytes), aborting upload',
+                    category: ErrorCategory::MediaFormat,
+                );
             }
 
             // Set up Google Client with deferred mode for resumable upload
@@ -143,7 +160,10 @@ class YouTubePublisher
             $handle = fopen($tempFile, 'r');
 
             if ($handle === false) {
-                throw new \Exception('Failed to open temp file for YouTube upload');
+                throw new YouTubePublishException(
+                    userMessage: 'Failed to open temp file for YouTube upload',
+                    category: ErrorCategory::ServerError,
+                );
             }
 
             while (! $uploadStatus && ! feof($handle)) {
@@ -157,7 +177,10 @@ class YouTubePublisher
             $client->setDefer(false);
 
             if (! $uploadStatus instanceof Video) {
-                throw new \Exception('YouTube upload failed: no video object returned');
+                throw new YouTubePublishException(
+                    userMessage: 'YouTube upload failed: no video object returned',
+                    category: ErrorCategory::ServerError,
+                );
             }
 
             $videoId = $uploadStatus->getId();
@@ -166,7 +189,7 @@ class YouTubePublisher
                 'id' => $videoId,
                 'url' => "https://www.youtube.com/shorts/{$videoId}",
             ];
-        } catch (\Google\Service\Exception $e) {
+        } catch (Exception $e) {
             $this->handleGoogleError($e);
         } catch (\Throwable $e) {
             Log::error('YouTube upload failed', [
@@ -229,7 +252,7 @@ class YouTubePublisher
 
     }
 
-    private function handleGoogleError(\Google\Service\Exception $e): never
+    private function handleGoogleError(Exception $e): never
     {
         throw YouTubePublishException::fromGoogleException($e);
     }

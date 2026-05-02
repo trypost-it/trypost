@@ -3,8 +3,8 @@ import { Head } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
+import BrandTab from '@/components/settings/BrandTab.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
-import WorkspaceTab from '@/components/settings/WorkspaceTab.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index as apiKeysRoute } from '@/routes/app/api-keys';
 import { members as membersRoute } from '@/routes/app';
@@ -14,8 +14,6 @@ import type { BreadcrumbItem } from '@/types';
 interface Workspace {
     id: string;
     name: string;
-    has_logo: boolean;
-    logo_url: string | null;
     brand_website: string | null;
     brand_description: string | null;
     brand_tone: string;
@@ -28,7 +26,8 @@ defineProps<{
 }>();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.workspace.title') },
+    { title: trans('settings.workspace.title'), href: workspaceSettings.url() },
+    { title: trans('settings.workspace.tabs.brand') },
 ]);
 
 const tabs = computed(() => [
@@ -40,13 +39,13 @@ const tabs = computed(() => [
 </script>
 
 <template>
-    <Head :title="$t('settings.workspace.title')" />
+    <Head :title="$t('settings.workspace.tabs.brand')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
-            <SettingsTabsNav :tabs="tabs" active="workspace" />
+            <SettingsTabsNav :tabs="tabs" active="brand" />
 
-            <WorkspaceTab :workspace="workspace" />
+            <BrandTab :workspace="workspace" />
         </div>
     </AppLayout>
 </template>

@@ -33,6 +33,7 @@ interface Props {
     content: string;
     media: MediaItem[];
     contentType?: string;
+    meta?: Record<string, any>;
 }
 
 const props = defineProps<Props>();
@@ -74,5 +75,6 @@ const previewComponent = computed(() => {
         :content="content"
         :media="media"
         :content-type="contentType"
+        :meta="meta"
     />
 </template>

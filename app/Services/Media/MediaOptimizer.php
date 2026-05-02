@@ -96,6 +96,47 @@ class MediaOptimizer
     }
 
     /**
+     * Center-crop an image to the given aspect ratio (width / height).
+     * Returns path to a temp file (caller must clean up).
+     */
+    public function cropToAspectRatio(string $filePath, float $ratio): string
+    {
+        $image = $this->manager->decodePath($filePath);
+
+        $width = $image->width();
+        $height = $image->height();
+        $current = $width / $height;
+
+        if (abs($current - $ratio) < 0.001) {
+            $tempFile = tempnam(sys_get_temp_dir(), 'media_crop_');
+            copy($filePath, $tempFile);
+
+            return $tempFile;
+        }
+
+        if ($current > $ratio) {
+            // Wider than target: keep height, shrink width.
+            $newWidth = (int) round($height * $ratio);
+            $newHeight = $height;
+        } else {
+            // Taller than target: keep width, shrink height.
+            $newWidth = $width;
+            $newHeight = (int) round($width / $ratio);
+        }
+
+        $offsetX = (int) round(($width - $newWidth) / 2);
+        $offsetY = (int) round(($height - $newHeight) / 2);
+
+        $image->crop($newWidth, $newHeight, $offsetX, $offsetY);
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'media_crop_');
+        $encoded = $image->encodeUsingMediaType('image/jpeg', quality: 100);
+        file_put_contents($tempFile, (string) $encoded);
+
+        return $tempFile;
+    }
+
+    /**
      * @return array{max_width: int, max_size: int, format: string, quality: int}
      */
     private function getImageConfig(Platform $platform): array

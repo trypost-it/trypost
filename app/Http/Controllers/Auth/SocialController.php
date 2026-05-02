@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Actions\SocialAccount\ToggleSocialAccount;
+use App\Enums\PostPlatform\Status as PostPlatformStatus;
 use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\SocialAccount\Status;
 use App\Features\SocialAccountLimit;
@@ -85,6 +86,13 @@ class SocialController extends Controller
         if ($account->workspace_id !== $workspace->id) {
             abort(403);
         }
+
+        // Drop pending platform rows from drafts/scheduled posts so the account
+        // disappears cleanly from their UI. Published/failed rows survive via the
+        // FK's nullOnDelete cascade and keep their snapshot fields for history.
+        $account->postPlatforms()
+            ->where('status', PostPlatformStatus::Pending->value)
+            ->delete();
 
         $account->delete();
 

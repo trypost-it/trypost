@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Exceptions\TokenExpiredException;
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Carbon\CarbonInterface;
@@ -32,6 +33,57 @@ class PinterestAnalytics
         return Cache::remember($cacheKey, $cacheTtl, function () use ($account, $since, $until) {
             return $this->fetchMetricsFromApi($account, $since, $until);
         });
+    }
+
+    public function fetchPostMetrics(PostPlatform $postPlatform): array
+    {
+        $account = $postPlatform->socialAccount;
+
+        if (! $account || ! $postPlatform->platform_post_id) {
+            return ['unsupported' => true, 'reason' => 'missing_post_id'];
+        }
+
+        if ($account->is_token_expired || $account->is_token_expiring_soon) {
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
+            $account->refresh();
+        }
+
+        $start = now()->subDays(90)->format('Y-m-d');
+        $end = now()->format('Y-m-d');
+
+        $response = $this->socialHttp()
+            ->withToken($account->access_token)
+            ->get("{$this->baseUrl}/pins/{$postPlatform->platform_post_id}/analytics", [
+                'start_date' => $start,
+                'end_date' => $end,
+                'metric_types' => 'IMPRESSION,SAVE,PIN_CLICK,OUTBOUND_CLICK,VIDEO_MRC_VIEW',
+            ]);
+
+        if ($response->failed()) {
+            Log::warning('Pinterest post metrics fetch failed', [
+                'body' => $this->redactResponseBody($response->body()),
+            ]);
+
+            return ['unsupported' => true, 'reason' => 'api_error'];
+        }
+
+        $data = data_get($response->json(), 'all.summary_metrics', []);
+
+        $rows = [
+            'IMPRESSION' => 'Impressions',
+            'SAVE' => 'Saves',
+            'PIN_CLICK' => 'Pin clicks',
+            'OUTBOUND_CLICK' => 'Outbound clicks',
+            'VIDEO_MRC_VIEW' => 'Video views',
+        ];
+
+        return collect($rows)
+            ->map(fn (string $label, string $key) => [
+                'label' => $label,
+                'value' => (int) data_get($data, $key, 0),
+            ])
+            ->values()
+            ->all();
     }
 
     private function fetchMetricsFromApi(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array

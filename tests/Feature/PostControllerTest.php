@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\PostPlatform\Status;
 use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
 use App\Models\Post;
@@ -12,6 +13,7 @@ use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceLabel;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
@@ -157,25 +159,42 @@ test('edit post returns 404 for post from different workspace', function () {
     $response->assertNotFound();
 });
 
-test('edit post shows published posts in read-only mode', function () {
-    $post = Post::factory()->create([
-        'workspace_id' => $this->workspace->id,
-        'user_id' => $this->user->id,
-        'status' => PostStatus::Published,
-    ]);
+test('edit redirects to show for non-editable statuses', function () {
+    foreach ([PostStatus::Published, PostStatus::PartiallyPublished, PostStatus::Publishing] as $status) {
+        $post = Post::factory()->create([
+            'workspace_id' => $this->workspace->id,
+            'user_id' => $this->user->id,
+            'status' => $status,
+        ]);
 
-    PostPlatform::factory()->create([
-        'post_id' => $post->id,
-        'social_account_id' => $this->socialAccount->id,
-    ]);
+        PostPlatform::factory()->create([
+            'post_id' => $post->id,
+            'social_account_id' => $this->socialAccount->id,
+        ]);
 
-    $response = $this->actingAs($this->user)->get(route('app.posts.edit', $post));
+        $this->actingAs($this->user)
+            ->get(route('app.posts.edit', $post))
+            ->assertRedirect(route('app.posts.show', $post));
+    }
+});
 
-    $response->assertOk();
-    $response->assertInertia(fn ($page) => $page
-        ->component('posts/Edit')
-        ->has('post')
-    );
+test('edit allows draft, scheduled, and failed posts', function () {
+    foreach ([PostStatus::Draft, PostStatus::Scheduled, PostStatus::Failed] as $status) {
+        $post = Post::factory()->create([
+            'workspace_id' => $this->workspace->id,
+            'user_id' => $this->user->id,
+            'status' => $status,
+        ]);
+
+        PostPlatform::factory()->create([
+            'post_id' => $post->id,
+            'social_account_id' => $this->socialAccount->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('app.posts.edit', $post))
+            ->assertOk();
+    }
 });
 
 // Update tests
@@ -479,6 +498,397 @@ test('update post can sync multiple labels', function () {
     $post->refresh();
     expect($post->labels)->toHaveCount(2);
     expect($post->labels->pluck('id')->toArray())->toEqualCanonicalizing([$label2->id, $label3->id]);
+});
+
+test('platform metrics returns unsupported when post not published', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $pp = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+        'status' => Status::Pending,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->getJson(route('app.posts.platforms.metrics', ['post' => $post->id, 'postPlatform' => $pp->id]));
+
+    $response->assertOk();
+    $response->assertJson(['unsupported' => true, 'reason' => 'not_published']);
+});
+
+test('platform metrics returns 404 for post in another workspace', function () {
+    $otherWorkspace = Workspace::factory()->create();
+    $otherPost = Post::factory()->create(['workspace_id' => $otherWorkspace->id]);
+    $pp = PostPlatform::factory()->create([
+        'post_id' => $otherPost->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $this->actingAs($this->user)
+        ->getJson(route('app.posts.platforms.metrics', ['post' => $otherPost->id, 'postPlatform' => $pp->id]))
+        ->assertNotFound();
+});
+
+test('platform metrics returns 404 when post platform belongs to different post', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $otherPost = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $pp = PostPlatform::factory()->create([
+        'post_id' => $otherPost->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $this->actingAs($this->user)
+        ->getJson(route('app.posts.platforms.metrics', ['post' => $post->id, 'postPlatform' => $pp->id]))
+        ->assertNotFound();
+});
+
+test('platform metrics dispatches X analytics for X platform', function () {
+    $xAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::X,
+    ]);
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $pp = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $xAccount->id,
+        'platform' => Platform::X,
+        'status' => Status::Published,
+        'platform_post_id' => '1234567890',
+    ]);
+
+    Http::fake([
+        'https://api.x.com/2/tweets/1234567890*' => Http::response([
+            'data' => [
+                'public_metrics' => [
+                    'impression_count' => 500,
+                    'like_count' => 42,
+                    'retweet_count' => 7,
+                    'reply_count' => 3,
+                    'quote_count' => 1,
+                    'bookmark_count' => 4,
+                ],
+            ],
+        ], 200),
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->getJson(route('app.posts.platforms.metrics', ['post' => $post->id, 'postPlatform' => $pp->id]));
+
+    $response->assertOk();
+    $response->assertJsonFragment(['label' => 'Impressions', 'value' => 500]);
+    $response->assertJsonFragment(['label' => 'Likes', 'value' => 42]);
+});
+
+test('show page renders for non-editable posts', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Published,
+        'content' => 'Hello world',
+    ]);
+
+    PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+        'enabled' => true,
+        'platform_url' => 'https://linkedin.com/posts/abc',
+    ]);
+
+    $response = $this->actingAs($this->user)->get(route('app.posts.show', $post));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('posts/Show', false)
+        ->has('post.post_platforms', 1)
+    );
+});
+
+test('show page redirects editable posts to edit', function () {
+    foreach ([PostStatus::Draft, PostStatus::Scheduled, PostStatus::Failed] as $status) {
+        $post = Post::factory()->create([
+            'workspace_id' => $this->workspace->id,
+            'user_id' => $this->user->id,
+            'status' => $status,
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('app.posts.show', $post))
+            ->assertRedirect(route('app.posts.edit', $post));
+    }
+});
+
+test('destroy blocks published posts', function () {
+    foreach ([PostStatus::Publishing, PostStatus::Published, PostStatus::PartiallyPublished] as $status) {
+        $post = Post::factory()->create([
+            'workspace_id' => $this->workspace->id,
+            'user_id' => $this->user->id,
+            'status' => $status,
+        ]);
+
+        $this->actingAs($this->user)
+            ->delete(route('app.posts.destroy', $post))
+            ->assertRedirect();
+
+        expect(Post::find($post->id))->not->toBeNull();
+    }
+});
+
+test('show page returns 404 for post in another workspace', function () {
+    $otherWorkspace = Workspace::factory()->create();
+    $post = Post::factory()->create([
+        'workspace_id' => $otherWorkspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $this->actingAs($this->user)
+        ->get(route('app.posts.show', $post))
+        ->assertNotFound();
+});
+
+test('update post redirects to show page after publishing', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+        'content' => 'Test',
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'publishing',
+        'content' => 'Test',
+        'platforms' => [
+            ['id' => $postPlatform->id, 'content_type' => ContentType::LinkedInPost->value],
+        ],
+    ]);
+
+    $response->assertRedirect(route('app.posts.show', $post));
+});
+
+test('update post rejects scheduling youtube short with image', function () {
+    $youtubeAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::YouTube,
+    ]);
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+        'content' => 'Test',
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $youtubeAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'scheduled',
+        'scheduled_at' => now()->addDay()->toIso8601String(),
+        'media' => [
+            [
+                'id' => 'media-1',
+                'path' => 'media/foo.jpg',
+                'url' => 'https://example.com/foo.jpg',
+                'type' => 'image',
+                'mime_type' => 'image/jpeg',
+            ],
+        ],
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content_type' => ContentType::YouTubeShort->value,
+            ],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors('platforms.0.content_type');
+});
+
+test('update post rejects scheduling instagram reel with no media', function () {
+    $instagramAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Instagram,
+    ]);
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+        'content' => 'Test',
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $instagramAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'scheduled',
+        'scheduled_at' => now()->addDay()->toIso8601String(),
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content_type' => ContentType::InstagramReel->value,
+            ],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors('platforms.0.content_type');
+});
+
+test('update post rejects invalid instagram aspect_ratio meta', function () {
+    $instagramAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Instagram,
+    ]);
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $instagramAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'draft',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content_type' => ContentType::InstagramFeed->value,
+                'meta' => ['aspect_ratio' => '2:1'],
+            ],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors('platforms.0.meta.aspect_ratio');
+});
+
+test('update post accepts valid instagram aspect_ratio meta', function () {
+    $instagramAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Instagram,
+    ]);
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $instagramAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'draft',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content_type' => ContentType::InstagramFeed->value,
+                'meta' => ['aspect_ratio' => '4:5'],
+            ],
+        ],
+    ]);
+
+    $response->assertSessionDoesntHaveErrors('platforms.0.meta.aspect_ratio');
+    $postPlatform->refresh();
+    expect(data_get($postPlatform->meta, 'aspect_ratio'))->toBe('4:5');
+});
+
+test('scheduling without content_type per platform fails', function () {
+    $youtubeAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::YouTube,
+    ]);
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+        'content' => 'Test',
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $youtubeAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'scheduled',
+        'scheduled_at' => now()->addDay()->toIso8601String(),
+        'platforms' => [
+            ['id' => $postPlatform->id],
+        ],
+    ]);
+
+    $response->assertSessionHasErrors('platforms.0.content_type');
+});
+
+test('draft post does not enforce media-vs-content-type compatibility', function () {
+    $youtubeAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::YouTube,
+    ]);
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $youtubeAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'draft',
+        'media' => [
+            [
+                'id' => 'media-1',
+                'path' => 'media/foo.jpg',
+                'url' => 'https://example.com/foo.jpg',
+                'type' => 'image',
+                'mime_type' => 'image/jpeg',
+            ],
+        ],
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content_type' => ContentType::YouTubeShort->value,
+            ],
+        ],
+    ]);
+
+    $response->assertSessionDoesntHaveErrors('platforms.0.content_type');
 });
 
 test('update post validates label_ids exist', function () {

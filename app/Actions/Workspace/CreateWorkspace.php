@@ -30,7 +30,9 @@ class CreateWorkspace
             'user_id' => $user->id,
         ]);
 
-        $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
+        // Creator becomes Admin of the workspace they made. The Account Owner
+        // is resolved separately (via account.owner_id) and outranks this role.
+        $workspace->members()->attach($user->id, ['role' => Role::Admin->value]);
         $user->switchWorkspace($workspace);
 
         return $workspace;

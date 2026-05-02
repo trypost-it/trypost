@@ -34,21 +34,23 @@ test('members index requires authentication', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('workspace settings shows members and invites', function () {
+test('members page shows members and invites', function () {
     Invite::factory()->create([
         'account_id' => $this->account->id,
         'invited_by' => $this->user->id,
         'workspaces' => [$this->workspace->id],
     ]);
 
-    $response = $this->actingAs($this->user)->get(route('app.workspace.settings'));
+    $response = $this->actingAs($this->user)->get(route('app.members'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('settings/Workspace', false)
+        ->component('settings/Members', false)
         ->has('workspace')
         ->has('members')
-        ->has('invitations')
+        ->has('invites')
+        ->has('owner')
+        ->has('roles')
     );
 });
 

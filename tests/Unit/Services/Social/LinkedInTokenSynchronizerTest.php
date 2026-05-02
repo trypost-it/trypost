@@ -123,6 +123,66 @@ test('does not sync when no linked account exists', function () {
     expect($personalAccount->access_token)->toBe('access-token');
 });
 
+test('syncs tokens to every linked page admin\'d by the same user', function () {
+    $linkedInUserId = 'linkedin-user-multi';
+
+    $personalAccount = SocialAccount::factory()->linkedin()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform_user_id' => $linkedInUserId,
+        'access_token' => 'new-access-token',
+        'refresh_token' => 'new-refresh-token',
+        'token_expires_at' => now()->addDays(60),
+    ]);
+
+    $pageOne = SocialAccount::factory()->linkedinPage()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform_user_id' => 'org-one',
+        'access_token' => 'old-token-1',
+        'refresh_token' => 'old-refresh-1',
+        'meta' => [
+            'organization_id' => 'org-one',
+            'admin_user_id' => $linkedInUserId,
+            'admin_name' => 'Test User',
+        ],
+    ]);
+
+    $pageTwo = SocialAccount::factory()->linkedinPage()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform_user_id' => 'org-two',
+        'access_token' => 'old-token-2',
+        'refresh_token' => 'old-refresh-2',
+        'meta' => [
+            'organization_id' => 'org-two',
+            'admin_user_id' => $linkedInUserId,
+            'admin_name' => 'Test User',
+        ],
+    ]);
+
+    $unrelatedPage = SocialAccount::factory()->linkedinPage()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform_user_id' => 'org-other-admin',
+        'access_token' => 'untouched-token',
+        'refresh_token' => 'untouched-refresh',
+        'meta' => [
+            'organization_id' => 'org-other-admin',
+            'admin_user_id' => 'someone-else',
+            'admin_name' => 'Other User',
+        ],
+    ]);
+
+    $this->synchronizer->syncTokens($personalAccount);
+
+    $pageOne->refresh();
+    $pageTwo->refresh();
+    $unrelatedPage->refresh();
+
+    expect($pageOne->access_token)->toBe('new-access-token');
+    expect($pageOne->refresh_token)->toBe('new-refresh-token');
+    expect($pageTwo->access_token)->toBe('new-access-token');
+    expect($pageTwo->refresh_token)->toBe('new-refresh-token');
+    expect($unrelatedPage->access_token)->toBe('untouched-token');
+});
+
 test('does not sync across different workspaces', function () {
     $linkedInUserId = 'linkedin-user-cross';
     $otherWorkspace = Workspace::factory()->create(['user_id' => $this->user->id]);

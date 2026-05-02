@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Exceptions\TokenExpiredException;
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Carbon\CarbonInterface;
@@ -32,6 +33,64 @@ class YouTubeAnalytics
         return Cache::remember($cacheKey, $cacheTtl, function () use ($account, $since, $until) {
             return $this->fetchMetricsFromApi($account, $since, $until);
         });
+    }
+
+    public function fetchPostMetrics(PostPlatform $postPlatform): array
+    {
+        $account = $postPlatform->socialAccount;
+
+        if (! $account || ! $postPlatform->platform_post_id) {
+            return ['unsupported' => true, 'reason' => 'missing_post_id'];
+        }
+
+        if ($account->is_token_expired || $account->is_token_expiring_soon) {
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
+            $account->refresh();
+        }
+
+        $this->accessToken = $account->access_token;
+
+        $publishedAt = $postPlatform->published_at ?? $postPlatform->created_at;
+        $startDate = $publishedAt->format('Y-m-d');
+        $endDate = now()->format('Y-m-d');
+
+        $response = $this->getHttpClient()
+            ->get("{$this->baseUrl}/reports", [
+                'ids' => 'channel==MINE',
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'metrics' => 'views,estimatedMinutesWatched,averageViewDuration,likes,comments,shares',
+                'filters' => "video=={$postPlatform->platform_post_id}",
+            ]);
+
+        if ($response->failed()) {
+            Log::warning('YouTube post metrics fetch failed', [
+                'body' => $this->redactResponseBody($response->body()),
+            ]);
+
+            return ['unsupported' => true, 'reason' => 'api_error'];
+        }
+
+        $data = $response->json();
+        $columns = collect(data_get($data, 'columnHeaders', []))->pluck('name')->all();
+        $row = data_get($data, 'rows.0', []);
+
+        $labels = [
+            'views' => 'Views',
+            'estimatedMinutesWatched' => 'Minutes watched',
+            'averageViewDuration' => 'Avg view duration (s)',
+            'likes' => 'Likes',
+            'comments' => 'Comments',
+            'shares' => 'Shares',
+        ];
+
+        return collect($columns)
+            ->map(fn (string $name, int $i) => [
+                'label' => $labels[$name] ?? ucfirst($name),
+                'value' => (int) ($row[$i] ?? 0),
+            ])
+            ->values()
+            ->all();
     }
 
     private function fetchMetricsFromApi(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array

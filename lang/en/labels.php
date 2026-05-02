@@ -6,7 +6,13 @@ return [
     'search' => 'Search labels...',
     'new_label' => 'New Label',
     'no_labels_yet' => 'No labels yet',
+    'no_search_results' => 'No labels match your search',
+    'try_different_search' => 'Try a different keyword or clear the search.',
     'create_first_label' => 'Create your first label',
+    'table' => [
+        'name' => 'Name',
+        'created_at' => 'Created',
+    ],
 
     'create' => [
         'title' => 'Create Label',

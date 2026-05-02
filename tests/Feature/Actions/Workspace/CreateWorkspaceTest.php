@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\Workspace\CreateWorkspace;
+use App\Enums\UserWorkspace\Role;
 use App\Models\Account;
 use App\Models\User;
 
@@ -29,7 +30,7 @@ test('CreateWorkspace persists name and brand fields', function () {
     expect($workspace->user_id)->toBe($user->id);
 });
 
-test('CreateWorkspace switches user current workspace and attaches as member', function () {
+test('CreateWorkspace switches user current workspace and attaches as admin', function () {
     $account = Account::factory()->create();
     $user = User::factory()->create(['account_id' => $account->id, 'current_workspace_id' => null]);
 
@@ -38,6 +39,9 @@ test('CreateWorkspace switches user current workspace and attaches as member', f
     $user->refresh();
     expect($user->current_workspace_id)->toBe($workspace->id);
     expect($workspace->members->contains($user))->toBeTrue();
+
+    $member = $workspace->members()->where('user_id', $user->id)->first();
+    expect($member?->pivot->role)->toBe(Role::Admin->value);
 });
 
 test('CreateWorkspace ignores unknown extra keys like logo_url', function () {

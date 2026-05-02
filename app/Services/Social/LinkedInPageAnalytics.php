@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Exceptions\TokenExpiredException;
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Carbon\CarbonInterface;
@@ -32,6 +33,42 @@ class LinkedInPageAnalytics
         return Cache::remember($cacheKey, $cacheTtl, function () use ($account, $since, $until) {
             return $this->fetchMetricsFromApi($account, $since, $until);
         });
+    }
+
+    public function fetchPostMetrics(PostPlatform $postPlatform): array
+    {
+        $account = $postPlatform->socialAccount;
+
+        if (! $account || ! $postPlatform->platform_post_id) {
+            return ['unsupported' => true, 'reason' => 'missing_post_id'];
+        }
+
+        if ($account->is_token_expired || $account->is_token_expiring_soon) {
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
+            $account->refresh();
+        }
+
+        // platform_post_id is the share URN (e.g., "urn:li:share:12345").
+        $shareUrn = urlencode($postPlatform->platform_post_id);
+
+        $response = $this->socialHttp()
+            ->withToken($account->access_token)
+            ->get("{$this->baseUrl}/socialActions/{$shareUrn}");
+
+        if ($response->failed()) {
+            Log::warning('LinkedIn Page post metrics fetch failed', [
+                'body' => $this->redactResponseBody($response->body()),
+            ]);
+
+            return ['unsupported' => true, 'reason' => 'api_error'];
+        }
+
+        $data = $response->json();
+
+        return [
+            ['label' => 'Likes', 'value' => (int) data_get($data, 'likesSummary.totalLikes', 0)],
+            ['label' => 'Comments', 'value' => (int) data_get($data, 'commentsSummary.aggregatedTotalComments', 0)],
+        ];
     }
 
     private function fetchMetricsFromApi(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array

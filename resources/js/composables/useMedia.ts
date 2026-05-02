@@ -16,7 +16,7 @@ export interface MediaItem {
 
 export interface MediaValidationWarning {
     key: string; // short key, e.g. 'gif_not_allowed'
-    params: Record<string, string | number>;
+    params: Record<string, string>;
 }
 
 const formatBytes = (bytes: number): string => {
@@ -57,10 +57,10 @@ export const getMediaValidationWarning = (
         return { key: 'requires_media', params: {} };
     }
     if (total > rules.maxFiles) {
-        return { key: 'max_files_exceeded', params: { max: rules.maxFiles, current: total } };
+        return { key: 'max_files_exceeded', params: { max: String(rules.maxFiles), current: String(total) } };
     }
     if (rules.minFiles && total < rules.minFiles) {
-        return { key: 'min_files_required', params: { min: rules.minFiles, current: total } };
+        return { key: 'min_files_required', params: { min: String(rules.minFiles), current: String(total) } };
     }
     if (! rules.acceptVideos && videos.length > 0) {
         return { key: 'no_video_allowed', params: {} };

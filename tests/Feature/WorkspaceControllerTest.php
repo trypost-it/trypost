@@ -168,15 +168,23 @@ test('workspace settings requires authentication', function () {
     $response->assertRedirect(route('login'));
 });
 
-test('workspace settings shows settings page with members and invitations', function () {
+test('workspace settings shows the workspace settings page', function () {
     $response = $this->actingAs($this->user)->get(route('app.workspace.settings'));
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('settings/Workspace', false)
         ->has('workspace')
-        ->has('members')
-        ->has('invitations')
+    );
+});
+
+test('brand settings shows the brand settings page', function () {
+    $response = $this->actingAs($this->user)->get(route('app.workspace.brand'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('settings/Brand', false)
+        ->has('workspace')
     );
 });
 

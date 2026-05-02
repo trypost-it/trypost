@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Social;
 
+use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\TokenExpiredException;
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Carbon\CarbonInterface;
@@ -33,6 +35,56 @@ class InstagramAnalytics
         return Cache::remember($cacheKey, $cacheTtl, function () use ($account, $since, $until) {
             return $this->fetchMetricsFromApi($account, $since, $until);
         });
+    }
+
+    public function fetchPostMetrics(PostPlatform $postPlatform): array
+    {
+        $account = $postPlatform->socialAccount;
+
+        if (! $account || ! $postPlatform->platform_post_id) {
+            return ['unsupported' => true, 'reason' => 'missing_post_id'];
+        }
+
+        $this->baseUrl = $account->platform->instagramGraphBaseUrl();
+
+        if ($account->is_token_expired || $account->is_token_expiring_soon) {
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
+            $account->refresh();
+        }
+
+        $this->accessToken = $account->access_token;
+
+        // Per-post metric set differs by content type. Reels/Stories expose
+        // different fields than feed posts. Pick the right set per type.
+        $metrics = match ($postPlatform->content_type) {
+            ContentType::InstagramReel => 'reach,likes,comments,shares,saved,plays',
+            ContentType::InstagramStory => 'reach,impressions,replies',
+            default => 'reach,likes,comments,shares,saved,total_interactions',
+        };
+
+        $response = $this->socialHttp()
+            ->get("{$this->baseUrl}/{$postPlatform->platform_post_id}/insights", [
+                'metric' => $metrics,
+                'access_token' => $this->accessToken,
+            ]);
+
+        if ($response->failed()) {
+            Log::warning('Instagram post metrics fetch failed', [
+                'body' => $this->redactResponseBody($response->body()),
+            ]);
+
+            return ['unsupported' => true, 'reason' => 'api_error'];
+        }
+
+        $data = data_get($response->json(), 'data', []);
+
+        return collect($data)
+            ->map(fn (array $item) => [
+                'label' => ucfirst(str_replace('_', ' ', data_get($item, 'name', ''))),
+                'value' => (int) data_get($item, 'values.0.value', 0),
+            ])
+            ->values()
+            ->all();
     }
 
     private function fetchMetricsFromApi(SocialAccount $account, CarbonInterface $since, CarbonInterface $until): array

@@ -6,14 +6,18 @@ namespace App\Services\Social;
 
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\ErrorCategory;
 use App\Exceptions\Social\InstagramPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
+use App\Services\Media\MediaOptimizer;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class InstagramPublisher
 {
@@ -41,24 +45,32 @@ class InstagramPublisher
         $media = $postPlatform->post->mediaItems;
 
         if ($media->isEmpty()) {
-            throw new \Exception('Instagram requires at least one image or video.');
+            throw new InstagramPublishException(
+                userMessage: 'Instagram requires at least one image or video.',
+                category: ErrorCategory::MediaFormat,
+            );
         }
 
         $firstMedia = $media->first();
         $contentType = $postPlatform->content_type;
 
+        $aspectRatio = data_get($postPlatform->meta, 'aspect_ratio');
+
         return match ($contentType) {
             ContentType::InstagramReel => $this->publishReel($instagramId, $accessToken, $content, $firstMedia),
             ContentType::InstagramStory => $this->publishStory($instagramId, $accessToken, $firstMedia),
-            ContentType::InstagramFeed => $this->publishFeed($instagramId, $accessToken, $content, $media),
-            default => throw new \Exception("Unsupported Instagram content type: {$contentType?->value}"),
+            ContentType::InstagramFeed => $this->publishFeed($instagramId, $accessToken, $content, $media, $aspectRatio),
+            default => throw new InstagramPublishException(
+                userMessage: "Unsupported Instagram content type: {$contentType?->value}",
+                category: ErrorCategory::ContentPolicy,
+            ),
         };
     }
 
-    private function publishFeed(string $instagramId, string $accessToken, ?string $content, $media): array
+    private function publishFeed(string $instagramId, string $accessToken, ?string $content, $media, ?string $aspectRatio): array
     {
         if ($media->count() > 1) {
-            return $this->publishCarousel($instagramId, $accessToken, $content, $media);
+            return $this->publishCarousel($instagramId, $accessToken, $content, $media, $aspectRatio);
         }
 
         $firstMedia = $media->first();
@@ -67,14 +79,16 @@ class InstagramPublisher
             return $this->publishReel($instagramId, $accessToken, $content, $firstMedia);
         }
 
-        return $this->publishSingleImage($instagramId, $accessToken, $content, $firstMedia);
+        return $this->publishSingleImage($instagramId, $accessToken, $content, $firstMedia, $aspectRatio);
     }
 
-    private function publishSingleImage(string $instagramId, string $accessToken, ?string $content, $media): array
+    private function publishSingleImage(string $instagramId, string $accessToken, ?string $content, $media, ?string $aspectRatio): array
     {
+        $imageUrl = $this->cropForFeed($media->url, $aspectRatio);
+
         // Step 1: Create container
         $containerResponse = $this->socialHttp()->post("{$this->baseUrl}/{$instagramId}/media", [
-            'image_url' => $media->url,
+            'image_url' => $imageUrl,
             'caption' => $content,
             'access_token' => $accessToken,
         ]);
@@ -90,7 +104,10 @@ class InstagramPublisher
         $containerId = $containerResponse->json()['id'] ?? null;
 
         if (! $containerId) {
-            throw new \Exception('Instagram container creation failed: No container ID returned');
+            throw new InstagramPublishException(
+                userMessage: 'Instagram container creation failed: No container ID returned',
+                category: ErrorCategory::ServerError,
+            );
         }
 
         // Step 2: Wait for container to be ready
@@ -121,7 +138,10 @@ class InstagramPublisher
         $containerId = $containerResponse->json()['id'] ?? null;
 
         if (! $containerId) {
-            throw new \Exception('Instagram reel container creation failed: No container ID returned');
+            throw new InstagramPublishException(
+                userMessage: 'Instagram reel container creation failed: No container ID returned',
+                category: ErrorCategory::ServerError,
+            );
         }
 
         // Wait for video processing
@@ -160,7 +180,10 @@ class InstagramPublisher
         $containerId = $containerResponse->json()['id'] ?? null;
 
         if (! $containerId) {
-            throw new \Exception('Instagram story container creation failed: No container ID returned');
+            throw new InstagramPublishException(
+                userMessage: 'Instagram story container creation failed: No container ID returned',
+                category: ErrorCategory::ServerError,
+            );
         }
 
         // Step 2: Wait for media processing
@@ -170,7 +193,7 @@ class InstagramPublisher
         return $this->publishContainer($instagramId, $accessToken, $containerId);
     }
 
-    private function publishCarousel(string $instagramId, string $accessToken, ?string $content, $mediaCollection): array
+    private function publishCarousel(string $instagramId, string $accessToken, ?string $content, $mediaCollection, ?string $aspectRatio): array
     {
         // Step 1: Create containers for each media item
         $childContainers = [];
@@ -187,7 +210,7 @@ class InstagramPublisher
                 $params['video_url'] = $media->url;
                 $params['media_type'] = 'VIDEO';
             } else {
-                $params['image_url'] = $media->url;
+                $params['image_url'] = $this->cropForFeed($media->url, $aspectRatio);
             }
 
             $containerResponse = $this->socialHttp()->post("{$this->baseUrl}/{$instagramId}/media", $params);
@@ -217,7 +240,10 @@ class InstagramPublisher
         }
 
         if (empty($childContainers)) {
-            throw new \Exception('Failed to create any carousel items');
+            throw new InstagramPublishException(
+                userMessage: 'Failed to create any carousel items',
+                category: ErrorCategory::ServerError,
+            );
         }
 
         // Step 2: Create carousel container
@@ -238,7 +264,10 @@ class InstagramPublisher
         $carouselId = $carouselResponse->json()['id'] ?? null;
 
         if (! $carouselId) {
-            throw new \Exception('Instagram carousel container creation failed: No container ID returned');
+            throw new InstagramPublishException(
+                userMessage: 'Instagram carousel container creation failed: No container ID returned',
+                category: ErrorCategory::ServerError,
+            );
         }
 
         // Step 3: Wait for carousel to be ready
@@ -266,7 +295,10 @@ class InstagramPublisher
         $mediaId = $publishResponse->json()['id'] ?? null;
 
         if (! $mediaId) {
-            throw new \Exception('Instagram publish failed: no media ID returned');
+            throw new InstagramPublishException(
+                userMessage: 'Instagram publish failed: no media ID returned',
+                category: ErrorCategory::ServerError,
+            );
         }
 
         // Get permalink
@@ -281,6 +313,54 @@ class InstagramPublisher
             'id' => $mediaId,
             'url' => $permalink,
         ];
+    }
+
+    /**
+     * Crop the image to the user-selected aspect ratio and return a public URL
+     * Instagram can fetch. Returns the original URL untouched when no ratio is
+     * set or 'original' is selected (caller has already validated the original
+     * fits IG's 4:5 to 1.91:1 range).
+     */
+    private function cropForFeed(string $imageUrl, ?string $aspectRatio): string
+    {
+        if (! $aspectRatio || $aspectRatio === 'original') {
+            return $imageUrl;
+        }
+
+        $ratio = $this->aspectRatioToFloat($aspectRatio);
+
+        $tempInput = tempnam(sys_get_temp_dir(), 'ig_crop_in_');
+
+        try {
+            $download = Http::sink($tempInput)->timeout(120)->get($imageUrl);
+
+            if ($download->failed()) {
+                throw new InstagramPublishException(
+                    userMessage: 'Failed to download image for cropping',
+                    category: ErrorCategory::ServerError,
+                );
+            }
+
+            $cropped = app(MediaOptimizer::class)->cropToAspectRatio($tempInput, $ratio);
+
+            $path = 'instagram-crops/'.Str::uuid()->toString().'.jpg';
+            Storage::put($path, file_get_contents($cropped));
+
+            @unlink($cropped);
+
+            return Storage::url($path);
+        } finally {
+            @unlink($tempInput);
+        }
+    }
+
+    private function aspectRatioToFloat(string $ratio): float
+    {
+        return match ($ratio) {
+            '4:5' => 4 / 5,
+            '16:9' => 16 / 9,
+            default => 1.0,
+        };
     }
 
     private function waitForMediaProcessing(string $containerId, string $accessToken, int $maxAttempts = 30): void
@@ -304,7 +384,10 @@ class InstagramPublisher
             }
 
             if ($status === 'ERROR') {
-                throw new \Exception('Instagram media processing failed');
+                throw new InstagramPublishException(
+                    userMessage: 'Instagram media processing failed',
+                    category: ErrorCategory::ServerError,
+                );
             }
 
             sleep(5);

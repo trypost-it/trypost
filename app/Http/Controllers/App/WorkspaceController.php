@@ -140,25 +140,24 @@ class WorkspaceController extends Controller
 
         $this->authorize('update', $workspace);
 
-        $members = $workspace->members()
-            ->get()
-            ->map(fn ($member) => [
-                'id' => $member->id,
-                'name' => $member->name,
-                'email' => $member->email,
-                'role' => $member->pivot->role,
-                'is_owner' => $member->id === $workspace->account?->owner_id,
-            ]);
-
-        $invitations = $workspace->invites()
-            ->select('id', 'email')
-            ->latest()
-            ->get();
-
         return Inertia::render('settings/Workspace', [
             'workspace' => $workspace,
-            'members' => $members,
-            'invitations' => $invitations,
+        ]);
+    }
+
+    public function brandSettings(Request $request): Response|RedirectResponse
+    {
+        $user = $request->user();
+        $workspace = $user->currentWorkspace;
+
+        if (! $workspace) {
+            return redirect()->route('app.workspaces.create');
+        }
+
+        $this->authorize('update', $workspace);
+
+        return Inertia::render('settings/Brand', [
+            'workspace' => $workspace,
         ]);
     }
 

@@ -2,19 +2,30 @@
 import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
 import { IconHash, IconPencil, IconSearch, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import CreateDialog from '@/components/hashtags/CreateDialog.vue';
 import EditDialog from '@/components/hashtags/EditDialog.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableLoadMore,
+    TableRow,
+} from '@/components/ui/table';
+import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as hashtagsIndex, destroy as hashtagsDestroy } from '@/routes/app/hashtags';
+import { destroy as hashtagsDestroy, index as hashtagsIndex } from '@/routes/app/hashtags';
+import type { BreadcrumbItem } from '@/types';
+
 interface Workspace {
     id: string;
     name: string;
@@ -29,17 +40,13 @@ interface Hashtag {
 
 interface ScrollHashtags {
     data: Hashtag[];
-    meta: {
-        hasNextPage: boolean;
-    };
+    meta: { hasNextPage: boolean };
 }
 
 interface Props {
     workspace: Workspace;
     hashtags: ScrollHashtags;
-    filters: {
-        search: string;
-    };
+    filters: { search: string };
 }
 
 const props = defineProps<Props>();
@@ -50,15 +57,15 @@ const search = debounce(() => {
     router.get(
         hashtagsIndex.url(),
         { search: searchQuery.value || undefined },
-        {
-            preserveState: true,
-            preserveScroll: true,
-            reset: ['hashtags'],
-        },
+        { preserveState: true, preserveScroll: true, reset: ['hashtags'] },
     );
 }, 300);
 
 watch(searchQuery, () => search());
+
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { title: trans('hashtags.title') },
+]);
 
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const isCreateDialogOpen = ref(false);
@@ -71,92 +78,98 @@ const openEditDialog = (hashtag: Hashtag) => {
 };
 
 const handleDelete = (hashtagId: string) => {
-    deleteModal.value?.open({
-        url: hashtagsDestroy.url(hashtagId),
-    });
+    deleteModal.value?.open({ url: hashtagsDestroy.url(hashtagId) });
 };
 
-const getHashtagCount = (hashtags: string): number => {
-    return hashtags.split(/[\s,]+/).filter(tag => tag.startsWith('#') || tag.length > 0).length;
-};
+const getHashtagCount = (hashtags: string): number =>
+    hashtags.split(/[\s,]+/).filter((tag) => tag.startsWith('#') || tag.length > 0).length;
+
+const formatDate = (date: string): string => dayjs.utc(date).local().format('D MMM YYYY');
+
+const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 </script>
 
 <template>
-
     <Head :title="$t('hashtags.title')" />
 
-    <AppLayout :title="$t('hashtags.title')">
-        <template #header-actions>
-            <div class="relative">
-                <IconSearch class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    v-model="searchQuery"
-                    :placeholder="trans('hashtags.search')"
-                    class="w-64 pl-9"
-                />
-            </div>
-            <Button @click="isCreateDialogOpen = true">
-                {{ $t('hashtags.new_group') }}
-            </Button>
-        </template>
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+            <PageHeader :title="$t('hashtags.title')" />
 
-        <div class="flex flex-col gap-6 p-6">
+            <div class="flex items-center justify-between gap-3">
+                <div class="relative">
+                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        v-model="searchQuery"
+                        :placeholder="trans('hashtags.search')"
+                        class="w-64 pl-9"
+                    />
+                </div>
+
+                <Button @click="isCreateDialogOpen = true">{{ $t('hashtags.new_group') }}</Button>
+            </div>
 
             <EmptyState
                 v-if="hashtags.data.length === 0"
                 :icon="IconHash"
-                :title="$t('hashtags.no_groups_yet')"
-                :description="$t('hashtags.no_groups_description')"
+                :title="hasActiveSearch ? $t('hashtags.no_search_results') : $t('hashtags.no_groups_yet')"
+                :description="hasActiveSearch ? $t('hashtags.try_different_search') : $t('hashtags.no_groups_description')"
             />
 
-            <div v-else>
-                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <Card v-for="hashtag in hashtags.data" :key="hashtag.id">
-                        <CardHeader class="pb-3">
-                            <div class="flex items-center justify-between">
-                                <CardTitle class="text-lg">{{ hashtag.name }}</CardTitle>
-                                <div class="flex items-center gap-1">
-                                    <Button variant="ghost" size="icon" class="h-8 w-8" @click="openEditDialog(hashtag)">
-                                        <IconPencil class="h-4 w-4" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon"
-                                        class="h-8 w-8 text-destructive hover:text-destructive"
-                                        @click="handleDelete(hashtag.id)">
-                                        <IconTrash class="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            </div>
-                            <CardDescription>
-                                {{ $t('hashtags.hashtags_count', { count: String(getHashtagCount(hashtag.hashtags)) }) }}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p class="text-sm text-muted-foreground line-clamp-3">
-                                {{ hashtag.hashtags }}
-                            </p>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <InfiniteScroll data="hashtags" #default="{ loading }">
-                    <div v-if="loading" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mt-4">
-                        <Card v-for="i in 3" :key="i">
-                            <CardHeader class="pb-3">
-                                <div class="flex items-center justify-between">
-                                    <Skeleton class="h-6 w-32" />
-                                    <div class="flex gap-1">
-                                        <Skeleton class="h-8 w-8" />
-                                        <Skeleton class="h-8 w-8" />
+            <div v-else class="rounded-md border">
+                <InfiniteScroll data="hashtags" items-element="#hashtags-body" preserve-url>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>{{ $t('hashtags.table.name') }}</TableHead>
+                                <TableHead>{{ $t('hashtags.table.tags') }}</TableHead>
+                                <TableHead>{{ $t('hashtags.table.count') }}</TableHead>
+                                <TableHead>{{ $t('hashtags.table.created_at') }}</TableHead>
+                                <TableHead class="text-right" />
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody id="hashtags-body">
+                            <TableRow
+                                v-for="hashtag in hashtags.data"
+                                :key="hashtag.id"
+                                class="cursor-pointer"
+                                @click="openEditDialog(hashtag)"
+                            >
+                                <TableCell class="font-medium">{{ hashtag.name }}</TableCell>
+                                <TableCell class="max-w-md">
+                                    <p class="truncate text-sm text-muted-foreground">{{ hashtag.hashtags }}</p>
+                                </TableCell>
+                                <TableCell class="text-muted-foreground tabular-nums">
+                                    {{ getHashtagCount(hashtag.hashtags) }}
+                                </TableCell>
+                                <TableCell class="text-muted-foreground">{{ formatDate(hashtag.created_at) }}</TableCell>
+                                <TableCell class="text-right" @click.stop>
+                                    <div class="flex justify-end gap-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            class="size-8"
+                                            @click="openEditDialog(hashtag)"
+                                        >
+                                            <IconPencil class="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            class="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                            @click="handleDelete(hashtag.id)"
+                                        >
+                                            <IconTrash class="h-4 w-4" />
+                                        </Button>
                                     </div>
-                                </div>
-                                <Skeleton class="h-4 w-20" />
-                            </CardHeader>
-                            <CardContent>
-                                <Skeleton class="h-4 w-full" />
-                                <Skeleton class="h-4 w-3/4 mt-2" />
-                            </CardContent>
-                        </Card>
-                    </div>
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+
+                    <template #next="{ loading }">
+                        <TableLoadMore v-if="loading" />
+                    </template>
                 </InfiniteScroll>
             </div>
         </div>
@@ -165,7 +178,11 @@ const getHashtagCount = (hashtags: string): number => {
     <CreateDialog v-model:open="isCreateDialogOpen" />
     <EditDialog v-model:open="isEditDialogOpen" :hashtag="editingHashtag" />
 
-    <ConfirmDeleteModal ref="deleteModal" :title="$t('hashtags.delete.title')"
-        :description="$t('hashtags.delete.description')" :action="$t('hashtags.delete.confirm')"
-        :cancel="$t('hashtags.delete.cancel')" />
+    <ConfirmDeleteModal
+        ref="deleteModal"
+        :title="$t('hashtags.delete.title')"
+        :description="$t('hashtags.delete.description')"
+        :action="$t('hashtags.delete.confirm')"
+        :cancel="$t('hashtags.delete.cancel')"
+    />
 </template>

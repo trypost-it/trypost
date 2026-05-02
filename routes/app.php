@@ -7,7 +7,6 @@ use App\Http\Controllers\App\ApiKeyController;
 use App\Http\Controllers\App\AssetController;
 use App\Http\Controllers\App\BillingController;
 use App\Http\Controllers\App\GiphyController;
-use App\Http\Controllers\App\MediaController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\PostAssistantController;
 use App\Http\Controllers\App\PostCommentController;
@@ -126,6 +125,9 @@ Route::middleware(['auth', 'verified', EnsureAccountReady::class])->group(functi
     Route::post('settings/workspace/logo', [WorkspaceController::class, 'uploadLogo'])->name('app.workspace.upload-logo');
     Route::delete('settings/workspace/logo', [WorkspaceController::class, 'deleteLogo'])->name('app.workspace.delete-logo');
 
+    // Brand settings
+    Route::get('settings/brand', [WorkspaceController::class, 'brandSettings'])->name('app.workspace.brand');
+
     // Social Accounts
     Route::get('accounts', [SocialController::class, 'index'])->name('app.accounts');
     Route::delete('accounts/{account}', [SocialController::class, 'disconnect'])->name('app.accounts.disconnect');
@@ -142,6 +144,8 @@ Route::middleware(['auth', 'verified', EnsureAccountReady::class])->group(functi
     Route::get('posts/{status?}', [PostController::class, 'index'])->name('app.posts.index')->where('status', 'draft|scheduled|published');
     Route::post('posts', [PostController::class, 'store'])->name('app.posts.store');
     Route::get('posts/{post}/edit', [PostController::class, 'edit'])->name('app.posts.edit');
+    Route::get('posts/{post}', [PostController::class, 'show'])->name('app.posts.show');
+    Route::get('posts/{post}/platforms/{postPlatform}/metrics', [PostController::class, 'platformMetrics'])->name('app.posts.platforms.metrics');
     Route::put('posts/{post}', [PostController::class, 'update'])->name('app.posts.update');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('app.posts.destroy');
 
@@ -158,15 +162,8 @@ Route::middleware(['auth', 'verified', EnsureAccountReady::class])->group(functi
         Route::post('posts/{post}/assistant', [PostAssistantController::class, 'store'])->name('app.posts.assistant.store');
     });
 
-    // Media
-    Route::post('medias', [MediaController::class, 'store'])->name('app.medias.store');
-    Route::post('medias/chunked', [MediaController::class, 'storeChunked'])->name('app.medias.store-chunked');
-    Route::post('medias/reorder', [MediaController::class, 'reorder'])->name('app.medias.reorder');
-    Route::post('medias/{media}/duplicate', [MediaController::class, 'duplicate'])->name('app.medias.duplicate');
-    Route::delete('medias/{modelId}/{media}', [MediaController::class, 'destroy'])->name('app.medias.destroy');
-
     // Members
-    Route::get('settings/members', fn () => redirect()->route('app.workspace.settings'))->name('app.members');
+    Route::get('settings/members', [WorkspaceInviteController::class, 'index'])->name('app.members');
     Route::post('settings/members/invites', [WorkspaceInviteController::class, 'store'])->name('app.invites.store');
     Route::delete('settings/members/invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('app.invites.destroy');
     Route::delete('settings/members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('app.members.remove');

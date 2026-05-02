@@ -164,6 +164,98 @@ test('can store asset from url', function () {
     $response->assertJsonPath('type', 'image');
 });
 
+test('chunked upload completes with single chunk', function () {
+    $content = str_repeat('x', 1000);
+
+    $response = $this->actingAs($this->user)->call(
+        'POST',
+        route('app.assets.store-chunked'),
+        [], [], [],
+        [
+            'HTTP_CONTENT_RANGE' => 'bytes 0-999/1000',
+            'HTTP_X_FILE_NAME' => 'test-video.mp4',
+            'HTTP_ACCEPT' => 'application/json',
+            'CONTENT_TYPE' => 'application/octet-stream',
+        ],
+        $content,
+    );
+
+    $response->assertSuccessful();
+    $response->assertJson(['done' => true]);
+    $response->assertJsonStructure(['done', 'id', 'path', 'url', 'type', 'mime_type', 'original_filename', 'size']);
+    expect($this->workspace->getMedia('assets')->count())->toBe(1);
+});
+
+test('chunked upload reports progress on intermediate chunks', function () {
+    $response = $this->actingAs($this->user)->call(
+        'POST',
+        route('app.assets.store-chunked'),
+        [], [], [],
+        [
+            'HTTP_CONTENT_RANGE' => 'bytes 0-499/1000',
+            'HTTP_X_FILE_NAME' => 'test-video.mp4',
+            'HTTP_ACCEPT' => 'application/json',
+            'CONTENT_TYPE' => 'application/octet-stream',
+        ],
+        str_repeat('a', 500),
+    );
+
+    $response->assertSuccessful();
+    $response->assertJson(['done' => false, 'progress' => 50]);
+    expect(Media::count())->toBe(0);
+});
+
+test('chunked upload rejects unsupported file extension', function () {
+    $response = $this->actingAs($this->user)->call(
+        'POST',
+        route('app.assets.store-chunked'),
+        [], [], [],
+        [
+            'HTTP_CONTENT_RANGE' => 'bytes 0-99/100',
+            'HTTP_X_FILE_NAME' => 'malware.exe',
+            'HTTP_ACCEPT' => 'application/json',
+            'CONTENT_TYPE' => 'application/octet-stream',
+        ],
+        str_repeat('x', 100),
+    );
+
+    $response->assertUnprocessable();
+});
+
+test('chunked upload rejects invalid Content-Range header', function () {
+    $response = $this->actingAs($this->user)->call(
+        'POST',
+        route('app.assets.store-chunked'),
+        [], [], [],
+        [
+            'HTTP_CONTENT_RANGE' => 'invalid',
+            'HTTP_X_FILE_NAME' => 'test.jpg',
+            'HTTP_ACCEPT' => 'application/json',
+            'CONTENT_TYPE' => 'application/octet-stream',
+        ],
+        'data',
+    );
+
+    $response->assertStatus(400);
+});
+
+test('chunked upload rejects unauthenticated', function () {
+    $response = $this->call(
+        'POST',
+        route('app.assets.store-chunked'),
+        [], [], [],
+        [
+            'HTTP_CONTENT_RANGE' => 'bytes 0-99/100',
+            'HTTP_X_FILE_NAME' => 'test.jpg',
+            'HTTP_ACCEPT' => 'application/json',
+            'CONTENT_TYPE' => 'application/octet-stream',
+        ],
+        str_repeat('x', 100),
+    );
+
+    $response->assertUnauthorized();
+});
+
 test('unsplash search returns results', function () {
     $this->mock(UnsplashService::class)
         ->shouldReceive('search')

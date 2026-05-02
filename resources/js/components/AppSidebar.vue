@@ -11,7 +11,6 @@ import {
     IconFileCheck,
     IconFileText,
     IconHash,
-    IconKey,
     IconLifebuoy,
     IconPhoto,
     IconMessageCircle,
@@ -50,7 +49,6 @@ import {
 } from '@/components/ui/sidebar';
 import { accounts, analytics, calendar } from '@/routes/app';
 import { edit as accountSettings } from '@/routes/app/account';
-import { index as apiKeys } from '@/routes/app/api-keys';
 import { index as billing } from '@/routes/app/billing';
 import { index as usage } from '@/routes/app/usage';
 import { index as assets } from '@/routes/app/assets';
@@ -116,38 +114,45 @@ const isOwner = computed(() => {
     return role === WorkspaceRole.Owner;
 });
 
-const workspaceNavItems = computed<NavItem[]>(() => [
-    {
-        title: trans('sidebar.workspace.connections'),
-        href: accounts.url(),
-        icon: IconAffiliate,
-    },
-    {
-        title: trans('sidebar.workspace.hashtags'),
-        href: hashtags.url(),
-        icon: IconHash,
-    },
-    {
-        title: trans('sidebar.workspace.labels'),
-        href: labels.url(),
-        icon: IconTag,
-    },
-    {
-        title: trans('sidebar.workspace.assets'),
-        href: assets.url(),
-        icon: IconPhoto,
-    },
-    {
-        title: trans('sidebar.workspace.api_keys'),
-        href: apiKeys.url(),
-        icon: IconKey,
-    },
-    {
-        title: trans('sidebar.workspace.settings'),
-        href: workspaceSettings.url(),
-        icon: IconSettings,
-    },
-]);
+const isAdmin = computed(() => {
+    const role = auth.value.currentWorkspace?.role;
+    return role === WorkspaceRole.Owner || role === WorkspaceRole.Admin;
+});
+
+const workspaceNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        {
+            title: trans('sidebar.workspace.connections'),
+            href: accounts.url(),
+            icon: IconAffiliate,
+        },
+        {
+            title: trans('sidebar.workspace.hashtags'),
+            href: hashtags.url(),
+            icon: IconHash,
+        },
+        {
+            title: trans('sidebar.workspace.labels'),
+            href: labels.url(),
+            icon: IconTag,
+        },
+        {
+            title: trans('sidebar.workspace.assets'),
+            href: assets.url(),
+            icon: IconPhoto,
+        },
+    ];
+
+    if (isAdmin.value) {
+        items.push({
+            title: trans('sidebar.workspace.settings'),
+            href: workspaceSettings.url(),
+            icon: IconSettings,
+        });
+    }
+
+    return items;
+});
 
 const accountNavItems = computed<NavItem[]>(() => [
     {

@@ -60,3 +60,8 @@ export interface User {
     [key: string]: unknown;
 }
 
+export type BreadcrumbItem = {
+    title: string;
+    href?: string;
+};
+

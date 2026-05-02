@@ -38,6 +38,7 @@ const props = defineProps<{
     content: string;
     media: MediaItem[];
     platformContentTypes: Record<string, string>;
+    platformMeta?: Record<string, Record<string, any>>;
 }>();
 
 const emit = defineEmits<{
@@ -138,6 +139,7 @@ const pickVariant = (value: string) => {
                     :media="media"
                     :social-account="activePlatform.social_account"
                     :content-type="activeContentType"
+                    :meta="platformMeta?.[activePlatform.id] ?? {}"
                 />
             </PhoneMockup>
         </div>

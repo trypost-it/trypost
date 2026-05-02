@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class PostPlatform extends Model
 {
@@ -80,7 +81,11 @@ class PostPlatform extends Model
      */
     public function getDisplayAvatarAttribute(): ?string
     {
-        return $this->socialAccount?->avatar_url ?? $this->platform_avatar;
+        if ($this->socialAccount?->avatar_url) {
+            return $this->socialAccount->avatar_url;
+        }
+
+        return $this->platform_avatar ? Storage::url($this->platform_avatar) : null;
     }
 
     public function markAsPublishing(): void

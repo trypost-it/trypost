@@ -6,6 +6,7 @@ namespace App\Services\Social;
 
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\ErrorCategory;
 use App\Exceptions\Social\PinterestPublishException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
@@ -38,7 +39,10 @@ class PinterestPublisher
             ContentType::PinterestPin => $this->publishImagePin($postPlatform, $content),
             ContentType::PinterestVideoPin => $this->publishVideoPin($postPlatform, $content),
             ContentType::PinterestCarousel => $this->publishCarousel($postPlatform, $content),
-            default => throw new \Exception("Unsupported content type: {$postPlatform->content_type->value}"),
+            default => throw new PinterestPublishException(
+                userMessage: "Unsupported content type: {$postPlatform->content_type->value}",
+                category: ErrorCategory::ContentPolicy,
+            ),
         };
     }
 
@@ -48,13 +52,19 @@ class PinterestPublisher
         $media = $postPlatform->post->mediaItems->first();
 
         if (! $media) {
-            throw new \Exception('Pinterest requires at least one image');
+            throw new PinterestPublishException(
+                userMessage: 'Pinterest requires at least one image',
+                category: ErrorCategory::MediaFormat,
+            );
         }
 
         $boardId = data_get($postPlatform->meta, 'board_id') ?? data_get($account->meta, 'default_board_id') ?? null;
 
         if (! $boardId) {
-            throw new \Exception('Pinterest board_id is required');
+            throw new PinterestPublishException(
+                userMessage: 'Pinterest board_id is required',
+                category: ErrorCategory::ContentPolicy,
+            );
         }
 
         // Download and optimize image
@@ -64,7 +74,10 @@ class PinterestPublisher
             $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
 
             if ($downloadResponse->failed()) {
-                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+                throw new PinterestPublishException(
+                    userMessage: 'Failed to download media: HTTP '.$downloadResponse->status(),
+                    category: ErrorCategory::ServerError,
+                );
             }
 
             $detectedMime = mime_content_type($tempFile) ?: '';
@@ -130,13 +143,19 @@ class PinterestPublisher
         $media = $postPlatform->post->mediaItems->first();
 
         if (! $media) {
-            throw new \Exception('Pinterest requires a video');
+            throw new PinterestPublishException(
+                userMessage: 'Pinterest requires a video',
+                category: ErrorCategory::MediaFormat,
+            );
         }
 
         $boardId = data_get($postPlatform->meta, 'board_id') ?? data_get($account->meta, 'default_board_id') ?? null;
 
         if (! $boardId) {
-            throw new \Exception('Pinterest board_id is required');
+            throw new PinterestPublishException(
+                userMessage: 'Pinterest board_id is required',
+                category: ErrorCategory::ContentPolicy,
+            );
         }
 
         // Step 1: Register media upload
@@ -157,7 +176,10 @@ class PinterestPublisher
         $mediaId = $registerData['media_id'] ?? null;
 
         if (! $mediaId) {
-            throw new \Exception('Pinterest media registration failed: no media ID returned');
+            throw new PinterestPublishException(
+                userMessage: 'Pinterest media registration failed: no media ID returned',
+                category: ErrorCategory::ServerError,
+            );
         }
 
         // Step 2: Upload video to S3
@@ -165,7 +187,10 @@ class PinterestPublisher
         $uploadUrl = $registerData['upload_url'] ?? null;
 
         if (! $uploadUrl) {
-            throw new \Exception('Pinterest did not return upload URL');
+            throw new PinterestPublishException(
+                userMessage: 'Pinterest did not return upload URL',
+                category: ErrorCategory::ServerError,
+            );
         }
 
         // Build multipart form data
@@ -182,13 +207,19 @@ class PinterestPublisher
             $downloadResponse = Http::withOptions(['sink' => $tempFile])->timeout(600)->get($media->url);
 
             if ($downloadResponse->failed()) {
-                throw new \Exception('Failed to download media: HTTP '.$downloadResponse->status());
+                throw new PinterestPublishException(
+                    userMessage: 'Failed to download media: HTTP '.$downloadResponse->status(),
+                    category: ErrorCategory::ServerError,
+                );
             }
 
             $videoStream = fopen($tempFile, 'r');
 
             if ($videoStream === false) {
-                throw new \Exception('Failed to read video file');
+                throw new PinterestPublishException(
+                    userMessage: 'Failed to read video file',
+                    category: ErrorCategory::ServerError,
+                );
             }
 
             $multipart[] = [
@@ -264,13 +295,19 @@ class PinterestPublisher
         $medias = $postPlatform->post->mediaItems;
 
         if ($medias->count() < 2 || $medias->count() > 5) {
-            throw new \Exception('Pinterest carousel requires 2-5 images');
+            throw new PinterestPublishException(
+                userMessage: 'Pinterest carousel requires 2-5 images',
+                category: ErrorCategory::MediaFormat,
+            );
         }
 
         $boardId = data_get($postPlatform->meta, 'board_id') ?? data_get($account->meta, 'default_board_id') ?? null;
 
         if (! $boardId) {
-            throw new \Exception('Pinterest board_id is required');
+            throw new PinterestPublishException(
+                userMessage: 'Pinterest board_id is required',
+                category: ErrorCategory::ContentPolicy,
+            );
         }
 
         $items = $medias->map(fn ($media) => [
@@ -342,13 +379,20 @@ class PinterestPublisher
 
             if ($status === 'failed') {
                 $failureCode = data_get($data, 'failure_code', 'unknown');
-                throw new \Exception("Pinterest media processing failed: {$failureCode}");
+                throw new PinterestPublishException(
+                    userMessage: "Pinterest media processing failed: {$failureCode}",
+                    category: ErrorCategory::ServerError,
+                    platformErrorCode: (string) $failureCode,
+                );
             }
 
             sleep(3);
         }
 
-        throw new \Exception("Pinterest media processing timeout after {$maxAttempts} attempts");
+        throw new PinterestPublishException(
+            userMessage: "Pinterest media processing timeout after {$maxAttempts} attempts",
+            category: ErrorCategory::ServerError,
+        );
     }
 
     private function refreshToken(SocialAccount $account): void

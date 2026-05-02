@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Exceptions\TokenExpiredException;
+use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Carbon\CarbonInterface;
@@ -146,6 +147,46 @@ class XAnalytics
             ['label' => 'Replies', 'value' => $totals['reply_count']],
             ['label' => 'Quotes', 'value' => $totals['quote_count']],
             ['label' => 'Bookmarks', 'value' => $totals['bookmark_count']],
+        ];
+    }
+
+    public function fetchPostMetrics(PostPlatform $postPlatform): array
+    {
+        $account = $postPlatform->socialAccount;
+
+        if (! $account || ! $postPlatform->platform_post_id) {
+            return ['unsupported' => true, 'reason' => 'missing_post_id'];
+        }
+
+        if ($account->is_token_expired || $account->is_token_expiring_soon) {
+            $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));
+            $account->refresh();
+        }
+
+        $this->accessToken = $account->access_token;
+
+        $response = $this->getHttpClient()
+            ->get("{$this->baseUrl}/tweets/{$postPlatform->platform_post_id}", [
+                'tweet.fields' => 'public_metrics',
+            ]);
+
+        if ($response->failed()) {
+            Log::warning('X post metrics fetch failed', [
+                'body' => $this->redactResponseBody($response->body()),
+            ]);
+
+            return ['unsupported' => true, 'reason' => 'api_error'];
+        }
+
+        $metrics = data_get($response->json(), 'data.public_metrics', []);
+
+        return [
+            ['label' => 'Impressions', 'value' => data_get($metrics, 'impression_count', 0)],
+            ['label' => 'Likes', 'value' => data_get($metrics, 'like_count', 0)],
+            ['label' => 'Retweets', 'value' => data_get($metrics, 'retweet_count', 0)],
+            ['label' => 'Replies', 'value' => data_get($metrics, 'reply_count', 0)],
+            ['label' => 'Quotes', 'value' => data_get($metrics, 'quote_count', 0)],
+            ['label' => 'Bookmarks', 'value' => data_get($metrics, 'bookmark_count', 0)],
         ];
     }
 

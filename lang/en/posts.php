@@ -113,6 +113,26 @@ return [
                 'story' => 'Story',
             ],
         ],
+        'linkedin' => [
+            'settings' => 'LinkedIn Settings',
+            'settings_page' => 'LinkedIn Page Settings',
+            'posting_to' => 'Posting to',
+            'variant_label' => 'Post type',
+            'variant' => [
+                'post' => 'Post',
+                'carousel' => 'Carousel',
+            ],
+        ],
+        'pinterest' => [
+            'settings' => 'Pinterest Settings',
+            'posting_to' => 'Posting to',
+            'variant_label' => 'Pin type',
+            'variant' => [
+                'pin' => 'Pin',
+                'video_pin' => 'Video Pin',
+                'carousel' => 'Carousel',
+            ],
+        ],
         'warnings' => [
             'no_variant' => 'Pick a post type to continue.',
             'requires_media' => 'This post type requires at least one image or video.',
@@ -190,6 +210,10 @@ return [
         'caption_placeholder' => 'Write your caption...',
         'compose_title' => 'Create a post',
         'compose_subtitle' => 'Compose your message and add media',
+        'preview_empty' => [
+            'title' => 'No platform selected',
+            'description' => 'Select a platform to publish to see the preview.',
+        ],
         'drag_drop' => 'Drag & drop or click to upload',
         'publish_to' => 'Publish to',
         'organize' => 'Organize',

@@ -117,7 +117,7 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
                 </div>
 
                 <!-- Post Media - Aspect ratio matches user's chosen crop -->
-                <div class="relative w-full bg-black" :style="feedAspectStyle">
+                <div class="relative w-full shrink-0 bg-black" :style="feedAspectStyle">
                     <PostMediaPreview
                         :media="media"
                         :placeholder-icon="IconPhoto"

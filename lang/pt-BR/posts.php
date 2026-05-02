@@ -113,6 +113,26 @@ return [
                 'story' => 'Story',
             ],
         ],
+        'linkedin' => [
+            'settings' => 'Configurações do LinkedIn',
+            'settings_page' => 'Configurações da Página do LinkedIn',
+            'posting_to' => 'Publicando em',
+            'variant_label' => 'Tipo de publicação',
+            'variant' => [
+                'post' => 'Post',
+                'carousel' => 'Carrossel',
+            ],
+        ],
+        'pinterest' => [
+            'settings' => 'Configurações do Pinterest',
+            'posting_to' => 'Publicando em',
+            'variant_label' => 'Tipo de pin',
+            'variant' => [
+                'pin' => 'Pin',
+                'video_pin' => 'Video Pin',
+                'carousel' => 'Carrossel',
+            ],
+        ],
         'warnings' => [
             'no_variant' => 'Escolha um tipo de publicação para continuar.',
             'requires_media' => 'Este tipo exige pelo menos uma imagem ou vídeo.',
@@ -191,6 +211,10 @@ return [
         'caption_placeholder' => 'Escreva sua legenda...',
         'compose_title' => 'Crie um post',
         'compose_subtitle' => 'Componha sua mensagem e adicione mídia',
+        'preview_empty' => [
+            'title' => 'Nenhuma plataforma selecionada',
+            'description' => 'Selecione uma plataforma para publicar e ver o preview.',
+        ],
         'drag_drop' => 'Arraste e solte ou clique para enviar',
         'publish_to' => 'Publicar em',
         'organize' => 'Organizar',

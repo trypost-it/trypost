@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { IconDeviceMobile } from '@tabler/icons-vue';
 import { computed, ref, watch } from 'vue';
 
 import PhoneMockup from '@/components/PhoneMockup.vue';
 import { PlatformPreview } from '@/components/posts/previews';
 import { Avatar } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { getContentTypeOptions, getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
+import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 
 interface MediaItem {
     id: string;
@@ -41,10 +42,6 @@ const props = defineProps<{
     platformMeta?: Record<string, Record<string, any>>;
 }>();
 
-const emit = defineEmits<{
-    'update:platformContentType': [platformId: string, contentType: string];
-}>();
-
 const getPlatformAvatar = (pp: PostPlatform): string | null => pp.social_account?.avatar_url ?? pp.platform_avatar ?? null;
 const getPlatformDisplayName = (pp: PostPlatform): string => pp.social_account?.display_name ?? pp.platform_name ?? pp.platform;
 
@@ -64,17 +61,6 @@ const activeContentType = computed(() => {
     if (!activePlatform.value) return null;
     return props.platformContentTypes[activePlatform.value.id] ?? activePlatform.value.content_type;
 });
-
-const activeVariants = computed(() => {
-    if (!activePlatform.value) return [];
-    const options = getContentTypeOptions(activePlatform.value.platform);
-    return options.length > 1 ? options : [];
-});
-
-const pickVariant = (value: string) => {
-    if (!activePlatform.value) return;
-    emit('update:platformContentType', activePlatform.value.id, value);
-};
 </script>
 
 <template>
@@ -114,24 +100,7 @@ const pickVariant = (value: string) => {
             </div>
         </div>
 
-        <div v-if="activeVariants.length > 0" class="border-b px-4 py-3">
-            <div class="flex flex-wrap justify-center gap-2">
-                <button
-                    v-for="variant in activeVariants"
-                    :key="variant.value"
-                    type="button"
-                    class="rounded-full border px-3 py-1.5 text-xs transition-colors"
-                    :class="activeContentType === variant.value
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border text-muted-foreground hover:text-foreground'"
-                    @click="pickVariant(variant.value)"
-                >
-                    {{ $t(variant.labelKey) }}
-                </button>
-            </div>
-        </div>
-
-        <div class="flex flex-1 justify-center bg-muted/30 px-4 py-8">
+        <div class="flex flex-1 items-start justify-center bg-muted/30 px-4 pb-8 pt-6">
             <PhoneMockup v-if="activePlatform">
                 <PlatformPreview
                     :platform="activePlatform.platform"
@@ -142,6 +111,11 @@ const pickVariant = (value: string) => {
                     :meta="platformMeta?.[activePlatform.id] ?? {}"
                 />
             </PhoneMockup>
+            <div v-else class="flex flex-col items-center gap-2 text-center text-muted-foreground">
+                <IconDeviceMobile class="size-10 opacity-40" />
+                <p class="text-sm font-medium">{{ $t('posts.edit.preview_empty.title') }}</p>
+                <p class="text-xs">{{ $t('posts.edit.preview_empty.description') }}</p>
+            </div>
         </div>
     </div>
 </template>

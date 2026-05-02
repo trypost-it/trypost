@@ -4,6 +4,8 @@ import { computed } from 'vue';
 
 import FacebookSettings from '@/components/posts/editor/FacebookSettings.vue';
 import InstagramSettings from '@/components/posts/editor/InstagramSettings.vue';
+import LinkedInSettings from '@/components/posts/editor/LinkedInSettings.vue';
+import PinterestSettings from '@/components/posts/editor/PinterestSettings.vue';
 import TikTokSettings from '@/components/posts/editor/TikTokSettings.vue';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -108,6 +110,19 @@ const selectedInstagramPlatforms = computed(() =>
 const selectedFacebookPlatforms = computed(() =>
     props.postPlatforms.filter(
         (pp) => pp.platform === 'facebook' && props.selectedPlatformIds.includes(pp.id),
+    ),
+);
+
+const selectedLinkedInPlatforms = computed(() =>
+    props.postPlatforms.filter(
+        (pp) => ['linkedin', 'linkedin-page'].includes(pp.platform)
+            && props.selectedPlatformIds.includes(pp.id),
+    ),
+);
+
+const selectedPinterestPlatforms = computed(() =>
+    props.postPlatforms.filter(
+        (pp) => pp.platform === 'pinterest' && props.selectedPlatformIds.includes(pp.id),
     ),
 );
 
@@ -255,6 +270,31 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
         <div v-if="selectedFacebookPlatforms.length > 0" class="space-y-4">
             <FacebookSettings
                 v-for="pp in selectedFacebookPlatforms"
+                :key="pp.id"
+                :social-account="pp.social_account"
+                :content-type="platformContentTypes[pp.id] ?? ''"
+                :media="media ?? []"
+                :disabled="isReadOnly"
+                @update:content-type="emit('update:platformContentType', pp.id, $event)"
+            />
+        </div>
+
+        <div v-if="selectedLinkedInPlatforms.length > 0" class="space-y-4">
+            <LinkedInSettings
+                v-for="pp in selectedLinkedInPlatforms"
+                :key="pp.id"
+                :social-account="pp.social_account"
+                :platform="pp.platform"
+                :content-type="platformContentTypes[pp.id] ?? ''"
+                :media="media ?? []"
+                :disabled="isReadOnly"
+                @update:content-type="emit('update:platformContentType', pp.id, $event)"
+            />
+        </div>
+
+        <div v-if="selectedPinterestPlatforms.length > 0" class="space-y-4">
+            <PinterestSettings
+                v-for="pp in selectedPinterestPlatforms"
                 :key="pp.id"
                 :social-account="pp.social_account"
                 :content-type="platformContentTypes[pp.id] ?? ''"

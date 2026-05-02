@@ -185,7 +185,7 @@ watch(
             @click="open = !open"
         >
             <span class="flex items-center gap-2">
-                <IconBrandTiktok class="h-4 w-4" />
+                <IconBrandTiktok class="size-5" />
                 <span>{{ $t('posts.form.tiktok.settings') }}</span>
                 <span v-if="socialAccount" class="text-muted-foreground">·&nbsp;@{{ socialAccount.username }}</span>
             </span>

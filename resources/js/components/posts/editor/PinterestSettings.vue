@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { IconAlertTriangle, IconBrandFacebook, IconChevronDown, IconChevronUp } from '@tabler/icons-vue';
+import { IconAlertTriangle, IconBrandPinterest, IconChevronDown, IconChevronUp } from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
 import { Avatar } from '@/components/ui/avatar';
-import { getMediaValidationWarning } from '@/composables/useMedia';
+import { getMediaValidationWarning, type MediaItem } from '@/composables/useMedia';
+import { ContentType } from '@/enums/content-type';
 
 interface SocialAccount {
     id: string;
@@ -11,12 +12,6 @@ interface SocialAccount {
     display_name: string;
     username: string;
     avatar_url: string | null;
-}
-
-interface MediaItem {
-    id: string;
-    type?: string;
-    mime_type?: string;
 }
 
 interface Props {
@@ -37,9 +32,9 @@ const emit = defineEmits<{
 const open = ref(false);
 
 const variants = [
-    { value: 'facebook_post', labelKey: 'posts.form.facebook.variant.post' },
-    { value: 'facebook_reel', labelKey: 'posts.form.facebook.variant.reel' },
-    { value: 'facebook_story', labelKey: 'posts.form.facebook.variant.story' },
+    { value: ContentType.PinterestPin, labelKey: 'posts.form.pinterest.variant.pin' },
+    { value: ContentType.PinterestVideoPin, labelKey: 'posts.form.pinterest.variant.video_pin' },
+    { value: ContentType.PinterestCarousel, labelKey: 'posts.form.pinterest.variant.carousel' },
 ];
 
 const pickVariant = (value: string) => {
@@ -58,8 +53,8 @@ const warning = computed(() => getMediaValidationWarning(props.contentType, prop
             @click="open = !open"
         >
             <span class="flex items-center gap-2">
-                <IconBrandFacebook class="size-5" />
-                <span>{{ $t('posts.form.facebook.settings') }}</span>
+                <IconBrandPinterest class="size-5" />
+                <span>{{ $t('posts.form.pinterest.settings') }}</span>
                 <span v-if="socialAccount" class="text-muted-foreground">·&nbsp;@{{ socialAccount.username }}</span>
             </span>
             <IconChevronUp v-if="open" class="h-4 w-4 text-muted-foreground" />
@@ -74,7 +69,7 @@ const warning = computed(() => getMediaValidationWarning(props.contentType, prop
                     class="h-9 w-9 shrink-0 rounded-full"
                 />
                 <div class="min-w-0 flex-1">
-                    <p class="text-xs text-muted-foreground">{{ $t('posts.form.facebook.posting_to') }}</p>
+                    <p class="text-xs text-muted-foreground">{{ $t('posts.form.pinterest.posting_to') }}</p>
                     <p class="truncate text-sm font-medium">
                         {{ socialAccount.display_name }}
                         <span class="text-muted-foreground">@{{ socialAccount.username }}</span>
@@ -83,7 +78,7 @@ const warning = computed(() => getMediaValidationWarning(props.contentType, prop
             </div>
 
             <div class="space-y-2">
-                <p class="text-sm font-medium">{{ $t('posts.form.facebook.variant_label') }}</p>
+                <p class="text-sm font-medium">{{ $t('posts.form.pinterest.variant_label') }}</p>
                 <div class="flex flex-wrap gap-2">
                     <button
                         v-for="variant in variants"

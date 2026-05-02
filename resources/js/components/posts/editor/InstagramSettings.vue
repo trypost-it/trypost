@@ -71,7 +71,7 @@ const warning = computed(() => getMediaValidationWarning(props.contentType, prop
             @click="open = !open"
         >
             <span class="flex items-center gap-2">
-                <IconBrandInstagram class="h-4 w-4" />
+                <IconBrandInstagram class="size-5" />
                 <span>{{ $t('posts.form.instagram.settings') }}</span>
                 <span v-if="socialAccount" class="text-muted-foreground">·&nbsp;@{{ socialAccount.username }}</span>
             </span>

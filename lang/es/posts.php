@@ -113,6 +113,26 @@ return [
                 'story' => 'Historia',
             ],
         ],
+        'linkedin' => [
+            'settings' => 'Configuración de LinkedIn',
+            'settings_page' => 'Configuración de la Página de LinkedIn',
+            'posting_to' => 'Publicando en',
+            'variant_label' => 'Tipo de publicación',
+            'variant' => [
+                'post' => 'Publicación',
+                'carousel' => 'Carrusel',
+            ],
+        ],
+        'pinterest' => [
+            'settings' => 'Configuración de Pinterest',
+            'posting_to' => 'Publicando en',
+            'variant_label' => 'Tipo de pin',
+            'variant' => [
+                'pin' => 'Pin',
+                'video_pin' => 'Video Pin',
+                'carousel' => 'Carrusel',
+            ],
+        ],
         'warnings' => [
             'no_variant' => 'Elige un tipo de publicación para continuar.',
             'requires_media' => 'Este tipo requiere al menos una imagen o video.',
@@ -191,6 +211,10 @@ return [
         'caption_placeholder' => 'Escribe tu descripción...',
         'compose_title' => 'Crear un post',
         'compose_subtitle' => 'Compón tu mensaje y agrega media',
+        'preview_empty' => [
+            'title' => 'Ninguna plataforma seleccionada',
+            'description' => 'Selecciona una plataforma para publicar y ver la vista previa.',
+        ],
         'drag_drop' => 'Arrastra y suelta o haz clic para subir',
         'publish_to' => 'Publicar en',
         'organize' => 'Organizar',

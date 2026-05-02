@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { IconAlertTriangle, IconBrandFacebook, IconChevronDown, IconChevronUp } from '@tabler/icons-vue';
+import { IconAlertTriangle, IconBrandLinkedin, IconChevronDown, IconChevronUp } from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
 import { Avatar } from '@/components/ui/avatar';
-import { getMediaValidationWarning } from '@/composables/useMedia';
+import { getMediaValidationWarning, type MediaItem } from '@/composables/useMedia';
+import { ContentType } from '@/enums/content-type';
 
 interface SocialAccount {
     id: string;
@@ -13,14 +14,9 @@ interface SocialAccount {
     avatar_url: string | null;
 }
 
-interface MediaItem {
-    id: string;
-    type?: string;
-    mime_type?: string;
-}
-
 interface Props {
     socialAccount: SocialAccount | null;
+    platform: string;
     contentType: string;
     media: MediaItem[];
     disabled?: boolean;
@@ -36,11 +32,19 @@ const emit = defineEmits<{
 
 const open = ref(false);
 
-const variants = [
-    { value: 'facebook_post', labelKey: 'posts.form.facebook.variant.post' },
-    { value: 'facebook_reel', labelKey: 'posts.form.facebook.variant.reel' },
-    { value: 'facebook_story', labelKey: 'posts.form.facebook.variant.story' },
-];
+const isPage = computed(() => props.platform === 'linkedin-page');
+
+const variants = computed(() =>
+    isPage.value
+        ? [
+            { value: ContentType.LinkedInPagePost, labelKey: 'posts.form.linkedin.variant.post' },
+            { value: ContentType.LinkedInPageCarousel, labelKey: 'posts.form.linkedin.variant.carousel' },
+        ]
+        : [
+            { value: ContentType.LinkedInPost, labelKey: 'posts.form.linkedin.variant.post' },
+            { value: ContentType.LinkedInCarousel, labelKey: 'posts.form.linkedin.variant.carousel' },
+        ],
+);
 
 const pickVariant = (value: string) => {
     if (props.disabled) return;
@@ -58,8 +62,8 @@ const warning = computed(() => getMediaValidationWarning(props.contentType, prop
             @click="open = !open"
         >
             <span class="flex items-center gap-2">
-                <IconBrandFacebook class="size-5" />
-                <span>{{ $t('posts.form.facebook.settings') }}</span>
+                <IconBrandLinkedin class="size-5" />
+                <span>{{ isPage ? $t('posts.form.linkedin.settings_page') : $t('posts.form.linkedin.settings') }}</span>
                 <span v-if="socialAccount" class="text-muted-foreground">·&nbsp;@{{ socialAccount.username }}</span>
             </span>
             <IconChevronUp v-if="open" class="h-4 w-4 text-muted-foreground" />
@@ -74,7 +78,7 @@ const warning = computed(() => getMediaValidationWarning(props.contentType, prop
                     class="h-9 w-9 shrink-0 rounded-full"
                 />
                 <div class="min-w-0 flex-1">
-                    <p class="text-xs text-muted-foreground">{{ $t('posts.form.facebook.posting_to') }}</p>
+                    <p class="text-xs text-muted-foreground">{{ $t('posts.form.linkedin.posting_to') }}</p>
                     <p class="truncate text-sm font-medium">
                         {{ socialAccount.display_name }}
                         <span class="text-muted-foreground">@{{ socialAccount.username }}</span>
@@ -83,7 +87,7 @@ const warning = computed(() => getMediaValidationWarning(props.contentType, prop
             </div>
 
             <div class="space-y-2">
-                <p class="text-sm font-medium">{{ $t('posts.form.facebook.variant_label') }}</p>
+                <p class="text-sm font-medium">{{ $t('posts.form.linkedin.variant_label') }}</p>
                 <div class="flex flex-wrap gap-2">
                     <button
                         v-for="variant in variants"

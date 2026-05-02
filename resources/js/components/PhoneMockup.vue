@@ -9,7 +9,7 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-    <div class="relative mx-auto select-none origin-top scale-[0.9]">
+    <div class="relative mx-auto select-none origin-top">
         <!-- Phone Frame - iPhone 14 Pro style -->
         <div class="relative bg-[#1a1a1a] rounded-[44px] p-[10px] shadow-2xl ring-1 ring-white/10">
             <!-- Inner frame -->

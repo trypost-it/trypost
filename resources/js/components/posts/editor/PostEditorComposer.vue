@@ -1,23 +1,27 @@
 <script setup lang="ts">
 import {
+    IconAlertTriangle,
+    IconCloudUpload,
+    IconGripVertical,
     IconHash,
     IconLibraryPhoto,
     IconLoader2,
-    IconMessage2,
     IconMoodSmile,
     IconSparkles,
     IconTrash,
+    IconVideo,
 } from '@tabler/icons-vue';
-import { ref } from 'vue';
+import { trans } from 'laravel-vue-i18n';
+import { computed, nextTick, ref } from 'vue';
 
 import EmojiPicker from '@/components/posts/EmojiPicker.vue';
 import HashtagsModal from '@/components/posts/HashtagsModal.vue';
 import MediaPickerDialog from '@/components/posts/MediaPickerDialog.vue';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
-import { Textarea } from '@/components/ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { readFileMetadata } from '@/composables/useMedia';
+import { formatBytes, readFileMetadata } from '@/composables/useMedia';
+import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 import { store as storeAsset } from '@/routes/app/assets';
 
 interface MediaItem {
@@ -37,9 +41,20 @@ interface Hashtag {
     hashtags: string;
 }
 
+interface PlatformLimit {
+    platform: string;
+    maxLength: number;
+}
+
+interface MediaIssue {
+    platform: string;
+    reason: string;
+}
+
 const props = defineProps<{
-    isReadOnly: boolean;
     hashtags: Hashtag[];
+    platformLimits: PlatformLimit[];
+    mediaIssues: Record<string, MediaIssue[]>;
 }>();
 
 const content = defineModel<string>('content', { required: true });
@@ -55,11 +70,56 @@ const emojiOpen = ref(false);
 const mediaPickerDialog = ref<InstanceType<typeof MediaPickerDialog> | null>(null);
 const hashtagsModal = ref<InstanceType<typeof HashtagsModal> | null>(null);
 
+const dragMediaIndex = ref<number | null>(null);
+const dragOverIndex = ref<number | null>(null);
+const mediaThumbRefs = ref<HTMLElement[]>([]);
+
 const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+
+const isVideo = (item: MediaItem): boolean =>
+    item.type === 'video' || Boolean(item.mime_type?.startsWith('video/'));
+
+const formatDuration = (seconds: number): string => {
+    const total = Math.round(seconds);
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
+const limitsWithUsage = computed(() =>
+    props.platformLimits.map((p) => {
+        const used = content.value.length;
+        const ratio = p.maxLength > 0 ? used / p.maxLength : 0;
+        const state = ratio > 1 ? 'over' : ratio >= 0.9 ? 'warn' : 'ok';
+        return { ...p, used, state };
+    }),
+);
+
+const limitClass = (state: string): string => {
+    if (state === 'over') return 'text-destructive';
+    if (state === 'warn') return 'text-amber-600 dark:text-amber-400';
+    return 'text-muted-foreground';
+};
+
+const smallestLimit = computed(() => {
+    if (props.platformLimits.length === 0) return null;
+    return Math.min(...props.platformLimits.map((p) => p.maxLength));
+});
+
+const overflowParts = computed(() => {
+    const limit = smallestLimit.value;
+    if (limit === null || content.value.length <= limit) {
+        return { fits: content.value, overflow: '' };
+    }
+    return {
+        fits: content.value.slice(0, limit),
+        overflow: content.value.slice(limit),
+    };
+});
 
 const handleDrop = (event: DragEvent) => {
     isDragging.value = false;
-    if (event.dataTransfer?.files) {
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
         uploadFiles(Array.from(event.dataTransfer.files));
     }
 };
@@ -123,50 +183,191 @@ const addMediaFromGallery = (picked: MediaItem[]) => {
 };
 
 const appendHashtags = (hashtag: Hashtag) => {
-    if (props.isReadOnly) return;
     const separator = content.value.trim() ? '\n\n' : '';
     content.value += separator + hashtag.hashtags;
 };
 
 const appendEmoji = (emoji: string) => {
-    if (props.isReadOnly) return;
     content.value += emoji;
     emojiOpen.value = false;
 };
+
+const moveMediaItem = (from: number, to: number) => {
+    if (from === to || to < 0 || to >= media.value.length) return;
+    const next = [...media.value];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    media.value = next;
+};
+
+const onMediaDragStart = (event: DragEvent, index: number) => {
+    dragMediaIndex.value = index;
+    if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', String(index));
+    }
+};
+
+const onMediaDragOver = (event: DragEvent, index: number) => {
+    if (dragMediaIndex.value === null) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragOverIndex.value = index;
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+};
+
+const onMediaDrop = (event: DragEvent, index: number) => {
+    if (dragMediaIndex.value === null) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const from = dragMediaIndex.value;
+    dragMediaIndex.value = null;
+    dragOverIndex.value = null;
+    moveMediaItem(from, index);
+};
+
+const onMediaDragEnd = () => {
+    dragMediaIndex.value = null;
+    dragOverIndex.value = null;
+};
+
+const GRID_COLS = 4;
+
+const onMediaKeydown = async (event: KeyboardEvent, index: number) => {
+    if (media.value.length < 2) return;
+    if (! event.altKey) return;
+
+    const deltas: Record<string, number> = {
+        ArrowLeft: -1,
+        ArrowRight: 1,
+        ArrowUp: -GRID_COLS,
+        ArrowDown: GRID_COLS,
+    };
+    const delta = deltas[event.key];
+    if (delta === undefined) return;
+
+    event.preventDefault();
+    const target = index + delta;
+    if (target < 0 || target >= media.value.length) return;
+    moveMediaItem(index, target);
+
+    await nextTick();
+    mediaThumbRefs.value[target]?.focus();
+};
+
+const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reason}`);
 </script>
 
 <template>
-    <div class="max-w-2xl mx-auto py-8 px-6">
+    <div class="mx-auto max-w-2xl px-6 py-10">
         <div
-            class="rounded-lg border bg-card shadow-sm transition-shadow focus-within:shadow-md"
-            :class="isDragging ? 'border-primary ring-2 ring-primary/20' : ''"
+            class="relative"
             @dragover.prevent="isDragging = true"
             @dragleave.prevent="isDragging = false"
             @drop.prevent="handleDrop"
         >
-            <div class="flex items-start gap-3 border-b px-5 py-4">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <IconMessage2 class="h-5 w-5" />
-                </div>
-                <div class="min-w-0">
-                    <h2 class="text-sm font-semibold text-foreground">{{ $t('posts.edit.compose_title') }}</h2>
-                    <p class="text-xs text-muted-foreground">{{ $t('posts.edit.compose_subtitle') }}</p>
+            <!-- Media grid (top) — always shown so "Add" tile is discoverable -->
+            <div class="mb-6">
+                <div class="grid grid-cols-4 gap-2">
+                    <div
+                        v-for="(item, index) in media"
+                        :key="item.id"
+                        :ref="(el) => { if (el) mediaThumbRefs[index] = el as HTMLElement; }"
+                        class="group relative aspect-square overflow-hidden rounded-xl bg-muted transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                        :class="[
+                            dragMediaIndex === index ? 'opacity-40' : '',
+                            dragOverIndex === index && dragMediaIndex !== index ? 'ring-2 ring-primary ring-offset-2' : '',
+                            mediaIssues[item.id] ? 'ring-1 ring-destructive ring-offset-1' : '',
+                        ]"
+                        tabindex="0"
+                        :draggable="media.length > 1"
+                        @dragstart="onMediaDragStart($event, index)"
+                        @dragover="onMediaDragOver($event, index)"
+                        @drop="onMediaDrop($event, index)"
+                        @dragend="onMediaDragEnd"
+                        @keydown="onMediaKeydown($event, index)"
+                    >
+                        <video
+                            v-if="isVideo(item)"
+                            :src="item.url"
+                            class="h-full w-full object-cover"
+                            muted
+                        />
+                        <img
+                            v-else
+                            :src="item.url"
+                            :alt="item.original_filename"
+                            class="h-full w-full object-cover"
+                            loading="lazy"
+                        />
+
+                        <div class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+
+                        <div class="absolute bottom-1.5 left-1.5 flex flex-col items-start gap-1 text-[10px] font-medium text-white">
+                            <span
+                                v-if="isVideo(item) && item.meta?.duration"
+                                class="inline-flex items-center gap-0.5 rounded-md bg-black/65 px-1.5 py-0.5 backdrop-blur-sm"
+                            >
+                                <IconVideo class="size-2.5" />
+                                {{ formatDuration(item.meta.duration) }}
+                            </span>
+                            <span
+                                v-if="item.size"
+                                class="inline-flex rounded-md bg-black/65 px-1.5 py-0.5 backdrop-blur-sm"
+                            >
+                                {{ formatBytes(item.size) }}
+                            </span>
+                        </div>
+
+                        <TooltipProvider v-if="mediaIssues[item.id]" :delay-duration="100">
+                            <Tooltip>
+                                <TooltipTrigger as-child>
+                                    <span class="absolute bottom-1.5 right-1.5 flex h-5 items-center gap-0.5 rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-destructive-foreground shadow-sm">
+                                        <IconAlertTriangle class="size-2.5" />
+                                        {{ mediaIssues[item.id].length }}
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <ul class="space-y-1 text-xs">
+                                        <li v-for="iss in mediaIssues[item.id]" :key="iss.platform" class="flex items-center gap-1.5">
+                                            <img :src="getPlatformLogo(iss.platform)" :alt="iss.platform" class="size-3 object-contain" />
+                                            <span class="font-medium">{{ getPlatformLabel(iss.platform) }}:</span>
+                                            <span class="opacity-80">{{ issueLabel(iss.reason) }}</span>
+                                        </li>
+                                    </ul>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        <span
+                            v-if="media.length > 1"
+                            class="absolute left-1.5 top-1.5 flex h-6 w-6 cursor-grab items-center justify-center rounded-md bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus:opacity-100"
+                        >
+                            <IconGripVertical class="h-3.5 w-3.5" />
+                        </span>
+
+                        <button
+                            type="button"
+                            class="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md bg-black/55 text-white opacity-0 backdrop-blur-sm transition-all hover:bg-destructive group-hover:opacity-100 group-focus:opacity-100"
+                            @click="removeMedia(item.id)"
+                        >
+                            <IconTrash class="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border/60 text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
+                        @click="mediaPickerDialog?.open()"
+                    >
+                        <IconLibraryPhoto class="h-5 w-5" />
+                        <span class="text-[10px] font-medium">{{ $t('posts.edit.add') }}</span>
+                    </button>
                 </div>
             </div>
 
-            <div class="relative">
-                <Textarea
-                    v-model="content"
-                    :placeholder="$t('posts.edit.caption_placeholder')"
-                    :disabled="isReadOnly"
-                    class="min-h-[240px] resize-none rounded-none border-0 bg-transparent px-5 py-4 text-sm shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <span class="pointer-events-none absolute bottom-2 right-3 text-xs text-muted-foreground/70">
-                    {{ content.length }}
-                </span>
-            </div>
-
-            <div v-if="!isReadOnly" class="flex items-center gap-1 border-t px-3 py-2">
+            <!-- Toolbar: between photos and textarea -->
+            <div class="mb-4 flex items-center gap-0.5">
                 <Popover v-model:open="emojiOpen">
                     <PopoverAnchor as-child>
                         <TooltipProvider>
@@ -176,10 +377,10 @@ const appendEmoji = (emoji: string) => {
                                         type="button"
                                         variant="ghost"
                                         size="icon-sm"
-                                        class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                        class="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
                                         @click="emojiOpen = !emojiOpen"
                                     >
-                                        <IconMoodSmile class="h-4 w-4" />
+                                        <IconMoodSmile class="size-4" />
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>{{ $t('posts.edit.emoji_picker.search') }}</TooltipContent>
@@ -198,10 +399,10 @@ const appendEmoji = (emoji: string) => {
                                 type="button"
                                 variant="ghost"
                                 size="icon-sm"
-                                class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                class="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
                                 @click="hashtagsModal?.open()"
                             >
-                                <IconHash class="h-4 w-4" />
+                                <IconHash class="size-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>{{ $t('posts.edit.hashtags') }}</TooltipContent>
@@ -215,82 +416,68 @@ const appendEmoji = (emoji: string) => {
                                 type="button"
                                 variant="ghost"
                                 size="icon-sm"
-                                class="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                class="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
                                 @click="emit('focus-assistant')"
                             >
-                                <IconSparkles class="h-4 w-4" />
+                                <IconSparkles class="size-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>{{ $t('posts.edit.tabs.writing_assistant') }}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
 
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger as-child>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                class="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                @click="mediaPickerDialog?.open()"
-                            >
-                                <IconLibraryPhoto class="h-4 w-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{{ $t('posts.edit.add_media') }}</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-
-                <div class="flex-1" />
-
-                <span v-if="uploading" class="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <IconLoader2 class="h-3.5 w-3.5 animate-spin" />
+                <span v-if="uploading" class="ml-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <IconLoader2 class="size-3.5 animate-spin" />
                 </span>
             </div>
 
-            <div v-if="media.length > 0" class="border-t px-5 py-4">
-                <div class="grid grid-cols-4 gap-2">
-                    <div
-                        v-for="item in media"
-                        :key="item.id"
-                        class="group relative aspect-square overflow-hidden rounded-lg border bg-muted"
-                    >
-                        <video
-                            v-if="item.type === 'video' || item.mime_type?.startsWith('video/')"
-                            :src="item.url"
-                            class="h-full w-full object-cover"
-                            muted
-                        />
-                        <img
-                            v-else
-                            :src="item.url"
-                            :alt="item.original_filename"
-                            class="h-full w-full object-cover"
-                            loading="lazy"
-                        />
-                        <button
-                            v-if="!isReadOnly"
-                            type="button"
-                            class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity hover:bg-black/80 group-hover:opacity-100"
-                            @click="removeMedia(item.id)"
-                        >
-                            <IconTrash class="h-3 w-3" />
-                        </button>
-                    </div>
-                    <button
-                        v-if="!isReadOnly"
-                        type="button"
-                        class="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
-                        @click="mediaPickerDialog?.open()"
-                    >
-                        <IconLibraryPhoto class="h-6 w-6" />
-                    </button>
-                </div>
+            <!-- Per-platform counters (below menu, above textarea) -->
+            <div
+                v-if="limitsWithUsage.length > 0"
+                class="mb-4 flex flex-wrap items-center gap-3"
+            >
+                <TooltipProvider v-for="limit in limitsWithUsage" :key="limit.platform" :delay-duration="200">
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <span
+                                class="inline-flex items-center gap-1 text-[11px] font-medium tabular-nums"
+                                :class="limitClass(limit.state)"
+                            >
+                                <img :src="getPlatformLogo(limit.platform)" :alt="limit.platform" class="size-3 object-contain" />
+                                {{ limit.used }}<span class="opacity-50">/{{ limit.maxLength }}</span>
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>{{ getPlatformLabel(limit.platform) }}</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
 
-            <div v-if="isDragging && !isReadOnly" class="border-t bg-primary/5 px-5 py-6 text-center text-sm text-primary">
-                {{ $t('posts.edit.drag_drop') }}
+            <!-- Textarea: borderless, sheet-of-paper feel.
+                 Mirror div sits behind to highlight chars beyond the smallest platform limit.
+                 Both share identical font/padding/leading/wrap so highlights align with the textarea text. -->
+            <div class="relative font-sans text-base leading-[1.7]">
+                <div
+                    v-if="overflowParts.overflow"
+                    aria-hidden="true"
+                    class="pointer-events-none absolute inset-0 whitespace-pre-wrap break-words p-0 font-sans text-base leading-[1.7] text-transparent"
+                >
+                    <span>{{ overflowParts.fits }}</span><span class="rounded-sm bg-destructive/15 text-destructive">{{ overflowParts.overflow }}</span>
+                </div>
+                <textarea
+                    v-model="content"
+                    :placeholder="$t('posts.edit.caption_placeholder')"
+                    class="relative block w-full resize-none border-0 bg-transparent p-0 font-sans text-base leading-[1.7] shadow-none outline-none placeholder:text-muted-foreground/50"
+                    style="min-height: 280px; field-sizing: content;"
+                />
+            </div>
+
+            <!-- Drag-drop overlay (full-bleed over the editor area) -->
+            <div
+                v-if="isDragging"
+                class="pointer-events-none absolute -inset-6 z-10 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm"
+            >
+                <IconCloudUpload class="size-10 text-primary" />
+                <p class="text-base font-semibold text-primary">{{ $t('posts.edit.drag_drop') }}</p>
             </div>
         </div>
 

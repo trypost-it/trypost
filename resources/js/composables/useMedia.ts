@@ -19,7 +19,7 @@ export interface MediaValidationWarning {
     params: Record<string, string>;
 }
 
-const formatBytes = (bytes: number): string => {
+export const formatBytes = (bytes: number): string => {
     if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
     if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     if (bytes >= 1024) return (bytes / 1024).toFixed(1) + ' KB';
@@ -114,6 +114,43 @@ export const getMediaValidationWarning = (
                 };
             }
         }
+    }
+
+    return null;
+};
+
+/**
+ * Returns a short reason key when a single media item doesn't fit a content
+ * type's per-item rules (type, size, duration, aspect ratio). Set-level rules
+ * (count, requires_media) are NOT checked here — use getMediaValidationWarning
+ * for those.
+ */
+export const getMediaItemIssue = (item: MediaItem, contentType: string): string | null => {
+    if (! contentType) return null;
+
+    const rules = getMediaRulesForContentType(contentType);
+    const isVideo = item.type === 'video' || Boolean(item.mime_type?.startsWith('video/'));
+    const isGif = item.mime_type === 'image/gif';
+
+    if (isVideo && ! rules.acceptVideos) return 'no_video_allowed';
+    if (! isVideo && ! rules.acceptImages) return 'no_image_allowed';
+    if (isGif && ! rules.acceptsGif) return 'gif_not_allowed';
+
+    const size = item.size ?? 0;
+    if (isVideo && rules.maxVideoBytes && size > rules.maxVideoBytes) return 'video_too_large';
+    if (! isVideo && rules.maxImageBytes && size > rules.maxImageBytes) return 'image_too_large';
+
+    const duration = item.meta?.duration ?? 0;
+    if (isVideo && rules.maxVideoDurationSec && duration > rules.maxVideoDurationSec) {
+        return 'video_too_long';
+    }
+
+    const width = item.meta?.width ?? 0;
+    const height = item.meta?.height ?? 0;
+    if (width > 0 && height > 0) {
+        const ratio = width / height;
+        if (rules.aspectRatioMin && ratio < rules.aspectRatioMin) return 'aspect_ratio_too_narrow';
+        if (rules.aspectRatioMax && ratio > rules.aspectRatioMax) return 'aspect_ratio_too_wide';
     }
 
     return null;

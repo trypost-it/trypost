@@ -16,6 +16,7 @@ import PostEditorSidebar from '@/components/posts/editor/PostEditorSidebar.vue';
 import PickTimePopover from '@/components/posts/PickTimePopover.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getMediaItemIssue } from '@/composables/useMedia';
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
@@ -134,6 +135,42 @@ const platformContentTypes = ref<Record<string, string>>(
 const updatePlatformContentType = (platformId: string, contentType: string) => {
     platformContentTypes.value = { ...platformContentTypes.value, [platformId]: contentType };
 };
+
+const platformLimits = computed(() => {
+    const seen = new Set<string>();
+    const result: { platform: string; maxLength: number }[] = [];
+    for (const pp of post.value.post_platforms) {
+        if (! selectedPlatformIds.value.includes(pp.id)) continue;
+        if (seen.has(pp.platform)) continue;
+        const accountId = pp.social_account_id;
+        const max = accountId ? props.platformConfigs[accountId]?.maxContentLength : null;
+        if (typeof max === 'number' && max > 0) {
+            seen.add(pp.platform);
+            result.push({ platform: pp.platform, maxLength: max });
+        }
+    }
+    return result;
+});
+
+const mediaIssues = computed(() => {
+    const result: Record<string, { platform: string; reason: string }[]> = {};
+    for (const item of media.value) {
+        const issues: { platform: string; reason: string }[] = [];
+        const seen = new Set<string>();
+        for (const pp of post.value.post_platforms) {
+            if (! selectedPlatformIds.value.includes(pp.id)) continue;
+            if (seen.has(pp.platform)) continue;
+            const contentType = platformContentTypes.value[pp.id] ?? pp.content_type ?? '';
+            const reason = getMediaItemIssue(item, contentType);
+            if (reason) {
+                seen.add(pp.platform);
+                issues.push({ platform: pp.platform, reason });
+            }
+        }
+        if (issues.length > 0) result[item.id] = issues;
+    }
+    return result;
+});
 
 const getMediaIncompatibilityReason = (contentType: string, mediaItems: MediaItem[]): string | null => {
     const rules = getMediaRulesForContentType(contentType);
@@ -495,8 +532,9 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                         <PostEditorComposer
                             v-model:content="content"
                             v-model:media="media"
-                            :is-read-only="isReadOnly"
                             :hashtags="hashtags"
+                            :platform-limits="platformLimits"
+                            :media-issues="mediaIssues"
                             @focus-assistant="focusAssistant"
                         />
                     </div>

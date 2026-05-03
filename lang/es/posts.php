@@ -218,21 +218,15 @@ return [
     'edit' => [
         'title' => 'Editar post',
         'view_title' => 'Ver post',
-        'manage_platforms' => 'Administrar plataformas',
-        'sync' => 'Sincronizar',
         'labels' => 'Etiquetas',
         'signatures' => 'Firmas',
         'schedule' => 'Programar',
-        'publish' => 'Publicar',
         'delete' => 'Eliminar',
-        'settings' => 'Configuración',
         'schedule_for' => 'Programar para',
         'scheduled_for' => 'Programado para',
         'saving' => 'Guardando...',
         'saved' => 'Guardado',
         'draft' => 'Borrador',
-        'scheduled_at' => 'Programado:',
-        'published_at' => 'Publicado:',
         'media' => 'Multimedia',
         'add_media' => 'Añadir media',
         'caption' => 'Descripción',
@@ -250,8 +244,6 @@ return [
         'add' => 'Añadir',
         'publish_to' => 'Publicar en',
         'organize' => 'Organizar',
-        'no_caption' => 'Sin descripción',
-        'no_content' => 'Sin contenido',
         'no_labels' => 'Todavía no hay etiquetas creadas',
         'pick_time' => 'Elegir hora',
         'post_now' => 'Publicar ahora',
@@ -313,11 +305,6 @@ return [
             'published' => 'Publicado',
             'publishing' => 'Publicando...',
             'failed' => 'Fallido',
-        ],
-
-        'empty_state' => [
-            'title' => 'No hay plataformas seleccionadas',
-            'description' => 'Selecciona al menos una plataforma para crear tu post',
         ],
 
         'delete_modal' => [

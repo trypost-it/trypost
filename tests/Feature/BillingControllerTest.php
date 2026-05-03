@@ -181,3 +181,109 @@ test('member cannot access billing index', function () {
 
     $this->actingAs($member)->get(route('app.billing.index'))->assertForbidden();
 });
+
+// Swap tests
+test('swap blocks downgrade when usage exceeds target plan limits', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $currentPlan = Plan::where('slug', 'plus')->first();
+    $currentPlan->update([
+        'stripe_monthly_price_id' => 'price_current_monthly',
+        'stripe_yearly_price_id' => 'price_current_yearly',
+    ]);
+    $this->account->update(['plan_id' => $currentPlan->id]);
+
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_current_monthly',
+    ]);
+
+    Workspace::factory()->count(3)->create([
+        'account_id' => $this->account->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    // Starter: workspace_limit=1
+    $targetPlan = Plan::where('slug', 'starter')->first();
+    $targetPlan->update([
+        'stripe_monthly_price_id' => 'price_target_monthly',
+        'stripe_yearly_price_id' => 'price_target_yearly',
+    ]);
+
+    $this->user->unsetRelation('account');
+
+    $response = $this->actingAs($this->user)
+        ->from(route('app.billing.index'))
+        ->post(route('app.billing.swap', $targetPlan), [
+            'price_id' => 'price_target_monthly',
+        ]);
+
+    $response->assertRedirect(route('app.billing.index'));
+    $response->assertSessionHas('flash.error', __('billing.flash.cannot_downgrade.workspaces', [
+        'plan' => $targetPlan->name,
+        'count' => '4', // 3 created + 1 from beforeEach
+        'limit' => '1',
+    ]));
+});
+
+test('swap blocks yearly to monthly downgrade', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $plan = Plan::where('slug', 'max')->first();
+    $plan->update([
+        'stripe_monthly_price_id' => 'price_monthly',
+        'stripe_yearly_price_id' => 'price_yearly',
+    ]);
+    $this->account->update(['plan_id' => $plan->id]);
+
+    $this->user->unsetRelation('account');
+
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_yearly',
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->post(route('app.billing.swap', $plan), [
+            'price_id' => 'price_monthly',
+        ]);
+
+    $response->assertStatus(422);
+});
+
+test('swap rejects invalid price_id for plan', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $plan = Plan::where('slug', 'pro')->first();
+    $plan->update([
+        'stripe_monthly_price_id' => 'price_monthly',
+        'stripe_yearly_price_id' => 'price_yearly',
+    ]);
+
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_other',
+    ]);
+
+    $this->user->unsetRelation('account');
+
+    $response = $this->actingAs($this->user)
+        ->post(route('app.billing.swap', $plan), [
+            'price_id' => 'price_unrelated',
+        ]);
+
+    $response->assertStatus(422);
+});
+
+test('swap requires authentication', function () {
+    $plan = Plan::first();
+    $response = $this->post(route('app.billing.swap', $plan));
+
+    $response->assertRedirect(route('login'));
+});

@@ -8,6 +8,7 @@ use App\Models\Account;
 use App\Models\Plan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -102,7 +103,7 @@ class BillingController extends Controller
         return Inertia::render('settings/account/Billing', [
             'hasSubscription' => $account->subscribed(Account::SUBSCRIPTION_NAME),
             'onTrial' => $subscription?->onTrial() ?? false,
-            'trialEndsAt' => $subscription?->trial_ends_at?->toFormattedDateString(),
+            'trialEndsAt' => $subscription?->trial_ends_at,
             'subscription' => $subscription?->only([
                 'stripe_status',
                 'ends_at',
@@ -111,7 +112,7 @@ class BillingController extends Controller
             'plans' => Plan::active()->orderBy('sort')->get(),
             'invoices' => $account->invoices()->map(fn ($invoice) => [
                 'id' => $invoice->id,
-                'date' => $invoice->date()->toFormattedDateString(),
+                'date' => $invoice->date(),
                 'total' => $invoice->total(),
                 'status' => $invoice->status,
                 'invoice_pdf' => $invoice->invoice_pdf,
@@ -158,6 +159,12 @@ class BillingController extends Controller
             422,
             'Cannot downgrade from yearly to monthly billing.',
         );
+
+        $authorization = Gate::inspect('swapPlan', [$account, $plan]);
+
+        if ($authorization->denied()) {
+            return back()->with('flash.error', $authorization->message());
+        }
 
         $subscription->swap($priceId);
         $account->update(['plan_id' => $plan->id]);

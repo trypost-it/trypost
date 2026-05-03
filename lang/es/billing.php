@@ -1,8 +1,7 @@
 <?php
 
 return [
-    'title' => 'Suscripción',
-    'description' => 'Administra tu suscripción y método de pago',
+    'title' => 'Facturación',
 
     'upgrade_dialog' => [
         'title' => 'Actualiza tu plan',
@@ -15,6 +14,7 @@ return [
         'switch_short' => 'Cambiar',
         'switch_to_yearly' => 'Cambiar a anual',
         'switch_to_monthly' => 'Cambiar a mensual',
+        'unavailable' => 'No disponible',
         'reasons' => [
             'workspace_limit' => 'Has alcanzado el límite de workspaces de tu plan. Actualiza para crear más.',
             'social_account_limit' => 'Has alcanzado el límite de cuentas sociales de tu plan. Actualiza para conectar más.',
@@ -52,30 +52,43 @@ return [
         ],
     ],
 
-    'trial' => [
-        'title' => 'Periodo de prueba activo',
-        'description' => 'Tu prueba termina el :date. Después, tu suscripción se cobrará automáticamente.',
+    'plan' => [
+        'title' => 'Plan',
+        'description' => 'Gestiona tu plan de suscripción.',
+        'change' => 'Cambiar plan',
+        'label' => 'Plan',
+        'price' => 'Precio',
+        'month' => 'mes',
+        'trial' => 'Prueba',
+        'active' => 'Activo',
+        'past_due' => 'Vencido',
+        'cancelling' => 'Cancelando',
+        'trial_ends' => 'La prueba termina en',
     ],
 
     'subscription' => [
-        'title' => 'Tu suscripción',
-        'status' => 'Estado',
-        'workspaces' => 'Workspaces',
-        'quantity' => 'Cantidad de suscripción',
-        'expires' => 'Expira :date',
-        'canceled_on' => 'Tu suscripción se cancelará el :date',
-        'manage' => 'Administrar en Stripe',
+        'title' => 'Suscripción',
+        'description' => 'Gestiona tu método de pago, datos de facturación y suscripción.',
+        'payment_method' => 'Método de pago',
+        'manage_label' => 'Suscripción',
+        'manage_stripe' => 'Gestionar en Stripe',
     ],
 
     'invoices' => [
         'title' => 'Facturas',
-        'description' => 'Historial de pagos',
+        'description' => 'Descarga tus facturas anteriores.',
         'empty' => 'No se encontraron facturas',
         'paid' => 'Pagado',
     ],
 
     'flash' => [
         'plan_changed' => 'Ahora estás en el plan :plan.',
+        'cannot_manage' => 'Solo el propietario de la cuenta puede gestionar la facturación.',
+        'cannot_downgrade' => [
+            'workspaces' => 'No puedes cambiar a :plan: tienes :count workspaces pero el plan solo permite :limit.',
+            'social_accounts' => 'No puedes cambiar a :plan: tienes :count cuentas sociales pero el plan solo permite :limit.',
+            'members' => 'No puedes cambiar a :plan: tienes :count miembros (incluyendo invitaciones) pero el plan solo permite :limit.',
+        ],
     ],
 
     'processing' => [
@@ -87,15 +100,5 @@ return [
         'cancelled_title' => 'Pago cancelado',
         'cancelled_description' => 'Tu pago fue cancelado. No se realizaron cargos.',
         'retry' => 'Intentar de nuevo',
-    ],
-
-    'status' => [
-        'active' => 'Activa',
-        'canceled' => 'Cancelada',
-        'incomplete' => 'Incompleta',
-        'incomplete_expired' => 'Expirada',
-        'past_due' => 'Vencida',
-        'trialing' => 'Prueba',
-        'unpaid' => 'Sin pagar',
     ],
 ];

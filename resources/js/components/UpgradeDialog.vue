@@ -7,7 +7,7 @@ import { computed, ref, watch } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import { Switch } from '@/components/ui/switch';
+import { useFeatureAccess } from '@/composables/useFeatureAccess';
 import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 import { checkout, swap } from '@/routes/app/billing';
 
@@ -24,6 +24,7 @@ interface Plan {
 }
 
 const { open, reason, closeUpgrade } = useUpgradeDialog();
+const { usage } = useFeatureAccess();
 const page = usePage();
 
 const plans = computed<Plan[]>(() => (page.props.plans as Plan[]) ?? []);
@@ -66,8 +67,39 @@ const features = (plan: Plan): string[] => [
     trans('billing.subscribe.features.ai_images', { count: String(plan.ai_images_limit) }),
 ];
 
+const downgradeBlocker = (plan: Plan): string | null => {
+    if (!usage.value) return null;
+
+    if (usage.value.workspaceCount > plan.workspace_limit) {
+        return trans('billing.flash.cannot_downgrade.workspaces', {
+            plan: plan.name,
+            count: String(usage.value.workspaceCount),
+            limit: String(plan.workspace_limit),
+        });
+    }
+    if (usage.value.socialAccountCount > plan.social_account_limit) {
+        return trans('billing.flash.cannot_downgrade.social_accounts', {
+            plan: plan.name,
+            count: String(usage.value.socialAccountCount),
+            limit: String(plan.social_account_limit),
+        });
+    }
+    const totalMembers = usage.value.memberCount + usage.value.pendingInviteCount;
+    if (totalMembers > plan.member_limit) {
+        return trans('billing.flash.cannot_downgrade.members', {
+            plan: plan.name,
+            count: String(totalMembers),
+            limit: String(plan.member_limit),
+        });
+    }
+    return null;
+};
+
+const isBlocked = (plan: Plan): boolean => !isCurrent(plan) && downgradeBlocker(plan) !== null;
+
 const ctaLabel = (plan: Plan): string => {
     if (isCurrent(plan)) return trans('billing.upgrade_dialog.current_plan');
+    if (isBlocked(plan)) return trans('billing.upgrade_dialog.unavailable');
     if (isSamePlan(plan)) {
         return isYearly.value
             ? trans('billing.upgrade_dialog.switch_to_yearly')
@@ -102,31 +134,43 @@ const onOpenChange = (value: boolean) => {
 <template>
     <Dialog :open="open" @update:open="onOpenChange">
         <DialogContent class="w-[95vw] gap-0 p-0 sm:max-w-4xl">
-            <div class="px-6 pt-6 pb-4">
-                <DialogTitle class="text-2xl font-semibold">
-                    {{ $t('billing.upgrade_dialog.title') }}
-                </DialogTitle>
-                <DialogDescription class="mt-1">
-                    {{ reason ?? $t('billing.upgrade_dialog.description') }}
-                </DialogDescription>
-            </div>
+            <div class="flex flex-col gap-4 px-6 pt-6 pb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                <div class="min-w-0">
+                    <DialogTitle class="text-2xl font-semibold">
+                        {{ $t('billing.upgrade_dialog.title') }}
+                    </DialogTitle>
+                    <DialogDescription class="mt-1">
+                        {{ reason ?? $t('billing.upgrade_dialog.description') }}
+                    </DialogDescription>
+                </div>
 
-            <div v-if="!isOnYearly" class="border-t px-6 py-4">
-                <div class="flex items-center justify-center gap-3">
-                    <span class="text-sm" :class="!isYearly ? 'font-medium' : 'text-muted-foreground'">
+                <div
+                    v-if="!isOnYearly"
+                    class="inline-flex h-9 shrink-0 items-center rounded-lg bg-muted p-[3px] text-sm"
+                >
+                    <button
+                        type="button"
+                        class="inline-flex h-full items-center rounded-md px-3 font-medium transition-colors"
+                        :class="!isYearly ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                        @click="isYearly = false"
+                    >
                         {{ $t('billing.subscribe.monthly') }}
-                    </span>
-                    <Switch v-model="isYearly" />
-                    <span class="flex items-center gap-2 text-sm" :class="isYearly ? 'font-medium' : 'text-muted-foreground'">
+                    </button>
+                    <button
+                        type="button"
+                        class="inline-flex h-full items-center gap-2 rounded-md px-3 font-medium transition-colors"
+                        :class="isYearly ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+                        @click="isYearly = true"
+                    >
                         {{ $t('billing.subscribe.yearly') }}
-                        <Badge variant="secondary" class="whitespace-nowrap">
+                        <Badge variant="secondary" class="whitespace-nowrap text-[10px]">
                             {{ $t('billing.subscribe.save_months') }}
                         </Badge>
-                    </span>
+                    </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 border-t px-6 pt-8 pb-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 gap-4 px-6 pt-8 pb-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div
                     v-for="plan in plans"
                     :key="plan.id"
@@ -164,9 +208,10 @@ const onOpenChange = (value: boolean) => {
 
                     <Button
                         class="w-full"
-                        :variant="isCurrent(plan) ? 'secondary' : isPopular(plan) ? 'default' : 'outline'"
+                        :variant="isCurrent(plan) || isBlocked(plan) ? 'secondary' : isPopular(plan) ? 'default' : 'outline'"
                         :loading="processing === plan.id"
-                        :disabled="(processing !== null && processing !== plan.id) || isCurrent(plan)"
+                        :disabled="(processing !== null && processing !== plan.id) || isCurrent(plan) || isBlocked(plan)"
+                        :title="downgradeBlocker(plan) ?? undefined"
                         @click="handleSelect(plan)"
                     >
                         {{ ctaLabel(plan) }}

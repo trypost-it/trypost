@@ -8,6 +8,7 @@ import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
+import date from '@/date';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { settings as settingsHub } from '@/routes/app';
 import { edit as accountEdit } from '@/routes/app/account';
@@ -116,7 +117,7 @@ const { openUpgrade } = useUpgradeDialog();
 
                         <div v-if="onTrial && trialEndsAt" class="flex items-center gap-3 py-3">
                             <span class="text-sm">{{ $t('billing.plan.trial_ends') }}</span>
-                            <span class="ml-auto text-sm font-medium">{{ trialEndsAt }}</span>
+                            <span class="ml-auto text-sm font-medium">{{ date.formatDate(trialEndsAt) }}</span>
                         </div>
                     </div>
                 </div>
@@ -167,7 +168,7 @@ const { openUpgrade } = useUpgradeDialog();
                         >
                             <IconFileText class="size-4 shrink-0 text-muted-foreground" />
                             <div class="min-w-0 flex-1">
-                                <span class="text-sm">{{ invoice.date }}</span>
+                                <span class="text-sm">{{ date.formatDate(invoice.date) }}</span>
                                 <span class="ml-2 text-sm text-muted-foreground">{{ invoice.total }}</span>
                             </div>
                             <Badge variant="outline">

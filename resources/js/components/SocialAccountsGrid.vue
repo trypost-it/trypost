@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { IconAlertCircle, IconCheck, IconExternalLink, IconInfoCircle, IconRefresh, IconTrash } from '@tabler/icons-vue';
+import { IconAlertCircle, IconCheck, IconExternalLink, IconRefresh, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, onMounted, onUnmounted } from 'vue';
 
@@ -125,15 +125,6 @@ const getProfileUrl = (platform: string, username: string | null, platformUserId
     return urls[platform] || null;
 };
 
-const getPlatformTooltip = (platform: string): string | null => {
-    const tooltips: Record<string, string> = {
-        'instagram-facebook': trans('accounts.tooltips.instagram_facebook'),
-        'instagram': trans('accounts.tooltips.instagram_direct'),
-        'bluesky': trans('accounts.tooltips.bluesky'),
-    };
-    return tooltips[platform] || null;
-};
-
 const isDisconnected = (account: SocialAccount | null): boolean => {
     if (!account) return false;
     return account.status === 'disconnected' || account.status === 'token_expired';
@@ -173,16 +164,6 @@ const isDisconnected = (account: SocialAccount | null): boolean => {
                                 </template>
                                 <template v-else>{{ platform.label }}</template>
                             </h3>
-                            <TooltipProvider v-if="getPlatformTooltip(platform.value)">
-                                <Tooltip>
-                                    <TooltipTrigger as-child>
-                                        <IconInfoCircle class="h-4 w-4 shrink-0 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top" class="max-w-[250px]">
-                                        <p>{{ getPlatformTooltip(platform.value) }}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
                         </div>
                         <Switch v-if="platform.connected && platform.account" :model-value="platform.account.is_active"
                             @update:model-value="handleToggle(platform.account.id)" />

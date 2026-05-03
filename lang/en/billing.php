@@ -14,6 +14,7 @@ return [
         'switch_short' => 'Switch',
         'switch_to_yearly' => 'Switch to yearly',
         'switch_to_monthly' => 'Switch to monthly',
+        'unavailable' => 'Unavailable',
         'reasons' => [
             'workspace_limit' => 'You\'ve reached the workspace limit on your current plan. Upgrade to create more workspaces.',
             'social_account_limit' => 'You\'ve reached the social account limit on your current plan. Upgrade to connect more accounts.',
@@ -82,6 +83,12 @@ return [
 
     'flash' => [
         'plan_changed' => 'You are now on the :plan plan.',
+        'cannot_manage' => 'Only the account owner can manage billing.',
+        'cannot_downgrade' => [
+            'workspaces' => 'Cannot switch to :plan: you have :count workspaces but the plan only allows :limit.',
+            'social_accounts' => 'Cannot switch to :plan: you have :count social accounts but the plan only allows :limit.',
+            'members' => 'Cannot switch to :plan: you have :count team members (including invites) but the plan only allows :limit.',
+        ],
     ],
 
     'processing' => [

@@ -9,6 +9,11 @@ function getUserTimezone(): string {
 }
 
 export default {
+    formatDate(date: string | null | undefined) {
+        if (!date) return '-';
+        return dayjs.utc(date).tz(getUserTimezone()).format('LL');
+    },
+
     formatDateTime(date: string) {
         return dayjs
             .utc(date)

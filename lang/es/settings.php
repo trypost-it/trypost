@@ -4,6 +4,23 @@ return [
     'title' => 'Configuración',
     'description' => 'Administra tu perfil y configuración de la cuenta',
 
+    'hub' => [
+        'title' => 'Configuración',
+        'description' => 'Elige qué quieres gestionar.',
+        'profile' => [
+            'title' => 'Perfil',
+            'description' => 'Actualiza tu información personal, contraseña y preferencias de notificaciones.',
+        ],
+        'workspace' => [
+            'title' => 'Workspace',
+            'description' => 'Configura tu workspace, marca, miembros y claves de API.',
+        ],
+        'account' => [
+            'title' => 'Cuenta',
+            'description' => 'Gestiona la información de la cuenta, uso y facturación.',
+        ],
+    ],
+
     'nav' => [
         'profile' => 'Perfil',
         'password' => 'Contraseña',
@@ -177,7 +194,24 @@ return [
         ],
     ],
 
+    'account' => [
+        'tabs' => [
+            'account' => 'Cuenta',
+            'usage' => 'Uso',
+            'billing' => 'Facturación',
+        ],
+        'title' => 'Configuración de cuenta',
+        'description' => 'Gestiona el nombre de la cuenta y el correo de facturación',
+        'name' => 'Nombre de la cuenta',
+        'name_placeholder' => 'Mi Empresa',
+        'billing_email' => 'Correo de facturación',
+        'billing_email_placeholder' => 'facturacion@empresa.com',
+        'billing_email_hint' => 'Este correo se usará para facturas y comunicaciones de facturación de Stripe.',
+        'submit' => 'Guardar',
+    ],
+
     'flash' => [
+        'account_updated' => '¡Cuenta actualizada correctamente!',
         'profile_updated' => '¡Perfil actualizado correctamente!',
         'language_updated' => '¡Idioma actualizado correctamente!',
         'password_updated' => '¡Contraseña actualizada correctamente!',

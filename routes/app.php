@@ -19,6 +19,7 @@ use App\Http\Controllers\App\Settings\AccountController;
 use App\Http\Controllers\App\Settings\NotificationPreferenceController;
 use App\Http\Controllers\App\Settings\PasswordController;
 use App\Http\Controllers\App\Settings\ProfileController;
+use App\Http\Controllers\App\Settings\SettingsController;
 use App\Http\Controllers\App\Settings\UsageController;
 use App\Http\Controllers\App\UnsplashController;
 use App\Http\Controllers\App\WorkspaceController;
@@ -229,6 +230,8 @@ Route::middleware(['auth'])->group(function () {
 
 // Settings (auth required)
 Route::middleware(['auth'])->group(function () {
+    Route::get('settings', [SettingsController::class, 'index'])->name('app.settings');
+
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('app.profile.edit');
     Route::put('settings/profile', [ProfileController::class, 'update'])->name('app.profile.update');
     Route::post('settings/profile/photo', [ProfileController::class, 'uploadPhoto'])->name('app.profile.upload-photo');

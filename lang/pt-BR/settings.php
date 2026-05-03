@@ -4,6 +4,23 @@ return [
     'title' => 'Configurações',
     'description' => 'Gerencie seu perfil e configurações da conta',
 
+    'hub' => [
+        'title' => 'Configurações',
+        'description' => 'Escolha o que você quer gerenciar.',
+        'profile' => [
+            'title' => 'Perfil',
+            'description' => 'Atualize suas informações pessoais, senha e preferências de notificações.',
+        ],
+        'workspace' => [
+            'title' => 'Workspace',
+            'description' => 'Configure seu workspace, marca, membros e chaves de API.',
+        ],
+        'account' => [
+            'title' => 'Conta',
+            'description' => 'Gerencie informações da conta, uso e faturamento.',
+        ],
+    ],
+
     'nav' => [
         'profile' => 'Perfil',
         'password' => 'Senha',
@@ -177,7 +194,24 @@ return [
         ],
     ],
 
+    'account' => [
+        'tabs' => [
+            'account' => 'Conta',
+            'usage' => 'Uso',
+            'billing' => 'Faturamento',
+        ],
+        'title' => 'Configurações da conta',
+        'description' => 'Gerencie o nome da conta e o e-mail de cobrança',
+        'name' => 'Nome da conta',
+        'name_placeholder' => 'Minha Empresa',
+        'billing_email' => 'E-mail de cobrança',
+        'billing_email_placeholder' => 'cobranca@empresa.com',
+        'billing_email_hint' => 'Este e-mail será usado para faturas e comunicações de cobrança do Stripe.',
+        'submit' => 'Salvar',
+    ],
+
     'flash' => [
+        'account_updated' => 'Conta atualizada com sucesso!',
         'profile_updated' => 'Perfil atualizado com sucesso!',
         'language_updated' => 'Idioma atualizado com sucesso!',
         'password_updated' => 'Senha atualizada com sucesso!',

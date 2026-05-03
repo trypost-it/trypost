@@ -22,11 +22,11 @@ return [
     'groups' => [
         'posts' => 'Posts',
         'workspace' => 'Workspace',
-        'account' => 'Conta',
         'support' => 'Suporte',
     ],
 
     'analytics' => 'Analytics',
+    'settings' => 'Configurações',
 
     'posts' => [
         'calendar' => 'Calendário',
@@ -42,13 +42,6 @@ return [
         'labels' => 'Etiquetas',
         'assets' => 'Mídias',
         'api_keys' => 'API Keys',
-        'settings' => 'Configurações',
-    ],
-
-    'account' => [
-        'settings' => 'Configurações',
-        'usage' => 'Uso',
-        'billing' => 'Faturamento',
     ],
 
     'notifications' => 'Notificações',

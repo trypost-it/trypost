@@ -6,8 +6,6 @@ import {
     IconChartBar,
     IconChevronRight,
     IconClock,
-    IconChartPie,
-    IconCreditCard,
     IconFileCheck,
     IconFileText,
     IconHash,
@@ -23,7 +21,6 @@ import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 import { create as createPost, index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
-import { WorkspaceRole } from '@/enums/workspace-role';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Avatar } from '@/components/ui/avatar';
@@ -46,14 +43,10 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { accounts, analytics, calendar } from '@/routes/app';
-import { edit as accountSettings } from '@/routes/app/account';
-import { index as billing } from '@/routes/app/billing';
-import { index as usage } from '@/routes/app/usage';
+import { accounts, analytics, calendar, settings as settingsHub } from '@/routes/app';
 import { index as assets } from '@/routes/app/assets';
 import { index as signatures } from '@/routes/app/signatures';
 import { index as labels } from '@/routes/app/labels';
-import { settings as workspaceSettings } from '@/routes/app/workspace';
 import { create as createWorkspaceRoute, switchMethod } from '@/routes/app/workspaces';
 import type { NavItem } from '@/types';
 
@@ -64,9 +57,7 @@ interface Workspace {
 }
 
 const page = usePage();
-const auth = computed(() => page.props.auth);
 const currentWorkspace = computed<Workspace | null>(() => page.props.auth.currentWorkspace as Workspace | null);
-const isSelfHosted = computed(() => page.props.selfHosted as boolean);
 const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Workspace[]);
 
 const { state: sidebarState } = useSidebar();
@@ -108,66 +99,26 @@ const postsNavItems = computed<NavItem[]>(() => [
     },
 ]);
 
-const isOwner = computed(() => {
-    const role = auth.value.currentWorkspace?.role;
-    return role === WorkspaceRole.Owner;
-});
-
-const isAdmin = computed(() => {
-    const role = auth.value.currentWorkspace?.role;
-    return role === WorkspaceRole.Owner || role === WorkspaceRole.Admin;
-});
-
-const workspaceNavItems = computed<NavItem[]>(() => {
-    const items: NavItem[] = [
-        {
-            title: trans('sidebar.workspace.connections'),
-            href: accounts.url(),
-            icon: IconAffiliate,
-        },
-        {
-            title: trans('sidebar.workspace.signatures'),
-            href: signatures.url(),
-            icon: IconHash,
-        },
-        {
-            title: trans('sidebar.workspace.labels'),
-            href: labels.url(),
-            icon: IconTag,
-        },
-        {
-            title: trans('sidebar.workspace.assets'),
-            href: assets.url(),
-            icon: IconPhoto,
-        },
-    ];
-
-    if (isAdmin.value) {
-        items.push({
-            title: trans('sidebar.workspace.settings'),
-            href: workspaceSettings.url(),
-            icon: IconSettings,
-        });
-    }
-
-    return items;
-});
-
-const accountNavItems = computed<NavItem[]>(() => [
+const workspaceNavItems = computed<NavItem[]>(() => [
     {
-        title: trans('sidebar.account.settings'),
-        href: accountSettings.url(),
-        icon: IconSettings,
+        title: trans('sidebar.workspace.connections'),
+        href: accounts.url(),
+        icon: IconAffiliate,
     },
     {
-        title: trans('sidebar.account.usage'),
-        href: usage.url(),
-        icon: IconChartPie,
+        title: trans('sidebar.workspace.signatures'),
+        href: signatures.url(),
+        icon: IconHash,
     },
     {
-        title: trans('sidebar.account.billing'),
-        href: billing.url(),
-        icon: IconCreditCard,
+        title: trans('sidebar.workspace.labels'),
+        href: labels.url(),
+        icon: IconTag,
+    },
+    {
+        title: trans('sidebar.workspace.assets'),
+        href: assets.url(),
+        icon: IconPhoto,
     },
 ]);
 
@@ -239,11 +190,18 @@ const switchWorkspace = (workspaceId: string) => {
             <NavMain v-if="currentWorkspace" :items="mainNavItems" />
             <NavMain v-if="currentWorkspace" :items="postsNavItems" :label="$t('sidebar.groups.posts')" />
             <NavMain v-if="currentWorkspace" :items="workspaceNavItems" :label="$t('sidebar.groups.workspace')" />
-            <NavMain v-if="currentWorkspace && isOwner && !isSelfHosted" :items="accountNavItems" :label="$t('sidebar.groups.account')" />
         </SidebarContent>
 
         <SidebarFooter>
             <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton as-child :tooltip="trans('sidebar.settings')">
+                        <Link :href="settingsHub.url()">
+                            <IconSettings />
+                            <span>{{ $t('sidebar.settings') }}</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
                 <SidebarMenuItem>
                     <SidebarMenuButton as-child :tooltip="trans('sidebar.support.share_feedback')">
                         <a href="https://github.com/trypost-it/trypost/discussions" target="_blank"

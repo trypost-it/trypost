@@ -7,7 +7,7 @@ import BrandTab from '@/components/settings/BrandTab.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index as apiKeysRoute } from '@/routes/app/api-keys';
-import { members as membersRoute } from '@/routes/app';
+import { members as membersRoute, settings as settingsHub } from '@/routes/app';
 import { brand as brandRoute, settings as workspaceSettings } from '@/routes/app/workspace';
 import type { BreadcrumbItem } from '@/types';
 
@@ -31,6 +31,7 @@ defineProps<{
 }>();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { title: trans('settings.hub.title'), href: settingsHub().url },
     { title: trans('settings.workspace.title'), href: workspaceSettings.url() },
     { title: trans('settings.workspace.tabs.brand') },
 ]);

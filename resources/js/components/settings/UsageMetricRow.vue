@@ -6,7 +6,7 @@ import { formatNumber } from '@/lib/utils';
 type Props = {
     label: string;
     current: number;
-    limit: number;
+    limit?: number;
 };
 
 const props = defineProps<Props>();
@@ -14,14 +14,18 @@ const props = defineProps<Props>();
 const RING_RADIUS = 8;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
+const hasLimit = computed(() => props.limit !== undefined);
+
 const percentage = computed(() => {
-    if (props.limit === 0) {
+    if (!hasLimit.value || props.limit === 0) {
         return 0;
     }
-    return Math.min(100, (props.current / props.limit) * 100);
+    return Math.min(100, (props.current / (props.limit as number)) * 100);
 });
 
-const isOverLimit = computed(() => props.current >= props.limit);
+const isOverLimit = computed(
+    () => hasLimit.value && props.current >= (props.limit as number),
+);
 
 const dashoffset = computed(
     () => RING_CIRCUMFERENCE * (1 - percentage.value / 100),
@@ -41,6 +45,7 @@ const dashoffset = computed(
                 class="opacity-10"
             />
             <circle
+                v-if="hasLimit"
                 cx="10"
                 cy="10"
                 :r="RING_RADIUS"
@@ -62,8 +67,8 @@ const dashoffset = computed(
             >
                 {{ formatNumber(current) }}
             </span>
-            <span class="text-muted-foreground">
-                / {{ formatNumber(limit) }}
+            <span v-if="hasLimit" class="text-muted-foreground">
+                / {{ formatNumber(limit as number) }}
             </span>
         </span>
     </div>

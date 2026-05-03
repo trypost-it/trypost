@@ -1,73 +1,96 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
+import { computed } from 'vue';
 
+import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { update as accountUpdate } from '@/routes/app/account';
+import { settings as settingsHub } from '@/routes/app';
+import { edit as accountEdit, update as accountUpdate } from '@/routes/app/account';
+import { index as billingIndex } from '@/routes/app/billing';
+import { index as usageIndex } from '@/routes/app/usage';
+import type { BreadcrumbItem } from '@/types';
+
 interface AccountData {
     id: string;
     name: string;
     billing_email: string;
 }
 
-const props = defineProps<{
+defineProps<{
     account: AccountData;
     selfHosted: boolean;
 }>();
 
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { title: trans('settings.hub.title'), href: settingsHub().url },
+    { title: trans('settings.account.title') },
+]);
+
+const tabs = computed(() => [
+    { name: 'account', label: trans('settings.account.tabs.account'), href: accountEdit().url },
+    { name: 'usage', label: trans('settings.account.tabs.usage'), href: usageIndex().url },
+    { name: 'billing', label: trans('settings.account.tabs.billing'), href: billingIndex().url },
+]);
 </script>
 
 <template>
-    <AppLayout :title="$t('settings.account.title')">
-        <Head :title="$t('settings.account.title')" />
+    <Head :title="$t('settings.account.title')" />
 
-        <div class="mx-auto max-w-2xl space-y-6 p-6">
-            <HeadingSmall
-                :title="$t('settings.account.title')"
-                :description="$t('settings.account.description')"
-            />
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+            <SettingsTabsNav :tabs="tabs" active="account" />
 
-            <Form
-                v-bind="accountUpdate.form()"
-                method="put"
-                v-slot="{ errors, processing }"
-                class="space-y-6"
-            >
-                <div class="grid gap-2">
-                    <Label for="account-name">{{ $t('settings.account.name') }}</Label>
-                    <Input
-                        id="account-name"
-                        name="name"
-                        :default-value="account.name"
-                        :placeholder="trans('settings.account.name_placeholder')"
+            <section class="space-y-12">
+                <div class="space-y-6">
+                    <HeadingSmall
+                        :title="$t('settings.account.title')"
+                        :description="$t('settings.account.description')"
                     />
-                    <InputError :message="errors.name" />
-                </div>
 
-                <div v-if="!selfHosted" class="grid gap-2">
-                    <Label for="billing-email">{{ $t('settings.account.billing_email') }}</Label>
-                    <Input
-                        id="billing-email"
-                        name="billing_email"
-                        type="email"
-                        :default-value="account.billing_email"
-                        :placeholder="trans('settings.account.billing_email_placeholder')"
-                    />
-                    <p class="text-sm text-muted-foreground">
-                        {{ $t('settings.account.billing_email_hint') }}
-                    </p>
-                    <InputError :message="errors.billing_email" />
-                </div>
+                    <Form
+                        v-bind="accountUpdate.form()"
+                        method="put"
+                        v-slot="{ errors, processing }"
+                        class="space-y-6"
+                    >
+                        <div class="grid gap-2">
+                            <Label for="account-name">{{ $t('settings.account.name') }}</Label>
+                            <Input
+                                id="account-name"
+                                name="name"
+                                :default-value="account.name"
+                                :placeholder="trans('settings.account.name_placeholder')"
+                            />
+                            <InputError :message="errors.name" />
+                        </div>
 
-                <Button type="submit" :disabled="processing">
-                    {{ $t('settings.account.submit') }}
-                </Button>
-            </Form>
+                        <div v-if="!selfHosted" class="grid gap-2">
+                            <Label for="billing-email">{{ $t('settings.account.billing_email') }}</Label>
+                            <Input
+                                id="billing-email"
+                                name="billing_email"
+                                type="email"
+                                :default-value="account.billing_email"
+                                :placeholder="trans('settings.account.billing_email_placeholder')"
+                            />
+                            <p class="text-sm text-muted-foreground">
+                                {{ $t('settings.account.billing_email_hint') }}
+                            </p>
+                            <InputError :message="errors.billing_email" />
+                        </div>
+
+                        <Button type="submit" :disabled="processing">
+                            {{ $t('settings.account.submit') }}
+                        </Button>
+                    </Form>
+                </div>
+            </section>
         </div>
     </AppLayout>
 </template>

@@ -4,6 +4,23 @@ return [
     'title' => 'Settings',
     'description' => 'Manage your profile and account settings',
 
+    'hub' => [
+        'title' => 'Settings',
+        'description' => 'Choose what you want to manage.',
+        'profile' => [
+            'title' => 'Profile',
+            'description' => 'Update your personal info, password, and notification preferences.',
+        ],
+        'workspace' => [
+            'title' => 'Workspace',
+            'description' => 'Configure your workspace, brand, members, and API keys.',
+        ],
+        'account' => [
+            'title' => 'Account',
+            'description' => 'Manage your account info, usage, and billing.',
+        ],
+    ],
+
     'nav' => [
         'profile' => 'Profile',
         'password' => 'Password',
@@ -178,6 +195,11 @@ return [
     ],
 
     'account' => [
+        'tabs' => [
+            'account' => 'Account',
+            'usage' => 'Usage',
+            'billing' => 'Billing',
+        ],
         'title' => 'Account Settings',
         'description' => 'Manage your account name and billing email',
         'name' => 'Account Name',

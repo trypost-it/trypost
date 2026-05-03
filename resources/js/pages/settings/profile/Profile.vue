@@ -8,14 +8,19 @@ import DeleteUser from '@/components/DeleteUser.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
 import PhotoUpload from '@/components/PhotoUpload.vue';
+import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
-import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { uploadPhoto, deletePhoto } from '@/routes/app/profile';
+import { settings as settingsHub } from '@/routes/app';
+import { preferences as notificationPreferences } from '@/routes/app/notifications';
+import { deletePhoto, edit as editProfile, uploadPhoto } from '@/routes/app/profile';
+import { edit as editPassword } from '@/routes/app/user-password';
 import { send } from '@/routes/verification';
+import type { BreadcrumbItem } from '@/types';
+
 interface Props {
     mustVerifyEmail: boolean;
     status?: string;
@@ -25,100 +30,113 @@ defineProps<Props>();
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { title: trans('settings.hub.title'), href: settingsHub().url },
+    { title: trans('settings.profile.title') },
+]);
+
+const tabs = computed(() => [
+    { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
+    { name: 'password', label: trans('settings.nav.password'), href: editPassword().url },
+    { name: 'notifications', label: trans('settings.nav.notifications'), href: notificationPreferences().url },
+]);
 </script>
 
 <template>
-    <AppLayout :title="$t('settings.profile.title')">
-        <Head :title="$t('settings.profile.title')" />
+    <Head :title="$t('settings.profile.title')" />
 
-        <h1 class="sr-only">{{ $t('settings.profile.title') }}</h1>
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+            <SettingsTabsNav :tabs="tabs" active="profile" />
 
-        <SettingsLayout>
-            <div class="flex flex-col space-y-6">
-                <HeadingSmall
-                    :title="$t('settings.profile.photo_heading')"
-                    :description="$t('settings.profile.photo_description')"
-                />
+            <section class="space-y-12">
+                <div class="flex flex-col space-y-6">
+                    <HeadingSmall
+                        :title="$t('settings.profile.photo_heading')"
+                        :description="$t('settings.profile.photo_description')"
+                    />
 
-                <PhotoUpload
-                    :photo-url="user.photo_url"
-                    :has-photo="user.has_photo"
-                    :name="user.name"
-                    :upload-url="uploadPhoto().url"
-                    :delete-url="deletePhoto().url"
-                />
-            </div>
+                    <PhotoUpload
+                        :photo-url="user.photo_url"
+                        :has-photo="user.has_photo"
+                        :name="user.name"
+                        :upload-url="uploadPhoto().url"
+                        :delete-url="deletePhoto().url"
+                    />
+                </div>
 
-            <Separator />
+                <Separator />
 
-            <div class="flex flex-col space-y-6">
-                <HeadingSmall
-                    :title="$t('settings.profile.heading')"
-                    :description="$t('settings.profile.description')"
-                />
+                <div class="flex flex-col space-y-6">
+                    <HeadingSmall
+                        :title="$t('settings.profile.heading')"
+                        :description="$t('settings.profile.description')"
+                    />
 
-                <Form
-                    v-bind="ProfileController.update.form()"
-                    class="space-y-6"
-                    v-slot="{ errors, processing }"
-                >
-                    <div class="grid gap-2">
-                        <Label for="name">{{ $t('settings.profile.name') }}</Label>
-                        <Input
-                            id="name"
-                            name="name"
-                            :default-value="user.name"
-                            autocomplete="name"
-                            :placeholder="trans('settings.profile.name_placeholder')"
-                        />
-                        <InputError :message="errors.name" />
-                    </div>
-
-                    <div class="grid gap-2">
-                        <Label for="email">{{ $t('settings.profile.email') }}</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            name="email"
-                            :default-value="user.email"
-                            autocomplete="username"
-                            :placeholder="trans('settings.profile.email_placeholder')"
-                        />
-                        <InputError :message="errors.email" />
-                    </div>
-
-                    <div v-if="mustVerifyEmail && !user.email_verified_at">
-                        <p class="-mt-4 text-sm text-muted-foreground">
-                            {{ $t('settings.profile.email_unverified') }}
-                            <Link
-                                :href="send()"
-                                as="button"
-                                class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                            >
-                                {{ $t('settings.profile.resend_verification') }}
-                            </Link>
-                        </p>
-
-                        <div
-                            v-if="status === 'verification-link-sent'"
-                            class="mt-2 text-sm font-medium text-green-600"
-                        >
-                            {{ $t('settings.profile.verification_sent') }}
-                        </div>
-                    </div>
-
-                    <Button
-                        :disabled="processing"
-                        data-test="update-profile-button"
+                    <Form
+                        v-bind="ProfileController.update.form()"
+                        class="space-y-6"
+                        v-slot="{ errors, processing }"
                     >
-                        {{ $t('settings.profile.save') }}
-                    </Button>
-                </Form>
-            </div>
+                        <div class="grid gap-2">
+                            <Label for="name">{{ $t('settings.profile.name') }}</Label>
+                            <Input
+                                id="name"
+                                name="name"
+                                :default-value="user.name"
+                                autocomplete="name"
+                                :placeholder="trans('settings.profile.name_placeholder')"
+                            />
+                            <InputError :message="errors.name" />
+                        </div>
 
-            <Separator />
+                        <div class="grid gap-2">
+                            <Label for="email">{{ $t('settings.profile.email') }}</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                name="email"
+                                :default-value="user.email"
+                                autocomplete="username"
+                                :placeholder="trans('settings.profile.email_placeholder')"
+                            />
+                            <InputError :message="errors.email" />
+                        </div>
 
-            <DeleteUser />
-        </SettingsLayout>
+                        <div v-if="mustVerifyEmail && !user.email_verified_at">
+                            <p class="-mt-4 text-sm text-muted-foreground">
+                                {{ $t('settings.profile.email_unverified') }}
+                                <Link
+                                    :href="send()"
+                                    as="button"
+                                    class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                                >
+                                    {{ $t('settings.profile.resend_verification') }}
+                                </Link>
+                            </p>
+
+                            <div
+                                v-if="status === 'verification-link-sent'"
+                                class="mt-2 text-sm font-medium text-green-600"
+                            >
+                                {{ $t('settings.profile.verification_sent') }}
+                            </div>
+                        </div>
+
+                        <Button
+                            :disabled="processing"
+                            data-test="update-profile-button"
+                        >
+                            {{ $t('settings.profile.save') }}
+                        </Button>
+                    </Form>
+                </div>
+
+                <Separator />
+
+                <DeleteUser />
+            </section>
+        </div>
     </AppLayout>
 </template>

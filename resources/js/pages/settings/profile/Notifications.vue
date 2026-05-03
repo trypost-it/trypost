@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { trans } from 'laravel-vue-i18n';
+import { computed, ref } from 'vue';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/AppLayout.vue';
-import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { settings as settingsHub } from '@/routes/app';
 import { preferences as preferencesRoute } from '@/routes/app/notifications';
+import { edit as editProfile } from '@/routes/app/profile';
+import { edit as editPassword } from '@/routes/app/user-password';
+import type { BreadcrumbItem } from '@/types';
+
 interface Preferences {
     post_published: boolean;
     post_failed: boolean;
@@ -25,6 +31,18 @@ const postPublished = ref(props.preferences.post_published);
 const postFailed = ref(props.preferences.post_failed);
 const accountDisconnected = ref(props.preferences.account_disconnected);
 const processing = ref(false);
+
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { title: trans('settings.hub.title'), href: settingsHub().url },
+    { title: trans('settings.profile.title'), href: editProfile().url },
+    { title: trans('settings.nav.notifications') },
+]);
+
+const tabs = computed(() => [
+    { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
+    { name: 'password', label: trans('settings.nav.password'), href: editPassword().url },
+    { name: 'notifications', label: trans('settings.nav.notifications'), href: preferencesRoute().url },
+]);
 
 const submit = () => {
     processing.value = true;
@@ -43,54 +61,56 @@ const submit = () => {
 </script>
 
 <template>
-    <AppLayout :title="$t('settings.notifications.title')">
-        <Head :title="$t('settings.notifications.title')" />
+    <Head :title="$t('settings.notifications.title')" />
 
-        <h1 class="sr-only">{{ $t('settings.notifications.title') }}</h1>
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+            <SettingsTabsNav :tabs="tabs" active="notifications" />
 
-        <SettingsLayout>
-            <div class="flex flex-col space-y-6">
-                <HeadingSmall
-                    :title="$t('settings.notifications.heading')"
-                    :description="$t('settings.notifications.description')"
-                />
+            <section class="space-y-12">
+                <div class="flex flex-col space-y-6">
+                    <HeadingSmall
+                        :title="$t('settings.notifications.heading')"
+                        :description="$t('settings.notifications.description')"
+                    />
 
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between rounded-lg border p-4">
-                        <div class="space-y-0.5">
-                            <Label for="post_published">{{ $t('settings.notifications.post_published') }}</Label>
-                            <p class="text-sm text-muted-foreground">
-                                {{ $t('settings.notifications.post_published_description') }}
-                            </p>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between rounded-lg border p-4">
+                            <div class="space-y-0.5">
+                                <Label for="post_published">{{ $t('settings.notifications.post_published') }}</Label>
+                                <p class="text-sm text-muted-foreground">
+                                    {{ $t('settings.notifications.post_published_description') }}
+                                </p>
+                            </div>
+                            <Switch id="post_published" v-model="postPublished" />
                         </div>
-                        <Switch id="post_published" v-model="postPublished" />
+
+                        <div class="flex items-center justify-between rounded-lg border p-4">
+                            <div class="space-y-0.5">
+                                <Label for="post_failed">{{ $t('settings.notifications.post_failed') }}</Label>
+                                <p class="text-sm text-muted-foreground">
+                                    {{ $t('settings.notifications.post_failed_description') }}
+                                </p>
+                            </div>
+                            <Switch id="post_failed" v-model="postFailed" />
+                        </div>
+
+                        <div class="flex items-center justify-between rounded-lg border p-4">
+                            <div class="space-y-0.5">
+                                <Label for="account_disconnected">{{ $t('settings.notifications.account_disconnected') }}</Label>
+                                <p class="text-sm text-muted-foreground">
+                                    {{ $t('settings.notifications.account_disconnected_description') }}
+                                </p>
+                            </div>
+                            <Switch id="account_disconnected" v-model="accountDisconnected" />
+                        </div>
                     </div>
 
-                    <div class="flex items-center justify-between rounded-lg border p-4">
-                        <div class="space-y-0.5">
-                            <Label for="post_failed">{{ $t('settings.notifications.post_failed') }}</Label>
-                            <p class="text-sm text-muted-foreground">
-                                {{ $t('settings.notifications.post_failed_description') }}
-                            </p>
-                        </div>
-                        <Switch id="post_failed" v-model="postFailed" />
-                    </div>
-
-                    <div class="flex items-center justify-between rounded-lg border p-4">
-                        <div class="space-y-0.5">
-                            <Label for="account_disconnected">{{ $t('settings.notifications.account_disconnected') }}</Label>
-                            <p class="text-sm text-muted-foreground">
-                                {{ $t('settings.notifications.account_disconnected_description') }}
-                            </p>
-                        </div>
-                        <Switch id="account_disconnected" v-model="accountDisconnected" />
-                    </div>
+                    <Button :disabled="processing" class="self-start" @click="submit">
+                        {{ $t('settings.notifications.save') }}
+                    </Button>
                 </div>
-
-                <Button :disabled="processing" class="self-start" @click="submit">
-                    {{ $t('settings.notifications.save') }}
-                </Button>
-            </div>
-        </SettingsLayout>
+            </section>
+        </div>
     </AppLayout>
 </template>

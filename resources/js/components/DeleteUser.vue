@@ -108,6 +108,15 @@ const focusFirstInput = () => {
                         </div>
 
                         <DialogFooter class="gap-2">
+                             <Button
+                                type="submit"
+                                variant="destructive"
+                                :disabled="processing"
+                                data-test="confirm-delete-user-button"
+                            >
+                                {{ $t('settings.delete_account.confirm') }}
+                            </Button>
+
                             <DialogClose as-child>
                                 <Button
                                     variant="secondary"
@@ -121,15 +130,6 @@ const focusFirstInput = () => {
                                     {{ $t('settings.delete_account.cancel') }}
                                 </Button>
                             </DialogClose>
-
-                            <Button
-                                type="submit"
-                                variant="destructive"
-                                :disabled="processing"
-                                data-test="confirm-delete-user-button"
-                            >
-                                {{ $t('settings.delete_account.confirm') }}
-                            </Button>
                         </DialogFooter>
                     </Form>
                 </DialogContent>

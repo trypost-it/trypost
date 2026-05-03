@@ -7,8 +7,8 @@ return [
     'subscribe' => [
         'page_title' => 'Escolha seu plano',
         'title' => 'Escolha o plano ideal pra você',
-        'description' => 'Comece com :days dias grátis. Sem cobrança até o fim do seu teste.',
-        'trial_info' => ':days dias grátis, depois cobrança automática',
+        'description' => 'Comece com 7 dias grátis. Sem cobrança até o fim do seu teste.',
+        'trial_info' => '7 dias grátis, depois cobrança automática',
         'monthly' => 'Mensal',
         'yearly' => 'Anual',
         'per_month' => 'mês',
@@ -17,9 +17,9 @@ return [
         'billed_yearly' => 'cobrança anual',
         'save_months' => '2 meses grátis',
         'popular' => 'Mais popular',
-        'start_trial' => 'Iniciar teste de :days dias',
+        'start_trial' => 'Iniciar teste de 7 dias',
         'card_required' => 'Cartão de crédito necessário para iniciar o teste.',
-        'cancel_anytime' => 'Cancele antes do fim do teste — sem cobrança.',
+        'cancel_anytime' => 'Nenhuma cobrança será realizada antes do fim do período de testes.',
         'prices' => [
             'starter' => ['monthly' => 'R$ 95', 'yearly' => 'R$ 950'],
             'plus' => ['monthly' => 'R$ 145', 'yearly' => 'R$ 1450'],

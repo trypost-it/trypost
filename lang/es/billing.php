@@ -7,8 +7,8 @@ return [
     'subscribe' => [
         'page_title' => 'Elige tu plan',
         'title' => 'Elige el plan ideal para ti',
-        'description' => 'Comienza con :days días gratis. Sin cargo hasta que termine tu prueba.',
-        'trial_info' => 'Prueba gratuita de :days días, luego se cobra automáticamente',
+        'description' => 'Comienza con 7 días gratis. Sin cargo hasta que termine tu prueba.',
+        'trial_info' => 'Prueba gratuita de 7 días, luego se cobra automáticamente',
         'monthly' => 'Mensual',
         'yearly' => 'Anual',
         'per_month' => 'mes',
@@ -17,9 +17,9 @@ return [
         'billed_yearly' => 'facturado anualmente',
         'save_months' => '2 meses gratis',
         'popular' => 'Más popular',
-        'start_trial' => 'Comenzar prueba de :days días',
+        'start_trial' => 'Comenzar prueba de 7 días',
         'card_required' => 'Tarjeta de crédito requerida para iniciar tu prueba.',
-        'cancel_anytime' => 'Cancela antes que termine tu prueba — sin cargo.',
+        'cancel_anytime' => 'No se realizará ningún cobro antes de que termine el período de prueba.',
         'prices' => [
             'starter' => ['monthly' => '$19', 'yearly' => '$190'],
             'plus' => ['monthly' => '$29', 'yearly' => '$290'],

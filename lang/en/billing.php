@@ -6,8 +6,8 @@ return [
     'subscribe' => [
         'page_title' => 'Choose your plan',
         'title' => 'Choose the right plan for you',
-        'description' => 'Start with a :days-day free trial. No charge until your trial ends.',
-        'trial_info' => ':days-day free trial, then billed automatically',
+        'description' => 'Start with a 7-day free trial. No charge until your trial ends.',
+        'trial_info' => '7-day free trial, then billed automatically',
         'monthly' => 'Monthly',
         'yearly' => 'Yearly',
         'per_month' => 'mo',
@@ -16,9 +16,9 @@ return [
         'billed_yearly' => 'billed yearly',
         'save_months' => '2 months free',
         'popular' => 'Most popular',
-        'start_trial' => 'Start :days-day free trial',
+        'start_trial' => 'Start 7-day free trial',
         'card_required' => 'Credit card required to start your trial.',
-        'cancel_anytime' => 'Cancel anytime before your trial ends — no charge.',
+        'cancel_anytime' => 'No charges will be made before the trial period ends.',
         'prices' => [
             'starter' => ['monthly' => '$19', 'yearly' => '$190'],
             'plus' => ['monthly' => '$29', 'yearly' => '$290'],

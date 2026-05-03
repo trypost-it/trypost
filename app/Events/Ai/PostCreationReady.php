@@ -19,6 +19,8 @@ class PostCreationReady implements ShouldBroadcastNow
         public string $creationId,
         public ?string $content,
         public ?string $error = null,
+        public ?string $imageTitle = null,
+        public ?string $imageBody = null,
     ) {}
 
     public function broadcastOn(): PrivateChannel
@@ -39,6 +41,8 @@ class PostCreationReady implements ShouldBroadcastNow
         return [
             'creation_id' => $this->creationId,
             'content' => $this->content,
+            'image_title' => $this->imageTitle,
+            'image_body' => $this->imageBody,
             'error' => $this->error,
         ];
     }

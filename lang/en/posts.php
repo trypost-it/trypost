@@ -471,6 +471,11 @@ return [
         'template_description' => 'Pick from our curated templates and customize.',
         'coming_soon' => 'Coming soon',
 
+        'preview' => [
+            'image_title' => 'Image title',
+            'image_body' => 'Image body',
+        ],
+
         'steps' => [
             'format_title' => 'Choose a format',
             'format_description' => 'Select the type of post you want to create.',

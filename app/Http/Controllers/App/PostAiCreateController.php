@@ -69,29 +69,54 @@ class PostAiCreateController extends Controller
             abort(Response::HTTP_NOT_FOUND);
         }
 
-        $media = $this->buildMediaArray($workspace, $state);
-
-        $post = CreatePost::execute($workspace, $request->user(), [
-            'content' => data_get($state, 'content', ''),
-            'media' => $media,
-        ]);
-
-        // Set the platform's aspect_ratio meta from the same enum that drives
-        // image generation, so the preview matches the rendered image exactly.
         $format = data_get($state, 'format');
         $socialAccountId = data_get($state, 'social_account_id');
         $contentType = $format ? ContentType::tryFrom($format) : null;
+
+        // The wizard's preview is editable. Frontend sends whichever fields it
+        // showed: caption for normal formats, image_title + image_body for
+        // stories. We override the cached state with whatever was edited.
+        if ($request->filled('content')) {
+            $state['content'] = (string) $request->input('content');
+        }
+        if ($request->filled('image_title')) {
+            $state['image_title'] = (string) $request->input('image_title');
+        }
+        if ($request->filled('image_body')) {
+            $state['image_body'] = (string) $request->input('image_body');
+        }
+
+        $media = $this->buildMediaArray($workspace, $state);
+
+        $caption = ($contentType && ! $contentType->supportsCaption())
+            ? ''
+            : (string) data_get($state, 'content', '');
+
+        $post = CreatePost::execute($workspace, $request->user(), [
+            'content' => $caption,
+            'media' => $media,
+        ]);
+
+        // Sync the post_platform with the wizard choice: set content_type to
+        // match the format (so the editor surfaces "Story" instead of "Post"
+        // for instance) and aspect_ratio so the preview matches the rendered
+        // image exactly. Carousel collapses to feed since Instagram doesn't
+        // expose carousel as a separate content_type at the API level.
         if ($contentType && $socialAccountId) {
             $aspectRatio = $this->aspectRatioFor($contentType);
+            $platformContentType = $contentType === ContentType::InstagramCarousel
+                ? ContentType::InstagramFeed
+                : $contentType;
 
             $post->postPlatforms()
                 ->where('social_account_id', $socialAccountId)
-                ->each(function ($platform) use ($aspectRatio): void {
+                ->each(function ($platform) use ($aspectRatio, $platformContentType): void {
                     $meta = $platform->meta ?? [];
                     if ($aspectRatio !== null) {
                         $meta['aspect_ratio'] = $aspectRatio;
                     }
                     $platform->meta = $meta;
+                    $platform->content_type = $platformContentType->value;
                     $platform->enabled = true;
                     $platform->save();
                 });
@@ -105,12 +130,6 @@ class PostAiCreateController extends Controller
         ]);
     }
 
-    /**
-     * Build the media array for post creation from the AI creation state.
-     *
-     * @param  array<string, mixed>  $state
-     * @return array<int, array<string, mixed>>
-     */
     /**
      * Map the AI image dimensions to the aspect_ratio string the editor's
      * preview understands. Returns null when the size doesn't match a known
@@ -129,6 +148,12 @@ class PostAiCreateController extends Controller
         };
     }
 
+    /**
+     * Build the media array for post creation from the AI creation state.
+     *
+     * @param  array<string, mixed>  $state
+     * @return array<int, array<string, mixed>>
+     */
     private function buildMediaArray(Workspace $workspace, array $state): array
     {
         $media = [];

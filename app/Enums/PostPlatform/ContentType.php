@@ -213,6 +213,18 @@ enum ContentType: string
         };
     }
 
+    /**
+     * Whether this content type carries a text caption visible to viewers.
+     * Stories are image-overlay only — viewers don't see a separate caption.
+     */
+    public function supportsCaption(): bool
+    {
+        return match ($this) {
+            self::InstagramStory, self::FacebookStory => false,
+            default => true,
+        };
+    }
+
     public function requiresMedia(): bool
     {
         return match ($this) {

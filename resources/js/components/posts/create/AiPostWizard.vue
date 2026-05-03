@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3';
+import { router, useHttp } from '@inertiajs/vue3';
 import { echo } from '@laravel/echo-vue';
 import {
     IconArrowLeft,
@@ -12,6 +12,7 @@ import { computed, onUnmounted, ref, watch } from 'vue';
 
 import { finalize as finalizeRoute, start as startRoute } from '@/actions/App/Http/Controllers/App/PostAiCreateController';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getPlatformLogo } from '@/composables/usePlatformLogo';
@@ -54,10 +55,25 @@ const submitting = ref(false);
 const finalizing = ref(false);
 const previewStatus = ref<'loading' | 'done' | 'error'>('loading');
 const previewContent = ref('');
+const previewImageTitle = ref('');
+const previewImageBody = ref('');
 const previewError = ref('');
 const previewCreationId = ref<string | null>(null);
 let echoChannel: any = null;
 let subscribedChannelName: string | null = null;
+
+const httpStart = useHttp<{
+    format: string | null;
+    social_account_id: string | null;
+    image_count: number;
+    prompt: string;
+}>({ format: null, social_account_id: null, image_count: 0, prompt: '' });
+
+const httpFinalize = useHttp<{ content: string; image_title: string; image_body: string }>({
+    content: '',
+    image_title: '',
+    image_body: '',
+});
 
 const AI_FORMATS: Array<{ value: ContentTypeValue; platforms: string[] }> = [
     { value: ContentType.InstagramFeed, platforms: ['instagram', 'instagram-facebook'] },
@@ -115,6 +131,11 @@ const supportsOptionalImages = computed(() =>
 // Instagram Feed accepts only 1 image (single-image post). Others accept up to 4.
 const maxOptionalImages = computed(() =>
     selectedFormat.value === ContentType.InstagramFeed ? 1 : 4,
+);
+// Mirrors ContentType::supportsCaption() in PHP.
+const supportsCaption = computed(() =>
+    selectedFormat.value !== ContentType.InstagramStory &&
+    selectedFormat.value !== ContentType.FacebookStory,
 );
 const showsAccountPicker = computed(() => accountsForFormat.value.length > 1);
 
@@ -209,6 +230,8 @@ const subscribeToCreation = (userId: string, creationId: string) => {
             previewError.value = e.error;
         } else {
             previewContent.value = e.content ?? '';
+            previewImageTitle.value = e.image_title ?? '';
+            previewImageBody.value = e.image_body ?? '';
             previewStatus.value = 'done';
         }
         unsubscribeEcho();
@@ -221,41 +244,23 @@ const startGeneration = async () => {
     submitting.value = true;
     previewStatus.value = 'loading';
     previewContent.value = '';
+    previewImageTitle.value = '';
+    previewImageBody.value = '';
     previewError.value = '';
     goToStep('preview');
 
+    httpStart.format = selectedFormat.value;
+    httpStart.social_account_id = selectedAccountId.value;
+    httpStart.image_count = submittedImageCount.value;
+    httpStart.prompt = promptText.value.trim();
+
     try {
-        const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-        const response = await fetch(startRoute.url(), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                Accept: 'application/json',
-            },
-            body: JSON.stringify({
-                format: selectedFormat.value,
-                social_account_id: selectedAccountId.value,
-                image_count: submittedImageCount.value,
-                prompt: promptText.value.trim(),
-            }),
-        });
-
-        if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(err?.message ?? `HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        const creationId: string = data.creation_id;
-        const channel: string = data.channel;
-        const parts = channel.split('.');
-        const userId = parts[1] ?? '';
-
-        subscribeToCreation(userId, creationId);
+        const data = await httpStart.post(startRoute.url()) as { creation_id: string; channel: string };
+        const userId = data.channel.split('.')[1] ?? '';
+        subscribeToCreation(userId, data.creation_id);
     } catch (err: any) {
         previewStatus.value = 'error';
-        previewError.value = err?.message ?? trans('posts.create.steps.preview_error');
+        previewError.value = err?.response?.data?.message ?? trans('posts.create.steps.preview_error');
     } finally {
         submitting.value = false;
     }
@@ -267,21 +272,12 @@ const createPost = async () => {
     if (!previewCreationId.value || finalizing.value) return;
     finalizing.value = true;
 
+    httpFinalize.content = previewContent.value;
+    httpFinalize.image_title = previewImageTitle.value;
+    httpFinalize.image_body = previewImageBody.value;
+
     try {
-        const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-        const response = await fetch(finalizeRoute.url(previewCreationId.value), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                Accept: 'application/json',
-            },
-            body: JSON.stringify({}),
-        });
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const data = await response.json();
+        const data = await httpFinalize.post(finalizeRoute.url(previewCreationId.value)) as { redirect_url: string };
         router.visit(data.redirect_url);
     } catch {
         previewStatus.value = 'error';
@@ -441,9 +437,24 @@ onUnmounted(() => unsubscribeEcho());
             </div>
 
             <div v-else-if="previewStatus === 'done'" class="space-y-4">
-                <div class="rounded-xl border bg-muted/20 p-5">
-                    <p class="whitespace-pre-wrap text-sm leading-relaxed">{{ previewContent }}</p>
+                <!-- Caption-less formats (Stories): edit title + body separately. -->
+                <div v-if="!supportsCaption" class="space-y-3 rounded-xl border bg-muted/20 p-5">
+                    <div class="space-y-1">
+                        <Label class="text-xs font-medium text-muted-foreground">{{ $t('posts.create.preview.image_title') }}</Label>
+                        <Input v-model="previewImageTitle" class="bg-background" />
+                    </div>
+                    <div class="space-y-1">
+                        <Label class="text-xs font-medium text-muted-foreground">{{ $t('posts.create.preview.image_body') }}</Label>
+                        <Textarea v-model="previewImageBody" class="min-h-[120px] resize-none bg-background" />
+                    </div>
                 </div>
+
+                <!-- Default: edit caption text. -->
+                <Textarea
+                    v-else
+                    v-model="previewContent"
+                    class="min-h-[200px] resize-none rounded-xl border bg-muted/20 p-5 text-sm leading-relaxed"
+                />
 
                 <div class="flex justify-end gap-2">
                     <Button variant="outline" size="sm" @click="retryGeneration">

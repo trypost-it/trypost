@@ -484,6 +484,11 @@ return [
         'template_description' => 'Escolha um dos nossos templates e personalize.',
         'coming_soon' => 'Em breve',
 
+        'preview' => [
+            'image_title' => 'Título da imagem',
+            'image_body' => 'Texto da imagem',
+        ],
+
         'steps' => [
             'format_title' => 'Escolha um formato',
             'format_description' => 'Selecione o tipo de post que deseja criar.',

@@ -482,6 +482,12 @@ return [
         'ai_configure_description' => 'Elige un formato y describe el post que quieres crear.',
         'template_title' => 'Usar una plantilla',
         'template_description' => 'Elige una de nuestras plantillas y personalízala.',
+
+        'preview' => [
+            'image_title' => 'Título de la imagen',
+            'image_body' => 'Texto de la imagen',
+        ],
+
         'coming_soon' => 'Próximamente',
 
         'steps' => [

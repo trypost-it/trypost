@@ -278,6 +278,15 @@ class StreamPostCreation implements ShouldQueue
             'created_at' => now()->toIso8601String(),
         ], now()->addMinutes(30));
 
-        PostCreationReady::dispatch($this->userId, $this->creationId, $content);
+        // Broadcast all three fields — the frontend renders caption (when the
+        // format supports it) or title+body separately (for caption-less story
+        // formats). No string parsing on the way back.
+        PostCreationReady::dispatch(
+            userId: $this->userId,
+            creationId: $this->creationId,
+            content: $content,
+            imageTitle: $imageTitle,
+            imageBody: $imageBody,
+        );
     }
 }

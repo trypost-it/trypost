@@ -12,7 +12,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { settings as settingsHub } from '@/routes/app';
 import { preferences as preferencesRoute } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';
-import { edit as editPassword } from '@/routes/app/user-password';
+import { edit as editAuthentication } from '@/routes/app/authentication';
 import type { BreadcrumbItem } from '@/types';
 
 interface Preferences {
@@ -40,7 +40,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
 
 const tabs = computed(() => [
     { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
-    { name: 'password', label: trans('settings.nav.password'), href: editPassword().url },
+    { name: 'authentication', label: trans('settings.nav.authentication'), href: editAuthentication().url },
     { name: 'notifications', label: trans('settings.nav.notifications'), href: preferencesRoute().url },
 ]);
 

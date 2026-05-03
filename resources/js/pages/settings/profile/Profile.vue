@@ -4,7 +4,6 @@ import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 import ProfileController from '@/actions/App/Http/Controllers/App/Settings/ProfileController';
-import DeleteUser from '@/components/DeleteUser.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
 import PhotoUpload from '@/components/PhotoUpload.vue';
@@ -15,9 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { settings as settingsHub } from '@/routes/app';
+import { edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { deletePhoto, edit as editProfile, uploadPhoto } from '@/routes/app/profile';
-import { edit as editPassword } from '@/routes/app/user-password';
 import { send } from '@/routes/verification';
 import type { BreadcrumbItem } from '@/types';
 
@@ -38,7 +37,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
 
 const tabs = computed(() => [
     { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
-    { name: 'password', label: trans('settings.nav.password'), href: editPassword().url },
+    { name: 'authentication', label: trans('settings.nav.authentication'), href: editAuthentication().url },
     { name: 'notifications', label: trans('settings.nav.notifications'), href: notificationPreferences().url },
 ]);
 </script>
@@ -132,10 +131,6 @@ const tabs = computed(() => [
                         </Button>
                     </Form>
                 </div>
-
-                <Separator />
-
-                <DeleteUser />
             </section>
         </div>
     </AppLayout>

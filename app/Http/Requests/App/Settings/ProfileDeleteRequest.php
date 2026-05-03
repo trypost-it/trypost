@@ -4,22 +4,35 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\App\Settings;
 
-use App\Concerns\PasswordValidationRules;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProfileDeleteRequest extends FormRequest
 {
-    use PasswordValidationRules;
-
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
+        if ($this->user()->password) {
+            return [
+                'password' => ['required', 'string', 'current_password'],
+            ];
+        }
+
         return [
-            'password' => $this->currentPasswordRules(),
+            'email_confirmation' => ['required', 'string', Rule::in([$this->user()->email])],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'email_confirmation.in' => __('settings.delete_account.email_mismatch'),
         ];
     }
 }

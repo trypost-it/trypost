@@ -16,8 +16,8 @@ use App\Http\Controllers\App\PostController;
 use App\Http\Controllers\App\PostTemplateController;
 use App\Http\Controllers\App\PresenceController;
 use App\Http\Controllers\App\Settings\AccountController;
+use App\Http\Controllers\App\Settings\AuthenticationController;
 use App\Http\Controllers\App\Settings\NotificationPreferenceController;
-use App\Http\Controllers\App\Settings\PasswordController;
 use App\Http\Controllers\App\Settings\ProfileController;
 use App\Http\Controllers\App\Settings\SettingsController;
 use App\Http\Controllers\App\Settings\UsageController;
@@ -241,10 +241,16 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('app.profile.destroy');
-    Route::get('settings/profile/password', [PasswordController::class, 'edit'])->name('app.user-password.edit');
-    Route::put('settings/profile/password', [PasswordController::class, 'update'])
+
+    Route::get('settings/authentication', [AuthenticationController::class, 'edit'])->name('app.authentication.edit');
+    Route::put('settings/authentication/password', [AuthenticationController::class, 'updatePassword'])
         ->middleware('throttle:6,1')
-        ->name('app.user-password.update');
+        ->name('app.authentication.update-password');
+    Route::delete('settings/authentication/sessions', [AuthenticationController::class, 'destroyOtherSessions'])
+        ->name('app.authentication.destroy-other-sessions');
+    Route::delete('settings/authentication/providers/{provider}', [AuthenticationController::class, 'disconnectProvider'])
+        ->name('app.authentication.disconnect-provider');
+
     Route::get('settings/profile/notifications', [NotificationPreferenceController::class, 'edit'])->name('app.notifications.preferences');
     Route::put('settings/profile/notifications', [NotificationPreferenceController::class, 'update'])->name('app.notifications.preferences.update');
 });

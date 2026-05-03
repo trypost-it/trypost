@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class CreateUser
 {
     /**
-     * @param  array{name: string, email: string, password?: string, email_verified_at?: \DateTimeInterface|null, is_invite?: bool}  $data
+     * @param  array{name: string, email: string, password?: string, google_id?: string, email_verified_at?: \DateTimeInterface|null, is_invite?: bool}  $data
      */
     public static function execute(array $data): User
     {
@@ -27,6 +27,7 @@ class CreateUser
                 'name' => data_get($data, 'name'),
                 'email' => data_get($data, 'email'),
                 'password' => data_get($data, 'password'),
+                'google_id' => data_get($data, 'google_id'),
                 'email_verified_at' => data_get($data, 'email_verified_at', $isInviteRegistration ? now() : null),
                 'account_id' => $account->id,
             ]);

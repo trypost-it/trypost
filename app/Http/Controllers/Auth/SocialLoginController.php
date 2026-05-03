@@ -27,17 +27,23 @@ class SocialLoginController extends Controller
             return redirect()->route('login');
         }
 
-        $user = User::where('email', $googleUser->getEmail())->first();
+        $user = User::where('google_id', $googleUser->getId())
+            ->orWhere('email', $googleUser->getEmail())
+            ->first();
 
         if ($user) {
-            return $this->loginExistingUser($user);
+            return $this->loginExistingUser($user, $googleUser->getId());
         }
 
         return $this->registerNewUser($googleUser);
     }
 
-    private function loginExistingUser(User $user): RedirectResponse
+    private function loginExistingUser(User $user, string $googleId): RedirectResponse
     {
+        if (! $user->google_id) {
+            $user->update(['google_id' => $googleId]);
+        }
+
         if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
         }
@@ -52,6 +58,7 @@ class SocialLoginController extends Controller
         $user = CreateUser::execute([
             'name' => $googleUser->getName(),
             'email' => $googleUser->getEmail(),
+            'google_id' => $googleUser->getId(),
             'email_verified_at' => now(),
         ]);
 

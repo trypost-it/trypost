@@ -38,7 +38,7 @@ return [
 
     'workspace' => [
         'connections' => 'Connections',
-        'hashtags' => 'Hashtags',
+        'signatures' => 'Signatures',
         'labels' => 'Labels',
         'assets' => 'Assets',
         'api_keys' => 'API Keys',

@@ -221,7 +221,7 @@ return [
         'manage_platforms' => 'Administrar plataformas',
         'sync' => 'Sincronizar',
         'labels' => 'Etiquetas',
-        'hashtags' => 'Hashtags',
+        'signatures' => 'Firmas',
         'schedule' => 'Programar',
         'publish' => 'Publicar',
         'delete' => 'Eliminar',
@@ -347,9 +347,9 @@ return [
             'description' => 'Elige en qué plataformas publicar este post.',
         ],
 
-        'hashtags_modal' => [
-            'search' => 'Buscar hashtags...',
-            'no_results' => 'No se encontraron hashtags.',
+        'signatures_modal' => [
+            'search' => 'Buscar firmas...',
+            'no_results' => 'No se encontraron firmas.',
         ],
 
         'validation' => [

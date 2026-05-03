@@ -22,9 +22,9 @@ use App\Http\Controllers\App\Settings\ProfileController;
 use App\Http\Controllers\App\Settings\UsageController;
 use App\Http\Controllers\App\UnsplashController;
 use App\Http\Controllers\App\WorkspaceController;
-use App\Http\Controllers\App\WorkspaceHashtagController;
 use App\Http\Controllers\App\WorkspaceInviteController;
 use App\Http\Controllers\App\WorkspaceLabelController;
+use App\Http\Controllers\App\WorkspaceSignatureController;
 use App\Http\Controllers\Auth\BlueskyController;
 use App\Http\Controllers\Auth\FacebookController;
 use App\Http\Controllers\Auth\InstagramController;
@@ -178,11 +178,11 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::delete('settings/workspace/members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('app.members.remove');
     Route::put('settings/workspace/members/{user}/role', [WorkspaceInviteController::class, 'updateRole'])->name('app.members.update-role');
 
-    // Hashtags
-    Route::get('hashtags', [WorkspaceHashtagController::class, 'index'])->name('app.hashtags.index');
-    Route::post('hashtags', [WorkspaceHashtagController::class, 'store'])->name('app.hashtags.store');
-    Route::put('hashtags/{hashtag}', [WorkspaceHashtagController::class, 'update'])->name('app.hashtags.update');
-    Route::delete('hashtags/{hashtag}', [WorkspaceHashtagController::class, 'destroy'])->name('app.hashtags.destroy');
+    // Signatures
+    Route::get('signatures', [WorkspaceSignatureController::class, 'index'])->name('app.signatures.index');
+    Route::post('signatures', [WorkspaceSignatureController::class, 'store'])->name('app.signatures.store');
+    Route::put('signatures/{signature}', [WorkspaceSignatureController::class, 'update'])->name('app.signatures.update');
+    Route::delete('signatures/{signature}', [WorkspaceSignatureController::class, 'destroy'])->name('app.signatures.destroy');
 
     // Assets
     Route::get('assets', [AssetController::class, 'index'])->name('app.assets.index');

@@ -45,9 +45,9 @@ return [
             'title' => 'Workspaces em Equipe',
             'description' => 'Convide sua equipe, atribua funções e gerencie múltiplas marcas em workspaces separados.',
         ],
-        'hashtags' => [
-            'title' => 'Grupos de Hashtags',
-            'description' => 'Salve coleções de hashtags e adicione aos posts com um clique. Organize com etiquetas e filtros.',
+        'signatures' => [
+            'title' => 'Assinaturas',
+            'description' => 'Salve assinaturas reutilizáveis (hashtags, links, encerramentos) e anexe nos posts com um clique.',
         ],
     ],
 

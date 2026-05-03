@@ -51,7 +51,7 @@ import { edit as accountSettings } from '@/routes/app/account';
 import { index as billing } from '@/routes/app/billing';
 import { index as usage } from '@/routes/app/usage';
 import { index as assets } from '@/routes/app/assets';
-import { index as hashtags } from '@/routes/app/hashtags';
+import { index as signatures } from '@/routes/app/signatures';
 import { index as labels } from '@/routes/app/labels';
 import { settings as workspaceSettings } from '@/routes/app/workspace';
 import { create as createWorkspaceRoute, switchMethod } from '@/routes/app/workspaces';
@@ -126,8 +126,8 @@ const workspaceNavItems = computed<NavItem[]>(() => {
             icon: IconAffiliate,
         },
         {
-            title: trans('sidebar.workspace.hashtags'),
-            href: hashtags.url(),
+            title: trans('sidebar.workspace.signatures'),
+            href: signatures.url(),
             icon: IconHash,
         },
         {

@@ -8,10 +8,6 @@ use App\Mcp\Tools\Ai\GenerateImageTool;
 use App\Mcp\Tools\ApiKey\CreateApiKeyTool;
 use App\Mcp\Tools\ApiKey\DeleteApiKeyTool;
 use App\Mcp\Tools\ApiKey\ListApiKeysTool;
-use App\Mcp\Tools\Hashtag\CreateHashtagTool;
-use App\Mcp\Tools\Hashtag\DeleteHashtagTool;
-use App\Mcp\Tools\Hashtag\ListHashtagsTool;
-use App\Mcp\Tools\Hashtag\UpdateHashtagTool;
 use App\Mcp\Tools\Label\CreateLabelTool;
 use App\Mcp\Tools\Label\DeleteLabelTool;
 use App\Mcp\Tools\Label\ListLabelsTool;
@@ -20,6 +16,10 @@ use App\Mcp\Tools\Post\CreatePostTool;
 use App\Mcp\Tools\Post\DeletePostTool;
 use App\Mcp\Tools\Post\GetPostTool;
 use App\Mcp\Tools\Post\ListPostsTool;
+use App\Mcp\Tools\Signature\CreateSignatureTool;
+use App\Mcp\Tools\Signature\DeleteSignatureTool;
+use App\Mcp\Tools\Signature\ListSignaturesTool;
+use App\Mcp\Tools\Signature\UpdateSignatureTool;
 use App\Mcp\Tools\SocialAccount\ListSocialAccountsTool;
 use App\Mcp\Tools\SocialAccount\ToggleSocialAccountTool;
 use App\Mcp\Tools\Workspace\GetWorkspaceTool;
@@ -30,7 +30,7 @@ use Laravel\Mcp\Server\Attributes\Version;
 
 #[Name('TryPost')]
 #[Version('1.0.0')]
-#[Instructions('TryPost is a social media scheduling platform. Use this server to manage posts, hashtag groups, labels, workspaces, and API keys.')]
+#[Instructions('TryPost is a social media scheduling platform. Use this server to manage posts, signatures, labels, workspaces, and API keys.')]
 class TryPostServer extends Server
 {
     public int $defaultPaginationLength = 100;
@@ -42,11 +42,11 @@ class TryPostServer extends Server
         CreatePostTool::class,
         DeletePostTool::class,
 
-        // Hashtags
-        ListHashtagsTool::class,
-        CreateHashtagTool::class,
-        UpdateHashtagTool::class,
-        DeleteHashtagTool::class,
+        // Signatures
+        ListSignaturesTool::class,
+        CreateSignatureTool::class,
+        UpdateSignatureTool::class,
+        DeleteSignatureTool::class,
 
         // Labels
         ListLabelsTool::class,

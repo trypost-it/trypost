@@ -97,7 +97,7 @@ const props = defineProps<{
     pinterestBoards: any[];
     tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
     labels: { id: string; name: string; color: string }[];
-    hashtags: { id: string; name: string; hashtags: string }[];
+    signatures: { id: string; name: string; content: string }[];
     authUserId: string;
 }>();
 
@@ -522,7 +522,7 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                         <PostEditorComposer
                             v-model:content="content"
                             v-model:media="media"
-                            :hashtags="hashtags"
+                            :signatures="signatures"
                             :platform-limits="platformLimits"
                             :media-issues="mediaIssues"
                             @open-ai-generate="isAiGenerateOpen = true"

@@ -45,9 +45,9 @@ return [
             'title' => 'Team Workspaces',
             'description' => 'Invite your team, assign roles, and manage multiple brands from separate workspaces.',
         ],
-        'hashtags' => [
-            'title' => 'Hashtag Groups',
-            'description' => 'Save hashtag collections and add them to posts with one click. Organize with labels and filters.',
+        'signatures' => [
+            'title' => 'Signatures',
+            'description' => 'Save reusable signatures (hashtags, links, signoffs) and append them to posts with one click.',
         ],
     ],
 

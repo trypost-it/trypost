@@ -73,9 +73,9 @@ class Workspace extends Model
         return $this->hasMany(Post::class);
     }
 
-    public function hashtags(): HasMany
+    public function signatures(): HasMany
     {
-        return $this->hasMany(WorkspaceHashtag::class);
+        return $this->hasMany(WorkspaceSignature::class);
     }
 
     public function labels(): HasMany

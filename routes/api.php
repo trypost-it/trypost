@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\ApiKeyController;
-use App\Http\Controllers\Api\HashtagController;
 use App\Http\Controllers\Api\LabelController;
 use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\SignatureController;
 use App\Http\Controllers\Api\SocialAccountController;
 use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
@@ -21,11 +21,11 @@ Route::prefix('api')->middleware(['api.auth', 'throttle:api'])->group(function (
     // Workspace
     Route::get('/workspace', [WorkspaceController::class, 'show'])->name('api.workspace.show');
 
-    // Hashtags
-    Route::get('/hashtags', [HashtagController::class, 'index'])->name('api.hashtags.index');
-    Route::post('/hashtags', [HashtagController::class, 'store'])->name('api.hashtags.store');
-    Route::put('/hashtags/{hashtag}', [HashtagController::class, 'update'])->name('api.hashtags.update');
-    Route::delete('/hashtags/{hashtag}', [HashtagController::class, 'destroy'])->name('api.hashtags.destroy');
+    // Signatures
+    Route::get('/signatures', [SignatureController::class, 'index'])->name('api.signatures.index');
+    Route::post('/signatures', [SignatureController::class, 'store'])->name('api.signatures.store');
+    Route::put('/signatures/{signature}', [SignatureController::class, 'update'])->name('api.signatures.update');
+    Route::delete('/signatures/{signature}', [SignatureController::class, 'destroy'])->name('api.signatures.destroy');
 
     // Labels
     Route::get('/labels', [LabelController::class, 'index'])->name('api.labels.index');

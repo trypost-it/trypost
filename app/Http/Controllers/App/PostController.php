@@ -255,7 +255,7 @@ class PostController extends Controller
         $post->load(['postPlatforms.socialAccount', 'labels']);
         $socialAccounts = $workspace->socialAccounts()->active()->get();
         $labels = $workspace->labels;
-        $hashtags = $workspace->hashtags;
+        $signatures = $workspace->signatures;
 
         $platformConfigs = $socialAccounts->mapWithKeys(fn ($account) => [
             $account->id => new PlatformConfigResource($account),
@@ -287,7 +287,7 @@ class PostController extends Controller
                 ),
             ])->filter()),
             'labels' => $labels,
-            'hashtags' => $hashtags,
+            'signatures' => $signatures,
             'authUserId' => $request->user()->id,
         ]);
     }

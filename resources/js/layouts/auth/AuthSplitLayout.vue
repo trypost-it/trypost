@@ -18,7 +18,7 @@ withDefaults(defineProps<{
     showLegal: false,
 });
 
-const slideKeys = ['calendar', 'scheduling', 'media', 'video', 'team', 'hashtags'] as const;
+const slideKeys = ['calendar', 'scheduling', 'media', 'video', 'team', 'signatures'] as const;
 
 const slideIcons = {
     calendar: IconCalendar,
@@ -26,7 +26,7 @@ const slideIcons = {
     media: IconPhoto,
     video: IconVideo,
     team: IconUsers,
-    hashtags: IconHash,
+    signatures: IconHash,
 };
 
 const slides = computed(() =>

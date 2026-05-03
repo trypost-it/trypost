@@ -249,7 +249,7 @@ return [
         'add' => 'Add',
         'publish_to' => 'Publish to',
         'organize' => 'Organize',
-        'hashtags' => 'Hashtags',
+        'signatures' => 'Signatures',
         'view_on_platform' => 'View on platform',
         'platform_status' => 'Platform status',
         'compliance_incomplete' => 'Some platform settings are incomplete or incompatible with the attached media.',
@@ -334,9 +334,9 @@ return [
             'description' => 'Choose which platforms to publish this post to.',
         ],
 
-        'hashtags_modal' => [
-            'search' => 'Search hashtags...',
-            'no_results' => 'No hashtags found.',
+        'signatures_modal' => [
+            'search' => 'Search signatures...',
+            'no_results' => 'No signatures found.',
         ],
 
         'validation' => [

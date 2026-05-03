@@ -33,8 +33,8 @@ use App\Models\Subscription;
 use App\Models\SubscriptionItem;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Models\WorkspaceHashtag;
 use App\Models\WorkspaceLabel;
+use App\Models\WorkspaceSignature;
 use App\Services\PostTemplate\Registry as PostTemplateRegistry;
 use App\Socialite\InstagramProvider;
 use App\Socialite\LinkedInPageExtendSocialite;
@@ -162,7 +162,7 @@ class AppServiceProvider extends ServiceProvider
             'subscriptionItem' => SubscriptionItem::class,
             'user' => User::class,
             'workspace' => Workspace::class,
-            'workspaceHashtag' => WorkspaceHashtag::class,
+            'workspaceSignature' => WorkspaceSignature::class,
             'workspaceLabel' => WorkspaceLabel::class,
         ]);
     }

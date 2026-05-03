@@ -17,7 +17,7 @@ import { computed, nextTick, ref } from 'vue';
 
 import ImagePreviewDialog from '@/components/ImagePreviewDialog.vue';
 import EmojiPicker from '@/components/posts/EmojiPicker.vue';
-import HashtagsModal from '@/components/posts/HashtagsModal.vue';
+import SignaturesModal from '@/components/posts/SignaturesModal.vue';
 import MediaPickerDialog from '@/components/posts/MediaPickerDialog.vue';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
@@ -37,10 +37,10 @@ interface MediaItem {
     meta?: { width?: number; height?: number; duration?: number };
 }
 
-interface Hashtag {
+interface Signature {
     id: string;
     name: string;
-    hashtags: string;
+    content: string;
 }
 
 interface PlatformLimit {
@@ -54,7 +54,7 @@ interface MediaIssue {
 }
 
 const props = defineProps<{
-    hashtags: Hashtag[];
+    signatures: Signature[];
     platformLimits: PlatformLimit[];
     mediaIssues: Record<string, MediaIssue[]>;
 }>();
@@ -71,7 +71,7 @@ const isDragging = ref(false);
 const uploading = ref(false);
 const emojiOpen = ref(false);
 const mediaPickerDialog = ref<InstanceType<typeof MediaPickerDialog> | null>(null);
-const hashtagsModal = ref<InstanceType<typeof HashtagsModal> | null>(null);
+const signaturesModal = ref<InstanceType<typeof SignaturesModal> | null>(null);
 
 const dragMediaIndex = ref<number | null>(null);
 const dragOverIndex = ref<number | null>(null);
@@ -198,9 +198,9 @@ const addMediaFromGallery = (picked: MediaItem[]) => {
     media.value = [...media.value, ...additions];
 };
 
-const appendHashtags = (hashtag: Hashtag) => {
+const appendSignature = (signature: Signature) => {
     const separator = content.value.trim() ? '\n\n' : '';
-    content.value += separator + hashtag.hashtags;
+    content.value += separator + signature.content;
 };
 
 const appendEmoji = (emoji: string) => {
@@ -417,12 +417,12 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                                 variant="ghost"
                                 size="icon-sm"
                                 class="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-                                @click="hashtagsModal?.open()"
+                                @click="signaturesModal?.open()"
                             >
                                 <IconHash class="size-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{{ $t('posts.edit.hashtags') }}</TooltipContent>
+                        <TooltipContent>{{ $t('posts.edit.signatures') }}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
 
@@ -515,7 +515,7 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
             </div>
         </div>
 
-        <HashtagsModal ref="hashtagsModal" :hashtags="hashtags" @select="appendHashtags" />
+        <SignaturesModal ref="signaturesModal" :signatures="signatures" @select="appendSignature" />
         <MediaPickerDialog ref="mediaPickerDialog" @select="addMediaFromGallery" />
         <ImagePreviewDialog
             :images="previewImages"

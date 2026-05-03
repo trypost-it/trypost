@@ -20,12 +20,15 @@ class LoadWorkspaceFromToken
             return response()->json(['message' => 'Token not found.'], Response::HTTP_UNAUTHORIZED);
         }
 
+        // Personal API tokens (created from settings) bind to a specific
+        // workspace at creation. OAuth tokens (e.g. ChatGPT MCP) don't —
+        // they follow the user's current workspace.
         $workspace = $token->workspace_id
             ? Workspace::find($token->workspace_id)
-            : null;
+            : $user->currentWorkspace;
 
         if (! $workspace) {
-            return response()->json(['message' => 'Token is not bound to a workspace.'], Response::HTTP_UNAUTHORIZED);
+            return response()->json(['message' => 'No workspace selected.'], Response::HTTP_UNAUTHORIZED);
         }
 
         if (! config('trypost.self_hosted') && ! $workspace->account?->hasActiveSubscription()) {

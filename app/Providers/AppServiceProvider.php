@@ -56,7 +56,6 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Inertia\Inertia;
 use Laravel\Ai\Ai;
 use Laravel\Ai\Gateway\Gemini\GeminiGateway;
 use Laravel\Cashier\Cashier;
@@ -122,8 +121,7 @@ class AppServiceProvider extends ServiceProvider
             'mcp:use' => 'Use MCP server',
         ]);
 
-        Passport::authorizationView(fn ($parameters) => Inertia::render('oauth/Authorize', $parameters)
-        );
+        Passport::authorizationView('mcp.authorize');
     }
 
     protected function configureAi(): void

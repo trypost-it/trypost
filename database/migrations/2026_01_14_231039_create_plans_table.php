@@ -20,7 +20,6 @@ return new class extends Migration
             $table->integer('member_limit');
             $table->integer('workspace_limit');
             $table->integer('ai_images_limit');
-            $table->integer('data_retention_days');
             $table->integer('sort')->default(0);
             $table->boolean('is_archived')->default(false);
             $table->timestamps();

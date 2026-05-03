@@ -6,7 +6,6 @@ namespace App\Http\Controllers\App\Settings;
 
 use App\Enums\Ai\UsageType;
 use App\Features\AiImagesLimit;
-use App\Features\DataRetentionDays;
 use App\Features\MemberLimit;
 use App\Features\SocialAccountLimit;
 use App\Features\WorkspaceLimit;
@@ -50,7 +49,6 @@ class UsageController extends Controller
                 'aiImagesUsed' => AiUsageLog::monthlyCount($account->id, UsageType::Image),
                 'aiImagesLimit' => Feature::for($account)->value(AiImagesLimit::class),
                 'aiTextUsed' => AiUsageLog::monthlyCount($account->id, UsageType::Text),
-                'dataRetentionDays' => Feature::for($account)->value(DataRetentionDays::class),
             ],
         ]);
     }

@@ -30,7 +30,6 @@ return [
             'workspaces' => ':count workspaces',
             'members' => ':count team members',
             'ai_images' => ':count AI images/mo',
-            'data_retention' => ':days data retention',
         ],
     ],
 

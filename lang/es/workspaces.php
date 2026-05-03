@@ -52,4 +52,6 @@ return [
         'first_workspace_success' => 'Workspace creado. Conecta una cuenta social para empezar a publicar.',
         'success' => 'Workspace creado.',
     ],
+
+    'limit_reached' => 'Has alcanzado el límite de workspaces de tu plan.',
 ];

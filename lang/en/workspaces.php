@@ -52,4 +52,6 @@ return [
         'first_workspace_success' => 'Workspace created. Connect a social account to start posting.',
         'success' => 'Workspace created.',
     ],
+
+    'limit_reached' => 'You have reached your plan limit for workspaces.',
 ];

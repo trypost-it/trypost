@@ -25,7 +25,6 @@ class PlanSeeder extends Seeder
                 'member_limit' => 1,
                 'workspace_limit' => 1,
                 'ai_images_limit' => 50,
-                'data_retention_days' => 30,
                 'sort' => 1,
             ],
             [
@@ -37,7 +36,6 @@ class PlanSeeder extends Seeder
                 'member_limit' => 5,
                 'workspace_limit' => 5,
                 'ai_images_limit' => 150,
-                'data_retention_days' => 60,
                 'sort' => 2,
             ],
             [
@@ -49,7 +47,6 @@ class PlanSeeder extends Seeder
                 'member_limit' => 15,
                 'workspace_limit' => 15,
                 'ai_images_limit' => 500,
-                'data_retention_days' => 90,
                 'sort' => 3,
             ],
             [
@@ -61,7 +58,6 @@ class PlanSeeder extends Seeder
                 'member_limit' => 20,
                 'workspace_limit' => 50,
                 'ai_images_limit' => 2000,
-                'data_retention_days' => 730,
                 'sort' => 4,
             ],
         ];

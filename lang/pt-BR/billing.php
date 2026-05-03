@@ -31,7 +31,6 @@ return [
             'workspaces' => ':count workspaces',
             'members' => ':count membros da equipe',
             'ai_images' => ':count imagens IA/mês',
-            'data_retention' => ':days de retenção de dados',
         ],
     ],
 

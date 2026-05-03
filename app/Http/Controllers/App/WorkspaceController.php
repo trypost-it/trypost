@@ -8,9 +8,11 @@ use App\Actions\Ai\AutofillBrand;
 use App\Actions\Workspace\CreateWorkspace;
 use App\Actions\Workspace\DeleteWorkspace;
 use App\Enums\Workspace\BrandFont;
+use App\Features\WorkspaceLimit;
 use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
 use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
 use App\Http\Resources\App\WorkspaceMemberResource;
+use App\Models\Account;
 use App\Models\Workspace;
 use App\Services\Brand\LogoAttacher;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +22,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Pennant\Feature;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Throwable;
@@ -66,11 +69,14 @@ class WorkspaceController extends Controller
     {
         $user = $request->user();
 
-        $workspace = $user->currentWorkspace;
-
         if ($user->ownedWorkspacesCount() > 0 && ! $user->account?->hasActiveSubscription()) {
             return redirect()->route('app.billing.index')
                 ->with('message', 'Subscribe to create more workspaces.');
+        }
+
+        if ($this->hasReachedWorkspaceLimit($user->account)) {
+            return redirect()->route('app.calendar')
+                ->with('error', __('workspaces.limit_reached'));
         }
 
         return Inertia::render('workspaces/Create');
@@ -94,6 +100,10 @@ class WorkspaceController extends Controller
     public function store(StoreWorkspaceRequest $request, LogoAttacher $logoAttacher): RedirectResponse
     {
         $user = $request->user();
+
+        if ($this->hasReachedWorkspaceLimit($user->account)) {
+            abort(SymfonyResponse::HTTP_FORBIDDEN, __('workspaces.limit_reached'));
+        }
 
         $validated = $request->validated();
         $isFirstWorkspace = ! $user->workspaces()->exists();
@@ -227,5 +237,24 @@ class WorkspaceController extends Controller
 
         return redirect()->route('app.workspaces.index')
             ->with('success', 'Workspace deleted successfully!');
+    }
+
+    /**
+     * Check whether the account has hit its plan's workspace limit.
+     * Returns false in self-hosted mode (no plan limits apply).
+     */
+    private function hasReachedWorkspaceLimit(?Account $account): bool
+    {
+        if (config('trypost.self_hosted')) {
+            return false;
+        }
+
+        if (! $account) {
+            return false;
+        }
+
+        $limit = (int) Feature::for($account)->value(WorkspaceLimit::class);
+
+        return $account->workspaces()->count() >= $limit;
     }
 }

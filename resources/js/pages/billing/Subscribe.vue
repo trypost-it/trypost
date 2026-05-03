@@ -19,7 +19,6 @@ interface Plan {
     member_limit: number;
     workspace_limit: number;
     ai_images_limit: number;
-    data_retention_days: number;
 }
 
 const props = defineProps<{
@@ -35,11 +34,6 @@ const getPrice = (plan: Plan): string => {
     return trans(key);
 };
 
-const formatRetention = (days: number): string => {
-    if (days >= 730) return '2 years';
-    return `${days} days`;
-};
-
 const selectPlan = (plan: Plan) => {
     processing.value = plan.id;
     const priceId = isYearly.value ? plan.stripe_yearly_price_id : plan.stripe_monthly_price_id;
@@ -53,7 +47,6 @@ const features = (plan: Plan): string[] => [
     trans('billing.subscribe.features.workspaces', { count: String(plan.workspace_limit) }),
     trans('billing.subscribe.features.members', { count: String(plan.member_limit) }),
     trans('billing.subscribe.features.ai_images', { count: String(plan.ai_images_limit) }),
-    trans('billing.subscribe.features.data_retention', { days: formatRetention(plan.data_retention_days) }),
 ];
 
 const isPopular = (plan: Plan): boolean => {

@@ -29,7 +29,6 @@ class PlanFactory extends Factory
             'member_limit' => fake()->randomElement([1, 3, 10, 50]),
             'workspace_limit' => fake()->randomElement([1, 3, 10, 50]),
             'ai_images_limit' => fake()->randomElement([10, 50, 200, 1000]),
-            'data_retention_days' => fake()->randomElement([30, 90, 365, 730]),
             'sort' => 0,
             'is_archived' => false,
         ];

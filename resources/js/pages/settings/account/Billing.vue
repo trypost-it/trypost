@@ -7,6 +7,7 @@ import { computed } from 'vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { settings as settingsHub } from '@/routes/app';
 import { edit as accountEdit } from '@/routes/app/account';
@@ -66,6 +67,8 @@ const monthlyPrice = (slug: string | undefined): string => {
     if (! slug) return 'Free';
     return trans(`billing.subscribe.prices.${slug}.monthly`);
 };
+
+const { openUpgrade } = useUpgradeDialog();
 </script>
 
 <template>
@@ -86,6 +89,7 @@ const monthlyPrice = (slug: string | undefined): string => {
                             variant="outline"
                             size="sm"
                             class="mt-4"
+                            @click="openUpgrade()"
                         >
                             {{ $t('billing.plan.change') }}
                         </Button>

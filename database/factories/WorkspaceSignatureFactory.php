@@ -1,0 +1,29 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Database\Factories;
+
+use App\Models\Workspace;
+use App\Models\WorkspaceSignature;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends Factory<WorkspaceSignature>
+ */
+class WorkspaceSignatureFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'workspace_id' => Workspace::factory(),
+            'name' => fake()->words(2, true),
+            'content' => '#'.implode(' #', fake()->words(5)),
+        ];
+    }
+}

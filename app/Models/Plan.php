@@ -22,8 +22,6 @@ class Plan extends Model
         'name',
         'stripe_monthly_price_id',
         'stripe_yearly_price_id',
-        'monthly_price',
-        'yearly_price',
         'social_account_limit',
         'member_limit',
         'workspace_limit',
@@ -38,8 +36,6 @@ class Plan extends Model
         return [
             'slug' => Slug::class,
             'is_archived' => 'boolean',
-            'monthly_price' => 'integer',
-            'yearly_price' => 'integer',
             'social_account_limit' => 'integer',
             'member_limit' => 'integer',
             'workspace_limit' => 'integer',
@@ -57,15 +53,5 @@ class Plan extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_archived', false);
-    }
-
-    public function formattedMonthlyPrice(): string
-    {
-        return '$'.number_format($this->monthly_price / 100, 0);
-    }
-
-    public function formattedYearlyPrice(): string
-    {
-        return '$'.number_format($this->yearly_price / 100, 0);
     }
 }

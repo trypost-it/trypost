@@ -12,6 +12,7 @@ return [
         'monthly' => 'Mensal',
         'yearly' => 'Anual',
         'per_month' => 'mês',
+        'per_year' => 'ano',
         'billed_monthly' => 'cobrança mensal',
         'billed_yearly' => 'cobrança anual',
         'save_months' => '2 meses grátis',
@@ -19,6 +20,12 @@ return [
         'start_trial' => 'Iniciar teste de :days dias',
         'card_required' => 'Cartão de crédito necessário para iniciar o teste.',
         'cancel_anytime' => 'Cancele antes do fim do teste — sem cobrança.',
+        'prices' => [
+            'starter' => ['monthly' => 'R$ 95', 'yearly' => 'R$ 950'],
+            'plus' => ['monthly' => 'R$ 145', 'yearly' => 'R$ 1450'],
+            'pro' => ['monthly' => 'R$ 245', 'yearly' => 'R$ 2450'],
+            'max' => ['monthly' => 'R$ 495', 'yearly' => 'R$ 4950'],
+        ],
         'features' => [
             'social_accounts' => ':count contas sociais',
             'workspaces' => ':count workspaces',

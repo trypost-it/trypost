@@ -16,8 +16,6 @@ return new class extends Migration
             $table->string('name');
             $table->string('stripe_monthly_price_id')->nullable();
             $table->string('stripe_yearly_price_id')->nullable();
-            $table->integer('monthly_price');
-            $table->integer('yearly_price');
             $table->integer('social_account_limit');
             $table->integer('member_limit');
             $table->integer('workspace_limit');

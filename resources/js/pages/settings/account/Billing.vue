@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { IconDownload, IconFileText } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,8 +10,6 @@ import { portal } from '@/routes/app/billing';
 interface Plan {
     name: string;
     slug: string;
-    monthly_price: number;
-    yearly_price: number;
 }
 
 interface Subscription {
@@ -44,9 +43,9 @@ const props = defineProps<{
     defaultPaymentMethod: PaymentMethod | null;
 }>();
 
-const formatPrice = (cents: number): string => {
-    if (cents === 0) return 'Free';
-    return '$' + (cents / 100).toFixed(0);
+const monthlyPrice = (slug: string | undefined): string => {
+    if (! slug) return 'Free';
+    return trans(`billing.subscribe.prices.${slug}.monthly`);
 };
 </script>
 
@@ -86,7 +85,7 @@ const formatPrice = (cents: number): string => {
                     <div class="flex items-center gap-3 py-3">
                         <span class="text-sm">{{ $t('billing.plan.price') }}</span>
                         <span class="ml-auto text-sm font-medium tabular-nums">
-                            {{ formatPrice(plan?.monthly_price ?? 0) }}/{{ $t('billing.plan.month') }}
+                            {{ monthlyPrice(plan?.slug) }}/{{ $t('billing.plan.month') }}
                         </span>
                     </div>
 

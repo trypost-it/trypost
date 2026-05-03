@@ -14,8 +14,6 @@ test('seeder creates plans with correct limits', function () {
     $starter = Plan::where('slug', Slug::Starter)->first();
 
     expect($starter->name)->toBe('Starter')
-        ->and($starter->monthly_price)->toBe(1900)
-        ->and($starter->yearly_price)->toBe(19000)
         ->and($starter->social_account_limit)->toBe(5)
         ->and($starter->member_limit)->toBe(1)
         ->and($starter->workspace_limit)->toBe(1)
@@ -26,8 +24,6 @@ test('seeder creates plans with correct limits', function () {
     $max = Plan::where('slug', Slug::Max)->first();
 
     expect($max->name)->toBe('Max')
-        ->and($max->monthly_price)->toBe(9900)
-        ->and($max->yearly_price)->toBe(99000)
         ->and($max->social_account_limit)->toBe(100)
         ->and($max->member_limit)->toBe(20)
         ->and($max->workspace_limit)->toBe(50)

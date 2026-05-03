@@ -15,8 +15,6 @@ interface Plan {
     name: string;
     stripe_monthly_price_id: string | null;
     stripe_yearly_price_id: string | null;
-    monthly_price: number;
-    yearly_price: number;
     social_account_limit: number;
     member_limit: number;
     workspace_limit: number;
@@ -32,22 +30,9 @@ const props = defineProps<{
 const isYearly = ref(false);
 const processing = ref<string | null>(null);
 
-const formatPrice = (cents: number): string => {
-    return '$' + (cents / 100).toFixed(0);
-};
-
 const getPrice = (plan: Plan): string => {
-    return formatPrice(isYearly.value ? plan.yearly_price / 12 : plan.monthly_price);
-};
-
-const getTotalPrice = (plan: Plan): string => {
-    return formatPrice(isYearly.value ? plan.yearly_price : plan.monthly_price);
-};
-
-const getSavings = (plan: Plan): number => {
-    const monthlyTotal = plan.monthly_price * 12;
-    const yearlyTotal = plan.yearly_price;
-    return Math.round(((monthlyTotal - yearlyTotal) / monthlyTotal) * 100);
+    const key = `billing.subscribe.prices.${plan.slug}.${isYearly.value ? 'yearly' : 'monthly'}`;
+    return trans(key);
 };
 
 const formatRetention = (days: number): string => {
@@ -138,7 +123,7 @@ const isPopular = (plan: Plan): boolean => {
                         <h3 class="text-xl font-semibold">{{ plan.name }}</h3>
                         <div class="mt-3 flex items-baseline gap-1">
                             <span class="text-4xl font-bold tracking-tight">{{ getPrice(plan) }}</span>
-                            <span class="text-muted-foreground">/{{ $t('billing.subscribe.per_month') }}</span>
+                            <span class="text-muted-foreground">/{{ isYearly ? $t('billing.subscribe.per_year') : $t('billing.subscribe.per_month') }}</span>
                         </div>
                         <p class="mt-1 text-sm text-muted-foreground">
                             {{ isYearly ? $t('billing.subscribe.billed_yearly') : $t('billing.subscribe.billed_monthly') }}

@@ -11,6 +11,7 @@ return [
         'monthly' => 'Monthly',
         'yearly' => 'Yearly',
         'per_month' => 'mo',
+        'per_year' => 'yr',
         'billed_monthly' => 'billed monthly',
         'billed_yearly' => 'billed yearly',
         'save_months' => '2 months free',
@@ -18,6 +19,12 @@ return [
         'start_trial' => 'Start :days-day free trial',
         'card_required' => 'Credit card required to start your trial.',
         'cancel_anytime' => 'Cancel anytime before your trial ends — no charge.',
+        'prices' => [
+            'starter' => ['monthly' => '$19', 'yearly' => '$190'],
+            'plus' => ['monthly' => '$29', 'yearly' => '$290'],
+            'pro' => ['monthly' => '$49', 'yearly' => '$490'],
+            'max' => ['monthly' => '$99', 'yearly' => '$990'],
+        ],
         'features' => [
             'social_accounts' => ':count social accounts',
             'workspaces' => ':count workspaces',

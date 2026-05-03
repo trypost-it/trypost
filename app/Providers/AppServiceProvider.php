@@ -245,9 +245,9 @@ class AppServiceProvider extends ServiceProvider
         JsonResource::withoutWrapping();
         Model::shouldBeStrict(! $this->app->isProduction());
 
-        DB::prohibitDestructiveCommands(
-            app()->isProduction(),
-        );
+        // DB::prohibitDestructiveCommands(
+        //     app()->isProduction(),
+        // );
 
         Password::defaults(fn (): ?Password => app()->isProduction()
             ? Password::min(12)

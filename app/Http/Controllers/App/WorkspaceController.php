@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -85,8 +86,15 @@ class WorkspaceController extends Controller
             'url' => ['required', 'string', 'max:255'],
         ]);
 
+        $user = $request->user();
+
+        $gate = Gate::inspect('useAi', $user->account);
+        if ($gate->denied()) {
+            return response()->json(['message' => $gate->message()], SymfonyResponse::HTTP_PAYMENT_REQUIRED);
+        }
+
         try {
-            $metadata = $autofill(data_get($validated, 'url'));
+            $metadata = $autofill(data_get($validated, 'url'), $user->currentWorkspace, $user->id);
         } catch (RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
         }

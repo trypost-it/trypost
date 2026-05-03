@@ -16,12 +16,18 @@ return new class extends Migration
             $table->uuid('workspace_id');
             $table->uuid('user_id')->nullable();
             $table->uuid('post_id')->nullable();
-            $table->string('type'); // image, video, audio
+            $table->string('type'); // text, template
             $table->string('provider')->nullable();
+            $table->string('model')->nullable();
+            $table->unsignedInteger('prompt_tokens')->default(0);
+            $table->unsignedInteger('completion_tokens')->default(0);
+            $table->unsignedInteger('total_tokens')->default(0);
+            $table->unsignedInteger('credits')->default(0);
             $table->json('metadata')->nullable();
             $table->timestamps();
 
             $table->foreign('account_id')->references('id')->on('accounts')->cascadeOnDelete();
+            $table->index(['account_id', 'created_at']);
             $table->index(['account_id', 'type', 'created_at']);
         });
     }

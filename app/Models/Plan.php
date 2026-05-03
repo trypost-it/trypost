@@ -25,7 +25,7 @@ class Plan extends Model
         'social_account_limit',
         'member_limit',
         'workspace_limit',
-        'ai_images_limit',
+        'monthly_credits_limit',
         'sort',
         'is_archived',
     ];
@@ -38,7 +38,7 @@ class Plan extends Model
             'social_account_limit' => 'integer',
             'member_limit' => 'integer',
             'workspace_limit' => 'integer',
-            'ai_images_limit' => 'integer',
+            'monthly_credits_limit' => 'integer',
             'sort' => 'integer',
         ];
     }

@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Features\AiImagesLimit;
 use App\Features\MemberLimit;
+use App\Features\MonthlyCreditsLimit;
 use App\Features\SocialAccountLimit;
 use App\Features\WorkspaceLimit;
 use App\Models\Account;
@@ -20,7 +20,7 @@ test('booted hook flushes pennant cache when plan_id changes', function () {
     expect(Feature::for($account)->value(WorkspaceLimit::class))->toBe($starter->workspace_limit);
     expect(Feature::for($account)->value(SocialAccountLimit::class))->toBe($starter->social_account_limit);
     expect(Feature::for($account)->value(MemberLimit::class))->toBe($starter->member_limit);
-    expect(Feature::for($account)->value(AiImagesLimit::class))->toBe($starter->ai_images_limit);
+    expect(Feature::for($account)->value(MonthlyCreditsLimit::class))->toBe($starter->monthly_credits_limit);
 
     $account->update(['plan_id' => $plus->id]);
     $account->load('plan');
@@ -28,7 +28,7 @@ test('booted hook flushes pennant cache when plan_id changes', function () {
     expect(Feature::for($account)->value(WorkspaceLimit::class))->toBe($plus->workspace_limit);
     expect(Feature::for($account)->value(SocialAccountLimit::class))->toBe($plus->social_account_limit);
     expect(Feature::for($account)->value(MemberLimit::class))->toBe($plus->member_limit);
-    expect(Feature::for($account)->value(AiImagesLimit::class))->toBe($plus->ai_images_limit);
+    expect(Feature::for($account)->value(MonthlyCreditsLimit::class))->toBe($plus->monthly_credits_limit);
 });
 
 test('booted hook does not flush pennant when other fields change', function () {

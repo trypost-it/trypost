@@ -24,9 +24,8 @@ interface UsageData {
     socialAccountLimit: number;
     memberCount: number;
     memberLimit: number;
-    aiImagesUsed: number;
-    aiImagesLimit: number;
-    aiTextUsed: number;
+    creditsUsed: number;
+    monthlyCreditsLimit: number;
 }
 
 defineProps<{
@@ -94,14 +93,9 @@ const tabs = computed(() => [
 
                     <div class="divide-y">
                         <UsageMetricRow
-                            :label="$t('usage.ai_images')"
-                            :current="usage.aiImagesUsed"
-                            :limit="usage.aiImagesLimit"
-                        />
-
-                        <UsageMetricRow
-                            :label="$t('usage.ai_text')"
-                            :current="usage.aiTextUsed"
+                            :label="$t('usage.credits')"
+                            :current="usage.creditsUsed"
+                            :limit="usage.monthlyCreditsLimit"
                         />
                     </div>
                 </div>

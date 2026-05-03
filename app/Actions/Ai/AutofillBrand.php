@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Ai;
 
+use App\Models\Workspace;
 use App\Services\Brand\BrandAnalyzerRunner;
 use App\Services\Brand\BrandMetadata;
 use App\Services\Brand\HomepageMetaExtractor;
@@ -19,7 +20,7 @@ final class AutofillBrand
         private readonly LogoColorExtractor $logoColors,
     ) {}
 
-    public function __invoke(string $url): BrandMetadata
+    public function __invoke(string $url, ?Workspace $workspace = null, ?string $userId = null): BrandMetadata
     {
         $url = $this->fetcher->normalizeUrl($url);
 
@@ -53,7 +54,7 @@ final class AutofillBrand
             return $metadata;
         }
 
-        $analysis = $this->analyzer->analyze($this->extractor->extractBodyHtml($html));
+        $analysis = $this->analyzer->analyze($this->extractor->extractBodyHtml($html), $workspace, $userId);
 
         return $analysis === null
             ? $metadata

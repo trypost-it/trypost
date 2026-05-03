@@ -48,7 +48,7 @@ return [
             'social_accounts' => ':count social accounts',
             'workspaces' => ':count workspaces',
             'members' => ':count team members',
-            'ai_images' => ':count AI images/mo',
+            'credits' => ':count AI credits/mo',
         ],
     ],
 
@@ -89,6 +89,7 @@ return [
             'social_accounts' => 'Cannot switch to :plan: you have :count social accounts but the plan only allows :limit.',
             'members' => 'Cannot switch to :plan: you have :count team members (including invites) but the plan only allows :limit.',
         ],
+        'credits_exhausted' => 'Out of AI credits — your monthly :limit allowance has been used. Upgrade your plan or wait until next month.',
     ],
 
     'processing' => [

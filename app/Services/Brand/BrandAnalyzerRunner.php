@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Brand;
 
 use App\Ai\Agents\BrandAnalyzer;
+use App\Models\Workspace;
+use App\Services\Ai\RecordAiUsage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use League\HTMLToMarkdown\HtmlConverter;
@@ -23,7 +25,7 @@ final class BrandAnalyzerRunner
         };
     }
 
-    public function analyze(string $bodyHtml): ?LlmBrandAnalysis
+    public function analyze(string $bodyHtml, ?Workspace $workspace = null, ?string $userId = null): ?LlmBrandAnalysis
     {
         $markdown = $this->htmlToMarkdown($bodyHtml);
 
@@ -37,6 +39,21 @@ final class BrandAnalyzerRunner
             Log::warning('BrandAnalyzer failed, falling back to meta tags', ['error' => $e->getMessage()]);
 
             return null;
+        }
+
+        // Brand analysis can run during onboarding before the user has a
+        // workspace; skip usage tracking in that case (the cost is small and
+        // one-shot). Other AI flows always carry a workspace.
+        if ($workspace !== null) {
+            RecordAiUsage::recordText(
+                workspace: $workspace,
+                promptTokens: $response->usage->promptTokens,
+                completionTokens: $response->usage->completionTokens,
+                provider: (string) config('ai.default'),
+                model: (string) config('ai.default_text_model'),
+                userId: $userId,
+                metadata: ['agent' => 'brand_analyzer'],
+            );
         }
 
         return LlmBrandAnalysis::fromResponse($response);

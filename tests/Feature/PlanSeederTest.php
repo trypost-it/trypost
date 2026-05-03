@@ -17,7 +17,7 @@ test('seeder creates plans with correct limits', function () {
         ->and($starter->social_account_limit)->toBe(5)
         ->and($starter->member_limit)->toBe(1)
         ->and($starter->workspace_limit)->toBe(1)
-        ->and($starter->ai_images_limit)->toBe(50)
+        ->and($starter->monthly_credits_limit)->toBe(1000)
         ->and($starter->sort)->toBe(1);
 
     $max = Plan::where('slug', Slug::Max)->first();
@@ -26,7 +26,7 @@ test('seeder creates plans with correct limits', function () {
         ->and($max->social_account_limit)->toBe(100)
         ->and($max->member_limit)->toBe(20)
         ->and($max->workspace_limit)->toBe(50)
-        ->and($max->ai_images_limit)->toBe(2000)
+        ->and($max->monthly_credits_limit)->toBe(15000)
         ->and($max->sort)->toBe(4);
 });
 

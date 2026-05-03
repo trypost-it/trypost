@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App\Settings;
 
-use App\Enums\Ai\UsageType;
-use App\Features\AiImagesLimit;
 use App\Features\MemberLimit;
+use App\Features\MonthlyCreditsLimit;
 use App\Features\SocialAccountLimit;
 use App\Features\WorkspaceLimit;
 use App\Http\Controllers\App\Controller;
@@ -46,9 +45,8 @@ class UsageController extends Controller
                 'socialAccountLimit' => Feature::for($account)->value(SocialAccountLimit::class),
                 'memberCount' => $totalMembers,
                 'memberLimit' => Feature::for($account)->value(MemberLimit::class),
-                'aiImagesUsed' => AiUsageLog::monthlyCount($account->id, UsageType::Image),
-                'aiImagesLimit' => Feature::for($account)->value(AiImagesLimit::class),
-                'aiTextUsed' => AiUsageLog::monthlyCount($account->id, UsageType::Text),
+                'creditsUsed' => AiUsageLog::monthlyCredits($account->id),
+                'monthlyCreditsLimit' => Feature::for($account)->value(MonthlyCreditsLimit::class),
             ],
         ]);
     }

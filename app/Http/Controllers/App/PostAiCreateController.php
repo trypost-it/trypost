@@ -15,6 +15,7 @@ use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -26,6 +27,11 @@ class PostAiCreateController extends Controller
         $workspace = $request->user()->currentWorkspace;
 
         $this->authorize('createPost', $workspace);
+
+        $gate = Gate::inspect('useAi', $workspace->account);
+        if ($gate->denied()) {
+            return response()->json(['message' => $gate->message()], Response::HTTP_PAYMENT_REQUIRED);
+        }
 
         $socialAccountId = $request->input('social_account_id');
 

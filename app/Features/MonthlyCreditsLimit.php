@@ -6,12 +6,12 @@ namespace App\Features;
 
 use App\Models\Account;
 
-class AiImagesLimit
+class MonthlyCreditsLimit
 {
-    public string $name = 'ai-images-limit';
+    public string $name = 'monthly-credits-limit';
 
     public function resolve(Account $scope): int
     {
-        return $scope->plan?->ai_images_limit ?? 50;
+        return $scope->plan?->monthly_credits_limit ?? 1000;
     }
 }

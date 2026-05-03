@@ -12,13 +12,14 @@ interface Usage {
     socialAccountCount: number;
     memberCount: number;
     pendingInviteCount: number;
+    creditsUsed: number;
 }
 
 interface Features {
     workspaceLimit: number;
     socialAccountLimit: number;
     memberLimit: number;
-    aiImagesLimit: number;
+    monthlyCreditsLimit: number;
 }
 
 export const useFeatureAccess = () => {
@@ -32,7 +33,7 @@ export const useFeatureAccess = () => {
     const workspaceLimit = computed(() => features.value?.workspaceLimit ?? 1);
     const socialAccountLimit = computed(() => features.value?.socialAccountLimit ?? 1);
     const memberLimit = computed(() => features.value?.memberLimit ?? 1);
-    const aiImagesLimit = computed(() => features.value?.aiImagesLimit ?? 0);
+    const monthlyCreditsLimit = computed(() => features.value?.monthlyCreditsLimit ?? 0);
 
     const canCreateWorkspace = computed(() => {
         if (isSelfHosted.value) return true;
@@ -52,6 +53,12 @@ export const useFeatureAccess = () => {
         return usage.value.memberCount + usage.value.pendingInviteCount < memberLimit.value;
     });
 
+    const hasCreditsLeft = computed(() => {
+        if (isSelfHosted.value) return true;
+        if (!usage.value) return true;
+        return usage.value.creditsUsed < monthlyCreditsLimit.value;
+    });
+
     return {
         plan,
         usage,
@@ -60,9 +67,10 @@ export const useFeatureAccess = () => {
         workspaceLimit,
         socialAccountLimit,
         memberLimit,
-        aiImagesLimit,
+        monthlyCreditsLimit,
         canCreateWorkspace,
         canConnectSocialAccount,
         canInviteMember,
+        hasCreditsLeft,
     };
 };

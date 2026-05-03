@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models\Traits;
 
-use App\Features\AiImagesLimit;
 use App\Features\MemberLimit;
+use App\Features\MonthlyCreditsLimit;
 use App\Features\SocialAccountLimit;
 use App\Features\WorkspaceLimit;
+use App\Models\AiUsageLog;
 use App\Models\Invite;
 use Laravel\Pennant\Feature;
 
@@ -21,7 +22,7 @@ use Laravel\Pennant\Feature;
 trait HasUsage
 {
     /**
-     * @return array{workspaceCount: int, socialAccountCount: int, memberCount: int, pendingInviteCount: int}
+     * @return array{workspaceCount: int, socialAccountCount: int, memberCount: int, pendingInviteCount: int, creditsUsed: int}
      */
     public function usage(): array
     {
@@ -35,11 +36,12 @@ trait HasUsage
             'pendingInviteCount' => Invite::where('account_id', $this->id)
                 ->whereNull('accepted_at')
                 ->count(),
+            'creditsUsed' => AiUsageLog::monthlyCredits($this->id),
         ];
     }
 
     /**
-     * @return array{workspaceLimit: int, socialAccountLimit: int, memberLimit: int, aiImagesLimit: int}
+     * @return array{workspaceLimit: int, socialAccountLimit: int, memberLimit: int, monthlyCreditsLimit: int}
      */
     public function featureLimits(): array
     {
@@ -47,7 +49,7 @@ trait HasUsage
             'workspaceLimit' => Feature::for($this)->value(WorkspaceLimit::class),
             'socialAccountLimit' => Feature::for($this)->value(SocialAccountLimit::class),
             'memberLimit' => Feature::for($this)->value(MemberLimit::class),
-            'aiImagesLimit' => Feature::for($this)->value(AiImagesLimit::class),
+            'monthlyCreditsLimit' => Feature::for($this)->value(MonthlyCreditsLimit::class),
         ];
     }
 }

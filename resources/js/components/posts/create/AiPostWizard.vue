@@ -457,8 +457,7 @@ onUnmounted(() => unsubscribeEcho());
                 />
 
                 <div class="flex justify-end gap-2">
-                    <Button variant="outline" size="sm" @click="retryGeneration">
-                        <IconRefresh class="mr-1 size-4" />
+                    <Button variant="outline" @click="retryGeneration">
                         {{ $t('posts.create.steps.retry') }}
                     </Button>
                     <Button :disabled="finalizing" @click="createPost">

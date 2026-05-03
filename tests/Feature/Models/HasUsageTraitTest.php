@@ -36,6 +36,7 @@ test('usage returns correct counts across the account', function () {
         'socialAccountCount' => 3,
         'memberCount' => 3,
         'pendingInviteCount' => 2,
+        'creditsUsed' => 0,
     ]);
 });
 
@@ -49,7 +50,7 @@ test('featureLimits returns plan-resolved limits', function () {
         'workspaceLimit' => $plan->workspace_limit,
         'socialAccountLimit' => $plan->social_account_limit,
         'memberLimit' => $plan->member_limit,
-        'aiImagesLimit' => $plan->ai_images_limit,
+        'monthlyCreditsLimit' => $plan->monthly_credits_limit,
     ]);
 });
 

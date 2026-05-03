@@ -6,7 +6,6 @@ namespace App\Jobs\Ai;
 
 use App\Ai\Agents\PostContentGenerator;
 use App\Ai\Agents\PostContentHumanizer;
-use App\Enums\Ai\UsageType;
 use App\Enums\PostPlatform\ContentType;
 use App\Events\Ai\PostCreationReady;
 use App\Models\SocialAccount;
@@ -58,10 +57,12 @@ class StreamPostCreation implements ShouldQueue
         try {
             $response = $agent->prompt($this->prompt);
 
-            RecordAiUsage::record(
+            RecordAiUsage::recordText(
                 workspace: $workspace,
-                type: UsageType::Text,
+                promptTokens: $response->usage->promptTokens,
+                completionTokens: $response->usage->completionTokens,
                 provider: (string) config('ai.default'),
+                model: (string) config('ai.default_text_model'),
                 userId: $this->userId,
                 metadata: ['agent' => 'post_generator', 'format' => $this->format],
             );
@@ -140,10 +141,12 @@ class StreamPostCreation implements ShouldQueue
             $response = $humanizer->prompt(json_encode($input, JSON_UNESCAPED_UNICODE));
             $humanized = $response->structured ?? [];
 
-            RecordAiUsage::record(
+            RecordAiUsage::recordText(
                 workspace: $workspace,
-                type: UsageType::Text,
+                promptTokens: $response->usage->promptTokens,
+                completionTokens: $response->usage->completionTokens,
                 provider: (string) config('ai.default'),
+                model: (string) config('ai.default_text_model'),
                 userId: $this->userId,
                 metadata: ['agent' => 'post_humanizer', 'format' => $format],
             );

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\UserWorkspace\Role;
 use App\Models\Account;
+use App\Models\AiUsageLog;
 use App\Models\Invite;
 use App\Models\Plan;
 use App\Models\SocialAccount;
@@ -95,6 +96,48 @@ test('swapPlan denies when members + pending invites exceed target plan limit', 
         'count' => '5',
         'limit' => '1',
     ]));
+});
+
+test('useAi allows when account has credits remaining', function () {
+    config()->set('trypost.self_hosted', false);
+
+    $plan = Plan::where('slug', 'starter')->first();
+    $this->account->update(['plan_id' => $plan->id]);
+
+    $response = $this->policy->useAi($this->owner, $this->account->fresh());
+
+    expect($response->allowed())->toBeTrue();
+});
+
+test('useAi denies when monthly credits are exhausted', function () {
+    config()->set('trypost.self_hosted', false);
+
+    $plan = Plan::where('slug', 'starter')->first();
+    $this->account->update(['plan_id' => $plan->id]);
+    $workspace = Workspace::factory()->create([
+        'account_id' => $this->account->id,
+        'user_id' => $this->owner->id,
+    ]);
+
+    AiUsageLog::factory()->text(credits: $plan->monthly_credits_limit)->create([
+        'account_id' => $this->account->id,
+        'workspace_id' => $workspace->id,
+    ]);
+
+    $response = $this->policy->useAi($this->owner, $this->account->fresh());
+
+    expect($response->denied())->toBeTrue();
+    expect($response->message())->toBe(__('billing.flash.credits_exhausted', [
+        'limit' => (string) $plan->monthly_credits_limit,
+    ]));
+});
+
+test('useAi always allows when self-hosted', function () {
+    config()->set('trypost.self_hosted', true);
+
+    $response = $this->policy->useAi($this->owner, $this->account);
+
+    expect($response->allowed())->toBeTrue();
 });
 
 test('swapPlan allows when usage equals target plan limit (boundary)', function () {

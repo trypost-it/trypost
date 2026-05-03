@@ -42,6 +42,6 @@ test('integer fields are cast correctly', function () {
     expect($plan->social_account_limit)->toBeInt()
         ->and($plan->member_limit)->toBeInt()
         ->and($plan->workspace_limit)->toBeInt()
-        ->and($plan->ai_images_limit)->toBeInt()
+        ->and($plan->monthly_credits_limit)->toBeInt()
         ->and($plan->sort)->toBeInt();
 });

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Features\MonthlyCreditsLimit;
 use App\Models\Account;
+use App\Models\AiUsageLog;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
+use Laravel\Pennant\Feature;
 
 class AccountPolicy
 {
@@ -19,6 +22,29 @@ class AccountPolicy
     public function manageBilling(User $user, Account $account): bool
     {
         return $user->id === $account->owner_id;
+    }
+
+    /**
+     * Authorize using AI features. Allows when the account still has monthly
+     * credits remaining. Manual post creation is unaffected — only AI calls
+     * are gated by this check.
+     */
+    public function useAi(User $user, Account $account): Response
+    {
+        if (config('trypost.self_hosted')) {
+            return Response::allow();
+        }
+
+        $limit = (int) Feature::for($account)->value(MonthlyCreditsLimit::class);
+        $used = AiUsageLog::monthlyCredits($account->id);
+
+        if ($used >= $limit) {
+            return Response::deny(__('billing.flash.credits_exhausted', [
+                'limit' => (string) $limit,
+            ]));
+        }
+
+        return Response::allow();
     }
 
     /**

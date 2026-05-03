@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Features\AiImagesLimit;
 use App\Features\MemberLimit;
+use App\Features\MonthlyCreditsLimit;
 use App\Features\SocialAccountLimit;
 use App\Features\WorkspaceLimit;
 use App\Models\Traits\HasUsage;
@@ -40,7 +40,7 @@ class Account extends Model
                     WorkspaceLimit::class,
                     SocialAccountLimit::class,
                     MemberLimit::class,
-                    AiImagesLimit::class,
+                    MonthlyCreditsLimit::class,
                 ]);
             }
         });

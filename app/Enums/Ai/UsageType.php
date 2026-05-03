@@ -6,6 +6,6 @@ namespace App\Enums\Ai;
 
 enum UsageType: string
 {
-    case Image = 'image';
+    case Template = 'template';
     case Text = 'text';
 }

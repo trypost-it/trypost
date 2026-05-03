@@ -25,6 +25,11 @@ class AiUsageLog extends Model
         'post_id',
         'type',
         'provider',
+        'model',
+        'prompt_tokens',
+        'completion_tokens',
+        'total_tokens',
+        'credits',
         'metadata',
     ];
 
@@ -32,6 +37,10 @@ class AiUsageLog extends Model
     {
         return [
             'type' => UsageType::class,
+            'prompt_tokens' => 'integer',
+            'completion_tokens' => 'integer',
+            'total_tokens' => 'integer',
+            'credits' => 'integer',
             'metadata' => 'array',
         ];
     }
@@ -41,11 +50,10 @@ class AiUsageLog extends Model
         return $this->belongsTo(Account::class);
     }
 
-    public static function monthlyCount(string $accountId, UsageType $type): int
+    public static function monthlyCredits(string $accountId): int
     {
-        return static::where('account_id', $accountId)
-            ->where('type', $type)
+        return (int) static::where('account_id', $accountId)
             ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
-            ->count();
+            ->sum('credits');
     }
 }

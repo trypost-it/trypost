@@ -20,22 +20,33 @@ class AiUsageLogFactory extends Factory
             'workspace_id' => Workspace::factory(),
             'type' => fake()->randomElement(UsageType::cases()),
             'provider' => fake()->randomElement(['openai', 'gemini', 'internal']),
+            'prompt_tokens' => 0,
+            'completion_tokens' => 0,
+            'total_tokens' => 0,
+            'credits' => 0,
         ];
     }
 
-    public function image(): static
+    public function template(): static
     {
         return $this->state(fn () => [
-            'type' => UsageType::Image,
+            'type' => UsageType::Template,
             'provider' => 'internal',
         ]);
     }
 
-    public function text(): static
+    public function text(int $credits = 10): static
     {
+        $tokens = $credits * 150;
+
         return $this->state(fn () => [
             'type' => UsageType::Text,
             'provider' => 'openai',
+            'model' => 'gpt-5.4',
+            'prompt_tokens' => intdiv($tokens, 2),
+            'completion_tokens' => intdiv($tokens, 2),
+            'total_tokens' => $tokens,
+            'credits' => $credits,
         ]);
     }
 }

@@ -23,8 +23,14 @@ class BrandAnalyzer implements Agent, HasStructuredOutput
     {
         return match (config('ai.default')) {
             'openai' => Lab::OpenAI,
+            'anthropic' => Lab::Anthropic,
             default => Lab::Gemini,
         };
+    }
+
+    public function model(): string
+    {
+        return config('ai.default_text_model');
     }
 
     public function schema(JsonSchema $schema): array

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services\Image;
 
-use App\Enums\Ai\UsageType;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Services\Ai\RecordAiUsage;
@@ -109,9 +108,8 @@ class TemplateImageGenerator
         $filename = 'ai-images/'.uniqid('slide_', true).'.webp';
         Storage::put($filename, (string) $canvas->encode(new WebpEncoder(quality: 85)));
 
-        RecordAiUsage::record(
+        RecordAiUsage::recordTemplate(
             workspace: $workspace,
-            type: UsageType::Image,
             provider: 'internal',
             metadata: [
                 'template' => 'C',
@@ -162,9 +160,8 @@ class TemplateImageGenerator
         $filename = 'ai-images/'.uniqid('slide_', true).'.webp';
         Storage::put($filename, (string) $canvas->encode(new WebpEncoder(quality: 85)));
 
-        RecordAiUsage::record(
+        RecordAiUsage::recordTemplate(
             workspace: $workspace,
-            type: UsageType::Image,
             provider: 'internal',
             metadata: [
                 'template' => $template,

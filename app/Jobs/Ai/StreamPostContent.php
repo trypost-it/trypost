@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Jobs\Ai;
 
 use App\Ai\Agents\PostContentStreamer;
-use App\Enums\Ai\UsageType;
 use App\Models\Workspace;
 use App\Services\Ai\RecordAiUsage;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -42,12 +41,14 @@ class StreamPostContent implements ShouldQueue
         $channel = new PrivateChannel("users.{$this->userId}.ai-gen.{$this->generationId}");
 
         try {
-            $agent->broadcast($this->prompt, $channel, now: true);
+            $response = $agent->broadcast($this->prompt, $channel, now: true);
 
-            RecordAiUsage::record(
+            RecordAiUsage::recordText(
                 workspace: $workspace,
-                type: UsageType::Text,
+                promptTokens: $response->usage?->promptTokens ?? 0,
+                completionTokens: $response->usage?->completionTokens ?? 0,
                 provider: (string) config('ai.default'),
+                model: (string) config('ai.default_text_model'),
                 userId: $this->userId,
                 metadata: ['agent' => 'post_streamer'],
             );

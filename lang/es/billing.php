@@ -48,7 +48,7 @@ return [
             'social_accounts' => ':count cuentas sociales',
             'workspaces' => ':count workspaces',
             'members' => ':count miembros del equipo',
-            'ai_images' => ':count imágenes IA/mes',
+            'credits' => ':count créditos IA/mes',
         ],
     ],
 
@@ -89,6 +89,7 @@ return [
             'social_accounts' => 'No puedes cambiar a :plan: tienes :count cuentas sociales pero el plan solo permite :limit.',
             'members' => 'No puedes cambiar a :plan: tienes :count miembros (incluyendo invitaciones) pero el plan solo permite :limit.',
         ],
+        'credits_exhausted' => 'Sin créditos de IA — has usado tus :limit créditos mensuales. Mejora tu plan o espera hasta el próximo mes.',
     ],
 
     'processing' => [

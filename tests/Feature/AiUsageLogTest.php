@@ -2,62 +2,60 @@
 
 declare(strict_types=1);
 
-use App\Enums\Ai\UsageType;
 use App\Models\Account;
 use App\Models\AiUsageLog;
 use App\Models\Workspace;
 
-test('monthly count returns correct count for account and type', function () {
+test('monthly credits returns sum of credits for account this month', function () {
     $account = Account::factory()->create();
     $workspace = Workspace::factory()->create(['account_id' => $account->id]);
 
-    AiUsageLog::factory()->image()->count(3)->create([
+    AiUsageLog::factory()->text(credits: 5)->count(3)->create([
         'account_id' => $account->id,
         'workspace_id' => $workspace->id,
     ]);
 
-    AiUsageLog::factory()->text()->count(2)->create([
+    AiUsageLog::factory()->text(credits: 10)->count(2)->create([
         'account_id' => $account->id,
         'workspace_id' => $workspace->id,
     ]);
 
-    expect(AiUsageLog::monthlyCount($account->id, UsageType::Image))->toBe(3);
-    expect(AiUsageLog::monthlyCount($account->id, UsageType::Text))->toBe(2);
+    expect(AiUsageLog::monthlyCredits($account->id))->toBe(35);
 });
 
-test('monthly count excludes logs from other months', function () {
+test('monthly credits excludes logs from other months', function () {
     $account = Account::factory()->create();
     $workspace = Workspace::factory()->create(['account_id' => $account->id]);
 
-    AiUsageLog::factory()->image()->create([
+    AiUsageLog::factory()->text(credits: 10)->create([
         'account_id' => $account->id,
         'workspace_id' => $workspace->id,
     ]);
 
-    AiUsageLog::factory()->image()->create([
+    AiUsageLog::factory()->text(credits: 50)->create([
         'account_id' => $account->id,
         'workspace_id' => $workspace->id,
         'created_at' => now()->subMonth(),
     ]);
 
-    expect(AiUsageLog::monthlyCount($account->id, UsageType::Image))->toBe(1);
+    expect(AiUsageLog::monthlyCredits($account->id))->toBe(10);
 });
 
-test('monthly count excludes logs from other accounts', function () {
+test('monthly credits excludes logs from other accounts', function () {
     $account = Account::factory()->create();
     $otherAccount = Account::factory()->create();
     $workspace = Workspace::factory()->create(['account_id' => $account->id]);
     $otherWorkspace = Workspace::factory()->create(['account_id' => $otherAccount->id]);
 
-    AiUsageLog::factory()->image()->create([
+    AiUsageLog::factory()->text(credits: 10)->create([
         'account_id' => $account->id,
         'workspace_id' => $workspace->id,
     ]);
 
-    AiUsageLog::factory()->image()->create([
+    AiUsageLog::factory()->text(credits: 100)->create([
         'account_id' => $otherAccount->id,
         'workspace_id' => $otherWorkspace->id,
     ]);
 
-    expect(AiUsageLog::monthlyCount($account->id, UsageType::Image))->toBe(1);
+    expect(AiUsageLog::monthlyCredits($account->id))->toBe(10);
 });

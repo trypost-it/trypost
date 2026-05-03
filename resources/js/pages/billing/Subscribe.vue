@@ -18,7 +18,7 @@ interface Plan {
     social_account_limit: number;
     member_limit: number;
     workspace_limit: number;
-    ai_images_limit: number;
+    monthly_credits_limit: number;
 }
 
 const props = defineProps<{
@@ -46,7 +46,7 @@ const features = (plan: Plan): string[] => [
     trans('billing.subscribe.features.social_accounts', { count: String(plan.social_account_limit) }),
     trans('billing.subscribe.features.workspaces', { count: String(plan.workspace_limit) }),
     trans('billing.subscribe.features.members', { count: String(plan.member_limit) }),
-    trans('billing.subscribe.features.ai_images', { count: String(plan.ai_images_limit) }),
+    trans('billing.subscribe.features.credits', { count: plan.monthly_credits_limit.toLocaleString() }),
 ];
 
 const isPopular = (plan: Plan): boolean => {

@@ -10,7 +10,6 @@ import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -37,8 +36,6 @@ import type { BreadcrumbItem } from '@/types';
 interface ApiToken {
     id: string;
     name: string;
-    key_hint: string;
-    status: 'active' | 'expired';
     last_used_at: string | null;
     expires_at: string | null;
     created_at: string;
@@ -96,10 +93,16 @@ const tabs = computed(() => [
                     {{ $t('settings.api_keys.new_token_message') }}
                 </p>
                 <div class="flex items-center gap-2">
-                    <code class="flex-1 rounded bg-white px-3 py-2 font-mono text-sm dark:bg-black">
+                    <code class="block min-w-0 flex-1 truncate rounded bg-white px-3 py-2 font-mono text-sm dark:bg-black">
                         {{ newToken }}
                     </code>
-                    <Button variant="outline" size="sm" @click="copyToClipboard(newToken!, trans('settings.api_keys.new_token_message'))">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="shrink-0"
+                        @click="copyToClipboard(newToken!, trans('settings.api_keys.copy_success'))"
+                    >
+                        <IconCopy class="size-4" />
                         {{ $t('settings.api_keys.copy') }}
                     </Button>
                 </div>
@@ -110,8 +113,6 @@ const tabs = computed(() => [
                     <TableHeader>
                         <TableRow>
                             <TableHead>{{ $t('settings.api_keys.table.name') }}</TableHead>
-                            <TableHead>{{ $t('settings.api_keys.table.key') }}</TableHead>
-                            <TableHead>{{ $t('settings.api_keys.table.status') }}</TableHead>
                             <TableHead>{{ $t('settings.api_keys.table.expires') }}</TableHead>
                             <TableHead>{{ $t('settings.api_keys.table.last_used') }}</TableHead>
                             <TableHead class="w-10" />
@@ -120,16 +121,8 @@ const tabs = computed(() => [
                     <TableBody>
                         <TableRow v-for="token in apiTokens" :key="token.id">
                             <TableCell class="font-medium">{{ token.name }}</TableCell>
-                            <TableCell>
-                                <code class="text-xs text-muted-foreground">{{ token.key_hint }}</code>
-                            </TableCell>
-                            <TableCell>
-                                <Badge :variant="token.status === 'active' ? 'default' : 'secondary'">
-                                    {{ token.status }}
-                                </Badge>
-                            </TableCell>
                             <TableCell class="text-muted-foreground">
-                                {{ token.expires_at ? date.formatDateTime(token.expires_at) : $t('settings.api_keys.table.never') }}
+                                {{ token.expires_at ? date.formatDate(token.expires_at) : $t('settings.api_keys.table.never') }}
                             </TableCell>
                             <TableCell class="text-muted-foreground">
                                 {{ token.last_used_at ? date.diffForHumans(token.last_used_at) : $t('settings.api_keys.table.never') }}

@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Features\AiImagesLimit;
+use App\Features\MemberLimit;
+use App\Features\SocialAccountLimit;
+use App\Features\WorkspaceLimit;
+use App\Models\Traits\HasUsage;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,11 +16,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Cashier\Billable;
+use Laravel\Pennant\Feature;
 
 class Account extends Model
 {
     /** @use HasFactory<AccountFactory> */
-    use Billable, HasFactory, HasUuids;
+    use Billable, HasFactory, HasUsage, HasUuids;
 
     public const SUBSCRIPTION_NAME = 'default';
 
@@ -25,6 +31,20 @@ class Account extends Model
         'billing_email',
         'plan_id',
     ];
+
+    protected static function booted(): void
+    {
+        static::updated(function (Account $account): void {
+            if ($account->wasChanged('plan_id')) {
+                Feature::for($account)->forget([
+                    WorkspaceLimit::class,
+                    SocialAccountLimit::class,
+                    MemberLimit::class,
+                    AiImagesLimit::class,
+                ]);
+            }
+        });
+    }
 
     public function owner(): BelongsTo
     {

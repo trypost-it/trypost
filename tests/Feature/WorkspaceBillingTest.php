@@ -132,10 +132,12 @@ test('create workspace is blocked when account hits plan limit in saas mode', fu
     ]);
 
     // Starter plan: workspace_limit = 1; the user already owns 1 workspace (from beforeEach).
-    $response = $this->actingAs($this->user)->get(route('app.workspaces.create'));
+    $response = $this->actingAs($this->user)
+        ->from(route('app.calendar'))
+        ->get(route('app.workspaces.create'));
 
     $response->assertRedirect(route('app.calendar'))
-        ->assertSessionHas('error', __('workspaces.limit_reached'));
+        ->assertSessionHas('flash.error', __('workspaces.limit_reached'));
 });
 
 test('create workspace is allowed when below plan limit in saas mode', function () {

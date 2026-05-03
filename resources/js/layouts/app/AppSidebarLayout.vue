@@ -3,6 +3,7 @@ import { useHttp, usePage } from '@inertiajs/vue3';
 import { onBeforeUnmount, onMounted } from 'vue';
 
 import AppHeader from '@/components/AppHeader.vue';
+import UpgradeDialog from '@/components/UpgradeDialog.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import Toast from '@/components/Toast.vue';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -78,5 +79,6 @@ onBeforeUnmount(() => {
             </div>
         </SidebarInset>
     </SidebarProvider>
+    <UpgradeDialog />
     <Toast />
 </template>

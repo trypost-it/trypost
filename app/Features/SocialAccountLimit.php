@@ -8,6 +8,8 @@ use App\Models\Account;
 
 class SocialAccountLimit
 {
+    public string $name = 'social-account-limit';
+
     public function resolve(Account $scope): int
     {
         return $scope->plan?->social_account_limit ?? 5;

@@ -6,6 +6,8 @@ namespace App\Http\Middleware\App;
 
 use App\Http\Resources\App\HandleInertiaRequests\AuthUserResource;
 use App\Http\Resources\App\HandleInertiaRequests\AuthWorkspaceResource;
+use App\Models\Account;
+use App\Models\Plan;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -26,6 +28,8 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
 
         $currentWorkspace = $user?->currentWorkspace?->load('media');
+        $account = $user?->account;
+        $isSelfHosted = (bool) config('trypost.self_hosted');
 
         return [
             ...parent::share($request),
@@ -36,7 +40,13 @@ class HandleInertiaRequests extends Middleware
                 'workspaces' => $user
                     ? $user->workspaces()->with('media')->get()->map(fn ($ws) => AuthWorkspaceResource::summary($ws))
                     : [],
+                'plan' => $account?->plan,
+                'hasActiveSubscription' => $account ? $account->hasActiveSubscription() : false,
+                'currentPriceId' => $account?->subscription(Account::SUBSCRIPTION_NAME)?->stripe_price,
             ],
+            'usage' => $account && ! $isSelfHosted ? $account->usage() : null,
+            'features' => $account && ! $isSelfHosted ? $account->featureLimits() : null,
+            'plans' => $isSelfHosted ? [] : Plan::active()->orderBy('sort')->get(),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => $request->session()->get('flash', []),
             'applicationUrl' => config('app.url'),
@@ -47,8 +57,9 @@ class HandleInertiaRequests extends Middleware
                 'name' => $name,
             ])->values()->all(),
             'aiEnabled' => ! empty(config('services.gemini.api_key')) || ! empty(config('services.openai.api_key')),
-            'selfHosted' => config('trypost.self_hosted'),
+            'selfHosted' => $isSelfHosted,
             'googleAuthEnabled' => config('trypost.google_auth_enabled'),
+            'trialDays' => config('cashier.trial_days'),
         ];
     }
 }

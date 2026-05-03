@@ -54,4 +54,8 @@ return [
     ],
 
     'limit_reached' => 'Você atingiu o limite de workspaces do seu plano.',
+
+    'flash' => [
+        'deleted' => 'Workspace excluído com sucesso.',
+    ],
 ];

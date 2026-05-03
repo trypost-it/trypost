@@ -4,6 +4,24 @@ return [
     'title' => 'Assinatura',
     'description' => 'Gerencie sua assinatura e método de pagamento',
 
+    'upgrade_dialog' => [
+        'title' => 'Faça upgrade do seu plano',
+        'description' => 'Escolha um plano que se encaixe nas suas necessidades.',
+        'current_plan' => 'Plano atual',
+        'current_short' => 'Atual',
+        'current_badge' => 'Atual',
+        'subscribe' => 'Assinar',
+        'switch' => 'Mudar para este plano',
+        'switch_short' => 'Mudar',
+        'switch_to_yearly' => 'Mudar para anual',
+        'switch_to_monthly' => 'Mudar para mensal',
+        'reasons' => [
+            'workspace_limit' => 'Você atingiu o limite de workspaces do seu plano. Faça upgrade pra criar mais.',
+            'social_account_limit' => 'Você atingiu o limite de contas sociais do seu plano. Faça upgrade pra conectar mais.',
+            'member_limit' => 'Você atingiu o limite de membros do seu plano. Faça upgrade pra convidar mais pessoas.',
+        ],
+    ],
+
     'subscribe' => [
         'page_title' => 'Escolha seu plano',
         'title' => 'Escolha o plano ideal pra você',
@@ -54,6 +72,10 @@ return [
         'description' => 'Histórico de pagamentos',
         'empty' => 'Nenhuma fatura encontrada',
         'paid' => 'Pago',
+    ],
+
+    'flash' => [
+        'plan_changed' => 'Você está agora no plano :plan.',
     ],
 
     'processing' => [

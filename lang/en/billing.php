@@ -3,6 +3,24 @@
 return [
     'title' => 'Billing',
 
+    'upgrade_dialog' => [
+        'title' => 'Upgrade your plan',
+        'description' => 'Pick a plan that fits your needs.',
+        'current_plan' => 'Current plan',
+        'current_short' => 'Current',
+        'current_badge' => 'Current',
+        'subscribe' => 'Subscribe',
+        'switch' => 'Switch to this plan',
+        'switch_short' => 'Switch',
+        'switch_to_yearly' => 'Switch to yearly',
+        'switch_to_monthly' => 'Switch to monthly',
+        'reasons' => [
+            'workspace_limit' => 'You\'ve reached the workspace limit on your current plan. Upgrade to create more workspaces.',
+            'social_account_limit' => 'You\'ve reached the social account limit on your current plan. Upgrade to connect more accounts.',
+            'member_limit' => 'You\'ve reached the team member limit on your current plan. Upgrade to invite more people.',
+        ],
+    ],
+
     'subscribe' => [
         'page_title' => 'Choose your plan',
         'title' => 'Choose the right plan for you',
@@ -60,6 +78,10 @@ return [
         'description' => 'Download your past invoices.',
         'empty' => 'No invoices found',
         'paid' => 'Paid',
+    ],
+
+    'flash' => [
+        'plan_changed' => 'You are now on the :plan plan.',
     ],
 
     'processing' => [

@@ -15,9 +15,15 @@ import YouTubeAnalytics from '@/components/analytics/YouTubeAnalytics.vue';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
+import type { BreadcrumbItem } from '@/types';
+
 const props = defineProps<{
     accounts: AnalyticsAccount[];
 }>();
+
+const breadcrumbs = computed<BreadcrumbItem[]>(() => [
+    { title: trans('sidebar.analytics') },
+]);
 
 const selectedAccountId = ref<string | null>(props.accounts[0]?.id ?? null);
 
@@ -37,7 +43,7 @@ const platformSupportsDateRange = computed(() => {
 </script>
 
 <template>
-    <AppLayout :title="$t('sidebar.analytics')" :full-width="true">
+    <AppLayout :breadcrumbs="breadcrumbs" :full-width="true">
         <template #header-actions>
             <DateRangePicker v-if="platformSupportsDateRange" v-model="dateRange" />
         </template>

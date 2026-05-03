@@ -141,6 +141,7 @@ class BillingController extends Controller
         ]);
 
         $priceId = $request->input('price_id');
+        $subscription = $account->subscription(Account::SUBSCRIPTION_NAME);
 
         abort_unless(
             $priceId === $plan->stripe_monthly_price_id || $priceId === $plan->stripe_yearly_price_id,
@@ -148,10 +149,21 @@ class BillingController extends Controller
             'Invalid price for this plan',
         );
 
-        $account->subscription(Account::SUBSCRIPTION_NAME)->swap($priceId);
+        $currentPlan = $account->plan;
+        $isOnYearly = $currentPlan && $subscription->stripe_price === $currentPlan->stripe_yearly_price_id;
+        $isTargetMonthly = $priceId === $plan->stripe_monthly_price_id;
+
+        abort_if(
+            $isOnYearly && $isTargetMonthly,
+            422,
+            'Cannot downgrade from yearly to monthly billing.',
+        );
+
+        $subscription->swap($priceId);
         $account->update(['plan_id' => $plan->id]);
 
-        return redirect()->route('app.billing.index');
+        return redirect()->route('app.billing.index')
+            ->with('flash.success', __('billing.flash.plan_changed', ['plan' => $plan->name]));
     }
 
     public function portal(Request $request): RedirectResponse

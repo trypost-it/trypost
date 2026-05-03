@@ -8,6 +8,8 @@ use App\Models\Account;
 
 class WorkspaceLimit
 {
+    public string $name = 'workspace-limit';
+
     public function resolve(Account $scope): int
     {
         return $scope->plan?->workspace_limit ?? 1;

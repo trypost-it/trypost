@@ -8,7 +8,6 @@ use App\Actions\Ai\AutofillBrand;
 use App\Actions\Workspace\CreateWorkspace;
 use App\Actions\Workspace\DeleteWorkspace;
 use App\Enums\Workspace\BrandFont;
-use App\Features\WorkspaceLimit;
 use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
 use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
 use App\Http\Resources\App\WorkspaceMemberResource;
@@ -22,7 +21,6 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
-use Laravel\Pennant\Feature;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Throwable;
@@ -75,8 +73,7 @@ class WorkspaceController extends Controller
         }
 
         if ($this->hasReachedWorkspaceLimit($user->account)) {
-            return redirect()->route('app.calendar')
-                ->with('error', __('workspaces.limit_reached'));
+            return back()->with('flash.error', __('workspaces.limit_reached'));
         }
 
         return Inertia::render('workspaces/Create');
@@ -187,10 +184,7 @@ class WorkspaceController extends Controller
         $workspace->addMedia($request->file('photo'), 'logo');
         $workspace->unsetRelation('media');
 
-        session()->flash('flash.banner', __('settings.flash.logo_updated'));
-        session()->flash('flash.bannerStyle', 'success');
-
-        return back();
+        return back()->with('flash.success', __('settings.flash.logo_updated'));
     }
 
     public function deleteLogo(Request $request): RedirectResponse
@@ -202,10 +196,7 @@ class WorkspaceController extends Controller
         $workspace->clearMediaCollection('logo');
         $workspace->unsetRelation('media');
 
-        session()->flash('flash.banner', __('settings.flash.logo_deleted'));
-        session()->flash('flash.bannerStyle', 'success');
-
-        return back();
+        return back()->with('flash.success', __('settings.flash.logo_deleted'));
     }
 
     public function updateSettings(UpdateWorkspaceRequest $request): RedirectResponse
@@ -221,10 +212,7 @@ class WorkspaceController extends Controller
 
         $workspace->update($request->validated());
 
-        session()->flash('flash.banner', __('settings.flash.workspace_updated'));
-        session()->flash('flash.bannerStyle', 'success');
-
-        return back();
+        return back()->with('flash.success', __('settings.flash.workspace_updated'));
     }
 
     public function destroy(Request $request, Workspace $workspace): RedirectResponse
@@ -236,7 +224,7 @@ class WorkspaceController extends Controller
         DeleteWorkspace::execute($user, $workspace);
 
         return redirect()->route('app.workspaces.index')
-            ->with('success', 'Workspace deleted successfully!');
+            ->with('flash.success', __('workspaces.flash.deleted'));
     }
 
     /**
@@ -253,7 +241,7 @@ class WorkspaceController extends Controller
             return false;
         }
 
-        $limit = (int) Feature::for($account)->value(WorkspaceLimit::class);
+        $limit = (int) ($account->plan?->workspace_limit ?? 1);
 
         return $account->workspaces()->count() >= $limit;
     }

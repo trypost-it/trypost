@@ -4,6 +4,24 @@ return [
     'title' => 'Suscripción',
     'description' => 'Administra tu suscripción y método de pago',
 
+    'upgrade_dialog' => [
+        'title' => 'Actualiza tu plan',
+        'description' => 'Elige un plan que se adapte a tus necesidades.',
+        'current_plan' => 'Plan actual',
+        'current_short' => 'Actual',
+        'current_badge' => 'Actual',
+        'subscribe' => 'Suscribirse',
+        'switch' => 'Cambiar a este plan',
+        'switch_short' => 'Cambiar',
+        'switch_to_yearly' => 'Cambiar a anual',
+        'switch_to_monthly' => 'Cambiar a mensual',
+        'reasons' => [
+            'workspace_limit' => 'Has alcanzado el límite de workspaces de tu plan. Actualiza para crear más.',
+            'social_account_limit' => 'Has alcanzado el límite de cuentas sociales de tu plan. Actualiza para conectar más.',
+            'member_limit' => 'Has alcanzado el límite de miembros de tu plan. Actualiza para invitar a más personas.',
+        ],
+    ],
+
     'subscribe' => [
         'page_title' => 'Elige tu plan',
         'title' => 'Elige el plan ideal para ti',
@@ -54,6 +72,10 @@ return [
         'description' => 'Historial de pagos',
         'empty' => 'No se encontraron facturas',
         'paid' => 'Pagado',
+    ],
+
+    'flash' => [
+        'plan_changed' => 'Ahora estás en el plan :plan.',
     ],
 
     'processing' => [

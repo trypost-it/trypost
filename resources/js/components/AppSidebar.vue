@@ -9,9 +9,7 @@ import {
     IconFileCheck,
     IconFileText,
     IconHash,
-    IconLifebuoy,
     IconPhoto,
-    IconMessageCircle,
     IconPencil,
     IconPlus,
     IconSettings,
@@ -21,6 +19,8 @@ import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 import { create as createPost, index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
+import { useFeatureAccess } from '@/composables/useFeatureAccess';
+import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Avatar } from '@/components/ui/avatar';
@@ -45,8 +45,8 @@ import {
 } from '@/components/ui/sidebar';
 import { accounts, analytics, calendar, settings as settingsHub } from '@/routes/app';
 import { index as assets } from '@/routes/app/assets';
-import { index as signatures } from '@/routes/app/signatures';
 import { index as labels } from '@/routes/app/labels';
+import { index as signatures } from '@/routes/app/signatures';
 import { create as createWorkspaceRoute, switchMethod } from '@/routes/app/workspaces';
 import type { NavItem } from '@/types';
 
@@ -127,6 +127,17 @@ const switchWorkspace = (workspaceId: string) => {
         preserveScroll: true,
     });
 };
+
+const { canCreateWorkspace } = useFeatureAccess();
+const { openUpgrade } = useUpgradeDialog();
+
+const handleCreateWorkspace = () => {
+    if (!canCreateWorkspace.value) {
+        openUpgrade(trans('billing.upgrade_dialog.reasons.workspace_limit'));
+        return;
+    }
+    router.visit(createWorkspaceRoute.url());
+};
 </script>
 
 <template>
@@ -164,11 +175,9 @@ const switchWorkspace = (workspaceId: string) => {
                                 </DropdownMenuItem>
                             </div>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem as-child>
-                                <Link :href="createWorkspaceRoute.url()">
-                                    <IconPlus class="size-4" />
-                                    {{ $t('sidebar.create_workspace') }}
-                                </Link>
+                            <DropdownMenuItem class="gap-2" @click="handleCreateWorkspace">
+                                <IconPlus class="size-4" />
+                                {{ $t('sidebar.create_workspace') }}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -200,23 +209,6 @@ const switchWorkspace = (workspaceId: string) => {
                             <IconSettings />
                             <span>{{ $t('sidebar.settings') }}</span>
                         </Link>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton as-child :tooltip="trans('sidebar.support.share_feedback')">
-                        <a href="https://github.com/trypost-it/trypost/discussions" target="_blank"
-                            rel="noopener noreferrer">
-                            <IconMessageCircle />
-                            <span>{{ $t('sidebar.support.share_feedback') }}</span>
-                        </a>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                    <SidebarMenuButton as-child :tooltip="trans('sidebar.support.docs')">
-                        <a href="https://trypost.it/docs" target="_blank" rel="noopener noreferrer">
-                            <IconLifebuoy />
-                            <span>{{ $t('sidebar.support.docs') }}</span>
-                        </a>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
             </SidebarMenu>

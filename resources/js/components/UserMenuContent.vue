@@ -4,7 +4,9 @@ import {
     IconBrightnessUp,
     IconDeviceDesktop,
     IconLanguage,
+    IconLifebuoy,
     IconLogout,
+    IconMessageCircle,
     IconMoon,
     IconUser,
 } from '@tabler/icons-vue';
@@ -142,6 +144,31 @@ const handleLogout = () => {
                 </DropdownMenuSubContent>
             </DropdownMenuPortal>
         </DropdownMenuSub>
+    </DropdownMenuGroup>
+    <DropdownMenuSeparator />
+    <DropdownMenuGroup>
+        <DropdownMenuItem :as-child="true">
+            <a
+                class="block w-full cursor-pointer"
+                href="https://github.com/trypost-it/trypost/discussions"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <IconMessageCircle class="size-4" />
+                {{ $t('sidebar.support.share_feedback') }}
+            </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem :as-child="true">
+            <a
+                class="block w-full cursor-pointer"
+                href="https://trypost.it/docs"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                <IconLifebuoy class="size-4" />
+                {{ $t('sidebar.support.docs') }}
+            </a>
+        </DropdownMenuItem>
     </DropdownMenuGroup>
     <DropdownMenuSeparator />
     <DropdownMenuItem :as-child="true">

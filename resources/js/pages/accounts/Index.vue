@@ -38,7 +38,9 @@ import {
     TableLoadMore,
     TableRow,
 } from '@/components/ui/table';
+import { useFeatureAccess } from '@/composables/useFeatureAccess';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
+import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 import date from '@/date';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -78,6 +80,17 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: trans('accounts.p
 const isAddDialogOpen = ref(false);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const searchQuery = ref(props.filters.search);
+
+const { canConnectSocialAccount } = useFeatureAccess();
+const { openUpgrade } = useUpgradeDialog();
+
+const handleAddClick = () => {
+    if (!canConnectSocialAccount.value) {
+        openUpgrade(trans('billing.upgrade_dialog.reasons.social_account_limit'));
+        return;
+    }
+    isAddDialogOpen.value = true;
+};
 
 const search = debounce(() => {
     router.get(
@@ -129,7 +142,7 @@ const handleDisconnect = (accountId: string) => {
                     />
                 </div>
 
-                <Button @click="isAddDialogOpen = true">
+                <Button @click="handleAddClick">
                     {{ $t('accounts.add_social') }}
                 </Button>
             </div>

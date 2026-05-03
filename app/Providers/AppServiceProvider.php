@@ -20,6 +20,7 @@ use App\Enums\SocialAccount\Platform;
 use App\Listeners\StripeEventListener;
 use App\Models\Account;
 use App\Models\AiUsageLog;
+use App\Models\ApiToken;
 use App\Models\Invite;
 use App\Models\Media;
 use App\Models\Notification;
@@ -33,6 +34,7 @@ use App\Models\Subscription;
 use App\Models\SubscriptionItem;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceInvite;
 use App\Models\WorkspaceLabel;
 use App\Models\WorkspaceSignature;
 use App\Services\PostTemplate\Registry as PostTemplateRegistry;
@@ -149,11 +151,12 @@ class AppServiceProvider extends ServiceProvider
         Relation::enforceMorphMap([
             'account' => Account::class,
             'aiUsageLog' => AiUsageLog::class,
+            'apiToken' => ApiToken::class,
             'invite' => Invite::class,
             'media' => Media::class,
             'notification' => Notification::class,
-            'plan' => Plan::class,
             'notificationPreference' => NotificationPreference::class,
+            'plan' => Plan::class,
             'post' => Post::class,
             'postComment' => PostComment::class,
             'postPlatform' => PostPlatform::class,
@@ -162,8 +165,9 @@ class AppServiceProvider extends ServiceProvider
             'subscriptionItem' => SubscriptionItem::class,
             'user' => User::class,
             'workspace' => Workspace::class,
-            'workspaceSignature' => WorkspaceSignature::class,
+            'workspaceInvite' => WorkspaceInvite::class,
             'workspaceLabel' => WorkspaceLabel::class,
+            'workspaceSignature' => WorkspaceSignature::class,
         ]);
     }
 

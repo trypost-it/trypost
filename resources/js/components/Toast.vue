@@ -1,46 +1,56 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { computed, onMounted, watch } from 'vue';
+import { onMounted, watch } from 'vue';
 import { toast } from 'vue-sonner';
 
 import { Toaster } from '@/components/ui/sonner';
 
-const page = usePage();
-const style = computed(() => (page.props.flash as Record<string, string>)?.bannerStyle || 'success');
-const message = computed(() => (page.props.flash as Record<string, string>)?.banner || '');
+interface Flash {
+    banner?: string;
+    bannerStyle?: 'success' | 'danger' | 'warning' | 'info';
+    success?: string;
+    error?: string;
+    warning?: string;
+    info?: string;
+}
 
-const showToast = (msg: string) => {
-    switch (style.value) {
-        case 'success':
-            toast.success(msg);
-            break;
-        case 'danger':
-            toast.error(msg);
-            break;
-        case 'warning':
-            toast.warning(msg);
-            break;
-        case 'info':
-            toast.info(msg);
-            break;
-        default:
-            toast(msg);
+const page = usePage();
+
+const showFlash = (flash: Flash | undefined) => {
+    if (!flash) return;
+
+    if (flash.banner) {
+        switch (flash.bannerStyle) {
+            case 'danger':
+                toast.error(flash.banner);
+                break;
+            case 'warning':
+                toast.warning(flash.banner);
+                break;
+            case 'info':
+                toast.info(flash.banner);
+                break;
+            case 'success':
+            default:
+                toast.success(flash.banner);
+        }
     }
+
+    if (flash.success) toast.success(flash.success);
+    if (flash.error) toast.error(flash.error);
+    if (flash.warning) toast.warning(flash.warning);
+    if (flash.info) toast.info(flash.info);
 };
 
-// Show flash on initial page load (after Toaster is mounted)
 onMounted(() => {
-    if (message.value) {
-        showToast(message.value);
-    }
+    showFlash(page.props.flash as Flash | undefined);
 });
 
-// Show flash on SPA navigation (Inertia visits)
-watch(() => page.props.flash, () => {
-    if (message.value) {
-        showToast(message.value);
-    }
-}, { deep: true });
+watch(
+    () => page.props.flash,
+    (flash) => showFlash(flash as Flash | undefined),
+    { deep: true },
+);
 </script>
 
 <template>

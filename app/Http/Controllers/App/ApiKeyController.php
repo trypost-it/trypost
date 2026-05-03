@@ -24,7 +24,7 @@ class ApiKeyController extends Controller
 
         $this->authorize('manageTeam', $workspace);
 
-        return Inertia::render('settings/ApiKeys', [
+        return Inertia::render('settings/workspace/ApiKeys', [
             'workspace' => $workspace,
             'apiTokens' => $workspace->apiTokens()->latest()->get(),
         ]);

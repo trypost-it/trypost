@@ -16,14 +16,13 @@ test('monthly count returns correct count for account and type', function () {
         'workspace_id' => $workspace->id,
     ]);
 
-    AiUsageLog::factory()->video()->count(2)->create([
+    AiUsageLog::factory()->text()->count(2)->create([
         'account_id' => $account->id,
         'workspace_id' => $workspace->id,
     ]);
 
     expect(AiUsageLog::monthlyCount($account->id, UsageType::Image))->toBe(3);
-    expect(AiUsageLog::monthlyCount($account->id, UsageType::Video))->toBe(2);
-    expect(AiUsageLog::monthlyCount($account->id, UsageType::Audio))->toBe(0);
+    expect(AiUsageLog::monthlyCount($account->id, UsageType::Text))->toBe(2);
 });
 
 test('monthly count excludes logs from other months', function () {

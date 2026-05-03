@@ -6,7 +6,6 @@ namespace App\Http\Controllers\App\Settings;
 
 use App\Enums\Ai\UsageType;
 use App\Features\AiImagesLimit;
-use App\Features\AiVideosLimit;
 use App\Features\DataRetentionDays;
 use App\Features\MemberLimit;
 use App\Features\SocialAccountLimit;
@@ -39,7 +38,7 @@ class UsageController extends Controller
             $totalSocialAccounts += $workspace->socialAccounts()->count();
         }
 
-        return Inertia::render('settings/Usage', [
+        return Inertia::render('settings/account/Usage', [
             'plan' => $account->plan,
             'usage' => [
                 'workspaceCount' => $account->workspaces()->count(),
@@ -50,8 +49,7 @@ class UsageController extends Controller
                 'memberLimit' => Feature::for($account)->value(MemberLimit::class),
                 'aiImagesUsed' => AiUsageLog::monthlyCount($account->id, UsageType::Image),
                 'aiImagesLimit' => Feature::for($account)->value(AiImagesLimit::class),
-                'aiVideosUsed' => AiUsageLog::monthlyCount($account->id, UsageType::Video),
-                'aiVideosLimit' => Feature::for($account)->value(AiVideosLimit::class),
+                'aiTextUsed' => AiUsageLog::monthlyCount($account->id, UsageType::Text),
                 'dataRetentionDays' => Feature::for($account)->value(DataRetentionDays::class),
             ],
         ]);

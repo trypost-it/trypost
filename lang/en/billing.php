@@ -23,7 +23,6 @@ return [
             'workspaces' => ':count workspaces',
             'members' => ':count team members',
             'ai_images' => ':count AI images/mo',
-            'ai_videos' => ':count AI videos/mo',
             'data_retention' => ':days data retention',
         ],
     ],

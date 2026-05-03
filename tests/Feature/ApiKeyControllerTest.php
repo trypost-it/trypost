@@ -22,7 +22,7 @@ it('shows api keys page', function () {
         ->get(route('app.api-keys.index'))
         ->assertOk()
         ->assertInertia(fn ($page) => $page
-            ->component('settings/ApiKeys')
+            ->component('settings/workspace/ApiKeys')
             ->has('apiTokens', 1)
         );
 });

@@ -181,14 +181,15 @@ return [
         'review' => [
             'button_tooltip' => 'Review with AI',
             'title' => 'Review post with AI',
-            'description' => 'AI scans for grammar, spelling, and clarity issues. Apply suggestions one by one.',
+            'description' => 'AI scans for grammar, spelling, and clarity. Apply the suggestions you agree with.',
             'loading' => 'Reviewing your text...',
             'no_issues' => 'No issues found. Looks good.',
             'original' => 'Original',
             'suggestion' => 'Suggestion',
             'apply' => 'Apply',
+            'apply_all' => 'Apply all',
             'applied' => 'Applied',
-            'close' => 'Close',
+            'cancel' => 'Cancel',
         ],
     ],
 

@@ -86,7 +86,7 @@ test('billing index shows billing dashboard', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('billing/Index', false)
+        ->component('settings/account/Billing', false)
         ->has('hasSubscription')
         ->has('plan')
         ->has('plans')

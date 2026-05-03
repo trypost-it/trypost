@@ -45,7 +45,7 @@ test('members page shows members and invites', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('settings/Members', false)
+        ->component('settings/workspace/Members', false)
         ->has('workspace')
         ->has('members')
         ->has('invites')

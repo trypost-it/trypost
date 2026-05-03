@@ -59,7 +59,6 @@ test('integer fields are cast correctly', function () {
         ->and($plan->member_limit)->toBeInt()
         ->and($plan->workspace_limit)->toBeInt()
         ->and($plan->ai_images_limit)->toBeInt()
-        ->and($plan->ai_videos_limit)->toBeInt()
         ->and($plan->data_retention_days)->toBeInt()
         ->and($plan->sort)->toBeInt();
 });

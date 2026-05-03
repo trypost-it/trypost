@@ -28,7 +28,6 @@ class Plan extends Model
         'member_limit',
         'workspace_limit',
         'ai_images_limit',
-        'ai_videos_limit',
         'data_retention_days',
         'sort',
         'is_archived',
@@ -45,7 +44,6 @@ class Plan extends Model
             'member_limit' => 'integer',
             'workspace_limit' => 'integer',
             'ai_images_limit' => 'integer',
-            'ai_videos_limit' => 'integer',
             'data_retention_days' => 'integer',
             'sort' => 'integer',
         ];

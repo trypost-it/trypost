@@ -28,5 +28,6 @@ return [
     ],
 
     'cancel' => 'Cancel',
+    'clear' => 'Clear',
     'loading_more' => 'Loading more...',
 ];

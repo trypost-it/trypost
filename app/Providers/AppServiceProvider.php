@@ -35,6 +35,7 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceHashtag;
 use App\Models\WorkspaceLabel;
+use App\Services\PostTemplate\Registry as PostTemplateRegistry;
 use App\Socialite\InstagramProvider;
 use App\Socialite\LinkedInPageExtendSocialite;
 use Carbon\CarbonImmutable;
@@ -76,6 +77,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(PostTemplateRegistry::class);
+
         if ($this->app->environment('local') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
             $this->app->register(TelescopeServiceProvider::class);

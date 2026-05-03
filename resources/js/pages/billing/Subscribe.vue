@@ -21,7 +21,6 @@ interface Plan {
     member_limit: number;
     workspace_limit: number;
     ai_images_limit: number;
-    ai_videos_limit: number;
     data_retention_days: number;
 }
 
@@ -69,7 +68,6 @@ const features = (plan: Plan): string[] => [
     trans('billing.subscribe.features.workspaces', { count: String(plan.workspace_limit) }),
     trans('billing.subscribe.features.members', { count: String(plan.member_limit) }),
     trans('billing.subscribe.features.ai_images', { count: String(plan.ai_images_limit) }),
-    trans('billing.subscribe.features.ai_videos', { count: String(plan.ai_videos_limit) }),
     trans('billing.subscribe.features.data_retention', { days: formatRetention(plan.data_retention_days) }),
 ];
 

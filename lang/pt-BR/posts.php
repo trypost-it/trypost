@@ -181,14 +181,15 @@ return [
         'review' => [
             'button_tooltip' => 'Revisar com IA',
             'title' => 'Revisar post com IA',
-            'description' => 'IA analisa gramática, ortografia e clareza. Aplique as sugestões uma a uma.',
+            'description' => 'A IA analisa gramática, ortografia e clareza. Aplique as sugestões com as quais você concorda.',
             'loading' => 'Revisando seu texto...',
             'no_issues' => 'Nenhum problema encontrado. Tudo certo.',
             'original' => 'Original',
             'suggestion' => 'Sugestão',
             'apply' => 'Aplicar',
-            'applied' => 'Aplicado',
-            'close' => 'Fechar',
+            'apply_all' => 'Aplicar todas',
+            'applied' => 'Aplicada',
+            'cancel' => 'Cancelar',
         ],
     ],
 

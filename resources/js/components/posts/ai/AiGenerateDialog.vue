@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { IconLoader2, IconRefresh, IconSparkles, IconWriting } from '@tabler/icons-vue';
+import { useHttp } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAiStream } from '@/composables/useAiStream';
 import { generate as generatePostAi } from '@/routes/app/posts/ai';
@@ -23,32 +24,22 @@ const prompt = ref('');
 const dispatching = ref(false);
 const { text, status, errorMessage, subscribe, unsubscribe, reset } = useAiStream();
 
-const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+const httpGenerate = useHttp<{ prompt: string; current_content: string | null }>({
+    prompt: '',
+    current_content: null,
+});
 
 const startGeneration = async () => {
     if (! prompt.value.trim()) return;
     dispatching.value = true;
+    httpGenerate.prompt = prompt.value;
+    httpGenerate.current_content = props.currentContent || null;
     try {
-        const response = await fetch(generatePostAi.url(props.postId), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify({
-                prompt: prompt.value,
-                current_content: props.currentContent || null,
-            }),
-        });
-        if (! response.ok) {
-            status.value = 'failed';
-            errorMessage.value = 'Could not start generation';
-            return;
-        }
-        const data = await response.json();
+        const data = (await httpGenerate.post(generatePostAi.url(props.postId))) as { channel: string };
         subscribe(data.channel);
+    } catch {
+        status.value = 'failed';
+        errorMessage.value = 'Could not start generation';
     } finally {
         dispatching.value = false;
     }
@@ -68,14 +59,10 @@ const retry = () => {
 const canApply = computed(() => status.value === 'completed' && text.value.trim().length > 0);
 const canRetry = computed(() => status.value === 'completed' || status.value === 'failed');
 
-watch(open, (isOpen) => {
-    if (! isOpen) {
-        unsubscribe();
-        reset();
-        prompt.value = '';
-    } else {
-        prompt.value = props.currentContent || '';
-    }
+watch(open, () => {
+    unsubscribe();
+    reset();
+    prompt.value = '';
 });
 </script>
 
@@ -83,17 +70,15 @@ watch(open, (isOpen) => {
     <Dialog v-model:open="open">
         <DialogContent class="sm:max-w-2xl">
             <DialogHeader>
-                <DialogTitle class="flex items-center gap-2">
-                    <IconSparkles class="size-5 text-primary" />
-                    {{ $t('posts.ai.generate.title') }}
-                </DialogTitle>
+                <DialogTitle>{{ $t('posts.ai.generate.title') }}</DialogTitle>
                 <DialogDescription>{{ $t('posts.ai.generate.description') }}</DialogDescription>
             </DialogHeader>
 
             <div class="space-y-4">
-                <div class="space-y-2">
-                    <label class="text-sm font-medium">{{ $t('posts.ai.generate.prompt_label') }}</label>
+                <div class="grid gap-2">
+                    <Label for="ai-generate-prompt">{{ $t('posts.ai.generate.prompt_label') }}</Label>
                     <Textarea
+                        id="ai-generate-prompt"
                         v-model="prompt"
                         :placeholder="$t('posts.ai.generate.prompt_placeholder')"
                         :disabled="status === 'streaming'"
@@ -101,35 +86,26 @@ watch(open, (isOpen) => {
                     />
                 </div>
 
-                <div v-if="status !== 'idle'" class="space-y-2">
-                    <label class="flex items-center gap-1.5 text-sm font-medium">
-                        <IconWriting class="size-4 text-muted-foreground" />
-                        {{ $t('posts.ai.generate.preview_label') }}
-                        <IconLoader2 v-if="status === 'streaming'" class="size-3.5 animate-spin text-muted-foreground" />
-                    </label>
+                <div v-if="status !== 'idle'" class="grid gap-2">
+                    <Label>{{ $t('posts.ai.generate.preview_label') }}</Label>
                     <div class="min-h-[120px] whitespace-pre-wrap rounded-md border bg-muted/30 px-3 py-2 text-sm">{{ text || '...' }}</div>
                     <p v-if="status === 'failed'" class="text-xs text-destructive">{{ errorMessage }}</p>
                 </div>
             </div>
 
-            <DialogFooter class="gap-2 sm:gap-2">
-                <Button v-if="canRetry" variant="outline" @click="retry">
-                    <IconRefresh class="size-4" />
-                    {{ $t('posts.ai.generate.retry') }}
-                </Button>
+            <DialogFooter>
                 <Button
                     v-if="status === 'idle'"
                     :disabled="! prompt.trim() || dispatching"
                     @click="startGeneration"
                 >
-                    <IconSparkles class="size-4" />
                     {{ $t('posts.ai.generate.start') }}
                 </Button>
-                <Button
-                    v-if="canApply"
-                    @click="apply"
-                >
+                <Button v-if="canApply" @click="apply">
                     {{ $t('posts.ai.generate.apply') }}
+                </Button>
+                <Button v-if="canRetry" variant="secondary" @click="retry">
+                    {{ $t('posts.ai.generate.retry') }}
                 </Button>
                 <Button variant="outline" @click="open = false">
                     {{ $t('posts.ai.generate.cancel') }}

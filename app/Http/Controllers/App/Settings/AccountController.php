@@ -19,7 +19,7 @@ class AccountController extends Controller
 
         $account = $request->user()->account;
 
-        return Inertia::render('settings/Account', [
+        return Inertia::render('settings/account/Account', [
             'account' => [
                 'id' => $account->id,
                 'name' => $account->name,

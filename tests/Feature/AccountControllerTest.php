@@ -35,7 +35,7 @@ test('account edit shows account settings with billing email when not self hoste
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('settings/Account', false)
+        ->component('settings/account/Account', false)
         ->where('selfHosted', false)
         ->has('account.billing_email')
     );
@@ -48,7 +48,7 @@ test('account edit shows self hosted flag when self hosted', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('settings/Account', false)
+        ->component('settings/account/Account', false)
         ->where('selfHosted', true)
     );
 });

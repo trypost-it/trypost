@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Image;
 
+use App\Enums\Ai\UsageType;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
+use App\Services\Ai\RecordAiUsage;
 use App\Services\Unsplash\UnsplashClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -96,8 +98,9 @@ class TemplateImageGenerator
         $handleBaselineY = $smallDividerY + 30 + (int) round($handleSize * 0.82);
 
         if ($fontMedium && $handle !== '') {
-            // Handle at 0.8 opacity over bg — slightly muted accent.
-            $handleColor = $this->blendHex($brandColor, $bgColor, 0.8);
+            // @handle uses text_color blended with the bg at 0.8 opacity —
+            // legible on any brand palette, slightly muted vs the display name.
+            $handleColor = $this->blendHex($textColor, $bgColor, 0.8);
             $handleWidth = $this->measureLetterSpacedWidth($handle, $fontMedium, $handleSize, 1);
             $handleX = (int) (($this->width - $handleWidth) / 2);
             $this->drawTextAt($core, $handle, $fontMedium, $handleSize, $handleColor, $handleX, $handleBaselineY, letterSpacing: 1);
@@ -105,6 +108,17 @@ class TemplateImageGenerator
 
         $filename = 'ai-images/'.uniqid('slide_', true).'.webp';
         Storage::put($filename, (string) $canvas->encode(new WebpEncoder(quality: 85)));
+
+        RecordAiUsage::record(
+            workspace: $workspace,
+            type: UsageType::Image,
+            provider: 'internal',
+            metadata: [
+                'template' => 'C',
+                'width' => $this->width,
+                'height' => $this->height,
+            ],
+        );
 
         return $filename;
     }
@@ -147,6 +161,17 @@ class TemplateImageGenerator
 
         $filename = 'ai-images/'.uniqid('slide_', true).'.webp';
         Storage::put($filename, (string) $canvas->encode(new WebpEncoder(quality: 85)));
+
+        RecordAiUsage::record(
+            workspace: $workspace,
+            type: UsageType::Image,
+            provider: 'internal',
+            metadata: [
+                'template' => $template,
+                'width' => $this->width,
+                'height' => $this->height,
+            ],
+        );
 
         return $filename;
     }

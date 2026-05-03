@@ -141,7 +141,7 @@ class WorkspaceController extends Controller
 
         $this->authorize('update', $workspace);
 
-        return Inertia::render('settings/Workspace', [
+        return Inertia::render('settings/workspace/Workspace', [
             'workspace' => $workspace,
         ]);
     }
@@ -157,7 +157,7 @@ class WorkspaceController extends Controller
 
         $this->authorize('update', $workspace);
 
-        return Inertia::render('settings/Brand', [
+        return Inertia::render('settings/workspace/Brand', [
             'workspace' => $workspace,
             'availableFonts' => BrandFont::values(),
         ]);

@@ -17,8 +17,7 @@ interface Usage {
     memberLimit: number;
     aiImagesUsed: number;
     aiImagesLimit: number;
-    aiVideosUsed: number;
-    aiVideosLimit: number;
+    aiTextUsed: number;
     dataRetentionDays: number;
 }
 
@@ -91,9 +90,8 @@ const formatRetention = (days: number): string => {
                     />
 
                     <UsageMetricRow
-                        :label="$t('usage.ai_videos')"
-                        :current="usage.aiVideosUsed"
-                        :limit="usage.aiVideosLimit"
+                        :label="$t('usage.ai_text')"
+                        :current="usage.aiTextUsed"
                     />
                 </div>
             </section>

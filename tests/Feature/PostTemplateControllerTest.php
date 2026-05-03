@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Enums\UserWorkspace\Role;
 use App\Models\Account;
-use App\Models\PostTemplate;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
@@ -37,51 +36,38 @@ beforeEach(function () {
     ]);
 });
 
-test('index returns global templates', function () {
-    PostTemplate::factory()->count(3)->create();
-
+test('index returns templates from the registry', function () {
     $this->actingAs($this->user)
-        ->getJson(route('app.post-templates.index'))
+        ->get(route('app.post-templates.index'))
         ->assertOk()
-        ->assertJsonCount(3, 'templates');
+        ->assertInertia(fn ($page) => $page
+            ->component('posts/templates/Index')
+            ->has('templates.data')
+        );
 });
 
 test('index requires authentication', function () {
-    $this->getJson(route('app.post-templates.index'))
-        ->assertUnauthorized();
+    $this->get(route('app.post-templates.index'))
+        ->assertRedirect(route('login'));
 });
 
 test('index filters by platform', function () {
-    PostTemplate::factory()->create(['platform' => 'instagram_carousel']);
-    PostTemplate::factory()->create(['platform' => 'linkedin_post']);
-
     $this->actingAs($this->user)
-        ->getJson(route('app.post-templates.index', ['platform' => 'instagram_carousel']))
+        ->get(route('app.post-templates.index', ['platform' => 'instagram_carousel']))
         ->assertOk()
-        ->assertJsonCount(1, 'templates');
-});
-
-test('index filters by category', function () {
-    PostTemplate::factory()->create(['category' => 'product_launch']);
-    PostTemplate::factory()->create(['category' => 'educational']);
-    PostTemplate::factory()->create(['category' => 'educational']);
-
-    $this->actingAs($this->user)
-        ->getJson(route('app.post-templates.index', ['category' => 'educational']))
-        ->assertOk()
-        ->assertJsonCount(2, 'templates');
+        ->assertInertia(fn ($page) => $page
+            ->component('posts/templates/Index')
+            ->where('templates.data', fn ($templates) => collect($templates)->every(
+                fn ($t) => $t['platform'] === 'instagram_carousel'
+            ))
+        );
 });
 
 test('apply creates post and returns post_id and redirect_url', function () {
     Http::fake(['api.unsplash.com/*' => Http::response(['results' => []])]);
 
-    $template = PostTemplate::factory()->create([
-        'content' => 'Hello {{brand_name}}',
-        'slides' => null,
-    ]);
-
     $response = $this->actingAs($this->user)
-        ->postJson(route('app.post-templates.apply', $template))
+        ->postJson(route('app.post-templates.apply', 'success_story'))
         ->assertOk();
 
     expect($response->json('post_id'))->toBeString();
@@ -93,19 +79,17 @@ test('apply interpolates brand_name in content', function () {
 
     $this->workspace->update(['name' => 'Acme Corp']);
 
-    $template = PostTemplate::factory()->create([
-        'content' => 'Welcome to {{brand_name}}!',
-        'slides' => null,
-    ]);
-
+    // success_story template content references {{brand_name}}
     $this->actingAs($this->user)
-        ->postJson(route('app.post-templates.apply', $template))
+        ->postJson(route('app.post-templates.apply', 'success_story'))
         ->assertOk();
 
     $this->assertDatabaseHas('posts', [
         'workspace_id' => $this->workspace->id,
-        'content' => 'Welcome to Acme Corp!',
     ]);
+
+    $post = $this->workspace->posts()->latest()->first();
+    expect($post->content)->toContain('Acme Corp');
 });
 
 test('apply rejects cross-workspace social_account_id', function () {
@@ -121,20 +105,22 @@ test('apply rejects cross-workspace social_account_id', function () {
         'workspace_id' => $otherWorkspace->id,
     ]);
 
-    $template = PostTemplate::factory()->create(['slides' => null]);
-
     $this->actingAs($this->user)
-        ->postJson(route('app.post-templates.apply', $template), [
+        ->postJson(route('app.post-templates.apply', 'success_story'), [
             'social_account_id' => $foreignSocialAccount->id,
         ])
         ->assertForbidden();
 });
 
 test('apply requires authentication', function () {
-    $template = PostTemplate::factory()->create();
-
-    $this->postJson(route('app.post-templates.apply', $template))
+    $this->postJson(route('app.post-templates.apply', 'success_story'))
         ->assertUnauthorized();
+});
+
+test('apply returns 404 for unknown slug', function () {
+    $this->actingAs($this->user)
+        ->postJson(route('app.post-templates.apply', 'this-slug-does-not-exist'))
+        ->assertNotFound();
 });
 
 test('apply with slides creates post even when image rendering fails', function () {
@@ -145,16 +131,8 @@ test('apply with slides creates post even when image rendering fails', function 
         'workspace_id' => $this->workspace->id,
     ]);
 
-    $template = PostTemplate::factory()->create([
-        'content' => 'Test post',
-        'slides' => [
-            ['title' => 'Slide 1', 'body' => 'Body 1', 'image_keywords' => ['test']],
-        ],
-        'image_count' => 1,
-    ]);
-
     $response = $this->actingAs($this->user)
-        ->postJson(route('app.post-templates.apply', $template), [
+        ->postJson(route('app.post-templates.apply', 'feature_launch_carousel'), [
             'social_account_id' => $socialAccount->id,
         ])
         ->assertOk();

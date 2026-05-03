@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Jobs\Ai;
 
 use App\Ai\Agents\PostContentStreamer;
+use App\Enums\Ai\UsageType;
 use App\Models\Workspace;
+use App\Services\Ai\RecordAiUsage;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -41,6 +43,14 @@ class StreamPostContent implements ShouldQueue
 
         try {
             $agent->broadcast($this->prompt, $channel, now: true);
+
+            RecordAiUsage::record(
+                workspace: $workspace,
+                type: UsageType::Text,
+                provider: (string) config('ai.default'),
+                userId: $this->userId,
+                metadata: ['agent' => 'post_streamer'],
+            );
         } catch (\Throwable $e) {
             Log::error('PostContentGenerator stream failed', [
                 'generation_id' => $this->generationId,

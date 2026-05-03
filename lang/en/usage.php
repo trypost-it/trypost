@@ -14,7 +14,7 @@ return [
     'social_accounts' => 'Social Accounts',
     'members' => 'Members',
     'ai_images' => 'Images',
-    'ai_videos' => 'Videos',
+    'ai_text' => 'Text generation',
     'data_retention' => 'Data Retention',
 
     'unlimited' => 'Unlimited',

@@ -173,7 +173,7 @@ test('workspace settings shows the workspace settings page', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('settings/Workspace', false)
+        ->component('settings/workspace/Workspace', false)
         ->has('workspace')
     );
 });
@@ -183,7 +183,7 @@ test('brand settings shows the brand settings page', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('settings/Brand', false)
+        ->component('settings/workspace/Brand', false)
         ->has('workspace')
     );
 });

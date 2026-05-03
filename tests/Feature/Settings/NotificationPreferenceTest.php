@@ -32,7 +32,7 @@ test('notification preferences page renders', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('settings/Notifications')
+        ->component('settings/profile/Notifications')
         ->has('preferences')
     );
 });

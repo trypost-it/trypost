@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Mcp\Servers;
 
 use App\Mcp\Tools\Ai\GenerateImageTool;
-use App\Mcp\Tools\Ai\GenerateVideoTool;
 use App\Mcp\Tools\ApiKey\CreateApiKeyTool;
 use App\Mcp\Tools\ApiKey\DeleteApiKeyTool;
 use App\Mcp\Tools\ApiKey\ListApiKeysTool;
@@ -69,7 +68,6 @@ class TryPostServer extends Server
 
         // AI generation
         GenerateImageTool::class,
-        GenerateVideoTool::class,
     ];
 
     protected array $resources = [];

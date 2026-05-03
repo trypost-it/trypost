@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconCheck, IconLoader2, IconWriting } from '@tabler/icons-vue';
+import { useHttp } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ const suggestions = ref<Suggestion[]>([]);
 const appliedSet = ref<Set<number>>(new Set());
 const errorMessage = ref<string | null>(null);
 
-const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+const httpReview = useHttp<{ content: string }>({ content: '' });
 
 const startReview = async () => {
     status.value = 'loading';
@@ -36,23 +36,11 @@ const startReview = async () => {
     appliedSet.value = new Set();
     errorMessage.value = null;
 
+    httpReview.content = props.content;
     try {
-        const response = await fetch(reviewPostAi.url(props.postId), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify({ content: props.content }),
-        });
-        if (!response.ok) {
-            status.value = 'failed';
-            errorMessage.value = 'Could not review';
-            return;
-        }
-        const data = await response.json();
+        const data = (await httpReview.post(reviewPostAi.url(props.postId))) as {
+            suggestions?: Suggestion[];
+        };
         suggestions.value = data.suggestions ?? [];
         status.value = 'completed';
     } catch {
@@ -69,14 +57,30 @@ const applySuggestion = (index: number, s: Suggestion) => {
     appliedSet.value = next;
 };
 
+const applyAll = () => {
+    suggestions.value.forEach((s, idx) => {
+        if (! appliedSet.value.has(idx)) {
+            emit('apply', s.original, s.suggestion);
+        }
+    });
+    appliedSet.value = new Set(suggestions.value.map((_, idx) => idx));
+    open.value = false;
+};
+
 const noIssues = computed(() => status.value === 'completed' && suggestions.value.length === 0);
+const hasSuggestions = computed(() => status.value === 'completed' && suggestions.value.length > 0);
+const allApplied = computed(
+    () => suggestions.value.length > 0 && appliedSet.value.size === suggestions.value.length,
+);
 
 watch(open, (isOpen) => {
-    if (isOpen) startReview();
-    else {
+    if (isOpen) {
+        startReview();
+    } else {
         status.value = 'idle';
         suggestions.value = [];
         appliedSet.value = new Set();
+        errorMessage.value = null;
     }
 });
 </script>
@@ -85,47 +89,63 @@ watch(open, (isOpen) => {
     <Dialog v-model:open="open">
         <DialogContent class="sm:max-w-2xl">
             <DialogHeader>
-                <DialogTitle class="flex items-center gap-2">
-                    <IconWriting class="size-5 text-primary" />
-                    {{ $t('posts.ai.review.title') }}
-                </DialogTitle>
+                <DialogTitle>{{ $t('posts.ai.review.title') }}</DialogTitle>
                 <DialogDescription>{{ $t('posts.ai.review.description') }}</DialogDescription>
             </DialogHeader>
 
-            <div v-if="status === 'loading'" class="flex items-center gap-2 py-8 text-sm text-muted-foreground">
-                <IconLoader2 class="size-4 animate-spin" />
+            <p v-if="status === 'loading'" class="py-8 text-center text-sm text-muted-foreground">
                 {{ $t('posts.ai.review.loading') }}
-            </div>
+            </p>
 
             <p v-else-if="status === 'failed'" class="py-4 text-sm text-destructive">{{ errorMessage }}</p>
 
-            <p v-else-if="noIssues" class="py-4 text-sm text-muted-foreground">{{ $t('posts.ai.review.no_issues') }}</p>
+            <p v-else-if="noIssues" class="py-8 text-center text-sm text-muted-foreground">
+                {{ $t('posts.ai.review.no_issues') }}
+            </p>
 
-            <ul v-else-if="suggestions.length > 0" class="max-h-[400px] space-y-3 overflow-y-auto">
-                <li
+            <div v-else-if="suggestions.length > 0" class="max-h-[400px] space-y-2 overflow-y-auto pr-1">
+                <article
                     v-for="(s, idx) in suggestions"
                     :key="idx"
-                    class="rounded-md border bg-card p-3"
-                    :class="appliedSet.has(idx) ? 'opacity-60' : ''"
+                    class="rounded-md border bg-card px-4 py-3 transition-opacity"
+                    :class="appliedSet.has(idx) ? 'opacity-50' : ''"
                 >
-                    <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ $t('posts.ai.review.original') }}</p>
-                    <p class="mb-2 text-sm line-through opacity-75">{{ s.original }}</p>
-                    <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ $t('posts.ai.review.suggestion') }}</p>
-                    <p class="mb-2 text-sm font-medium">{{ s.suggestion }}</p>
-                    <p class="mb-3 text-xs text-muted-foreground">{{ s.reason }}</p>
-                    <Button
-                        size="sm"
-                        :disabled="appliedSet.has(idx)"
-                        @click="applySuggestion(idx, s)"
-                    >
-                        <IconCheck class="size-4" />
-                        {{ appliedSet.has(idx) ? $t('posts.ai.review.applied') : $t('posts.ai.review.apply') }}
-                    </Button>
-                </li>
-            </ul>
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1 space-y-1.5">
+                            <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-relaxed">
+                                <span class="rounded bg-destructive/15 px-1.5 py-0.5 text-destructive line-through decoration-destructive/50">
+                                    {{ s.original }}
+                                </span>
+                                <span class="text-muted-foreground">→</span>
+                                <span class="rounded bg-emerald-500/15 px-1.5 py-0.5 font-medium text-emerald-700 dark:text-emerald-400">
+                                    {{ s.suggestion }}
+                                </span>
+                            </p>
+                            <p class="text-xs text-muted-foreground">{{ s.reason }}</p>
+                        </div>
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            :disabled="appliedSet.has(idx)"
+                            @click="applySuggestion(idx, s)"
+                        >
+                            {{ appliedSet.has(idx) ? $t('posts.ai.review.applied') : $t('posts.ai.review.apply') }}
+                        </Button>
+                    </div>
+                </article>
+            </div>
 
             <DialogFooter>
-                <Button variant="outline" @click="open = false">{{ $t('posts.ai.review.close') }}</Button>
+                <Button
+                    v-if="hasSuggestions"
+                    :disabled="allApplied"
+                    @click="applyAll"
+                >
+                    {{ $t('posts.ai.review.apply_all') }}
+                </Button>
+                <Button variant="outline" @click="open = false">
+                    {{ $t('posts.ai.review.cancel') }}
+                </Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>

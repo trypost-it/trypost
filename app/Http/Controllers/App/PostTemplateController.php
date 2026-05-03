@@ -8,10 +8,10 @@ use App\Actions\Post\CreatePost;
 use App\Enums\Media\Type as MediaType;
 use App\Http\Resources\App\PostTemplateResource;
 use App\Models\Media;
-use App\Models\PostTemplate;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Services\Image\TemplateImageGenerator;
+use App\Services\PostTemplate\Registry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +21,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PostTemplateController extends Controller
 {
+    public function __construct(private readonly Registry $registry) {}
+
     public function index(Request $request): InertiaResponse
     {
         $request->validate([
@@ -28,20 +30,18 @@ class PostTemplateController extends Controller
             'search' => ['nullable', 'string', 'max:120'],
         ]);
 
-        $templates = PostTemplate::query()
-            ->when($request->input('platform'), fn ($q, $p) => $q->where('platform', $p))
-            ->when($request->input('search'), function ($q, $search) {
-                $q->where(function ($inner) use ($search): void {
-                    $inner->where('name', 'ilike', "%{$search}%")
-                        ->orWhere('description', 'ilike', "%{$search}%");
-                });
-            })
-            ->orderBy('category')
-            ->orderBy('name')
-            ->paginate(config('app.pagination.default'));
+        $paginator = $this->registry->paginate(
+            locale: app()->getLocale(),
+            platform: $request->input('platform'),
+            search: $request->input('search'),
+            perPage: (int) config('app.pagination.default'),
+            page: (int) $request->input('page', 1),
+            path: $request->url(),
+            query: $request->query(),
+        );
 
         return Inertia::render('posts/templates/Index', [
-            'templates' => Inertia::scroll(fn () => PostTemplateResource::collection($templates)),
+            'templates' => Inertia::scroll(fn () => PostTemplateResource::collection($paginator)),
             'filters' => [
                 'search' => $request->input('search', ''),
                 'platform' => $request->input('platform', ''),
@@ -49,7 +49,7 @@ class PostTemplateController extends Controller
         ]);
     }
 
-    public function apply(Request $request, PostTemplate $template, TemplateImageGenerator $generator): JsonResponse
+    public function apply(Request $request, string $slug, TemplateImageGenerator $generator): JsonResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -59,6 +59,8 @@ class PostTemplateController extends Controller
             'social_account_id' => ['nullable', 'uuid'],
         ]);
 
+        $template = $this->registry->find($slug, app()->getLocale());
+
         $socialAccountId = $request->input('social_account_id');
         $socialAccount = null;
 
@@ -67,9 +69,7 @@ class PostTemplateController extends Controller
                 ->where('workspace_id', $workspace->id)
                 ->first();
 
-            if (! $socialAccount) {
-                abort(Response::HTTP_FORBIDDEN);
-            }
+            abort_if($socialAccount === null, Response::HTTP_FORBIDDEN);
         }
 
         $content = $this->interpolate($template->content, $workspace);
@@ -78,9 +78,8 @@ class PostTemplateController extends Controller
 
         if ($socialAccount && $template->slides) {
             foreach ($template->slides as $i => $slide) {
-                // First slide is always Template A (full-bleed cover); subsequent slides
-                // alternate so even-indexed are A and odd-indexed are B.
-                $tmpl = $i === 0 ? 'A' : ($i % 2 === 0 ? 'A' : 'B');
+                // Even-indexed slides use Template A (full-bleed cover); odd-indexed slides use Template B.
+                $tmpl = $i % 2 === 0 ? 'A' : 'B';
                 $path = $generator->render(
                     template: $tmpl,
                     workspace: $workspace,

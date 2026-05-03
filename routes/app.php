@@ -130,7 +130,7 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::delete('settings/workspace/logo', [WorkspaceController::class, 'deleteLogo'])->name('app.workspace.delete-logo');
 
     // Brand settings
-    Route::get('settings/brand', [WorkspaceController::class, 'brandSettings'])->name('app.workspace.brand');
+    Route::get('settings/workspace/brand', [WorkspaceController::class, 'brandSettings'])->name('app.workspace.brand');
 
     // Social Accounts
     Route::get('accounts', [SocialController::class, 'index'])->name('app.accounts');
@@ -156,7 +156,7 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
 
     // Post Templates
     Route::get('post-templates', [PostTemplateController::class, 'index'])->name('app.post-templates.index');
-    Route::post('post-templates/{template}/apply', [PostTemplateController::class, 'apply'])->name('app.post-templates.apply');
+    Route::post('post-templates/{slug}/apply', [PostTemplateController::class, 'apply'])->name('app.post-templates.apply');
 
     // Post AI
     Route::post('posts/{post}/ai/generate', [PostAiGenerateController::class, 'generate'])->name('app.posts.ai.generate');
@@ -172,11 +172,11 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::post('posts/{post}/comments/{comment}/react', [PostCommentController::class, 'react'])->name('app.posts.comments.react');
 
     // Members
-    Route::get('settings/members', [WorkspaceInviteController::class, 'index'])->name('app.members');
-    Route::post('settings/members/invites', [WorkspaceInviteController::class, 'store'])->name('app.invites.store');
-    Route::delete('settings/members/invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('app.invites.destroy');
-    Route::delete('settings/members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('app.members.remove');
-    Route::put('settings/members/{user}/role', [WorkspaceInviteController::class, 'updateRole'])->name('app.members.update-role');
+    Route::get('settings/workspace/members', [WorkspaceInviteController::class, 'index'])->name('app.members');
+    Route::post('settings/workspace/members/invites', [WorkspaceInviteController::class, 'store'])->name('app.invites.store');
+    Route::delete('settings/workspace/members/invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('app.invites.destroy');
+    Route::delete('settings/workspace/members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('app.members.remove');
+    Route::put('settings/workspace/members/{user}/role', [WorkspaceInviteController::class, 'updateRole'])->name('app.members.update-role');
 
     // Hashtags
     Route::get('hashtags', [WorkspaceHashtagController::class, 'index'])->name('app.hashtags.index');
@@ -203,19 +203,19 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::delete('labels/{label}', [WorkspaceLabelController::class, 'destroy'])->name('app.labels.destroy');
 
     // API Keys
-    Route::get('api-keys', [ApiKeyController::class, 'index'])->name('app.api-keys.index');
-    Route::post('api-keys', [ApiKeyController::class, 'store'])->name('app.api-keys.store');
-    Route::delete('api-keys/{apiToken}', [ApiKeyController::class, 'destroy'])->name('app.api-keys.destroy');
+    Route::get('settings/workspace/api-keys', [ApiKeyController::class, 'index'])->name('app.api-keys.index');
+    Route::post('settings/workspace/api-keys', [ApiKeyController::class, 'store'])->name('app.api-keys.store');
+    Route::delete('settings/workspace/api-keys/{apiToken}', [ApiKeyController::class, 'destroy'])->name('app.api-keys.destroy');
 
     // Account Settings
     Route::get('settings/account', [AccountController::class, 'edit'])->name('app.account.edit');
     Route::put('settings/account', [AccountController::class, 'update'])->name('app.account.update');
-    Route::get('settings/usage', [UsageController::class, 'index'])->name('app.usage.index');
+    Route::get('settings/account/usage', [UsageController::class, 'index'])->name('app.usage.index');
 
     // Billing
-    Route::get('settings/billing', [BillingController::class, 'index'])->name('app.billing.index');
-    Route::get('settings/billing/portal', [BillingController::class, 'portal'])->name('app.billing.portal');
-    Route::post('settings/billing/swap/{plan}', [BillingController::class, 'swap'])->name('app.billing.swap');
+    Route::get('settings/account/billing', [BillingController::class, 'index'])->name('app.billing.index');
+    Route::get('settings/account/billing/portal', [BillingController::class, 'portal'])->name('app.billing.portal');
+    Route::post('settings/account/billing/swap/{plan}', [BillingController::class, 'swap'])->name('app.billing.swap');
 
 });
 
@@ -238,10 +238,10 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('app.profile.destroy');
-    Route::get('settings/password', [PasswordController::class, 'edit'])->name('app.user-password.edit');
-    Route::put('settings/password', [PasswordController::class, 'update'])
+    Route::get('settings/profile/password', [PasswordController::class, 'edit'])->name('app.user-password.edit');
+    Route::put('settings/profile/password', [PasswordController::class, 'update'])
         ->middleware('throttle:6,1')
         ->name('app.user-password.update');
-    Route::get('settings/notifications', [NotificationPreferenceController::class, 'edit'])->name('app.notifications.preferences');
-    Route::put('settings/notifications', [NotificationPreferenceController::class, 'update'])->name('app.notifications.preferences.update');
+    Route::get('settings/profile/notifications', [NotificationPreferenceController::class, 'edit'])->name('app.notifications.preferences');
+    Route::put('settings/profile/notifications', [NotificationPreferenceController::class, 'update'])->name('app.notifications.preferences.update');
 });

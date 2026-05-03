@@ -6,14 +6,11 @@ use App\Enums\Ai\UsageType;
 use App\Enums\UserWorkspace\Role;
 use App\Mcp\Servers\TryPostServer;
 use App\Mcp\Tools\Ai\GenerateImageTool;
-use App\Mcp\Tools\Ai\GenerateVideoTool;
 use App\Models\Account;
 use App\Models\AiUsageLog;
 use App\Models\User;
 use App\Models\Workspace;
-use App\Services\Ai\VideoGenerationService;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Laravel\Ai\Image;
 
 beforeEach(function () {
@@ -83,48 +80,6 @@ test('generate-image tool rejects invalid orientation', function () {
             'prompt' => 'test',
             'orientation' => 'diagonal',
         ]);
-
-    $response->assertHasErrors();
-});
-
-test('generate-video tool delegates to VideoGenerationService and returns Media payload', function () {
-    $media = $this->workspace->media()->create([
-        'group_id' => Str::uuid()->toString(),
-        'collection' => 'assets',
-        'type' => 'video',
-        'path' => 'medias/v.mp4',
-        'original_filename' => 'ai-generated.mp4',
-        'mime_type' => 'video/mp4',
-        'size' => 4096,
-        'order' => 0,
-    ]);
-
-    $mock = $this->mock(VideoGenerationService::class);
-    $mock->shouldReceive('generate')->once()->andReturn($media);
-
-    $response = TryPostServer::actingAs($this->user)
-        ->tool(GenerateVideoTool::class, [
-            'prompt' => 'A cat dancing',
-            'orientation' => 'vertical',
-        ]);
-
-    $response->assertOk();
-    $response->assertSee($media->id);
-});
-
-test('generate-video tool rejects invalid orientation', function () {
-    $response = TryPostServer::actingAs($this->user)
-        ->tool(GenerateVideoTool::class, [
-            'prompt' => 'A cat dancing',
-            'orientation' => 'square',
-        ]);
-
-    $response->assertHasErrors();
-});
-
-test('generate-video tool requires prompt', function () {
-    $response = TryPostServer::actingAs($this->user)
-        ->tool(GenerateVideoTool::class, ['orientation' => 'vertical']);
 
     $response->assertHasErrors();
 });

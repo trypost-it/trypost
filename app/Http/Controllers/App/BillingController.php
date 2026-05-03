@@ -99,7 +99,7 @@ class BillingController extends Controller
 
         $subscription = $account->subscription(Account::SUBSCRIPTION_NAME);
 
-        return Inertia::render('billing/Index', [
+        return Inertia::render('settings/account/Billing', [
             'hasSubscription' => $account->subscribed(Account::SUBSCRIPTION_NAME),
             'onTrial' => $subscription?->onTrial() ?? false,
             'trialEndsAt' => $subscription?->trial_ends_at?->toFormattedDateString(),

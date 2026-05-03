@@ -19,7 +19,7 @@ class AiUsageLogFactory extends Factory
             'account_id' => Account::factory(),
             'workspace_id' => Workspace::factory(),
             'type' => fake()->randomElement(UsageType::cases()),
-            'provider' => fake()->randomElement(['gemini', 'veo', 'elevenlabs']),
+            'provider' => fake()->randomElement(['openai', 'gemini', 'internal']),
         ];
     }
 
@@ -27,23 +27,15 @@ class AiUsageLogFactory extends Factory
     {
         return $this->state(fn () => [
             'type' => UsageType::Image,
-            'provider' => 'gemini',
+            'provider' => 'internal',
         ]);
     }
 
-    public function video(): static
+    public function text(): static
     {
         return $this->state(fn () => [
-            'type' => UsageType::Video,
-            'provider' => 'veo',
-        ]);
-    }
-
-    public function audio(): static
-    {
-        return $this->state(fn () => [
-            'type' => UsageType::Audio,
-            'provider' => 'elevenlabs',
+            'type' => UsageType::Text,
+            'provider' => 'openai',
         ]);
     }
 }

@@ -130,9 +130,4 @@ return [
         'api_key' => env('GEMINI_API_KEY'),
     ],
 
-    'elevenlabs' => [
-        'api_key' => env('ELEVENLABS_API_KEY'),
-        'default_voice' => env('ELEVENLABS_DEFAULT_VOICE', 'EXAVITQu4vr4xnSDxMaL'),
-    ],
-
 ];

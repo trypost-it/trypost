@@ -6,10 +6,12 @@ namespace App\Jobs\Ai;
 
 use App\Ai\Agents\PostContentGenerator;
 use App\Ai\Agents\PostContentHumanizer;
+use App\Enums\Ai\UsageType;
 use App\Enums\PostPlatform\ContentType;
 use App\Events\Ai\PostCreationReady;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
+use App\Services\Ai\RecordAiUsage;
 use App\Services\Image\BrandColorMapper;
 use App\Services\Image\TemplateImageGenerator;
 use App\Services\Unsplash\UnsplashClient;
@@ -55,6 +57,14 @@ class StreamPostCreation implements ShouldQueue
 
         try {
             $response = $agent->prompt($this->prompt);
+
+            RecordAiUsage::record(
+                workspace: $workspace,
+                type: UsageType::Text,
+                provider: (string) config('ai.default'),
+                userId: $this->userId,
+                metadata: ['agent' => 'post_generator', 'format' => $this->format],
+            );
 
             // StructuredAgentResponse implements ArrayAccess: access via $response['key']
             $structured = $response->structured ?? [];
@@ -129,6 +139,14 @@ class StreamPostCreation implements ShouldQueue
             $humanizer = new PostContentHumanizer($workspace, $format);
             $response = $humanizer->prompt(json_encode($input, JSON_UNESCAPED_UNICODE));
             $humanized = $response->structured ?? [];
+
+            RecordAiUsage::record(
+                workspace: $workspace,
+                type: UsageType::Text,
+                provider: (string) config('ai.default'),
+                userId: $this->userId,
+                metadata: ['agent' => 'post_humanizer', 'format' => $format],
+            );
         } catch (\Throwable $e) {
             Log::warning('PostContentHumanizer failed, using generator output as-is', [
                 'creation_id' => $this->creationId,

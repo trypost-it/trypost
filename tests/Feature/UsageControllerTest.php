@@ -43,7 +43,7 @@ test('usage index shows usage page when not self hosted', function () {
 
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
-        ->component('settings/Usage', false)
+        ->component('settings/account/Usage', false)
         ->has('usage')
     );
 });

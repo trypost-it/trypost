@@ -459,6 +459,13 @@ return [
         'account_inactive' => 'Social account is deactivated',
     ],
 
+    'delete' => [
+        'title' => 'Delete post?',
+        'description' => 'This action can\'t be undone. The post and all its media will be permanently removed.',
+        'confirm' => 'Yes, delete',
+        'cancel' => 'Cancel',
+    ],
+
     'create' => [
         'title' => 'Create a new post',
         'description' => 'Choose how you want to start.',

@@ -88,19 +88,67 @@ enum Platform: string
         };
     }
 
+    /**
+     * Hard cap (in characters) the platform's API will accept. Going over this
+     * means the post can't be published. Values are the documented API maxes:
+     *
+     *  - LinkedIn UGC: 3000 (`commentary` field)
+     *  - X standard tweet: 280 (X Premium accepts 25K — ignored, conservative)
+     *  - TikTok caption: 2200
+     *  - YouTube Shorts: title=100, description=5000. We feed `content` to both
+     *    (publisher derives title from the first line via `buildTitle`), and
+     *    Shorts UX only shows ~100 chars before "more" — capping at 100 keeps
+     *    posts appropriate for the format.
+     *  - Facebook text status: 63206
+     *  - Instagram feed caption: 2200
+     *  - Threads: 500
+     *  - Pinterest pin description: 800 (title is 100, not modeled here)
+     *  - Bluesky: 300 graphemes
+     *  - Mastodon: 500 default; instances may be higher (we stay conservative)
+     */
     public function maxContentLength(): int
     {
         return match ($this) {
             self::LinkedIn, self::LinkedInPage => 3000,
             self::X => 280,
             self::TikTok => 2200,
-            self::YouTube => 5000,
+            self::YouTube => 100,
             self::Facebook => 63206,
             self::Instagram, self::InstagramFacebook => 2200,
             self::Threads => 500,
             self::Pinterest => 800,
             self::Bluesky => 300,
             self::Mastodon => 500,
+        };
+    }
+
+    /**
+     * Recommended target length (in characters) for AI-generated posts. This
+     * is the engagement sweet spot — much shorter than the platform's hard
+     * `maxContentLength()`. Use this to instruct the LLM at generation time;
+     * use `maxContentLength()` for publish-time validation.
+     */
+    public function recommendedAiContentLength(): int
+    {
+        return match ($this) {
+            // Microblogging — 70-200 char tweets perform best, leave hashtag room
+            self::X, self::Bluesky => 220,
+            // Threads/Mastodon — similar feel, slightly more relaxed
+            self::Threads, self::Mastodon => 300,
+            // LinkedIn — readable long-form sweet spot is ~1200-1500
+            self::LinkedIn, self::LinkedInPage => 1200,
+            // Instagram captions — most viewers expand only when interested,
+            // 100-150 words performs best
+            self::Instagram, self::InstagramFacebook => 600,
+            // Facebook — short posts dominate the algorithm
+            self::Facebook => 280,
+            // Pinterest pin description — image does the work, keep it tight
+            self::Pinterest => 200,
+            // TikTok caption — the video carries the story
+            self::TikTok => 150,
+            // YouTube Shorts — fits within the 100-char title (with " #Shorts"
+            // suffix taking 8 chars) so the same string works as title + desc
+            self::YouTube => 80,
         };
     }
 

@@ -24,6 +24,17 @@ Rules:
 - Avoid AI-clichés (testament, pivotal moment, emojis on every line, "Let's dive in").
 - Keep paragraphs short. Vary sentence rhythm.
 - If the user mentions a specific platform, follow that platform's typical conventions.
+@if(!empty($target_chars))
+
+CRITICAL — length for {{ $platform_label ?? 'the target platform' }}:
+- Aim for around {{ $target_chars }} characters in the `content` field. This is the engagement sweet spot for this platform.
+- Hard cap (must NEVER exceed): {{ $hard_max_chars }} characters total — including spaces, line breaks, hashtags and emojis.
+- Going LONGER than ~{{ $target_chars }} chars hurts performance even if it fits the hard cap. High-performing posts on this platform are concise.
+- Count before responding. Pad nothing. Stop when you've said it.
+@if($target_chars <= 300)
+- This is a short-form platform: 1-2 punchy sentences, no fluff. Use line breaks sparingly.
+@endif
+@endif
 
 @if(!empty($examples))
 

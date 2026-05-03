@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Ai\Agents;
 
+use App\Enums\PostPlatform\ContentType;
 use App\Models\Workspace;
 use App\Services\Ai\TemplateContextResolver;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -42,6 +43,20 @@ class PostContentGenerator implements Agent, HasStructuredOutput
                 ->all();
         }
 
+        // Two budgets: the platform's HARD cap (must never exceed — would break
+        // publishing) and the recommended SWEET SPOT length (what well-performing
+        // posts actually look like, way below the hard cap on most platforms).
+        $hardMaxChars = null;
+        $targetChars = null;
+        $platformLabel = null;
+        $contentType = $this->platformContext ? ContentType::tryFrom($this->platformContext) : null;
+        if ($contentType) {
+            $platform = $contentType->platform();
+            $hardMaxChars = $platform->maxContentLength();
+            $targetChars = $platform->recommendedAiContentLength();
+            $platformLabel = $platform->label();
+        }
+
         return view('prompts.post_content.generator', [
             'brand_name' => $this->workspace->name ?? '',
             'brand_description' => $this->workspace->brand_description ?? '',
@@ -52,6 +67,9 @@ class PostContentGenerator implements Agent, HasStructuredOutput
             'format' => $this->format,
             'slide_count' => $this->slideCount,
             'examples' => $examples,
+            'hard_max_chars' => $hardMaxChars,
+            'target_chars' => $targetChars,
+            'platform_label' => $platformLabel,
         ])->render();
     }
 

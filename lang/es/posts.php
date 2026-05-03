@@ -472,6 +472,13 @@ return [
         'account_inactive' => 'Cuenta social desactivada',
     ],
 
+    'delete' => [
+        'title' => '¿Eliminar post?',
+        'description' => 'Esta acción no se puede deshacer. El post y todos sus archivos multimedia se eliminarán de forma permanente.',
+        'confirm' => 'Sí, eliminar',
+        'cancel' => 'Cancelar',
+    ],
+
     'create' => [
         'title' => 'Crear nuevo post',
         'description' => 'Elige cómo quieres empezar.',

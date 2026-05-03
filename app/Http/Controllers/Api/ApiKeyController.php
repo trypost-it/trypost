@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
-use App\Actions\ApiKey\CreateApiKey;
-use App\Actions\ApiKey\DeleteApiKey;
 use App\Http\Requests\Api\ApiKey\StoreApiKeyRequest;
 use App\Http\Resources\Api\ApiKeyResource;
-use App\Models\ApiToken;
+use App\Models\AccessToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -18,28 +16,46 @@ class ApiKeyController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $apiKeys = $request->workspace->apiTokens()->latest()->get();
+        $tokens = AccessToken::where('user_id', $request->user()->id)
+            ->where('workspace_id', $request->user()->currentWorkspace->id)
+            ->where('revoked', false)
+            ->latest()
+            ->get();
 
-        return ApiKeyResource::collection($apiKeys);
+        return ApiKeyResource::collection($tokens);
     }
 
     public function store(StoreApiKeyRequest $request): JsonResponse
     {
-        $result = CreateApiKey::execute($request->workspace, $request->validated());
+        $workspace = $request->user()->currentWorkspace;
+        $validated = $request->validated();
+
+        $result = $request->user()->createToken($validated['name']);
+
+        $token = AccessToken::find($result->token->id);
+        $token->forceFill([
+            'workspace_id' => $workspace->id,
+            'expires_at' => $validated['expires_at'] ?? null,
+        ])->saveQuietly();
 
         return response()->json([
-            'token' => new ApiKeyResource(data_get($result, 'token')),
-            'plain_token' => data_get($result, 'plain_token'),
+            'token' => new ApiKeyResource($token->refresh()),
+            'plain_token' => $result->accessToken,
         ], Response::HTTP_CREATED);
     }
 
-    public function destroy(Request $request, ApiToken $apiToken): JsonResponse
+    public function destroy(Request $request, string $tokenId): JsonResponse
     {
-        if ($apiToken->workspace_id !== $request->workspace->id) {
+        $token = AccessToken::where('id', $tokenId)
+            ->where('user_id', $request->user()->id)
+            ->where('workspace_id', $request->user()->currentWorkspace->id)
+            ->first();
+
+        if (! $token) {
             abort(Response::HTTP_NOT_FOUND);
         }
 
-        DeleteApiKey::execute($apiToken);
+        $token->forceFill(['revoked' => true])->saveQuietly();
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }

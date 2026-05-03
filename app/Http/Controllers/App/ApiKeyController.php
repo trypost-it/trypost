@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
-use App\Actions\ApiKey\CreateApiKey;
-use App\Actions\ApiKey\DeleteApiKey;
-use App\Models\ApiToken;
+use App\Models\AccessToken;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,9 +22,22 @@ class ApiKeyController extends Controller
 
         $this->authorize('manageTeam', $workspace);
 
+        $tokens = AccessToken::where('user_id', $request->user()->id)
+            ->where('workspace_id', $workspace->id)
+            ->where('revoked', false)
+            ->latest()
+            ->get()
+            ->map(fn (AccessToken $token) => [
+                'id' => $token->id,
+                'name' => $token->name,
+                'last_used_at' => $token->last_used_at,
+                'expires_at' => $token->expires_at,
+                'created_at' => $token->created_at,
+            ]);
+
         return Inertia::render('settings/workspace/ApiKeys', [
             'workspace' => $workspace,
-            'apiTokens' => $workspace->apiTokens()->latest()->get(),
+            'apiTokens' => $tokens,
         ]);
     }
 
@@ -45,16 +56,19 @@ class ApiKeyController extends Controller
             'expires_at' => ['nullable', 'date', 'after:today'],
         ]);
 
-        $result = CreateApiKey::execute($workspace, $validated);
+        $result = $request->user()->createToken($validated['name']);
+        $accessToken = AccessToken::find($result->token->id);
+        $accessToken->forceFill([
+            'workspace_id' => $workspace->id,
+            'expires_at' => $validated['expires_at'] ?? null,
+        ])->saveQuietly();
 
-        session()->flash('flash.banner', __('settings.api_keys.flash.created'));
-        session()->flash('flash.bannerStyle', 'success');
-        session()->flash('flash.plainToken', data_get($result, 'plain_token'));
-
-        return back();
+        return back()
+            ->with('flash.success', __('settings.api_keys.flash.created'))
+            ->with('flash.plainToken', $result->accessToken);
     }
 
-    public function destroy(Request $request, ApiToken $apiToken): RedirectResponse
+    public function destroy(Request $request, string $tokenId): RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -64,15 +78,17 @@ class ApiKeyController extends Controller
 
         $this->authorize('manageTeam', $workspace);
 
-        if ($apiToken->workspace_id !== $workspace->id) {
+        $token = AccessToken::where('id', $tokenId)
+            ->where('user_id', $request->user()->id)
+            ->where('workspace_id', $workspace->id)
+            ->first();
+
+        if (! $token) {
             abort(404);
         }
 
-        DeleteApiKey::execute($apiToken);
+        $token->forceFill(['revoked' => true])->saveQuietly();
 
-        session()->flash('flash.banner', __('settings.api_keys.flash.deleted'));
-        session()->flash('flash.bannerStyle', 'success');
-
-        return back();
+        return back()->with('flash.success', __('settings.api_keys.flash.deleted'));
     }
 }

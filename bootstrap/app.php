@@ -1,16 +1,14 @@
 <?php
 
-use App\Http\Middleware\Api\AuthenticateApiToken;
+use App\Http\Middleware\Api\LoadWorkspaceFromToken;
 use App\Http\Middleware\App\HandleAppearance;
 use App\Http\Middleware\App\HandleInertiaRequests;
 use App\Http\Middleware\App\SetLocale;
-use App\Http\Middleware\Mcp\AuthenticateMcpToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Middleware\ThrottleRequests;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -35,18 +33,12 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'api.auth' => AuthenticateApiToken::class,
-            'mcp.auth' => AuthenticateMcpToken::class,
+            'workspace.token' => LoadWorkspaceFromToken::class,
         ]);
 
         $middleware->preventRequestForgery(except: [
             'stripe/*',
         ]);
-
-        $middleware->prependToPriorityList(
-            ThrottleRequests::class,
-            AuthenticateApiToken::class,
-        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->renderable(function (TooManyRequestsHttpException $e, Request $request) {

@@ -16,14 +16,14 @@ class SocialAccountController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $accounts = $request->workspace->socialAccounts()->orderBy('platform')->get();
+        $accounts = $request->user()->currentWorkspace->socialAccounts()->orderBy('platform')->get();
 
         return SocialAccountResource::collection($accounts);
     }
 
     public function toggle(Request $request, SocialAccount $account): SocialAccountResource|JsonResponse
     {
-        if ($account->workspace_id !== $request->workspace->id) {
+        if ($account->workspace_id !== $request->user()->currentWorkspace->id) {
             return response()->json(
                 ['message' => 'Account not found.'],
                 Response::HTTP_NOT_FOUND,

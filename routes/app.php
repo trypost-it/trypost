@@ -206,7 +206,7 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     // API Keys
     Route::get('settings/workspace/api-keys', [ApiKeyController::class, 'index'])->name('app.api-keys.index');
     Route::post('settings/workspace/api-keys', [ApiKeyController::class, 'store'])->name('app.api-keys.store');
-    Route::delete('settings/workspace/api-keys/{apiToken}', [ApiKeyController::class, 'destroy'])->name('app.api-keys.destroy');
+    Route::delete('settings/workspace/api-keys/{tokenId}', [ApiKeyController::class, 'destroy'])->name('app.api-keys.destroy');
 
     // Account Settings
     Route::get('settings/account', [AccountController::class, 'edit'])->name('app.account.edit');

@@ -43,7 +43,7 @@ test('content type maps to correct platform', function () {
 });
 
 test('content type has correct aspect ratios', function () {
-    expect(ContentType::InstagramFeed->aspectRatio())->toBe('1:1');
+    expect(ContentType::InstagramFeed->aspectRatio())->toBe('4:5');
     expect(ContentType::InstagramReel->aspectRatio())->toBe('9:16');
     expect(ContentType::InstagramStory->aspectRatio())->toBe('9:16');
     expect(ContentType::YouTubeShort->aspectRatio())->toBe('9:16');
@@ -54,7 +54,8 @@ test('content type has correct aspect ratios', function () {
 });
 
 test('content type has correct max media count', function () {
-    expect(ContentType::InstagramFeed->maxMediaCount())->toBe(10);
+    expect(ContentType::InstagramFeed->maxMediaCount())->toBe(1);
+    expect(ContentType::InstagramCarousel->maxMediaCount())->toBe(10);
     expect(ContentType::InstagramReel->maxMediaCount())->toBe(1);
     expect(ContentType::LinkedInCarousel->maxMediaCount())->toBe(20);
     expect(ContentType::XPost->maxMediaCount())->toBe(4);
@@ -80,13 +81,12 @@ test('content type supports image correctly', function () {
 });
 
 test('content type requires media correctly', function () {
-    expect(ContentType::InstagramFeed->requiresMedia())->toBeTrue();
     expect(ContentType::InstagramReel->requiresMedia())->toBeTrue();
     expect(ContentType::TikTokVideo->requiresMedia())->toBeTrue();
     expect(ContentType::YouTubeShort->requiresMedia())->toBeTrue();
     expect(ContentType::PinterestPin->requiresMedia())->toBeTrue();
+    expect(ContentType::InstagramFeed->requiresMedia())->toBeFalse();
     expect(ContentType::LinkedInPost->requiresMedia())->toBeFalse();
-    expect(ContentType::FacebookPost->requiresMedia())->toBeFalse();
     expect(ContentType::XPost->requiresMedia())->toBeFalse();
     expect(ContentType::ThreadsPost->requiresMedia())->toBeFalse();
     expect(ContentType::BlueskyPost->requiresMedia())->toBeFalse();

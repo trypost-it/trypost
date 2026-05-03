@@ -20,14 +20,14 @@ class SignatureController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $signatures = $request->workspace->signatures()->latest()->get();
+        $signatures = $request->user()->currentWorkspace->signatures()->latest()->get();
 
         return SignatureResource::collection($signatures);
     }
 
     public function store(StoreSignatureRequest $request): JsonResponse
     {
-        $signature = CreateSignature::execute($request->workspace, $request->validated());
+        $signature = CreateSignature::execute($request->user()->currentWorkspace, $request->validated());
 
         return (new SignatureResource($signature))
             ->response()
@@ -36,7 +36,7 @@ class SignatureController extends Controller
 
     public function update(UpdateSignatureRequest $request, WorkspaceSignature $signature): SignatureResource
     {
-        if ($signature->workspace_id !== $request->workspace->id) {
+        if ($signature->workspace_id !== $request->user()->currentWorkspace->id) {
             abort(Response::HTTP_NOT_FOUND);
         }
 
@@ -47,7 +47,7 @@ class SignatureController extends Controller
 
     public function destroy(Request $request, WorkspaceSignature $signature): JsonResponse
     {
-        if ($signature->workspace_id !== $request->workspace->id) {
+        if ($signature->workspace_id !== $request->user()->currentWorkspace->id) {
             abort(Response::HTTP_NOT_FOUND);
         }
 

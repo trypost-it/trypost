@@ -233,6 +233,7 @@ enum ContentType: string
             self::ThreadsPost => false,
             self::BlueskyPost => false,
             self::MastodonPost => false,
+            self::FacebookPost => false,
             self::InstagramFeed => false,
             default => true,
         };

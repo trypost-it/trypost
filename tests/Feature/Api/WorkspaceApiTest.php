@@ -2,33 +2,11 @@
 
 declare(strict_types=1);
 
-use App\Models\ApiToken;
 use App\Models\Workspace;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
-/**
- * @return array{token: ApiToken, plain_token: string, workspace: Workspace}
- */
 function createWorkspaceApiToken(array $overrides = []): array
 {
-    $plainToken = 'tp_'.Str::random(48);
-
-    $workspace = data_get($overrides, 'workspace') ?? Workspace::factory()->create();
-
-    $factoryOverrides = collect($overrides)->except('workspace')->toArray();
-
-    $apiToken = ApiToken::factory()->create(array_merge([
-        'workspace_id' => $workspace->id,
-        'token_lookup' => substr($plainToken, 3, 16),
-        'token_hash' => Hash::make($plainToken),
-    ], $factoryOverrides));
-
-    return [
-        'token' => $apiToken,
-        'plain_token' => $plainToken,
-        'workspace' => $workspace,
-    ];
+    return createApiTestToken($overrides);
 }
 
 test('show current workspace', function () {

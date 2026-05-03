@@ -95,11 +95,6 @@ class Workspace extends Model
             ->whereNull('accepted_at');
     }
 
-    public function apiTokens(): HasMany
-    {
-        return $this->hasMany(ApiToken::class);
-    }
-
     public function hasMember(User $user): bool
     {
         return $this->account?->owner_id === $user->id || $this->members()->where('user_id', $user->id)->exists();

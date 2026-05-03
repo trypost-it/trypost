@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\ApiKey;
 
-use App\Actions\ApiKey\CreateApiKey;
+use App\Models\AccessToken;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -22,11 +22,23 @@ class CreateApiKeyTool extends Tool
             'expires_at' => ['nullable', 'date', 'after:now'],
         ]);
 
-        $result = CreateApiKey::execute($request->user()->currentWorkspace, $validated);
+        $user = $request->user();
+        $workspace = $user->currentWorkspace;
+
+        $result = $user->createToken($validated['name']);
+
+        $token = AccessToken::find($result->token->id);
+        $token->forceFill([
+            'workspace_id' => $workspace->id,
+            'expires_at' => $validated['expires_at'] ?? null,
+        ])->saveQuietly();
 
         return Response::structured([
-            ...data_get($result, 'token')->toArray(),
-            'token' => data_get($result, 'plain_token'),
+            'id' => $token->id,
+            'name' => $token->name,
+            'workspace_id' => $token->workspace_id,
+            'expires_at' => $token->expires_at?->toIso8601String(),
+            'token' => $result->accessToken,
         ]);
     }
 

@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Enums\UserWorkspace\Role;
+use App\Models\AccessToken;
+use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -46,7 +50,56 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Issue a real Passport personal access token bound to a workspace and return
+ * the plain JWT string. Use the returned token in `Authorization: Bearer ...`
+ * to exercise the auth:api + workspace.token middleware stack.
+ */
+function passportToken(User $user, Workspace $workspace, array $scopes = []): string
 {
-    // ..
+    $result = $user->createToken('Test', $scopes);
+
+    AccessToken::find($result->token->id)
+        ->forceFill(['workspace_id' => $workspace->id])
+        ->saveQuietly();
+
+    return $result->accessToken;
+}
+
+/**
+ * Create a workspace + owner + Passport token suitable for hitting the public
+ * API. Drop-in replacement for the legacy `createXApiToken` helpers.
+ *
+ * @param  array{workspace?: Workspace}  $overrides
+ * @return array{plain_token: string, workspace: Workspace, user: User}
+ */
+function createApiTestToken(array $overrides = []): array
+{
+    $workspace = data_get($overrides, 'workspace');
+
+    if (! $workspace) {
+        $user = User::factory()->create();
+        $workspace = Workspace::factory()->create([
+            'account_id' => $user->account_id,
+            'user_id' => $user->id,
+        ]);
+        $workspace->members()->attach($user->id, [
+            'role' => Role::Admin->value,
+        ]);
+        $user->update(['current_workspace_id' => $workspace->id]);
+    } else {
+        $user = $workspace->owner ?? User::factory()->create([
+            'account_id' => $workspace->account_id,
+        ]);
+
+        if ($workspace->account && $workspace->account->owner_id !== $user->id) {
+            $workspace->account->update(['owner_id' => $user->id]);
+        }
+    }
+
+    return [
+        'plain_token' => passportToken($user, $workspace),
+        'workspace' => $workspace,
+        'user' => $user,
+    ];
 }

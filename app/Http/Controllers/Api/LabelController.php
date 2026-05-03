@@ -20,14 +20,14 @@ class LabelController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $labels = $request->workspace->labels()->latest()->get();
+        $labels = $request->user()->currentWorkspace->labels()->latest()->get();
 
         return LabelResource::collection($labels);
     }
 
     public function store(StoreLabelRequest $request): JsonResponse
     {
-        $label = CreateLabel::execute($request->workspace, $request->validated());
+        $label = CreateLabel::execute($request->user()->currentWorkspace, $request->validated());
 
         return (new LabelResource($label))
             ->response()
@@ -36,7 +36,7 @@ class LabelController extends Controller
 
     public function update(UpdateLabelRequest $request, WorkspaceLabel $label): LabelResource
     {
-        if ($label->workspace_id !== $request->workspace->id) {
+        if ($label->workspace_id !== $request->user()->currentWorkspace->id) {
             abort(Response::HTTP_NOT_FOUND);
         }
 
@@ -47,7 +47,7 @@ class LabelController extends Controller
 
     public function destroy(Request $request, WorkspaceLabel $label): JsonResponse
     {
-        if ($label->workspace_id !== $request->workspace->id) {
+        if ($label->workspace_id !== $request->user()->currentWorkspace->id) {
             abort(Response::HTTP_NOT_FOUND);
         }
 

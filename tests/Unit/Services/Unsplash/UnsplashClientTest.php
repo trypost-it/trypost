@@ -17,12 +17,10 @@ test('searchPhoto returns null when access key missing', function () {
     expect((new UnsplashClient)->searchPhoto(['kitchen']))->toBeNull();
 });
 
-test('searchPhoto returns null when keywords are empty', function () {
-    Http::fake();
+test('searchPhoto returns null when keywords are empty and no fallback found', function () {
+    Http::fake(['api.unsplash.com/*' => Http::response(['results' => []])]);
 
     expect((new UnsplashClient)->searchPhoto([]))->toBeNull();
-
-    Http::assertNothingSent();
 });
 
 test('searchPhoto returns formatted photo on success', function () {

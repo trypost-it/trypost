@@ -17,11 +17,9 @@ class ApiKeyResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'key_hint' => $this->key_hint,
-            'status' => $this->status,
-            'last_used_at' => $this->last_used_at?->format('Y-m-d H:i:s'),
-            'expires_at' => $this->expires_at?->format('Y-m-d H:i:s'),
-            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
+            'last_used_at' => $this->last_used_at?->toIso8601String(),
+            'expires_at' => $this->expires_at?->toIso8601String(),
+            'created_at' => $this->created_at?->toIso8601String(),
         ];
     }
 }

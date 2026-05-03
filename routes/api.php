@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\SocialAccountController;
 use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('api')->middleware(['api.auth', 'throttle:api'])->group(function () {
+Route::prefix('api')->middleware(['auth:api', 'workspace.token', 'throttle:api'])->group(function () {
     // Posts
     Route::get('/posts', [PostController::class, 'index'])->name('api.posts.index');
     Route::post('/posts', [PostController::class, 'store'])->name('api.posts.store');

@@ -118,7 +118,7 @@ class ProfileController extends Controller
 
                 $workspace->posts()->delete();
                 $workspace->socialAccounts()->delete();
-                $workspace->hashtags()->delete();
+                $workspace->signatures()->delete();
                 $workspace->labels()->delete();
                 $workspace->members()->detach();
                 $workspace->delete();

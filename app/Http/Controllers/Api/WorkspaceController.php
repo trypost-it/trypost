@@ -11,6 +11,6 @@ class WorkspaceController extends Controller
 {
     public function show(Request $request): WorkspaceResource
     {
-        return new WorkspaceResource($request->workspace);
+        return new WorkspaceResource($request->user()->currentWorkspace);
     }
 }

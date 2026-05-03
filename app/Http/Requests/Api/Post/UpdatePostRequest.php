@@ -36,7 +36,7 @@ class UpdatePostRequest extends FormRequest
                 ),
             ],
             'label_ids' => ['sometimes', 'array'],
-            'label_ids.*' => ['uuid', Rule::exists('workspace_labels', 'id')->where('workspace_id', $this->workspace->id)],
+            'label_ids.*' => ['uuid', Rule::exists('workspace_labels', 'id')->where('workspace_id', $this->user()->currentWorkspace->id)],
         ];
     }
 }

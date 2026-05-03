@@ -18,9 +18,9 @@ use App\Ai\PlatformRules\YouTubeRules;
 use App\Ai\Providers\ExtendedGeminiProvider;
 use App\Enums\SocialAccount\Platform;
 use App\Listeners\StripeEventListener;
+use App\Models\AccessToken;
 use App\Models\Account;
 use App\Models\AiUsageLog;
-use App\Models\ApiToken;
 use App\Models\Invite;
 use App\Models\Media;
 use App\Models\Notification;
@@ -56,12 +56,14 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
 use Laravel\Ai\Ai;
 use Laravel\Ai\Gateway\Gemini\GeminiGateway;
 use Laravel\Cashier\Cashier;
 use Laravel\Cashier\Events\WebhookReceived;
 use Laravel\Nightwatch\Facades\Nightwatch;
 use Laravel\Nightwatch\Records\CacheEvent;
+use Laravel\Passport\Passport;
 use Laravel\Pennant\Feature;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
@@ -108,6 +110,20 @@ class AppServiceProvider extends ServiceProvider
         Feature::resolveScopeUsing(fn () => auth()->user()?->account);
         Feature::useMorphMap();
         Feature::discover();
+
+        $this->configurePassport();
+    }
+
+    protected function configurePassport(): void
+    {
+        Passport::useTokenModel(AccessToken::class);
+
+        Passport::tokensCan([
+            'mcp:use' => 'Use MCP server',
+        ]);
+
+        Passport::authorizationView(fn ($parameters) => Inertia::render('oauth/Authorize', $parameters)
+        );
     }
 
     protected function configureAi(): void
@@ -149,9 +165,9 @@ class AppServiceProvider extends ServiceProvider
     protected function configureMorphMap(): void
     {
         Relation::enforceMorphMap([
+            'accessToken' => AccessToken::class,
             'account' => Account::class,
             'aiUsageLog' => AiUsageLog::class,
-            'apiToken' => ApiToken::class,
             'invite' => Invite::class,
             'media' => Media::class,
             'notification' => Notification::class,

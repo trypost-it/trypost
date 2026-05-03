@@ -21,7 +21,7 @@ class PostController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $posts = $request->workspace->posts()
+        $posts = $request->user()->currentWorkspace->posts()
             ->with(['postPlatforms.socialAccount', 'user', 'labels'])
             ->latest('scheduled_at')
             ->paginate(15);
@@ -31,7 +31,7 @@ class PostController extends Controller
 
     public function show(Request $request, Post $post): PostResource
     {
-        if ($post->workspace_id !== $request->workspace->id) {
+        if ($post->workspace_id !== $request->user()->currentWorkspace->id) {
             abort(Response::HTTP_NOT_FOUND);
         }
 
@@ -43,8 +43,8 @@ class PostController extends Controller
     public function store(StorePostRequest $request): JsonResponse
     {
         $post = CreatePost::execute(
-            $request->workspace,
-            $request->workspace->owner,
+            $request->user()->currentWorkspace,
+            $request->user()->currentWorkspace->owner,
             $request->validated()
         );
 
@@ -57,11 +57,11 @@ class PostController extends Controller
 
     public function update(UpdatePostRequest $request, Post $post): PostResource|JsonResponse
     {
-        if ($post->workspace_id !== $request->workspace->id) {
+        if ($post->workspace_id !== $request->user()->currentWorkspace->id) {
             abort(Response::HTTP_NOT_FOUND);
         }
 
-        $result = UpdatePost::execute($request->workspace, $post, $request->validated());
+        $result = UpdatePost::execute($request->user()->currentWorkspace, $post, $request->validated());
 
         if (data_get($result, 'action') === PostAction::AlreadyPublished) {
             return response()->json(
@@ -75,7 +75,7 @@ class PostController extends Controller
 
     public function destroy(Request $request, Post $post): JsonResponse
     {
-        if ($post->workspace_id !== $request->workspace->id) {
+        if ($post->workspace_id !== $request->user()->currentWorkspace->id) {
             abort(Response::HTTP_NOT_FOUND);
         }
 

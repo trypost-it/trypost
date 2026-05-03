@@ -87,6 +87,43 @@ test('calendar supports month view', function () {
     );
 });
 
+// Create tests
+test('create requires authentication', function () {
+    $response = $this->get(route('app.posts.create'));
+
+    $response->assertRedirect(route('login'));
+});
+
+test('create renders the wizard page', function () {
+    $response = $this->actingAs($this->user)->get(route('app.posts.create'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('posts/Create', false)
+        ->where('date', null)
+        ->has('socialAccounts', 1)
+        ->where('socialAccounts.0.id', $this->socialAccount->id)
+    );
+});
+
+test('create forwards date query param to the page', function () {
+    $response = $this->actingAs($this->user)->get(route('app.posts.create', ['date' => '2026-06-01']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->component('posts/Create', false)
+        ->where('date', '2026-06-01')
+    );
+});
+
+test('create redirects to workspaces.create when user has no workspace', function () {
+    $newUser = User::factory()->create();
+
+    $response = $this->actingAs($newUser)->get(route('app.posts.create'));
+
+    $response->assertRedirect(route('app.workspaces.create'));
+});
+
 // Store tests
 test('store post requires authentication', function () {
     $response = $this->post(route('app.posts.store'));

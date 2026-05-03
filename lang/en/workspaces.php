@@ -13,7 +13,7 @@ return [
     'create' => [
         'page_title' => 'Create your workspace',
         'title' => 'Set up your workspace',
-        'description' => 'Tell us about your brand. We\'ll use this to tailor AI-generated posts to your voice.',
+        'description' => 'Tell us a bit about you or your project. We\'ll use it to tailor AI-generated posts to your voice.',
         'website' => 'Website',
         'website_placeholder' => 'https://yourbrand.com',
         'autofill' => 'Autofill from website',

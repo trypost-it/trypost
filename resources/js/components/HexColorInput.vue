@@ -248,7 +248,7 @@ const huePointerStyle = computed(() => ({
 
                 <!-- Hex input -->
                 <Input
-                    :value="text"
+                    :model-value="text"
                     :placeholder="placeholder"
                     class="font-mono"
                     :class="!isValid ? 'border-destructive focus-visible:ring-destructive' : ''"
@@ -272,7 +272,7 @@ const huePointerStyle = computed(() => ({
         </Popover>
 
         <Input
-            :value="text"
+            :model-value="text"
             :name="name"
             :placeholder="placeholder"
             :disabled="disabled"

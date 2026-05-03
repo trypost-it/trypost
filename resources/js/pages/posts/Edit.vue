@@ -10,6 +10,8 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch } from 'vue';
 
+import AiGenerateDialog from '@/components/posts/ai/AiGenerateDialog.vue';
+import AiReviewDialog from '@/components/posts/ai/AiReviewDialog.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import PostEditorComposer from '@/components/posts/editor/PostEditorComposer.vue';
 import PostEditorSidebar from '@/components/posts/editor/PostEditorSidebar.vue';
@@ -186,8 +188,8 @@ const getMediaIncompatibilityReason = (contentType: string, mediaItems: MediaIte
     if (!rules.acceptVideos && videos.length > 0) return trans('posts.edit.compliance.no_videos');
     if (!rules.acceptImages && images.length > 0) return trans('posts.edit.compliance.no_images');
     if (!rules.acceptsGif && gifs.length > 0) return trans('posts.edit.compliance.no_gifs');
-    if (total > rules.maxFiles) return trans('posts.edit.compliance.too_many_files', { max: rules.maxFiles });
-    if (rules.minFiles && total < rules.minFiles) return trans('posts.edit.compliance.too_few_files', { min: rules.minFiles });
+    if (total > rules.maxFiles) return trans('posts.edit.compliance.too_many_files', { max: String(rules.maxFiles) });
+    if (rules.minFiles && total < rules.minFiles) return trans('posts.edit.compliance.too_few_files', { min: String(rules.minFiles) });
 
     for (const m of mediaItems) {
         const isVideo = m.type === 'video' || m.mime_type?.startsWith('video/');
@@ -199,7 +201,7 @@ const getMediaIncompatibilityReason = (contentType: string, mediaItems: MediaIte
         if (isVideo) {
             if (rules.maxVideoBytes && size > 0 && size > rules.maxVideoBytes) return trans('posts.edit.compliance.video_too_large');
             if (rules.maxVideoDurationSec && duration > 0 && duration > rules.maxVideoDurationSec) {
-                return trans('posts.edit.compliance.video_too_long', { seconds: rules.maxVideoDurationSec });
+                return trans('posts.edit.compliance.video_too_long', { seconds: String(rules.maxVideoDurationSec) });
             }
         } else if (rules.maxImageBytes && size > 0 && size > rules.maxImageBytes) {
             return trans('posts.edit.compliance.image_too_large');
@@ -289,6 +291,16 @@ const selectedLabelIds = ref<string[]>(post.value.labels?.map((l) => l.id) || []
 const isSubmitting = ref(false);
 const isSaving = ref(false);
 const showSaved = ref(false);
+const isAiGenerateOpen = ref(false);
+const isAiReviewOpen = ref(false);
+
+const onAiGenerateApply = (newContent: string) => {
+    content.value = newContent;
+};
+
+const onAiReviewApply = (original: string, suggestion: string) => {
+    content.value = content.value.replace(original, suggestion);
+};
 
 const isPostActionDisabled = computed(
     () => isSubmitting.value || selectedPlatformIds.value.length === 0 || !canSchedule.value,
@@ -296,7 +308,7 @@ const isPostActionDisabled = computed(
 const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 const initialTabFromQuery = (() => {
     const tab = queryParams?.get('tab');
-    return ['preview', 'schedule', 'comments', 'assistant'].includes(tab ?? '') ? (tab as string) : 'schedule';
+    return ['preview', 'schedule', 'comments'].includes(tab ?? '') ? (tab as string) : 'schedule';
 })();
 const initialHighlightCommentId = queryParams?.get('comment') ?? null;
 const activeTab = ref(initialTabFromQuery);
@@ -311,24 +323,6 @@ const togglePlatform = (platformId: string) => {
     } else {
         selectedPlatformIds.value.splice(index, 1);
     }
-};
-
-const addedTextFromMessageIds = ref<Set<string>>(new Set());
-
-const addMediaFromAssistant = (payload: {
-    messageId: string;
-    messageContent: string;
-    media: { id: string; path: string; url: string; type: string; mime_type: string };
-}) => {
-    media.value = [...media.value, payload.media];
-
-    const text = payload.messageContent.trim();
-    if (text === '' || addedTextFromMessageIds.value.has(payload.messageId)) {
-        return;
-    }
-
-    content.value = content.value.trim() === '' ? text : `${content.value}\n\n${text}`;
-    addedTextFromMessageIds.value.add(payload.messageId);
 };
 
 // Save logic
@@ -414,10 +408,6 @@ const toggleLabel = (labelId: string) => {
     } else {
         selectedLabelIds.value.splice(index, 1);
     }
-};
-
-const focusAssistant = () => {
-    activeTab.value = 'assistant';
 };
 
 const deletePost = () => {
@@ -535,7 +525,8 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                             :hashtags="hashtags"
                             :platform-limits="platformLimits"
                             :media-issues="mediaIssues"
-                            @focus-assistant="focusAssistant"
+                            @open-ai-generate="isAiGenerateOpen = true"
+                            @open-ai-review="isAiReviewOpen = true"
                         />
                     </div>
 
@@ -562,7 +553,6 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                             @toggle-label="toggleLabel"
                             @update:platform-meta="updatePlatformMeta"
                             @update:platform-content-type="updatePlatformContentType"
-                            @add-media-from-assistant="addMediaFromAssistant"
                         />
                     </div>
                 </div>
@@ -576,5 +566,19 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
         :description="$t('posts.delete.description')"
         :action="$t('posts.delete.confirm')"
         :cancel="$t('posts.delete.cancel')"
+    />
+
+    <AiGenerateDialog
+        v-model:open="isAiGenerateOpen"
+        :post-id="post.id"
+        :current-content="content"
+        @apply="onAiGenerateApply"
+    />
+
+    <AiReviewDialog
+        v-model:open="isAiReviewOpen"
+        :post-id="post.id"
+        :content="content"
+        @apply="onAiReviewApply"
     />
 </template>

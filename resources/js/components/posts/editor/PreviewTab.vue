@@ -6,16 +6,8 @@ import PhoneMockup from '@/components/PhoneMockup.vue';
 import { PlatformPreview } from '@/components/posts/previews';
 import { Avatar } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { MediaItem } from '@/composables/useMedia';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
-
-interface MediaItem {
-    id: string;
-    path: string;
-    url: string;
-    type?: string;
-    mime_type?: string;
-    original_filename?: string;
-}
 
 interface SocialAccount {
     id: string;
@@ -57,9 +49,9 @@ watch(
 );
 
 const activePlatform = computed(() => props.platforms.find((pp) => pp.id === activeId.value) ?? null);
-const activeContentType = computed(() => {
-    if (!activePlatform.value) return null;
-    return props.platformContentTypes[activePlatform.value.id] ?? activePlatform.value.content_type;
+const activeContentType = computed((): string | undefined => {
+    if (!activePlatform.value) return undefined;
+    return props.platformContentTypes[activePlatform.value.id] ?? activePlatform.value.content_type ?? undefined;
 });
 </script>
 

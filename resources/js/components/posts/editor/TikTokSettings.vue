@@ -40,7 +40,7 @@ interface CreatorInfo {
 
 interface Props {
     socialAccount: SocialAccount | null;
-    publishConfig: PublishConfig | null;
+    publishConfig: Record<string, any> | null;
     creatorInfo?: CreatorInfo | null;
     creatorInfoLoading?: boolean;
     videoDurationSec?: number | null;
@@ -126,7 +126,7 @@ const allPrivacyOptions = computed(() => {
 // Branded content cannot be private (TikTok compliance).
 const privacyOptions = computed(() =>
     brandContentToggle.value
-        ? allPrivacyOptions.value.filter((o) => o !== 'SELF_ONLY')
+        ? allPrivacyOptions.value.filter((o: string) => o !== 'SELF_ONLY')
         : allPrivacyOptions.value,
 );
 
@@ -234,7 +234,7 @@ watch(
             <!-- Max duration warning -->
             <p v-if="exceedsMaxDuration" class="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
                 <IconAlertTriangle class="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                {{ $t('posts.form.tiktok.max_duration_exceeded', { duration: videoDurationSec ?? 0, max: maxDurationSec ?? 0 }) }}
+                {{ $t('posts.form.tiktok.max_duration_exceeded', { duration: String(videoDurationSec ?? 0), max: String(maxDurationSec ?? 0) }) }}
             </p>
 
             <!-- Auto Add Music (photos only) -->

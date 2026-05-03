@@ -16,11 +16,9 @@ use App\Ai\PlatformRules\TikTokRules;
 use App\Ai\PlatformRules\XRules;
 use App\Ai\PlatformRules\YouTubeRules;
 use App\Ai\Providers\ExtendedGeminiProvider;
-use App\Ai\Tools\AttachmentCollector;
 use App\Enums\SocialAccount\Platform;
 use App\Listeners\StripeEventListener;
 use App\Models\Account;
-use App\Models\AiMessage;
 use App\Models\AiUsageLog;
 use App\Models\Invite;
 use App\Models\Media;
@@ -82,8 +80,6 @@ class AppServiceProvider extends ServiceProvider
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);
             $this->app->register(TelescopeServiceProvider::class);
         }
-
-        $this->app->scoped(AttachmentCollector::class);
     }
 
     /**
@@ -149,7 +145,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Relation::enforceMorphMap([
             'account' => Account::class,
-            'aiMessage' => AiMessage::class,
             'aiUsageLog' => AiUsageLog::class,
             'invite' => Invite::class,
             'media' => Media::class,

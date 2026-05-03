@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Head, InfiniteScroll, Link, router } from '@inertiajs/vue3';
+import { Head, InfiniteScroll, router } from '@inertiajs/vue3';
 import { IconFileText, IconSearch, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
-import { destroy as destroyPost, edit as editPost, index as postsIndex, show as showPost, store as storePost } from '@/actions/App/Http/Controllers/App/PostController';
+import { create as createPost, destroy as destroyPost, edit as editPost, index as postsIndex, show as showPost } from '@/actions/App/Http/Controllers/App/PostController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import PageHeader from '@/components/PageHeader.vue';
@@ -161,7 +161,7 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                     />
                 </div>
 
-                <Link :href="storePost.url()" method="post">
+                <Link :href="createPost.url()">
                     <Button>{{ $t('posts.new_post') }}</Button>
                 </Link>
             </div>
@@ -289,4 +289,5 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
         :action="$t('posts.edit.delete_modal.action')"
         :cancel="$t('posts.edit.delete_modal.cancel')"
     />
+
 </template>

@@ -13,7 +13,7 @@ return [
     'create' => [
         'page_title' => 'Crea tu workspace',
         'title' => 'Configura tu workspace',
-        'description' => 'Cuéntanos sobre tu marca. Lo usaremos para personalizar las publicaciones generadas por IA con tu voz.',
+        'description' => 'Cuéntanos un poco sobre ti o tu proyecto. Lo usaremos para personalizar las publicaciones generadas por IA con tu voz.',
         'website' => 'Sitio web',
         'website_placeholder' => 'https://tumarca.com',
         'autofill' => 'Autocompletar desde el sitio',

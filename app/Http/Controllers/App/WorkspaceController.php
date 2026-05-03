@@ -7,6 +7,7 @@ namespace App\Http\Controllers\App;
 use App\Actions\Ai\AutofillBrand;
 use App\Actions\Workspace\CreateWorkspace;
 use App\Actions\Workspace\DeleteWorkspace;
+use App\Enums\Workspace\BrandFont;
 use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
 use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
 use App\Http\Resources\App\WorkspaceMemberResource;
@@ -158,6 +159,7 @@ class WorkspaceController extends Controller
 
         return Inertia::render('settings/Brand', [
             'workspace' => $workspace,
+            'availableFonts' => BrandFont::values(),
         ]);
     }
 

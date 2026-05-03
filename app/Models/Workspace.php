@@ -30,6 +30,7 @@ class Workspace extends Model
         'brand_color',
         'background_color',
         'text_color',
+        'brand_font',
         'content_language',
     ];
 

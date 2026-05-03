@@ -4,7 +4,6 @@ import { computed, ref } from 'vue';
 import CommentsTab from '@/components/posts/editor/CommentsTab.vue';
 import PreviewTab from '@/components/posts/editor/PreviewTab.vue';
 import ScheduleTab from '@/components/posts/editor/ScheduleTab.vue';
-import WritingAssistantTab from '@/components/posts/editor/WritingAssistantTab.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface MediaItem {
@@ -84,11 +83,6 @@ const emit = defineEmits<{
     (e: 'toggle-label', labelId: string): void;
     (e: 'update:platformMeta', platformId: string, meta: Record<string, any>): void;
     (e: 'update:platformContentType', platformId: string, contentType: string): void;
-    (e: 'add-media-from-assistant', payload: {
-        messageId: string;
-        messageContent: string;
-        media: { id: string; path: string; url: string; type: string; mime_type: string };
-    }): void;
 }>();
 
 const commentsTabRef = ref<InstanceType<typeof CommentsTab> | null>(null);
@@ -109,7 +103,6 @@ defineExpose({
             <TabsTrigger value="preview">{{ $t('posts.edit.tabs.preview') }}</TabsTrigger>
             <TabsTrigger value="schedule">{{ $t('posts.edit.tabs.schedule') }}</TabsTrigger>
             <TabsTrigger value="comments">{{ $t('posts.edit.tabs.comments') }}</TabsTrigger>
-            <TabsTrigger value="assistant">{{ $t('posts.edit.tabs.writing_assistant') }}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="preview" class="flex-1 overflow-y-auto">
@@ -151,12 +144,5 @@ defineExpose({
             />
         </TabsContent>
 
-        <TabsContent value="assistant" class="flex-1 overflow-hidden">
-            <WritingAssistantTab
-                :post-id="post.id"
-                :workspace-id="workspaceId"
-                @add-media="(payload) => emit('add-media-from-assistant', payload)"
-            />
-        </TabsContent>
     </Tabs>
 </template>

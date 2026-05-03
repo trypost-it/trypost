@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('brand_color', 9)->nullable();
             $table->string('background_color', 9)->nullable();
             $table->string('text_color', 9)->nullable();
+            $table->string('brand_font')->default('Inter');
             $table->string('content_language', 10)->default('en');
             $table->timestamps();
 

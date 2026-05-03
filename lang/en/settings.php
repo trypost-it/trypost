@@ -109,6 +109,7 @@ return [
         'brand_color' => 'Brand color',
         'background_color' => 'Background color',
         'text_color' => 'Text color',
+        'font' => 'Font',
         'content_language' => 'Content language',
         'content_language_description' => 'Language used for AI-generated captions, hashtags, and any text inside generated images or videos.',
     ],

@@ -13,6 +13,7 @@ use App\Enums\Post\Status as PostStatus;
 use App\Enums\SocialAccount\Platform;
 use App\Http\Requests\App\Post\UpdatePostRequest;
 use App\Http\Resources\App\PlatformConfigResource;
+use App\Http\Resources\App\SocialAccountResource;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Services\Social\BlueskyAnalytics;
@@ -125,6 +126,20 @@ class PostController extends Controller
             'currentWeekStart' => $weekStart->format('Y-m-d'),
             'currentMonth' => $monthDate->format('Y-m-d'),
             'view' => $view,
+        ]);
+    }
+
+    public function create(Request $request): Response
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        $this->authorize('createPost', $workspace);
+
+        return Inertia::render('posts/Create', [
+            'date' => $request->query('date'),
+            'socialAccounts' => SocialAccountResource::collection(
+                $workspace->socialAccounts()->active()->get()
+            ),
         ]);
     }
 

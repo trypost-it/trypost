@@ -18,11 +18,16 @@ interface Workspace {
     brand_description: string | null;
     brand_tone: string;
     brand_voice_notes: string | null;
+    brand_color: string | null;
+    background_color: string | null;
+    text_color: string | null;
+    brand_font: string;
     content_language: string;
 }
 
 defineProps<{
     workspace: Workspace;
+    availableFonts: string[];
 }>();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
@@ -45,7 +50,7 @@ const tabs = computed(() => [
         <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
             <SettingsTabsNav :tabs="tabs" active="brand" />
 
-            <BrandTab :workspace="workspace" />
+            <BrandTab :workspace="workspace" :available-fonts="availableFonts" />
         </div>
     </AppLayout>
 </template>

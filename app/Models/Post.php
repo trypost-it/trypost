@@ -69,11 +69,6 @@ class Post extends Model
         return $this->hasMany(PostPlatform::class)->orderBy('id');
     }
 
-    public function aiMessages(): HasMany
-    {
-        return $this->hasMany(AiMessage::class);
-    }
-
     public function comments(): HasMany
     {
         return $this->hasMany(PostComment::class);

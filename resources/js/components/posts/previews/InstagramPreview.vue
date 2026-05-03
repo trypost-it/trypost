@@ -51,11 +51,19 @@ const isReel = computed(() => props.contentType === ContentType.InstagramReel);
 const isStory = computed(() => props.contentType === ContentType.InstagramStory);
 const isFeed = computed(() => !isReel.value && !isStory.value);
 
-// Aspect ratio for the feed media frame. Instagram defaults to 1:1.
+// Padding-bottom percentage = height/width. Used instead of CSS `aspect-ratio`
+// because inside this flex column some rendering paths ignored `aspect-ratio`
+// and the frame stuck to a stale height. `null` = use original media height.
+const ASPECT_PADDING: Record<string, number | null> = {
+    '1:1': 100,
+    '4:5': 125,
+    '16:9': 56.25,
+    'original': null,
+};
+
 const feedAspectStyle = computed(() => {
-    const ratio = props.meta?.aspect_ratio ?? '1:1';
-    const value = ratio === '4:5' ? '4 / 5' : ratio === '16:9' ? '16 / 9' : ratio === 'original' ? 'auto' : '1 / 1';
-    return { aspectRatio: value };
+    const fraction = ASPECT_PADDING[props.meta?.aspect_ratio ?? '1:1'] ?? 100;
+    return fraction === null ? { aspectRatio: 'auto' } : { paddingBottom: `${fraction}%` };
 });
 
 // Format numbers like Instagram
@@ -118,12 +126,14 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
 
                 <!-- Post Media - Aspect ratio matches user's chosen crop -->
                 <div class="relative w-full shrink-0 bg-black" :style="feedAspectStyle">
-                    <PostMediaPreview
-                        :media="media"
-                        :placeholder-icon="IconPhoto"
-                        dot-active-class="bg-[#0095f6]"
-                        placeholder-class="w-full h-full flex items-center justify-center bg-[#fafafa] dark:bg-[#121212]"
-                    />
+                    <div class="absolute inset-0">
+                        <PostMediaPreview
+                            :media="media"
+                            :placeholder-icon="IconPhoto"
+                            dot-active-class="bg-[#0095f6]"
+                            placeholder-class="w-full h-full flex items-center justify-center bg-[#fafafa] dark:bg-[#121212]"
+                        />
+                    </div>
                 </div>
 
                 <!-- Action Buttons -->

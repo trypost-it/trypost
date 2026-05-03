@@ -23,13 +23,14 @@ interface SocialAccount {
 interface MediaItem {
     id: string;
     url: string;
-    type: string;
-    original_filename: string;
+    type?: string;
+    mime_type?: string;
+    original_filename?: string;
 }
 
 interface Props {
     platform: string;
-    socialAccount: SocialAccount;
+    socialAccount: SocialAccount | null | undefined;
     content: string;
     media: MediaItem[];
     contentType?: string;
@@ -37,6 +38,14 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const resolvedSocialAccount = computed((): SocialAccount => props.socialAccount ?? {
+    id: '',
+    platform: props.platform,
+    display_name: '',
+    username: '',
+    avatar_url: null,
+});
 
 const previewComponent = computed(() => {
     switch (props.platform) {
@@ -71,7 +80,7 @@ const previewComponent = computed(() => {
 <template>
     <component
         :is="previewComponent"
-        :social-account="socialAccount"
+        :social-account="resolvedSocialAccount"
         :content="content"
         :media="media"
         :content-type="contentType"

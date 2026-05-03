@@ -3,7 +3,7 @@ import { IconAlertTriangle, IconBrandFacebook, IconChevronDown, IconChevronUp } 
 import { computed, ref } from 'vue';
 
 import { Avatar } from '@/components/ui/avatar';
-import { getMediaValidationWarning } from '@/composables/useMedia';
+import { getMediaValidationWarning, type MediaItem } from '@/composables/useMedia';
 
 interface SocialAccount {
     id: string;
@@ -11,12 +11,6 @@ interface SocialAccount {
     display_name: string;
     username: string;
     avatar_url: string | null;
-}
-
-interface MediaItem {
-    id: string;
-    type?: string;
-    mime_type?: string;
 }
 
 interface Props {

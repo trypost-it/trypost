@@ -109,6 +109,7 @@ return [
         'brand_color' => 'Color de marca',
         'background_color' => 'Color de fondo',
         'text_color' => 'Color de texto',
+        'font' => 'Fuente',
         'content_language' => 'Idioma del contenido',
         'content_language_description' => 'Idioma usado en los subtítulos, hashtags y cualquier texto dentro de imágenes o videos generados por IA.',
     ],

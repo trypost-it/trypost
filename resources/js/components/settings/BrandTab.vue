@@ -4,6 +4,7 @@ import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
 import WorkspaceController from '@/actions/App/Http/Controllers/App/WorkspaceController';
+import FontPicker from '@/components/FontPicker.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import HexColorInput from '@/components/HexColorInput.vue';
 import InputError from '@/components/InputError.vue';
@@ -29,11 +30,13 @@ interface Workspace {
     brand_color: string | null;
     background_color: string | null;
     text_color: string | null;
+    brand_font: string;
     content_language: string;
 }
 
 const props = defineProps<{
     workspace: Workspace;
+    availableFonts: string[];
 }>();
 
 const brandTone = ref(props.workspace.brand_tone ?? 'professional');
@@ -41,6 +44,7 @@ const contentLanguage = ref(props.workspace.content_language ?? 'en');
 const brandColor = ref<string | null>(props.workspace.brand_color);
 const backgroundColor = ref<string | null>(props.workspace.background_color);
 const textColor = ref<string | null>(props.workspace.text_color);
+const brandFont = ref<string>(props.workspace.brand_font ?? 'Inter');
 
 const toneLabel = computed(() =>
     brandTone.value ? trans(`settings.brand.tone_${brandTone.value}`) : '',
@@ -156,6 +160,12 @@ const languageLabel = computed(() => {
                     <HexColorInput v-model="textColor" name="text_color" />
                     <InputError :message="errors.text_color" />
                 </div>
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="brand_font">{{ $t('settings.brand.font') }}</Label>
+                <FontPicker v-model="brandFont" name="brand_font" :fonts="availableFonts" />
+                <InputError :message="errors.brand_font" />
             </div>
 
             <div class="grid gap-2">

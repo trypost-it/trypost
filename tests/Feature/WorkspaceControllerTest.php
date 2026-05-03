@@ -210,6 +210,7 @@ test('update workspace settings updates workspace and redirects back', function 
         ->from(route('app.workspace.brand'))
         ->put(route('app.workspace.settings.update'), [
             'name' => 'Updated Name',
+            'brand_font' => 'Inter',
         ]);
 
     $response->assertRedirect(route('app.workspace.brand'));

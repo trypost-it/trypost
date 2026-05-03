@@ -22,8 +22,7 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
-import { store as storePost } from '@/actions/App/Http/Controllers/App/PostController';
-import { index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
+import { create as createPost, index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
 import { WorkspaceRole } from '@/enums/workspace-role';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -229,7 +228,7 @@ const switchWorkspace = (workspaceId: string) => {
         <SidebarContent>
             <!-- Create Post Button -->
             <div v-if="currentWorkspace" class="px-2 py-2">
-                <Link :href="storePost.url()" method="post" class="w-full">
+                <Link :href="createPost.url()" class="block">
                     <Button :size="sidebarState === 'collapsed' ? 'icon' : 'default'" class="w-full">
                         <IconPlus v-if="sidebarState === 'collapsed'" class="size-4" />
                         <span v-if="sidebarState === 'expanded'">{{ $t('sidebar.create_post') }}</span>

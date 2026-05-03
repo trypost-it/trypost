@@ -8,9 +8,12 @@ use App\Http\Controllers\App\AssetController;
 use App\Http\Controllers\App\BillingController;
 use App\Http\Controllers\App\GiphyController;
 use App\Http\Controllers\App\NotificationController;
-use App\Http\Controllers\App\PostAssistantController;
+use App\Http\Controllers\App\PostAiCreateController;
+use App\Http\Controllers\App\PostAiGenerateController;
+use App\Http\Controllers\App\PostAiReviewController;
 use App\Http\Controllers\App\PostCommentController;
 use App\Http\Controllers\App\PostController;
+use App\Http\Controllers\App\PostTemplateController;
 use App\Http\Controllers\App\PresenceController;
 use App\Http\Controllers\App\Settings\AccountController;
 use App\Http\Controllers\App\Settings\NotificationPreferenceController;
@@ -143,6 +146,7 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
 
     // Posts
     Route::get('posts/{status?}', [PostController::class, 'index'])->name('app.posts.index')->where('status', 'draft|scheduled|published');
+    Route::get('posts/create', [PostController::class, 'create'])->name('app.posts.create');
     Route::post('posts', [PostController::class, 'store'])->name('app.posts.store');
     Route::get('posts/{post}/edit', [PostController::class, 'edit'])->name('app.posts.edit');
     Route::get('posts/{post}', [PostController::class, 'show'])->name('app.posts.show');
@@ -150,18 +154,22 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::put('posts/{post}', [PostController::class, 'update'])->name('app.posts.update');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('app.posts.destroy');
 
+    // Post Templates
+    Route::get('post-templates', [PostTemplateController::class, 'index'])->name('app.post-templates.index');
+    Route::post('post-templates/{template}/apply', [PostTemplateController::class, 'apply'])->name('app.post-templates.apply');
+
+    // Post AI
+    Route::post('posts/{post}/ai/generate', [PostAiGenerateController::class, 'generate'])->name('app.posts.ai.generate');
+    Route::post('posts/{post}/ai/review', [PostAiReviewController::class, 'review'])->name('app.posts.ai.review');
+    Route::post('posts/ai/create', [PostAiCreateController::class, 'start'])->name('app.posts.ai.create');
+    Route::post('posts/ai/create/{creationId}/finalize', [PostAiCreateController::class, 'finalize'])->name('app.posts.ai.create.finalize');
+
     // Post Comments
     Route::get('posts/{post}/comments', [PostCommentController::class, 'index'])->name('app.posts.comments.index');
     Route::post('posts/{post}/comments', [PostCommentController::class, 'store'])->name('app.posts.comments.store');
     Route::put('posts/{post}/comments/{comment}', [PostCommentController::class, 'update'])->name('app.posts.comments.update');
     Route::delete('posts/{post}/comments/{comment}', [PostCommentController::class, 'destroy'])->name('app.posts.comments.destroy');
     Route::post('posts/{post}/comments/{comment}/react', [PostCommentController::class, 'react'])->name('app.posts.comments.react');
-
-    // Post AI Assistant
-    Route::middleware('throttle:10,1')->group(function () {
-        Route::get('posts/{post}/assistant', [PostAssistantController::class, 'index'])->name('app.posts.assistant.index');
-        Route::post('posts/{post}/assistant', [PostAssistantController::class, 'store'])->name('app.posts.assistant.store');
-    });
 
     // Members
     Route::get('settings/members', [WorkspaceInviteController::class, 'index'])->name('app.members');

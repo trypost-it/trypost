@@ -1,0 +1,55 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Ai\Agents;
+
+use App\Models\Workspace;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Contracts\HasStructuredOutput;
+use Laravel\Ai\Enums\Lab;
+use Laravel\Ai\Promptable;
+
+#[Temperature(0.2)]
+class PostContentReviewer implements Agent, HasStructuredOutput
+{
+    use Promptable;
+
+    public function __construct(
+        public Workspace $workspace,
+    ) {}
+
+    public function instructions(): string
+    {
+        return view('prompts.post_content.reviewer', [
+            'brand_name' => $this->workspace->name ?? '',
+            'brand_tone' => $this->workspace->brand_tone ?? '',
+            'brand_voice_notes' => $this->workspace->brand_voice_notes ?? '',
+            'content_language' => $this->workspace->content_language ?? 'en',
+        ])->render();
+    }
+
+    public function schema(JsonSchema $schema): array
+    {
+        return [
+            'suggestions' => $schema->array()
+                ->items($schema->object(fn ($s) => [
+                    'original' => $s->string()->description('The exact substring of the input that needs correction.')->required(),
+                    'suggestion' => $s->string()->description('The corrected version.')->required(),
+                    'reason' => $s->string()->description('1-line explanation in the output language.')->required(),
+                ]))
+                ->description('Up to 8 grammar/spelling/clarity suggestions. Empty array if the text is fine.')
+                ->required(),
+        ];
+    }
+
+    public function provider(): Lab
+    {
+        return match (config('ai.default')) {
+            'openai' => Lab::OpenAI,
+            default => Lab::Gemini,
+        };
+    }
+}

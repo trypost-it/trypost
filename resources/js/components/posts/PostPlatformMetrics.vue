@@ -32,7 +32,7 @@ onMounted(async () => {
     try {
         const response = await useHttp().get(
             metricsRoute.url({ post: props.postId, postPlatform: props.postPlatformId }),
-        );
+        ) as { data: unknown };
         const data = response.data;
 
         if (Array.isArray(data)) {

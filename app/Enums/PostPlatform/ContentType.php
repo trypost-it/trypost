@@ -10,6 +10,7 @@ enum ContentType: string
 {
     // Instagram
     case InstagramFeed = 'instagram_feed';
+    case InstagramCarousel = 'instagram_carousel';
     case InstagramReel = 'instagram_reel';
     case InstagramStory = 'instagram_story';
 
@@ -53,6 +54,7 @@ enum ContentType: string
     {
         return match ($this) {
             self::InstagramFeed => 'Feed Post',
+            self::InstagramCarousel => 'Carousel',
             self::InstagramReel => 'Reel',
             self::InstagramStory => 'Story',
             self::LinkedInPost, self::LinkedInPagePost => 'Post',
@@ -76,6 +78,7 @@ enum ContentType: string
     {
         return match ($this) {
             self::InstagramFeed => 'Appears in your feed and profile',
+            self::InstagramCarousel => 'Multi-slide swipeable post (2-10 images)',
             self::InstagramReel => 'Short video up to 90 seconds',
             self::InstagramStory => 'Disappears after 24 hours',
             self::LinkedInPost, self::LinkedInPagePost => 'Standard post with text and media',
@@ -98,7 +101,7 @@ enum ContentType: string
     public function platform(): SocialPlatform
     {
         return match ($this) {
-            self::InstagramFeed, self::InstagramReel, self::InstagramStory => SocialPlatform::Instagram,
+            self::InstagramFeed, self::InstagramCarousel, self::InstagramReel, self::InstagramStory => SocialPlatform::Instagram,
             self::LinkedInPost, self::LinkedInCarousel => SocialPlatform::LinkedIn,
             self::LinkedInPagePost, self::LinkedInPageCarousel => SocialPlatform::LinkedInPage,
             self::FacebookPost, self::FacebookReel, self::FacebookStory => SocialPlatform::Facebook,
@@ -112,10 +115,44 @@ enum ContentType: string
         };
     }
 
+    /**
+     * Image dimensions used by the AI generator for this format.
+     * Single source of truth — `TemplateImageGenerator` reads from here.
+     *
+     * @return array{width: int, height: int}
+     */
+    public function aiImageDimensions(): array
+    {
+        return match ($this) {
+            // Vertical 4:5 (Instagram preferred portrait, Threads mirrors it)
+            self::InstagramFeed,
+            self::InstagramCarousel,
+            self::ThreadsPost => ['width' => 1080, 'height' => 1350],
+
+            // Square 1:1 (LinkedIn, X, Facebook, Bluesky, Mastodon)
+            self::LinkedInPost,
+            self::LinkedInPagePost,
+            self::FacebookPost,
+            self::XPost,
+            self::BlueskyPost,
+            self::MastodonPost => ['width' => 1080, 'height' => 1080],
+
+            // Stories 9:16 (Instagram + Facebook)
+            self::InstagramStory,
+            self::FacebookStory => ['width' => 1080, 'height' => 1920],
+
+            // Pinterest pin 2:3
+            self::PinterestPin => ['width' => 1000, 'height' => 1500],
+
+            // Default: 4:5 portrait (used for any other case)
+            default => ['width' => 1080, 'height' => 1350],
+        };
+    }
+
     public function aspectRatio(): ?string
     {
         return match ($this) {
-            self::InstagramFeed => '1:1',
+            self::InstagramFeed, self::InstagramCarousel => '4:5',
             self::InstagramReel, self::InstagramStory => '9:16',
             self::FacebookReel, self::FacebookStory => '9:16',
             self::TikTokVideo, self::YouTubeShort => '9:16',
@@ -128,7 +165,8 @@ enum ContentType: string
     public function maxMediaCount(): int
     {
         return match ($this) {
-            self::InstagramFeed => 10,
+            self::InstagramFeed => 1,
+            self::InstagramCarousel => 10,
             self::InstagramReel, self::InstagramStory => 1,
             self::LinkedInPost, self::LinkedInPagePost => 1,
             self::LinkedInCarousel, self::LinkedInPageCarousel => 20,
@@ -149,6 +187,7 @@ enum ContentType: string
     {
         return match ($this) {
             self::InstagramFeed, self::InstagramReel, self::InstagramStory => true,
+            self::InstagramCarousel => false,
             self::LinkedInPost, self::LinkedInPagePost => true,
             self::LinkedInCarousel, self::LinkedInPageCarousel => false,
             self::FacebookPost, self::FacebookReel, self::FacebookStory => true,
@@ -178,13 +217,37 @@ enum ContentType: string
     {
         return match ($this) {
             self::LinkedInPost, self::LinkedInPagePost => false,
-            self::FacebookPost => false,
             self::XPost => false,
             self::ThreadsPost => false,
             self::BlueskyPost => false,
             self::MastodonPost => false,
+            self::InstagramFeed => false,
             default => true,
         };
+    }
+
+    /**
+     * Content types that the AI generator currently supports. Reels/stories/
+     * videos are excluded because the AI flow only produces text + images.
+     *
+     * @return array<self>
+     */
+    public static function aiSupported(): array
+    {
+        return [
+            self::InstagramFeed,
+            self::InstagramCarousel,
+            self::InstagramStory,
+            self::LinkedInPost,
+            self::LinkedInPagePost,
+            self::XPost,
+            self::ThreadsPost,
+            self::BlueskyPost,
+            self::MastodonPost,
+            self::FacebookPost,
+            self::FacebookStory,
+            self::PinterestPin,
+        ];
     }
 
     /**

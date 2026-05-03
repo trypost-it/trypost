@@ -10,10 +10,12 @@ import {
     IconSparkles,
     IconTrash,
     IconVideo,
+    IconWriting,
 } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, nextTick, ref } from 'vue';
 
+import ImagePreviewDialog from '@/components/ImagePreviewDialog.vue';
 import EmojiPicker from '@/components/posts/EmojiPicker.vue';
 import HashtagsModal from '@/components/posts/HashtagsModal.vue';
 import MediaPickerDialog from '@/components/posts/MediaPickerDialog.vue';
@@ -61,7 +63,8 @@ const content = defineModel<string>('content', { required: true });
 const media = defineModel<MediaItem[]>('media', { required: true });
 
 const emit = defineEmits<{
-    (e: 'focus-assistant'): void;
+    (e: 'open-ai-generate'): void;
+    (e: 'open-ai-review'): void;
 }>();
 
 const isDragging = ref(false);
@@ -73,6 +76,19 @@ const hashtagsModal = ref<InstanceType<typeof HashtagsModal> | null>(null);
 const dragMediaIndex = ref<number | null>(null);
 const dragOverIndex = ref<number | null>(null);
 const mediaThumbRefs = ref<HTMLElement[]>([]);
+const previewIndex = ref<number | null>(null);
+
+// Image-only URLs (videos are skipped) in the same order as `media`. The
+// preview index is computed against THIS list to keep arrow navigation tight.
+const previewImages = computed(() =>
+    media.value.filter((m) => !isVideo(m)).map((m) => m.url),
+);
+
+const openPreview = (item: MediaItem) => {
+    if (isVideo(item)) return;
+    const idx = previewImages.value.indexOf(item.url);
+    previewIndex.value = idx >= 0 ? idx : 0;
+};
 
 const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 
@@ -273,7 +289,7 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                         v-for="(item, index) in media"
                         :key="item.id"
                         :ref="(el) => { if (el) mediaThumbRefs[index] = el as HTMLElement; }"
-                        class="group relative aspect-square overflow-hidden rounded-xl bg-muted transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                        class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl bg-muted transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                         :class="[
                             dragMediaIndex === index ? 'opacity-40' : '',
                             dragOverIndex === index && dragMediaIndex !== index ? 'ring-2 ring-primary ring-offset-2' : '',
@@ -281,6 +297,7 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                         ]"
                         tabindex="0"
                         :draggable="media.length > 1"
+                        @click="openPreview(item)"
                         @dragstart="onMediaDragStart($event, index)"
                         @dragover="onMediaDragOver($event, index)"
                         @drop="onMediaDrop($event, index)"
@@ -349,7 +366,7 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                         <button
                             type="button"
                             class="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md bg-black/55 text-white opacity-0 backdrop-blur-sm transition-all hover:bg-destructive group-hover:opacity-100 group-focus:opacity-100"
-                            @click="removeMedia(item.id)"
+                            @click.stop="removeMedia(item.id)"
                         >
                             <IconTrash class="h-3.5 w-3.5" />
                         </button>
@@ -417,12 +434,29 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                                 variant="ghost"
                                 size="icon-sm"
                                 class="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-                                @click="emit('focus-assistant')"
+                                @click="emit('open-ai-generate')"
                             >
                                 <IconSparkles class="size-4" />
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{{ $t('posts.edit.tabs.writing_assistant') }}</TooltipContent>
+                        <TooltipContent>{{ $t('posts.ai.generate.button_tooltip') }}</TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger as-child>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                class="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                                @click="emit('open-ai-review')"
+                            >
+                                <IconWriting class="size-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{{ $t('posts.ai.review.button_tooltip') }}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
 
@@ -483,5 +517,11 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
 
         <HashtagsModal ref="hashtagsModal" :hashtags="hashtags" @select="appendHashtags" />
         <MediaPickerDialog ref="mediaPickerDialog" @select="addMediaFromGallery" />
+        <ImagePreviewDialog
+            :images="previewImages"
+            :index="previewIndex"
+            @update:index="previewIndex = $event"
+            @close="previewIndex = null"
+        />
     </div>
 </template>

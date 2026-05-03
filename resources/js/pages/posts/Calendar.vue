@@ -12,7 +12,7 @@ import date from '@/date';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { calendar } from '@/routes/app';
-import { edit as editPost, show as showPost, store as storePost } from '@/routes/app/posts';
+import { create as createPost, edit as editPost, show as showPost } from '@/routes/app/posts';
 
 interface PostPlatform {
     id: string;
@@ -52,6 +52,8 @@ const props = defineProps<Props>();
 
 // Mobile detection
 const isMobile = ref(false);
+const createPostUrl = (isoDate: string | null = null) =>
+    isoDate ? createPost.url({ query: { date: isoDate } }) : createPost.url();
 const checkMobile = () => {
     isMobile.value = window.innerWidth < 1024;
 };
@@ -270,10 +272,8 @@ const formatTime = (scheduledAt: string): string => {
                     </TabsList>
                 </Tabs>
 
-                <Link :href="storePost.url()" method="post">
-                    <Button>
-                        {{ $t('calendar.new_post') }}
-                    </Button>
+                <Link :href="createPost.url()">
+                    <Button>{{ $t('calendar.new_post') }}</Button>
                 </Link>
             </div>
         </template>
@@ -360,8 +360,8 @@ const formatTime = (scheduledAt: string): string => {
                     <!-- Day Content -->
                     <div class="flex-1 overflow-y-auto p-2 space-y-2">
                         <!-- Add Post Button -->
-                        <Link :href="storePost.url({ query: { date: day.format('YYYY-MM-DD') } })" method="post"
-                            class="flex items-center justify-center p-2 rounded border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors">
+                        <Link :href="createPostUrl(day.format('YYYY-MM-DD'))"
+                            class="w-full flex items-center justify-center p-2 rounded border border-dashed border-muted-foreground/30 text-muted-foreground hover:border-primary hover:text-primary hover:bg-primary/5 transition-colors">
                             <IconPlus class="h-4 w-4" />
                         </Link>
 
@@ -435,7 +435,7 @@ const formatTime = (scheduledAt: string): string => {
                                     }">
                                     {{ day.format('D') }}
                                 </span>
-                                <Link :href="storePost.url({ query: { date: day.format('YYYY-MM-DD') } })" method="post"
+                                <Link :href="createPostUrl(day.format('YYYY-MM-DD'))"
                                     class="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all">
                                     <IconPlus class="h-4 w-4" />
                                 </Link>
@@ -484,4 +484,5 @@ const formatTime = (scheduledAt: string): string => {
             </div>
         </div>
     </AppLayout>
+
 </template>

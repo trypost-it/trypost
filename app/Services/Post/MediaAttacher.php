@@ -40,11 +40,14 @@ use RuntimeException;
  */
 class MediaAttacher
 {
-    private const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-
-    private const ALLOWED_VIDEO_MIMES = ['video/mp4', 'video/quicktime', 'video/webm'];
-
-    private const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+    /**
+     * Cap on URL-fetched payloads. Smaller than the web upload cap (which
+     * can be 1 GB for direct uploads) because URL fetches have stricter
+     * server-side concerns: bandwidth, timeout, and unbounded user input.
+     * 50 MB covers a long photo or a short video; bigger files should be
+     * uploaded directly.
+     */
+    private const MAX_BYTES = 50 * 1024 * 1024;
 
     private static bool $skipUrlSafety = false;
 
@@ -222,18 +225,21 @@ class MediaAttacher
         return array_map(fn ($value) => MediaType::from($value), $intersection);
     }
 
+    /**
+     * Resolve the MediaType for a given MIME by walking the enum's own
+     * allow-list. Document is excluded from URL fetches (no PDFs via URL
+     * — those go through direct upload only).
+     */
     private function resolveType(?string $mime): ?MediaType
     {
         if ($mime === null || $mime === '') {
             return null;
         }
 
-        if (in_array($mime, self::ALLOWED_IMAGE_MIMES, true)) {
-            return MediaType::Image;
-        }
-
-        if (in_array($mime, self::ALLOWED_VIDEO_MIMES, true)) {
-            return MediaType::Video;
+        foreach ([MediaType::Image, MediaType::Video] as $type) {
+            if (in_array($mime, $type->allowedMimeTypes(), true)) {
+                return $type;
+            }
         }
 
         return null;

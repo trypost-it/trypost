@@ -251,8 +251,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('app.authentication.destroy-other-sessions');
     Route::get('settings/authentication/providers/{provider}/connect', [AuthenticationController::class, 'connectProvider'])
         ->name('app.authentication.connect-provider');
-    Route::get('settings/authentication/providers/{provider}/callback', [AuthenticationController::class, 'connectProviderCallback'])
-        ->name('app.authentication.connect-provider.callback');
     Route::delete('settings/authentication/providers/{provider}', [AuthenticationController::class, 'disconnectProvider'])
         ->name('app.authentication.disconnect-provider');
 

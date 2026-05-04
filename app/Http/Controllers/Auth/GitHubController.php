@@ -35,6 +35,13 @@ class GitHubController extends Controller
             return redirect()->route('login');
         }
 
+        // The signup/login redirect is gated by the `guest` middleware and
+        // the connect-from-settings redirect by `auth`, so this is a safe
+        // signal for which flow we came from.
+        if (Auth::check()) {
+            return $this->connectToCurrentUser(Auth::user(), (string) $githubUser->getId());
+        }
+
         $user = User::where('github_id', (string) $githubUser->getId())
             ->when($githubUser->getEmail(), fn ($query, $email) => $query->orWhere('email', $email))
             ->first();
@@ -50,6 +57,25 @@ class GitHubController extends Controller
         }
 
         return $this->registerNewUser($githubUser);
+    }
+
+    private function connectToCurrentUser(User $user, string $githubId): RedirectResponse
+    {
+        $existing = User::where('github_id', $githubId)
+            ->where('id', '!=', $user->id)
+            ->first();
+
+        if ($existing) {
+            return redirect()->route('app.authentication.edit')
+                ->with('flash.error', __('settings.authentication.providers.flash_already_linked', ['provider' => 'GitHub']));
+        }
+
+        if ($user->github_id !== $githubId) {
+            $user->update(['github_id' => $githubId]);
+        }
+
+        return redirect()->route('app.authentication.edit')
+            ->with('flash.success', __('settings.authentication.providers.flash_connected', ['provider' => 'GitHub']));
     }
 
     private function loginExistingUser(User $user, string $githubId): RedirectResponse

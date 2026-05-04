@@ -33,6 +33,13 @@ class GoogleController extends Controller
             return redirect()->route('login');
         }
 
+        // The signup/login redirect is gated by the `guest` middleware and
+        // the connect-from-settings redirect by `auth`, so this is a safe
+        // signal for which flow we came from.
+        if (Auth::check()) {
+            return $this->connectToCurrentUser(Auth::user(), $googleUser->getId());
+        }
+
         $user = User::where('google_id', $googleUser->getId())
             ->orWhere('email', $googleUser->getEmail())
             ->first();
@@ -42,6 +49,25 @@ class GoogleController extends Controller
         }
 
         return $this->registerNewUser($googleUser);
+    }
+
+    private function connectToCurrentUser(User $user, string $googleId): RedirectResponse
+    {
+        $existing = User::where('google_id', $googleId)
+            ->where('id', '!=', $user->id)
+            ->first();
+
+        if ($existing) {
+            return redirect()->route('app.authentication.edit')
+                ->with('flash.error', __('settings.authentication.providers.flash_already_linked', ['provider' => 'Google']));
+        }
+
+        if ($user->google_id !== $googleId) {
+            $user->update(['google_id' => $googleId]);
+        }
+
+        return redirect()->route('app.authentication.edit')
+            ->with('flash.success', __('settings.authentication.providers.flash_connected', ['provider' => 'Google']));
     }
 
     private function loginExistingUser(User $user, string $googleId): RedirectResponse

@@ -22,8 +22,10 @@ class MastodonAnalytics
 
         $instance = data_get($account->meta, 'instance', 'https://mastodon.social');
 
+        // Public posts: no auth needed. Our token only requests write scopes
+        // (read:accounts + write:statuses + write:media), so attaching the
+        // Bearer would 403 with "outside the authorized scopes".
         $response = $this->socialHttp()
-            ->withToken($account->access_token)
             ->get("{$instance}/api/v1/statuses/{$postPlatform->platform_post_id}");
 
         if ($response->failed()) {

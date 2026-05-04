@@ -20,13 +20,16 @@ class BlueskyAnalytics
             return ['unsupported' => true, 'reason' => 'missing_post_id'];
         }
 
-        $service = data_get($account->meta, 'service', 'https://bsky.social');
         $did = $account->platform_user_id;
         $atUri = "at://{$did}/app.bsky.feed.post/{$postPlatform->platform_post_id}";
 
-        // Public AppView API: no auth required for reading post counts.
+        // Read counts (likes, reposts, replies, quotes) live on the AT
+        // Protocol AppView, not the PDS. The user's PDS requires Bearer auth
+        // for this endpoint; the public AppView does not.
+        $appView = (string) config('trypost.platforms.bluesky.public_appview');
+
         $response = $this->socialHttp()
-            ->get("{$service}/xrpc/app.bsky.feed.getPosts", [
+            ->get("{$appView}/xrpc/app.bsky.feed.getPosts", [
                 'uris' => [$atUri],
             ]);
 

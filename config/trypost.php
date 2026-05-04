@@ -87,6 +87,7 @@ return [
         ],
         'bluesky' => [
             'enabled' => env('BLUESKY_ENABLED', true),
+            'public_appview' => env('BLUESKY_PUBLIC_APPVIEW', 'https://public.api.bsky.app'),
         ],
         'mastodon' => [
             'enabled' => env('MASTODON_ENABLED', true),

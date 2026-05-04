@@ -7,8 +7,10 @@ namespace App\Http\Controllers\Api;
 use App\Actions\Post\CreatePost;
 use App\Actions\Post\DeletePost;
 use App\Actions\Post\UpdatePost;
+use App\Enums\Media\Type as MediaType;
 use App\Enums\Post\Action as PostAction;
-use App\Http\Requests\Api\Post\AttachMediaRequest;
+use App\Http\Requests\Api\Post\AttachMediaFromUrlRequest;
+use App\Http\Requests\Api\Post\StoreMediaRequest;
 use App\Http\Requests\Api\Post\StorePostRequest;
 use App\Http\Requests\Api\Post\UpdatePostRequest;
 use App\Http\Resources\Api\PostMediaAttachResource;
@@ -20,6 +22,7 @@ use App\Services\Post\MediaAttacher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
 class PostController extends Controller
@@ -83,7 +86,42 @@ class PostController extends Controller
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function attachMedia(AttachMediaRequest $request, Post $post): PostMediaAttachResource
+    public function storeMedia(StoreMediaRequest $request, Post $post): PostResource
+    {
+        $this->authorize('update', $post);
+
+        $file = $request->file('media');
+        $type = MediaType::fromMime((string) $file->getMimeType());
+
+        if ($type === null || ! in_array($type, $post->allowedMediaTypes(), true)) {
+            throw ValidationException::withMessages([
+                'media' => 'This file type is not supported by the platforms enabled on the post.',
+            ]);
+        }
+
+        if ($file->getSize() > $type->maxSizeInBytes()) {
+            throw ValidationException::withMessages([
+                'media' => 'File size exceeds the maximum allowed for this media type.',
+            ]);
+        }
+
+        $media = $post->workspace->addMedia($file, 'assets');
+
+        $post->appendMedia([[
+            'id' => $media->id,
+            'path' => $media->path,
+            'url' => $media->url,
+            'type' => $media->type,
+            'mime_type' => $media->mime_type,
+            'original_filename' => $media->original_filename,
+        ]]);
+
+        $post->refresh()->load(['postPlatforms.socialAccount', 'labels']);
+
+        return new PostResource($post);
+    }
+
+    public function attachMediaFromUrl(AttachMediaFromUrlRequest $request, Post $post): PostMediaAttachResource
     {
         $this->authorize('update', $post);
 

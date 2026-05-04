@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { IconDeviceDesktop, IconDeviceMobile } from '@tabler/icons-vue';
+import { IconBrandGithub, IconDeviceDesktop, IconDeviceMobile } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
@@ -29,6 +29,7 @@ import { settings as settingsHub } from '@/routes/app';
 import { edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';
+import { redirect as githubRedirect } from '@/routes/auth/github';
 import { redirect as googleRedirect } from '@/routes/auth/google';
 import type { BreadcrumbItem } from '@/types';
 
@@ -41,7 +42,7 @@ type Session = {
 };
 
 type ConnectedAccount = {
-    provider: 'google';
+    provider: 'google' | 'github';
     label: string;
     connected: boolean;
     can_disconnect: boolean;
@@ -67,6 +68,7 @@ const tabs = computed(() => [
 
 const providerRedirects: Record<ConnectedAccount['provider'], () => { url: string }> = {
     google: googleRedirect,
+    github: githubRedirect,
 };
 
 const passwordHeading = computed(() =>
@@ -296,8 +298,13 @@ const logoutDialogOpen = ref(false);
                         >
                             <div class="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-muted">
                                 <img
-                                    :src="`/images/social/${account.provider}.svg`"
+                                    v-if="account.provider === 'google'"
+                                    src="/images/social/google.svg"
                                     :alt="account.label"
+                                    class="size-5"
+                                />
+                                <IconBrandGithub
+                                    v-else-if="account.provider === 'github'"
                                     class="size-5"
                                 />
                             </div>

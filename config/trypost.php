@@ -46,6 +46,8 @@ return [
 
     'google_auth_enabled' => env('GOOGLE_AUTH_ENABLED', false),
 
+    'github_auth_enabled' => env('GITHUB_AUTH_ENABLED', false),
+
     /*
     |--------------------------------------------------------------------------
     | Social Platforms

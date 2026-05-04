@@ -6,11 +6,12 @@ use App\Http\Controllers\Auth\AcceptInviteController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\GitHubController;
+use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\SignupSuccessController;
-use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,8 +30,11 @@ Route::middleware(['guest'])->group(function () {
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 
-    Route::get('/auth/google/redirect', [SocialLoginController::class, 'redirect'])->name('auth.google.redirect');
-    Route::get('/auth/google/callback', [SocialLoginController::class, 'callback'])->name('auth.google.callback');
+    Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('auth.google.callback');
+
+    Route::get('/auth/github/redirect', [GitHubController::class, 'redirect'])->name('auth.github.redirect');
+    Route::get('/auth/github/callback', [GitHubController::class, 'callback'])->name('auth.github.callback');
 });
 
 Route::middleware(['auth'])->group(function () {

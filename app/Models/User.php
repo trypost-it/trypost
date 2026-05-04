@@ -32,9 +32,16 @@ class User extends Authenticatable implements MustVerifyEmail, OAuthenticatable
         'email',
         'password',
         'google_id',
+        'github_id',
         'account_id',
         'current_workspace_id',
         'email_verified_at',
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_term',
+        'utm_content',
+        'registration_ip',
     ];
 
     /**

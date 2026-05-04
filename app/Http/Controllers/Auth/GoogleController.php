@@ -5,17 +5,23 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Actions\User\CreateUser;
+use App\Http\Controllers\Auth\Concerns\PreservesUtmParameters;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 
-class SocialLoginController extends Controller
+class GoogleController extends Controller
 {
-    public function redirect(): RedirectResponse
+    use PreservesUtmParameters;
+
+    public function redirect(Request $request): RedirectResponse
     {
+        $this->storeUtmParameters($request);
+
         return Socialite::driver('google-auth')->redirect();
     }
 
@@ -50,17 +56,22 @@ class SocialLoginController extends Controller
 
         Auth::login($user, remember: true);
 
+        $this->retrieveUtmParameters();
+
         return redirect()->route('app.home');
     }
 
     private function registerNewUser(\Laravel\Socialite\Contracts\User $googleUser): RedirectResponse
     {
+        $utmParameters = $this->retrieveUtmParameters();
+
         $user = CreateUser::execute([
             'name' => $googleUser->getName(),
             'email' => $googleUser->getEmail(),
             'google_id' => $googleUser->getId(),
             'email_verified_at' => now(),
-        ]);
+            'registration_ip' => request()->ip(),
+        ], $utmParameters);
 
         event(new Registered($user));
 
@@ -68,6 +79,6 @@ class SocialLoginController extends Controller
 
         session()->flash('auth_provider', 'google');
 
-        return redirect()->route('register.success');
+        return redirect()->route('register.success', $utmParameters);
     }
 }

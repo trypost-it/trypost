@@ -29,6 +29,7 @@ import { settings as settingsHub } from '@/routes/app';
 import { edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';
+import { redirect as githubRedirect } from '@/routes/auth/github';
 import { redirect as googleRedirect } from '@/routes/auth/google';
 import type { BreadcrumbItem } from '@/types';
 
@@ -41,7 +42,7 @@ type Session = {
 };
 
 type ConnectedAccount = {
-    provider: 'google';
+    provider: 'google' | 'github';
     label: string;
     connected: boolean;
     can_disconnect: boolean;
@@ -67,6 +68,7 @@ const tabs = computed(() => [
 
 const providerRedirects: Record<ConnectedAccount['provider'], () => { url: string }> = {
     google: googleRedirect,
+    github: githubRedirect,
 };
 
 const passwordHeading = computed(() =>
@@ -298,7 +300,7 @@ const logoutDialogOpen = ref(false);
                                 <img
                                     :src="`/images/social/${account.provider}.svg`"
                                     :alt="account.label"
-                                    class="size-5"
+                                    :class="['size-5', account.provider === 'github' ? 'dark:invert' : '']"
                                 />
                             </div>
                             <div class="flex-1 space-y-0.5">

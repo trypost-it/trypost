@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
 
-import GoogleAuthButton from '@/components/auth/GoogleAuthButton.vue';
+import SocialLogin from '@/components/auth/SocialLogin.vue';
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,7 @@ defineProps<{
         </div>
 
         <div class="flex flex-col gap-6">
-            <GoogleAuthButton :label="$t('auth.google_login')" />
+            <SocialLogin mode="login" />
 
             <Form v-bind="store.form()" :reset-on-success="['password']" v-slot="{ errors, processing }"
                 class="flex flex-col gap-6">

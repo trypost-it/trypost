@@ -17,7 +17,7 @@ use Inertia\Response;
 
 class AuthenticationController extends Controller
 {
-    private const array PROVIDERS = ['google'];
+    private const array PROVIDERS = ['google', 'github'];
 
     public function edit(Request $request): Response
     {
@@ -115,6 +115,7 @@ class AuthenticationController extends Controller
     {
         $labels = [
             'google' => 'Google',
+            'github' => 'GitHub',
         ];
 
         return collect(self::PROVIDERS)->map(fn (string $provider) => [

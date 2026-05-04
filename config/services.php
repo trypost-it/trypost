@@ -76,6 +76,13 @@ return [
         'redirect' => env('GOOGLE_AUTH_CALLBACK'),
     ],
 
+    // GitHub OAuth (used for login/signup)
+    'github' => [
+        'client_id' => env('GITHUB_CLIENT_ID'),
+        'client_secret' => env('GITHUB_CLIENT_SECRET'),
+        'redirect' => env('GITHUB_AUTH_CALLBACK'),
+    ],
+
     // Facebook Pages
     'facebook' => [
         'client_id' => env('FACEBOOK_CLIENT_ID'),

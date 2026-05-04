@@ -42,6 +42,9 @@ return [
     'or_continue_with' => 'O continuar con',
     'google_login' => 'Iniciar sesión con Google',
     'google_signup' => 'Registrarse con Google',
+    'github_login' => 'Iniciar sesión con GitHub',
+    'github_signup' => 'Registrarse con GitHub',
+    'github_email_unavailable' => 'No fue posible obtener tu correo de GitHub. Haz tu correo público en GitHub o concede el permiso de correo y vuelve a intentar.',
 
     'signup_success' => [
         'page_title' => 'Bienvenido',

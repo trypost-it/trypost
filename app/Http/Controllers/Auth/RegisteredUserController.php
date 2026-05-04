@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Actions\User\CreateUser;
+use App\Http\Controllers\Auth\Concerns\PreservesUtmParameters;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Rules\Timezone;
@@ -18,8 +19,12 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
+    use PreservesUtmParameters;
+
     public function create(Request $request): Response
     {
+        $this->storeUtmParameters($request);
+
         return Inertia::render('auth/Register', [
             'email' => $request->query('email'),
             'redirect' => $request->query('redirect'),
@@ -37,13 +42,16 @@ class RegisteredUserController extends Controller
 
         $isInviteRegistration = str_contains($request->input('redirect', ''), '/invites/');
 
+        $utmParameters = $this->retrieveUtmParameters();
+
         $user = CreateUser::execute([
             'name' => $request->name,
             'email' => $request->email,
             'password' => $request->password,
             'timezone' => $request->input('timezone', 'UTC'),
             'is_invite' => $isInviteRegistration,
-        ]);
+            'registration_ip' => $request->ip(),
+        ], $utmParameters);
 
         event(new Registered($user));
 
@@ -57,6 +65,6 @@ class RegisteredUserController extends Controller
 
         session()->flash('auth_provider', 'email');
 
-        return redirect()->route('register.success');
+        return redirect()->route('register.success', $utmParameters);
     }
 }

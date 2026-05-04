@@ -11,11 +11,12 @@ use Illuminate\Support\Facades\DB;
 class CreateUser
 {
     /**
-     * @param  array{name: string, email: string, password?: string, google_id?: string, email_verified_at?: \DateTimeInterface|null, is_invite?: bool}  $data
+     * @param  array{name: string, email: string, password?: string, google_id?: string, github_id?: string, email_verified_at?: \DateTimeInterface|null, is_invite?: bool, registration_ip?: string|null}  $data
+     * @param  array<string, string>  $utmParameters
      */
-    public static function execute(array $data): User
+    public static function execute(array $data, array $utmParameters = []): User
     {
-        return DB::transaction(function () use ($data): User {
+        return DB::transaction(function () use ($data, $utmParameters): User {
             $isInviteRegistration = data_get($data, 'is_invite', false);
 
             $account = Account::create([
@@ -23,14 +24,16 @@ class CreateUser
                 'billing_email' => data_get($data, 'email'),
             ]);
 
-            $user = User::create([
+            $user = User::create(array_merge([
                 'name' => data_get($data, 'name'),
                 'email' => data_get($data, 'email'),
                 'password' => data_get($data, 'password'),
                 'google_id' => data_get($data, 'google_id'),
+                'github_id' => data_get($data, 'github_id'),
                 'email_verified_at' => data_get($data, 'email_verified_at', $isInviteRegistration ? now() : null),
                 'account_id' => $account->id,
-            ]);
+                'registration_ip' => data_get($data, 'registration_ip'),
+            ], $utmParameters));
 
             $account->update(['owner_id' => $user->id]);
 

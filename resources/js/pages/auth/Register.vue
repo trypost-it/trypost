@@ -3,7 +3,7 @@ import { Form, Head } from '@inertiajs/vue3';
 import { IconEye, IconEyeOff } from '@tabler/icons-vue';
 import { ref } from 'vue';
 
-import GoogleAuthButton from '@/components/auth/GoogleAuthButton.vue';
+import SocialLogin from '@/components/auth/SocialLogin.vue';
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         <Head :title="$t('auth.register.page_title')" />
 
         <div class="flex flex-col gap-6">
-            <GoogleAuthButton :label="$t('auth.google_signup')" />
+            <SocialLogin mode="signup" />
 
             <Form
                 v-bind="store.form()"

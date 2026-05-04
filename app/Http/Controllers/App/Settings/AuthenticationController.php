@@ -15,6 +15,7 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\AbstractProvider;
 
 class AuthenticationController extends Controller
 {
@@ -68,9 +69,54 @@ class AuthenticationController extends Controller
     {
         abort_unless(in_array($provider, self::PROVIDERS, true), 404);
 
+        return $this->driver($provider)->redirect();
+    }
+
+    public function connectProviderCallback(Request $request, string $provider): RedirectResponse
+    {
+        abort_unless(in_array($provider, self::PROVIDERS, true), 404);
+
+        try {
+            $providerUser = $this->driver($provider)->user();
+        } catch (\Exception) {
+            return redirect()->route('app.authentication.edit')
+                ->with('flash.error', __('settings.authentication.providers.flash_already_linked', ['provider' => ucfirst($provider)]));
+        }
+
+        $user = $request->user();
+        $column = "{$provider}_id";
+        $providerId = (string) $providerUser->getId();
+
+        $existing = User::where($column, $providerId)
+            ->where('id', '!=', $user->id)
+            ->first();
+
+        if ($existing) {
+            return redirect()->route('app.authentication.edit')
+                ->with('flash.error', __('settings.authentication.providers.flash_already_linked', ['provider' => ucfirst($provider)]));
+        }
+
+        if ($user->{$column} !== $providerId) {
+            $user->update([$column => $providerId]);
+        }
+
+        return redirect()->route('app.authentication.edit')
+            ->with('flash.success', __('settings.authentication.providers.flash_connected', ['provider' => ucfirst($provider)]));
+    }
+
+    /**
+     * Build a Socialite driver for the connect flow with its dedicated
+     * callback URL. The signup/login flow uses the driver's default
+     * redirect URL configured in `config/services.php`; here we override
+     * so each flow round-trips through its own route.
+     */
+    private function driver(string $provider): AbstractProvider
+    {
+        $callback = route('app.authentication.connect-provider.callback', $provider);
+
         return match ($provider) {
-            'google' => Socialite::driver('google-auth')->redirect(),
-            'github' => Socialite::driver('github')->scopes(['read:user', 'user:email'])->redirect(),
+            'google' => Socialite::driver('google-auth')->redirectUrl($callback),
+            'github' => Socialite::driver('github')->scopes(['read:user', 'user:email'])->redirectUrl($callback),
         };
     }
 

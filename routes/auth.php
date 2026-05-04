@@ -31,15 +31,11 @@ Route::middleware(['guest'])->group(function () {
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 
     Route::get('/auth/google/redirect', [GoogleController::class, 'redirect'])->name('auth.google.redirect');
-    Route::get('/auth/github/redirect', [GitHubController::class, 'redirect'])->name('auth.github.redirect');
-});
+    Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('auth.google.callback');
 
-// Callbacks must be reachable by both guests (signup/login flow) and
-// authenticated users (connect-from-settings flow). Branching on
-// `Auth::check()` inside the callback is safe because the redirect that
-// initiated the round-trip enforces the right middleware.
-Route::get('/auth/google/callback', [GoogleController::class, 'callback'])->name('auth.google.callback');
-Route::get('/auth/github/callback', [GitHubController::class, 'callback'])->name('auth.github.callback');
+    Route::get('/auth/github/redirect', [GitHubController::class, 'redirect'])->name('auth.github.redirect');
+    Route::get('/auth/github/callback', [GitHubController::class, 'callback'])->name('auth.github.callback');
+});
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/register/success', SignupSuccessController::class)->name('register.success');

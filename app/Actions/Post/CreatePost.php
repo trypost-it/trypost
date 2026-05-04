@@ -22,12 +22,16 @@ class CreatePost
      * created via SyncPostPlatforms so the user can toggle them later in the
      * editor.
      *
+     * `label_ids[]` are attached after creation so the same set of UUIDs
+     * works for REST, MCP, and web callers.
+     *
      * @param  array{
      *     content?: ?string,
      *     media?: array<int, mixed>,
      *     date?: ?string,
      *     scheduled_at?: ?string,
-     *     platforms?: array<int, array{social_account_id: string, content_type?: string}>
+     *     platforms?: array<int, array{social_account_id: string, content_type?: string}>,
+     *     label_ids?: array<int, string>
      * }  $data
      */
     public static function execute(Workspace $workspace, User $user, array $data): Post
@@ -60,6 +64,10 @@ class CreatePost
                 $post->postPlatforms()
                     ->where('social_account_id', $accountId)
                     ->update($updates);
+            }
+
+            if ($labelIds = data_get($data, 'label_ids')) {
+                $post->labels()->sync($labelIds);
             }
 
             return $post;

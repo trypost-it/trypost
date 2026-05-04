@@ -42,29 +42,31 @@ class UpdatePost
             $post->labels()->sync(data_get($data, 'label_ids', []));
         }
 
-        DB::transaction(function () use ($post, $data) {
-            $post->postPlatforms()->update(['enabled' => false]);
+        if (Arr::has($data, 'platforms')) {
+            DB::transaction(function () use ($post, $data) {
+                $post->postPlatforms()->update(['enabled' => false]);
 
-            foreach (data_get($data, 'platforms', []) as $platformData) {
-                $updateData = ['enabled' => true];
+                foreach (data_get($data, 'platforms', []) as $platformData) {
+                    $updateData = ['enabled' => true];
 
-                if (data_get($platformData, 'content_type') !== null) {
-                    $updateData['content_type'] = data_get($platformData, 'content_type');
-                }
-
-                if (data_get($platformData, 'meta') !== null) {
-                    $postPlatform = $post->postPlatforms()->where('id', data_get($platformData, 'id'))->first();
-
-                    if ($postPlatform) {
-                        $updateData['meta'] = array_merge($postPlatform->meta ?? [], data_get($platformData, 'meta'));
+                    if (data_get($platformData, 'content_type') !== null) {
+                        $updateData['content_type'] = data_get($platformData, 'content_type');
                     }
-                }
 
-                $post->postPlatforms()
-                    ->where('id', data_get($platformData, 'id'))
-                    ->update($updateData);
-            }
-        });
+                    if (data_get($platformData, 'meta') !== null) {
+                        $postPlatform = $post->postPlatforms()->where('id', data_get($platformData, 'id'))->first();
+
+                        if ($postPlatform) {
+                            $updateData['meta'] = array_merge($postPlatform->meta ?? [], data_get($platformData, 'meta'));
+                        }
+                    }
+
+                    $post->postPlatforms()
+                        ->where('id', data_get($platformData, 'id'))
+                        ->update($updateData);
+                }
+            });
+        }
 
         if ($status === PostStatus::Publishing->value) {
             $post->update(['scheduled_at' => now()]);

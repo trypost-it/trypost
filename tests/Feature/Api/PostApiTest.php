@@ -9,6 +9,7 @@ use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
+use App\Models\WorkspaceLabel;
 
 beforeEach(function () {
     $result = createApiTestToken();
@@ -72,6 +73,47 @@ it('creates a post', function () {
         ->assertJsonPath('status', PostStatus::Draft->value);
 
     expect(Post::where('workspace_id', $this->workspace->id)->count())->toBe(1);
+});
+
+it('creates a post with content, media, and labels', function () {
+    $label = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $payload = [
+        'content' => 'Hello from the API',
+        'media' => [['id' => 'media-1', 'path' => 'media/foo.jpg', 'url' => 'https://example.com/foo.jpg', 'type' => 'image']],
+        'platforms' => [
+            ['social_account_id' => $this->socialAccount->id, 'content_type' => 'linkedin_post'],
+        ],
+        'label_ids' => [$label->id],
+    ];
+
+    $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store'), $payload)
+        ->assertCreated();
+
+    $post = Post::where('workspace_id', $this->workspace->id)->first();
+
+    expect($post->content)->toBe('Hello from the API');
+    expect($post->media)->toHaveCount(1);
+    expect($post->labels()->pluck('workspace_labels.id')->all())->toContain($label->id);
+
+    $response->assertJsonPath('content', 'Hello from the API');
+});
+
+it('rejects creating a post with an inactive social account', function () {
+    $inactive = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::LinkedIn,
+        'is_active' => false,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store'), [
+            'platforms' => [
+                ['social_account_id' => $inactive->id, 'content_type' => 'linkedin_post'],
+            ],
+        ])
+        ->assertJsonValidationErrors(['platforms.0.social_account_id']);
 });
 
 it('deletes a post', function () {

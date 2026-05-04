@@ -41,10 +41,6 @@ class CreatePostTool extends Tool
 
         $post = CreatePost::execute($workspace, $request->user(), $validated);
 
-        if ($labelIds = data_get($validated, 'label_ids')) {
-            $post->labels()->sync($labelIds);
-        }
-
         $post->load(['postPlatforms.socialAccount', 'labels']);
 
         return Response::structured((new PostResource($post))->resolve());

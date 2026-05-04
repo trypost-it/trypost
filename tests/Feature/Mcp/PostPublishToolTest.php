@@ -143,6 +143,11 @@ test('publish post immediate dispatches PublishPost job', function () {
 
     Queue::assertPushed(PublishPost::class);
     expect($post->fresh()->status)->toBe(PostStatus::Publishing);
+
+    // Regression: previously UpdatePost::execute disabled every platform when
+    // called without a `platforms` key, leaving the publish job with nothing
+    // to publish. The Arr::has guard keeps the existing toggle state intact.
+    expect(PostPlatform::where('post_id', $post->id)->where('enabled', true)->count())->toBe(1);
 });
 
 test('publish post scheduled does not dispatch immediately', function () {

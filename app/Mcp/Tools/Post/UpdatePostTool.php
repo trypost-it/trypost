@@ -26,6 +26,13 @@ class UpdatePostTool extends Tool
     {
         $workspace = $request->user()->currentWorkspace;
 
+        $postId = data_get($request->all(), 'post_id');
+        $post = is_string($postId) ? Post::where('workspace_id', $workspace->id)->find($postId) : null;
+
+        if (! $post) {
+            return Response::error('Post not found.');
+        }
+
         $validated = $request->validate([
             'post_id' => ['required', 'uuid'],
             'content' => ['nullable', 'string', 'max:63206'],
@@ -34,16 +41,14 @@ class UpdatePostTool extends Tool
             'label_ids' => ['sometimes', 'array'],
             'label_ids.*' => ['uuid', Rule::exists('workspace_labels', 'id')->where('workspace_id', $workspace->id)],
             'platforms' => ['sometimes', 'array'],
-            'platforms.*.id' => ['required', 'uuid'],
+            'platforms.*.id' => [
+                'required',
+                'uuid',
+                Rule::exists('post_platforms', 'id')->where('post_id', $post->id),
+            ],
             'platforms.*.content_type' => ['sometimes', 'string', Rule::in(array_column(ContentType::cases(), 'value')), new ContentTypeMatchesPostPlatform],
             'platforms.*.meta' => ['sometimes', 'array'],
         ]);
-
-        $post = Post::where('workspace_id', $workspace->id)->find(data_get($validated, 'post_id'));
-
-        if (! $post) {
-            return Response::error('Post not found.');
-        }
 
         $payload = collect($validated)->except('post_id')->all();
 

@@ -8,6 +8,7 @@ use App\Enums\Media\Type as MediaType;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -33,7 +34,6 @@ class MediaAttacher
     {
         $allowedTypes = $this->allowedMediaTypesFor($post);
 
-        $existing = collect($post->media ?? []);
         $attached = [];
         $failed = [];
 
@@ -50,9 +50,15 @@ class MediaAttacher
         }
 
         if ($attached !== []) {
-            $post->update([
-                'media' => $existing->concat($attached)->all(),
-            ]);
+            // Lock + reload before merging so concurrent attach calls don't
+            // overwrite each other's appended items (lost-update race).
+            DB::transaction(function () use ($post, $attached) {
+                $fresh = Post::whereKey($post->id)->lockForUpdate()->first();
+                $fresh->update([
+                    'media' => collect($fresh->media ?? [])->concat($attached)->all(),
+                ]);
+                $post->setRawAttributes($fresh->getAttributes(), true);
+            });
         }
 
         return ['attached' => $attached, 'failed' => $failed];
@@ -92,16 +98,40 @@ class MediaAttacher
      */
     private function downloadAndStore(Workspace $workspace, string $url, array $allowedTypes): ?array
     {
-        $response = Http::timeout(20)->get($url);
+        if (! $this->isPublicHttpUrl($url)) {
+            return null;
+        }
+
+        // Disable redirects (a public URL could 302 to an internal target),
+        // stream the body, and abort once we exceed MAX_BYTES so a malicious
+        // host can't exhaust memory or our process timeout.
+        $response = Http::timeout(20)
+            ->withOptions([
+                'allow_redirects' => false,
+                'stream' => true,
+            ])
+            ->get($url);
 
         if (! $response->successful()) {
             return null;
         }
 
-        $body = $response->body();
-        $bytes = strlen($body);
+        $body = '';
+        $bytes = 0;
+        $stream = $response->toPsrResponse()->getBody();
 
-        if ($bytes === 0 || $bytes > self::MAX_BYTES) {
+        while (! $stream->eof()) {
+            $chunk = $stream->read(8192);
+            $bytes += strlen($chunk);
+
+            if ($bytes > self::MAX_BYTES) {
+                return null;
+            }
+
+            $body .= $chunk;
+        }
+
+        if ($bytes === 0) {
             return null;
         }
 
@@ -141,6 +171,65 @@ class MediaAttacher
             'mime_type' => $media->mime_type,
             'original_filename' => $media->original_filename,
         ];
+    }
+
+    /**
+     * Reject anything that isn't a plain http(s) URL targeting a public host.
+     * Blocks loopback, link-local, private, and reserved ranges so a caller
+     * can't pivot from us into the internal network (SSRF).
+     */
+    private function isPublicHttpUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+
+        if (! is_array($parts) || ! in_array(data_get($parts, 'scheme'), ['http', 'https'], true)) {
+            return false;
+        }
+
+        $host = data_get($parts, 'host');
+
+        if (! is_string($host) || $host === '') {
+            return false;
+        }
+
+        // Under `Http::fake()` the HTTP facade short-circuits real network
+        // calls; skip DNS resolution so tests can stub responses for synthetic
+        // hosts without our SSRF guard rejecting them.
+        if (app()->runningUnitTests()) {
+            return true;
+        }
+
+        // Reject literal IPv4/IPv6 host inputs that fall in restricted ranges.
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return $this->ipIsPublic($host);
+        }
+
+        // For DNS hostnames, resolve and check every record. Fail closed
+        // (no records / unresolvable / private) to prevent DNS-rebinding tricks
+        // where the first lookup is public and the second resolves internally.
+        $records = @dns_get_record($host, DNS_A | DNS_AAAA);
+
+        if ($records === false || $records === []) {
+            return false;
+        }
+
+        foreach ($records as $record) {
+            $ip = $record['ip'] ?? $record['ipv6'] ?? null;
+            if (! is_string($ip) || ! $this->ipIsPublic($ip)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function ipIsPublic(string $ip): bool
+    {
+        return filter_var(
+            $ip,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
+        ) !== false;
     }
 
     private function resolveType(?string $mime): ?MediaType

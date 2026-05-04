@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
-import { IconBrandGithub, IconDeviceDesktop, IconDeviceMobile } from '@tabler/icons-vue';
+import { IconDeviceDesktop, IconDeviceMobile } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
@@ -298,14 +298,9 @@ const logoutDialogOpen = ref(false);
                         >
                             <div class="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-muted">
                                 <img
-                                    v-if="account.provider === 'google'"
-                                    src="/images/social/google.svg"
+                                    :src="`/images/social/${account.provider}.svg`"
                                     :alt="account.label"
-                                    class="size-5"
-                                />
-                                <IconBrandGithub
-                                    v-else-if="account.provider === 'github'"
-                                    class="size-5"
+                                    :class="['size-5', account.provider === 'github' ? 'dark:invert' : '']"
                                 />
                             </div>
                             <div class="flex-1 space-y-0.5">

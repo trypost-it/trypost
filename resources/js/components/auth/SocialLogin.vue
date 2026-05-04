@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { IconBrandGithub } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,7 @@ const hasSocial = computed(() => googleEnabled.value || githubEnabled.value);
             </Button>
 
             <Button v-if="githubEnabled" variant="outline" class="w-full" as="a" :href="githubRedirect.url()">
-                <IconBrandGithub class="size-4" />
+                <img src="/images/social/github.svg" alt="GitHub" class="size-4 dark:invert" />
                 {{ mode === 'login' ? $t('auth.github_login') : $t('auth.github_signup') }}
             </Button>
         </div>

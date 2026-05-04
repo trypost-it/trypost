@@ -22,17 +22,15 @@ class StoreChunkedAssetRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        preg_match(
-            '/bytes (\d+)-(\d+)\/(\d+)/',
-            (string) $this->header('Content-Range'),
-            $matches,
-        );
+        $parsed = sscanf((string) $this->header('Content-Range'), 'bytes %d-%d/%d') ?: [];
 
         $this->merge([
-            'range_start' => isset($matches[1]) ? (int) $matches[1] : null,
-            'range_end' => isset($matches[2]) ? (int) $matches[2] : null,
-            'total_size' => isset($matches[3]) ? (int) $matches[3] : null,
-            'file_name' => $this->header('X-File-Name', 'upload'),
+            'range_start' => $parsed[0] ?? null,
+            'range_end' => $parsed[1] ?? null,
+            'total_size' => $parsed[2] ?? null,
+            // Lowercase the name so `ends_with` validation is effectively
+            // case-insensitive (IMG_1234.JPG vs img_1234.jpg).
+            'file_name' => strtolower((string) $this->header('X-File-Name', 'upload')),
         ]);
     }
 
@@ -41,11 +39,16 @@ class StoreChunkedAssetRequest extends FormRequest
      */
     public function rules(): array
     {
+        $allowedSuffixes = collect([MediaType::Image, MediaType::Video])
+            ->flatMap(fn (MediaType $type) => $type->extensions())
+            ->map(fn (string $ext) => '.'.$ext)
+            ->all();
+
         return [
             'range_start' => ['required', 'integer', 'min:0'],
             'range_end' => ['required', 'integer', 'gte:range_start'],
             'total_size' => ['required', 'integer', 'min:1', 'max:'.MediaType::Video->maxSizeInBytes()],
-            'file_name' => ['required', 'string', 'regex:/\.(jpe?g|png|gif|webp|mp4)$/i'],
+            'file_name' => ['required', 'string', 'ends_with:'.implode(',', $allowedSuffixes)],
         ];
     }
 
@@ -59,7 +62,7 @@ class StoreChunkedAssetRequest extends FormRequest
             'range_end.required' => 'Invalid Content-Range header',
             'total_size.required' => 'Invalid Content-Range header',
             'total_size.max' => 'File size exceeds the maximum allowed ('.MediaType::Video->maxSizeInMb().' MB).',
-            'file_name.regex' => 'File type not supported.',
+            'file_name.ends_with' => 'File type not supported.',
         ];
     }
 }

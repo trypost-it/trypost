@@ -28,6 +28,21 @@ enum Type: string
         };
     }
 
+    /**
+     * Filename extensions that match this type. Used by callers that
+     * validate by name (chunked upload, URL fetch fallback) instead of
+     * by MIME.
+     *
+     * @return array<int, string>
+     */
+    public function extensions(): array
+    {
+        return match ($this) {
+            self::Image => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+            self::Video => ['mp4', 'mov', 'webm'],
+        };
+    }
+
     public function maxSizeInMb(): int
     {
         return (int) config("trypost.media.max_size_mb.{$this->value}");

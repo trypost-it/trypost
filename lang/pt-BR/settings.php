@@ -100,6 +100,8 @@ return [
             'connect' => 'Conectar',
             'disconnect' => 'Desconectar',
             'flash_disconnected' => ':provider desconectada com sucesso.',
+            'flash_connected' => ':provider conectada com sucesso.',
+            'flash_already_linked' => 'Essa conta do :provider já está vinculada a outro usuário.',
             'flash_cannot_disconnect' => 'Você não pode desconectar seu único método de login. Defina uma senha ou conecte outro provedor primeiro.',
         ],
     ],

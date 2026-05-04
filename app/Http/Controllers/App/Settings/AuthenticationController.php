@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthenticationController extends Controller
 {
@@ -61,6 +62,16 @@ class AuthenticationController extends Controller
             ->delete();
 
         return back()->with('flash.success', __('settings.authentication.sessions.flash_logged_out'));
+    }
+
+    public function connectProvider(string $provider): RedirectResponse
+    {
+        abort_unless(in_array($provider, self::PROVIDERS, true), 404);
+
+        return match ($provider) {
+            'google' => Socialite::driver('google-auth')->redirect(),
+            'github' => Socialite::driver('github')->scopes(['read:user', 'user:email'])->redirect(),
+        };
     }
 
     public function disconnectProvider(Request $request, string $provider): RedirectResponse

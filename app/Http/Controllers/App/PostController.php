@@ -165,13 +165,7 @@ class PostController extends Controller
 
     public function platformMetrics(Request $request, Post $post, PostPlatform $postPlatform): JsonResponse
     {
-        $workspace = $request->user()->currentWorkspace;
-
-        if (! $workspace || $post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
-
-        $this->authorize('view', $workspace);
+        $this->authorize('view', $post);
 
         if ($postPlatform->post_id !== $post->id) {
             abort(404);
@@ -188,11 +182,7 @@ class PostController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
-
-        if ($post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
+        $this->authorize('view', $post);
 
         if (in_array($post->status, [PostStatus::Draft, PostStatus::Scheduled, PostStatus::Failed], true)) {
             return redirect()->route('app.posts.edit', $post);
@@ -214,11 +204,7 @@ class PostController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
-
-        if ($post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
+        $this->authorize('update', $post);
 
         if (in_array($post->status, [PostStatus::Publishing, PostStatus::Published, PostStatus::PartiallyPublished], true)) {
             return redirect()->route('app.posts.show', $post);
@@ -274,11 +260,7 @@ class PostController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('createPost', $workspace);
-
-        if ($post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
+        $this->authorize('update', $post);
 
         $result = UpdatePost::execute($workspace, $post, $request->validated());
 
@@ -316,11 +298,7 @@ class PostController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('createPost', $workspace);
-
-        if ($post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
+        $this->authorize('delete', $post);
 
         if (in_array($post->status, [PostStatus::Publishing, PostStatus::Published, PostStatus::PartiallyPublished], true)) {
             session()->flash('flash.banner', __('posts.flash.cannot_delete_published'));

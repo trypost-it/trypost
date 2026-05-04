@@ -35,7 +35,7 @@ class PostController extends Controller
 
     public function show(Request $request, Post $post): PostResource
     {
-        $this->ensurePostInCurrentWorkspace($request, $post);
+        $this->authorize('view', $post);
 
         $post->load(['postPlatforms.socialAccount', 'user', 'labels']);
 
@@ -59,7 +59,7 @@ class PostController extends Controller
 
     public function update(UpdatePostRequest $request, Post $post): PostResource|JsonResponse
     {
-        $this->ensurePostInCurrentWorkspace($request, $post);
+        $this->authorize('update', $post);
 
         $result = UpdatePost::execute($request->user()->currentWorkspace, $post, $request->validated());
 
@@ -75,7 +75,7 @@ class PostController extends Controller
 
     public function destroy(Request $request, Post $post): JsonResponse
     {
-        $this->ensurePostInCurrentWorkspace($request, $post);
+        $this->authorize('delete', $post);
 
         DeletePost::execute($post);
 
@@ -84,7 +84,7 @@ class PostController extends Controller
 
     public function attachMedia(Request $request, Post $post): PostMediaAttachResource
     {
-        $this->ensurePostInCurrentWorkspace($request, $post);
+        $this->authorize('update', $post);
 
         $validated = $request->validate([
             'urls' => ['required', 'array', 'min:1', 'max:10'],
@@ -100,7 +100,7 @@ class PostController extends Controller
 
     public function metrics(Request $request, Post $post): PostMetricsResource
     {
-        $this->ensurePostInCurrentWorkspace($request, $post);
+        $this->authorize('view', $post);
 
         $post->load(['postPlatforms.socialAccount']);
 
@@ -109,17 +109,10 @@ class PostController extends Controller
 
     public function preview(Request $request, Post $post): PostPreviewResource
     {
-        $this->ensurePostInCurrentWorkspace($request, $post);
+        $this->authorize('view', $post);
 
         $post->load(['postPlatforms.socialAccount']);
 
         return new PostPreviewResource($post);
-    }
-
-    private function ensurePostInCurrentWorkspace(Request $request, Post $post): void
-    {
-        if ($post->workspace_id !== $request->user()->currentWorkspace->id) {
-            abort(Response::HTTP_NOT_FOUND);
-        }
     }
 }

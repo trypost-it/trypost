@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\App\Asset;
 
+use App\Enums\Media\Type as MediaType;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAssetRequest extends FormRequest
@@ -15,8 +16,17 @@ class StoreAssetRequest extends FormRequest
 
     public function rules(): array
     {
+        $allowedMimes = [...MediaType::Image->allowedMimeTypes(), ...MediaType::Video->allowedMimeTypes()];
+
         return [
-            'media' => ['required', 'file', 'max:1048576', 'mimetypes:image/jpeg,image/png,image/gif,image/webp,video/mp4'],
+            // Use the largest per-type cap as the upper bound; per-type
+            // enforcement happens after the upload via the Media model.
+            'media' => [
+                'required',
+                'file',
+                'max:'.MediaType::Video->maxSizeInKb(),
+                'mimetypes:'.implode(',', $allowedMimes),
+            ],
             'meta' => ['sometimes', 'array'],
             'meta.width' => ['sometimes', 'integer', 'min:1'],
             'meta.height' => ['sometimes', 'integer', 'min:1'],

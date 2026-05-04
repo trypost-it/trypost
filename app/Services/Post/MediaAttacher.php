@@ -22,27 +22,23 @@ use RuntimeException;
  *
  * Flow per URL:
  *   1. Stream the body to a temp file via Http::sink + a progress
- *      callback that aborts mid-download once MAX_BYTES is exceeded.
- *   2. Validate the Content-Type against the MediaType enum's allow-list
- *      AND the intersection of allowed media types across the post's
- *      enabled platforms.
- *   3. Hand off to `Workspace::addMediaFromPath()` so storage path,
+ *      callback that aborts once we exceed the largest configured
+ *      per-type cap (video = 1 GB by default, see config/trypost.php).
+ *   2. Resolve the MediaType from the response's Content-Type via
+ *      `MediaType::fromMime()`. Reject if the type isn't accepted by
+ *      the intersection of platforms enabled on the post.
+ *   3. Enforce the per-type cap (`MediaType::Image->maxSizeInBytes()`
+ *      vs `Video`) — a 100 MB jpeg is rejected even though we
+ *      streamed up to the video cap.
+ *   4. Hand off to `Workspace::addMediaFromPath()` so storage path,
  *      MIME re-detection, image normalization, and the Media row stay
  *      in one place (same path as the web upload flow).
- *   4. Append the resulting media item to the post's `media[]` JSON
+ *   5. Append the resulting media item to the post's `media[]` JSON
  *      column under a row lock so concurrent attach calls don't clobber
  *      each other.
  */
 class MediaAttacher
 {
-    /**
-     * Cap on URL-fetched payloads. Smaller than the web upload cap (1 GB)
-     * because URL fetches have different operational constraints:
-     * bandwidth, timeout, and unbounded user input. 50 MB covers a long
-     * photo or a short video; bigger files should be uploaded directly.
-     */
-    private const MAX_BYTES = 50 * 1024 * 1024;
-
     /**
      * @param  array<int, string>  $urls
      * @return array{attached: array<int, array<string, mixed>>, failed: array<int, string>}
@@ -79,6 +75,11 @@ class MediaAttacher
      */
     private function processOne(Workspace $workspace, string $url, array $allowedTypes): ?array
     {
+        // Use the largest configured per-type cap as the streaming-abort
+        // threshold; the actual per-type limit is checked below once we
+        // know the MIME.
+        $streamCap = MediaType::Video->maxSizeInBytes();
+
         $temp = tempnam(sys_get_temp_dir(), 'media_');
 
         try {
@@ -86,22 +87,31 @@ class MediaAttacher
                 ->sink($temp)
                 ->withOptions([
                     'allow_redirects' => false,
-                    'progress' => static function ($total, $downloaded): void {
-                        if ($downloaded > self::MAX_BYTES) {
+                    'progress' => static function ($total, $downloaded) use ($streamCap): void {
+                        if ($downloaded > $streamCap) {
                             throw new RuntimeException('exceeded max bytes');
                         }
                     },
                 ])
                 ->get($url);
 
-            if (! $response->successful() || filesize($temp) === 0) {
+            $bytes = filesize($temp) ?: 0;
+
+            if (! $response->successful() || $bytes === 0) {
                 return null;
             }
 
             $mime = trim(explode(';', (string) $response->header('Content-Type'))[0]);
-            $type = $this->resolveType($mime);
+            $type = MediaType::fromMime($mime);
 
             if ($type === null || ! in_array($type, $allowedTypes, true)) {
+                return null;
+            }
+
+            // Per-type size enforcement. Image is 10 MB even though we
+            // streamed up to the video cap, so a 100 MB jpeg is rejected
+            // here before we persist it.
+            if ($bytes > $type->maxSizeInBytes()) {
                 return null;
             }
 
@@ -166,25 +176,5 @@ class MediaAttacher
         $intersection = array_values(array_intersect(...$sets));
 
         return array_map(fn ($value) => MediaType::from($value), $intersection);
-    }
-
-    /**
-     * Resolve the MediaType for a given MIME by walking the enum's own
-     * allow-list. Document is excluded from URL fetches (no PDFs via URL
-     * — those go through direct upload only).
-     */
-    private function resolveType(?string $mime): ?MediaType
-    {
-        if ($mime === null || $mime === '') {
-            return null;
-        }
-
-        foreach ([MediaType::Image, MediaType::Video] as $type) {
-            if (in_array($mime, $type->allowedMimeTypes(), true)) {
-                return $type;
-            }
-        }
-
-        return null;
     }
 }

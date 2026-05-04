@@ -164,7 +164,7 @@ trait HasMedia
             return 'video';
         }
 
-        return 'document';
+        throw new \InvalidArgumentException("Unsupported media MIME type: {$mimeType}");
     }
 
     private function getMediaMeta(UploadedFile $file, string $type): array

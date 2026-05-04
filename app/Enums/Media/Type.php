@@ -8,32 +8,53 @@ enum Type: string
 {
     case Image = 'image';
     case Video = 'video';
-    case Document = 'document';
 
     public function label(): string
     {
         return match ($this) {
             self::Image => 'Imagem',
             self::Video => 'Vídeo',
-            self::Document => 'Documento',
         };
     }
 
+    /**
+     * @return array<int, string>
+     */
     public function allowedMimeTypes(): array
     {
         return match ($this) {
             self::Image => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
             self::Video => ['video/mp4', 'video/quicktime', 'video/webm'],
-            self::Document => ['application/pdf'],
         };
     }
 
     public function maxSizeInMb(): int
     {
-        return match ($this) {
-            self::Image => 10,
-            self::Video => 2048,
-            self::Document => 100,
-        };
+        return (int) config("trypost.media.max_size_mb.{$this->value}");
+    }
+
+    public function maxSizeInBytes(): int
+    {
+        return $this->maxSizeInMb() * 1024 * 1024;
+    }
+
+    public function maxSizeInKb(): int
+    {
+        return $this->maxSizeInMb() * 1024;
+    }
+
+    /**
+     * Resolve a Type from a MIME string. Returns null when the MIME is
+     * not in any type's allow-list.
+     */
+    public static function fromMime(string $mime): ?self
+    {
+        foreach (self::cases() as $type) {
+            if (in_array($mime, $type->allowedMimeTypes(), true)) {
+                return $type;
+            }
+        }
+
+        return null;
     }
 }

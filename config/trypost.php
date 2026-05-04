@@ -18,6 +18,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Media Size Limits
+    |--------------------------------------------------------------------------
+    |
+    | Per-type size caps in megabytes. Single source of truth — direct
+    | uploads (StoreAssetRequest, AssetController::storeChunked), URL
+    | fetches (MediaAttacher), and the MediaType enum all read from here.
+    |
+    */
+
+    'media' => [
+        'max_size_mb' => [
+            'image' => (int) env('MEDIA_IMAGE_MAX_SIZE_MB', 10),
+            'video' => (int) env('MEDIA_VIDEO_MAX_SIZE_MB', 1024),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Google Authentication
     |--------------------------------------------------------------------------
     |

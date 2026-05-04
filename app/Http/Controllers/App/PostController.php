@@ -18,22 +18,13 @@ use App\Http\Resources\App\PlatformConfigResource;
 use App\Http\Resources\App\SocialAccountResource;
 use App\Models\Post;
 use App\Models\PostPlatform;
-use App\Services\Social\BlueskyAnalytics;
-use App\Services\Social\FacebookAnalytics;
-use App\Services\Social\InstagramAnalytics;
-use App\Services\Social\LinkedInPageAnalytics;
-use App\Services\Social\MastodonAnalytics;
-use App\Services\Social\PinterestAnalytics;
+use App\Services\Post\PostMetricsFetcher;
 use App\Services\Social\PinterestPublisher;
-use App\Services\Social\ThreadsAnalytics;
 use App\Services\Social\TikTokCreatorInfo;
-use App\Services\Social\XAnalytics;
-use App\Services\Social\YouTubeAnalytics;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -174,38 +165,13 @@ class PostController extends Controller
 
     public function platformMetrics(Request $request, Post $post, PostPlatform $postPlatform): JsonResponse
     {
-        $workspace = $request->user()->currentWorkspace;
-
-        if (! $workspace || $post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
-
-        $this->authorize('view', $workspace);
+        $this->authorize('view', $post);
 
         if ($postPlatform->post_id !== $post->id) {
             abort(404);
         }
 
-        if ($postPlatform->status->value !== 'published' || ! $postPlatform->platform_post_id) {
-            return response()->json(['unsupported' => true, 'reason' => 'not_published']);
-        }
-
-        $cacheKey = "post_metrics:{$postPlatform->id}";
-
-        $metrics = Cache::remember($cacheKey, 300, fn () => match ($postPlatform->platform) {
-            Platform::X => app(XAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Bluesky => app(BlueskyAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Mastodon => app(MastodonAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Instagram, Platform::InstagramFacebook => app(InstagramAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Facebook => app(FacebookAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Threads => app(ThreadsAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::LinkedInPage => app(LinkedInPageAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::YouTube => app(YouTubeAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Pinterest => app(PinterestAnalytics::class)->fetchPostMetrics($postPlatform),
-            default => ['unsupported' => true, 'reason' => 'platform_not_supported'],
-        });
-
-        return response()->json($metrics);
+        return response()->json(app(PostMetricsFetcher::class)->forPlatform($postPlatform));
     }
 
     public function show(Request $request, Post $post): Response|RedirectResponse
@@ -216,11 +182,7 @@ class PostController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
-
-        if ($post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
+        $this->authorize('view', $post);
 
         if (in_array($post->status, [PostStatus::Draft, PostStatus::Scheduled, PostStatus::Failed], true)) {
             return redirect()->route('app.posts.edit', $post);
@@ -242,11 +204,7 @@ class PostController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('view', $workspace);
-
-        if ($post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
+        $this->authorize('update', $post);
 
         if (in_array($post->status, [PostStatus::Publishing, PostStatus::Published, PostStatus::PartiallyPublished], true)) {
             return redirect()->route('app.posts.show', $post);
@@ -302,11 +260,7 @@ class PostController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('createPost', $workspace);
-
-        if ($post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
+        $this->authorize('update', $post);
 
         $result = UpdatePost::execute($workspace, $post, $request->validated());
 
@@ -344,11 +298,7 @@ class PostController extends Controller
             return redirect()->route('app.workspaces.create');
         }
 
-        $this->authorize('createPost', $workspace);
-
-        if ($post->workspace_id !== $workspace->id) {
-            abort(404);
-        }
+        $this->authorize('delete', $post);
 
         if (in_array($post->status, [PostStatus::Publishing, PostStatus::Published, PostStatus::PartiallyPublished], true)) {
             session()->flash('flash.banner', __('posts.flash.cannot_delete_published'));

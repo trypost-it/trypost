@@ -1,7 +1,7 @@
 import { ref, type Ref } from 'vue';
 
-import { store as storeAsset, storeChunked as storeAssetChunked } from '@/routes/app/assets';
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
+import { store as storeAsset, storeChunked as storeAssetChunked } from '@/routes/app/assets';
 import { uploadChunked, shouldUseChunkedUpload } from '@/utils/chunkedUpload';
 
 export interface MediaItem {

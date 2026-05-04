@@ -89,6 +89,9 @@ jobs:
           DB_PORT: ${{ job.services.postgres.ports['5432'] }}
           REDIS_PORT: ${{ job.services.redis.ports['6379'] }}
 
+      - name: Generate Passport keys
+        run: php artisan passport:keys --force
+
       - name: Run tests
         run: php artisan test --compact
         env:

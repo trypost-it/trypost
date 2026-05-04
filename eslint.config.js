@@ -7,7 +7,19 @@ export default defineConfigWithVueTs(
     vue.configs['flat/essential'],
     vueTsConfigs.recommended,
     {
-        ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js', 'resources/js/components/ui/*'],
+        ignores: [
+            'vendor',
+            'node_modules',
+            'public',
+            'bootstrap/ssr',
+            'tailwind.config.js',
+            'resources/js/components/ui/*',
+            // Wayfinder regenerates these on every build with import order
+            // matching PHP file scan, not alphabetical. Excluding them avoids
+            // a perpetual fight between the generator and import/order.
+            'resources/js/actions/**',
+            'resources/js/routes/**',
+        ],
     },
     {
         plugins: {

@@ -21,12 +21,6 @@ interface SocialAccount {
     avatar_url: string | null;
 }
 
-interface PublishConfig {
-    privacyLevelOptions: string[];
-    musicUsageConfirmationUrl: string;
-    brandedContentPolicyUrl: string;
-}
-
 interface CreatorInfo {
     creator_nickname: string | null;
     creator_username: string | null;

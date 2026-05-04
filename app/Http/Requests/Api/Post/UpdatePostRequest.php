@@ -7,6 +7,7 @@ namespace App\Http\Requests\Api\Post;
 use App\Enums\Post\Status;
 use App\Enums\PostPlatform\ContentType;
 use App\Models\Post;
+use App\Rules\ContentTypeMatchesPostPlatform;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,7 +26,12 @@ class UpdatePostRequest extends FormRequest
             'media' => ['sometimes', 'array'],
             'platforms' => ['sometimes', 'array'],
             'platforms.*.id' => ['required', 'uuid', Rule::exists('post_platforms', 'id')->where('post_id', $this->route('post') instanceof Post ? $this->route('post')->id : $this->route('post'))],
-            'platforms.*.content_type' => ['sometimes', 'string', Rule::in(array_column(ContentType::cases(), 'value'))],
+            'platforms.*.content_type' => [
+                'sometimes',
+                'string',
+                Rule::in(array_column(ContentType::cases(), 'value')),
+                new ContentTypeMatchesPostPlatform,
+            ],
             'platforms.*.meta' => ['nullable', 'array'],
             'scheduled_at' => [
                 'nullable',

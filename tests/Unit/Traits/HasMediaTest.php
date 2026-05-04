@@ -107,12 +107,12 @@ test('model can add media from file path', function () {
     $workspace = Workspace::factory()->create();
 
     $tempFile = tempnam(sys_get_temp_dir(), 'test');
-    file_put_contents($tempFile, 'fake image content');
+    file_put_contents($tempFile, file_get_contents(__DIR__.'/../../fixtures/1x1.png'));
 
-    $media = $workspace->addMediaFromPath($tempFile, 'uploaded.jpg', 'logo');
+    $media = $workspace->addMediaFromPath($tempFile, 'uploaded.png', 'logo');
 
     expect($media)->toBeInstanceOf(Media::class);
-    expect($media->original_filename)->toBe('uploaded.jpg');
+    expect($media->original_filename)->toBe('uploaded.png');
     Storage::assertExists($media->path);
 
     unlink($tempFile);
@@ -166,13 +166,12 @@ test('add media detects video type', function () {
     expect($media->type->value)->toBe('video');
 });
 
-test('add media detects document type', function () {
+test('add media throws on unsupported MIME type', function () {
     $workspace = Workspace::factory()->create();
     $file = UploadedFile::fake()->create('document.pdf', 1000, 'application/pdf');
 
-    $media = $workspace->addMedia($file, 'logo');
-
-    expect($media->type->value)->toBe('document');
+    expect(fn () => $workspace->addMedia($file, 'logo'))
+        ->toThrow(InvalidArgumentException::class);
 });
 
 test('add media includes custom meta', function () {

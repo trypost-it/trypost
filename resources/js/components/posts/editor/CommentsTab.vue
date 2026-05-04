@@ -375,10 +375,6 @@ const showEmojiPicker = (commentId: string) => {
     emojiPickerCommentId.value = commentId;
 };
 
-const hideEmojiPicker = () => {
-    emojiPickerCommentId.value = null;
-};
-
 const handleKeydown = (event: KeyboardEvent) => {
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
         event.preventDefault();

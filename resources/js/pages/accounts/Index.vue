@@ -20,7 +20,6 @@ import PageHeader from '@/components/PageHeader.vue';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -28,6 +27,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import {
     Table,

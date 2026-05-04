@@ -6,18 +6,58 @@ namespace App\Policies;
 
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
 class PostPolicy
 {
     /**
-     * Authorize duplicating a post into the user's current workspace as a
-     * fresh draft. The post must live in the user's current workspace and
-     * the user must have permission to create posts there.
+     * Authorize viewing a post. The post must live in the user's current
+     * workspace; cross-workspace lookups deny as 404 so we don't leak
+     * existence across tenants.
      */
-    public function duplicate(User $user, Post $post): bool
+    public function view(User $user, Post $post): bool|Response
     {
         if ($post->workspace_id !== $user->current_workspace_id) {
-            return false;
+            return Response::denyAsNotFound();
+        }
+
+        return true;
+    }
+
+    /**
+     * Authorize updating a post. Same workspace-tenancy guard as `view`.
+     */
+    public function update(User $user, Post $post): bool|Response
+    {
+        if ($post->workspace_id !== $user->current_workspace_id) {
+            return Response::denyAsNotFound();
+        }
+
+        return true;
+    }
+
+    /**
+     * Authorize deleting a post. Same workspace-tenancy guard as `view`.
+     */
+    public function delete(User $user, Post $post): bool|Response
+    {
+        if ($post->workspace_id !== $user->current_workspace_id) {
+            return Response::denyAsNotFound();
+        }
+
+        return true;
+    }
+
+    /**
+     * Authorize duplicating a post into the user's current workspace as a
+     * fresh draft. The post must live in the user's current workspace
+     * (404 otherwise — tenancy guard, see `view()`) AND the user must
+     * have permission to create posts there (403 otherwise).
+     */
+    public function duplicate(User $user, Post $post): bool|Response
+    {
+        if ($post->workspace_id !== $user->current_workspace_id) {
+            return Response::denyAsNotFound();
         }
 
         return $user->can('createPost', $user->currentWorkspace);

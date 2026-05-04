@@ -21,7 +21,7 @@ interface Plan {
     monthly_credits_limit: number;
 }
 
-const props = defineProps<{
+defineProps<{
     plans: Plan[];
     trialDays: number;
 }>();

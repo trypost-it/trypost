@@ -6,6 +6,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Requests\App\Asset\StoreAssetFromUrlRequest;
 use App\Http\Requests\App\Asset\StoreAssetRequest;
+use App\Http\Requests\App\Asset\StoreChunkedAssetRequest;
 use App\Http\Resources\App\MediaResource;
 use App\Models\Media;
 use App\Services\UnsplashService;
@@ -66,33 +67,17 @@ class AssetController extends Controller
         return new MediaResource($media);
     }
 
-    public function storeChunked(Request $request): JsonResponse
+    public function storeChunked(StoreChunkedAssetRequest $request): JsonResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
         $this->authorize('createPost', $workspace);
 
-        $contentRange = $request->header('Content-Range');
+        $rangeStart = (int) $request->validated('range_start');
+        $rangeEnd = (int) $request->validated('range_end');
+        $totalSize = (int) $request->validated('total_size');
+        $fileName = (string) $request->validated('file_name');
 
-        preg_match('/bytes (\d+)-(\d+)\/(\d+)/', $contentRange, $matches);
-
-        if (empty($matches)) {
-            abort(SymfonyResponse::HTTP_BAD_REQUEST, 'Invalid Content-Range header');
-        }
-
-        $rangeStart = (int) $matches[1];
-        $rangeEnd = (int) $matches[2];
-        $totalSize = (int) $matches[3];
-
-        $fileName = $request->header('X-File-Name', 'upload');
-
-        if (! preg_match('/\.(jpe?g|png|gif|webp|mp4)$/i', $fileName)) {
-            abort(SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY, 'File type not supported.');
-        }
-
-        if ($totalSize > 1073741824) { // 1GB
-            abort(SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY, 'File size exceeds the maximum allowed (1GB).');
-        }
         $identifier = md5($request->user()->id.$fileName.$totalSize);
         $tempFile = storage_path("app/private/chunks/{$identifier}");
 

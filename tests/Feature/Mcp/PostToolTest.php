@@ -13,6 +13,7 @@ use App\Models\Post;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceLabel;
 use Illuminate\Testing\Fluent\AssertableJson;
 
 beforeEach(function () {
@@ -95,18 +96,36 @@ test('create post with content and date', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(CreatePostTool::class, [
             'content' => 'My new post',
-            'date' => '2026-04-15',
+            'scheduled_at' => '2099-12-31T15:30:00Z',
         ]);
 
     $response->assertOk()
         ->assertStructuredContent(function (AssertableJson $json) {
             $json->where('content', 'My new post')
                 ->where('status', 'draft')
-                ->where('scheduled_at', '2026-04-15 09:00:00')
+                ->where('scheduled_at', '2099-12-31 15:30:00')
                 ->etc();
         });
 
     expect(Post::where('workspace_id', $this->workspace->id)->count())->toBe(1);
+});
+
+test('create post with platforms enables only those', function () {
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreatePostTool::class, [
+            'content' => 'with platforms',
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'linkedin_post'],
+            ],
+        ]);
+
+    $response->assertOk();
+
+    $post = Post::where('workspace_id', $this->workspace->id)->first();
+    $enabled = $post->postPlatforms()->where('enabled', true)->get();
+    expect($enabled)->toHaveCount(1);
+    expect($enabled->first()->social_account_id)->toBe($this->socialAccount->id);
+    expect($enabled->first()->content_type->value)->toBe('linkedin_post');
 });
 
 test('create post without args creates empty draft for today', function () {
@@ -123,9 +142,64 @@ test('create post without args creates empty draft for today', function () {
     expect(Post::where('workspace_id', $this->workspace->id)->count())->toBe(1);
 });
 
-test('create post rejects invalid date format', function () {
+test('create post rejects scheduled_at in the past', function () {
     $response = TryPostServer::actingAs($this->user)
-        ->tool(CreatePostTool::class, ['date' => 'not-a-date']);
+        ->tool(CreatePostTool::class, ['scheduled_at' => '2020-01-01T00:00:00Z']);
+
+    $response->assertHasErrors();
+});
+
+test('create post rejects an inactive social account', function () {
+    $inactive = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::LinkedIn,
+        'is_active' => false,
+    ]);
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreatePostTool::class, [
+            'platforms' => [
+                ['social_account_id' => $inactive->id, 'content_type' => 'linkedin_post'],
+            ],
+        ]);
+
+    $response->assertHasErrors();
+});
+
+test('create post rejects a content_type not in the enum', function () {
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreatePostTool::class, [
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'made_up_type'],
+            ],
+        ]);
+
+    $response->assertHasErrors();
+});
+
+test('create post rejects a content_type that does not match the social account platform', function () {
+    // x_post on a LinkedIn account — ContentTypeMatchesPlatform should reject.
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreatePostTool::class, [
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'x_post'],
+            ],
+        ]);
+
+    $response->assertHasErrors();
+});
+
+test('create post rejects a label_id from another workspace', function () {
+    $otherWorkspace = Workspace::factory()->create();
+    $foreignLabel = WorkspaceLabel::factory()->create(['workspace_id' => $otherWorkspace->id]);
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreatePostTool::class, [
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'linkedin_post'],
+            ],
+            'label_ids' => [$foreignLabel->id],
+        ]);
 
     $response->assertHasErrors();
 });

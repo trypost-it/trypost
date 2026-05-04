@@ -3,22 +3,23 @@
 </p>
 
 <p align="center">
-  <strong>The open-source social media scheduling platform</strong>
+  <strong>The open-source alternative to Buffer, Hootsuite, and Later.</strong>
 </p>
 
 <p align="center">
-  Schedule, manage, and publish content to all your social media accounts from one place.
-  <br />
-  Self-hosted. Privacy-focused. No limits.
+  Schedule, write, and publish to every social network from one place.<br/>
+  Self-hosted. Built for teams, agencies, and creators who own their data.
 </p>
 
 <p align="center">
-  <a href="https://github.com/trypost-it/trypost/stargazers"><img src="https://img.shields.io/github/stars/trypost-it/trypost" alt="Stars"></a>
-  <a href="https://github.com/trypost-it/trypost/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-FSL-blue" alt="License"></a>
-  <a href="https://github.com/trypost-it/trypost/releases"><img src="https://img.shields.io/github/v/release/trypost-it/trypost" alt="Release"></a>
+  <a href="https://github.com/trypost-it/trypost/stargazers"><img src="https://img.shields.io/github/stars/trypost-it/trypost?style=flat-square&color=4f46e5" alt="Stars"></a>
+  <a href="https://github.com/trypost-it/trypost/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-AGPL--3.0-4f46e5?style=flat-square" alt="License"></a>
+  <a href="https://github.com/trypost-it/trypost/releases"><img src="https://img.shields.io/github/v/release/trypost-it/trypost?style=flat-square&color=4f46e5" alt="Release"></a>
+  <a href="https://github.com/trypost-it/trypost/discussions"><img src="https://img.shields.io/github/discussions/trypost-it/trypost?style=flat-square&color=4f46e5" alt="Discussions"></a>
 </p>
 
 <p align="center">
+  <a href="https://trypost.it">Cloud</a> &bull;
   <a href="https://trypost.it/docs">Documentation</a> &bull;
   <a href="https://github.com/orgs/trypost-it/projects/1">Roadmap</a> &bull;
   <a href="https://github.com/trypost-it/trypost/discussions">Community</a>
@@ -26,31 +27,50 @@
 
 ---
 
-## Why TryPost?
+## TryPost 1.0 is here
 
-Tired of paying expensive monthly fees for social media scheduling tools? Want full control over your data? TryPost is the solution.
+A massive release that turns TryPost into a complete open-source social media platform.
 
-|                         |                                                      |
-| ----------------------- | ---------------------------------------------------- |
-| **100% Open Source** | Inspect the code, contribute, make it yours          |
-| **Self-Hosted**      | Your data stays on your servers                      |
-| **No Limits**        | Schedule unlimited posts, connect unlimited accounts |
-| **Privacy First**    | No tracking, no analytics, no data selling           |
+- **MCP Server** — connect Claude, Cursor, ChatGPT, and any MCP client. Schedule, publish, and pull metrics with natural language.
+- **REST API** — Personal Access Tokens, every workflow you can do in the dashboard, available over HTTP.
+- **Workspaces &amp; Teams** — manage multiple brands or clients in isolated environments. Invite team members with role-based permissions.
+- **AI Carousel Generator** — type a prompt, get a multi-slide LinkedIn / Instagram carousel back, with images and copy on-brand.
+- **Brand Profile** — set tone, voice, language, and colors once. Every AI generation respects them automatically.
+- **Analytics** — per-account engagement metrics from every platform that exposes them, in a single dashboard.
+
+Read the [release notes &rarr;](https://github.com/trypost-it/trypost/releases/latest)
+
+---
+
+## Why TryPost
+
+Tired of paying $30–$200/month per user for a scheduler? Tired of your content sitting on someone else's database?
+
+|                              |                                                            |
+| ---------------------------- | ---------------------------------------------------------- |
+| **Self-hosted, your data**   | Your posts, drafts, and metrics never leave your server    |
+| **No artificial limits**     | Unlimited posts, unlimited connected accounts, unlimited workspaces |
+| **AI built in**              | Captions, carousels, on-brand voice — using your own keys  |
+| **Multi-tenant ready**       | Workspaces + roles for agencies managing many clients      |
+| **API + MCP first-class**    | Automate everything; your AI assistant can post for you    |
+| **AGPL-licensed**            | Inspect every line, fork it, ship it — forever free        |
 
 ## Features
 
-|                               |                                                         |
-| ----------------------------- | ------------------------------------------------------- |
-| **Visual Calendar**        | Drag and drop posts across your content calendar        |
-| **Post Composer**          | Create and preview posts for multiple platforms at once |
-| **Media Library**          | Upload images and videos with automatic optimization    |
-| **Team Collaboration**     | Invite team members with role-based permissions (Owner, Admin, Member) |
-| **Workspaces**             | Manage multiple brands or clients separately            |
-| **REST API**               | Full API with Bearer token authentication               |
-| **MCP Server**             | AI-ready with Model Context Protocol support            |
-| **Google Login**           | Sign up and log in with Google OAuth                    |
-| **Notifications**          | In-app and email notifications for post status          |
-| **i18n**                   | Available in English, Spanish, and Portuguese           |
+|                                |                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| **Visual Calendar**            | See every scheduled post at a glance, switch between month/week/day    |
+| **Multi-Platform Composer**    | One draft &rarr; preview &amp; tweak for every network in parallel    |
+| **AI Generate / Review**       | Draft from a prompt, get inline feedback before you publish            |
+| **AI Carousel Builder**        | Prompt &rarr; multi-slide carousel with images, on-brand               |
+| **Brand Profile**              | Tone, voice, language, colors — applied to every AI call               |
+| **Asset Library**              | Reusable workspace media + Unsplash &amp; Giphy search built in        |
+| **Signatures &amp; Labels**    | Reusable text blocks (hashtags, CTAs) and color-coded post tags        |
+| **Team Collaboration**         | Owner / Admin / Member roles, comments with @mentions on drafts        |
+| **Workspaces**                 | Isolate brands, clients, or projects in their own spaces               |
+| **REST API + MCP**             | Full programmatic control; AI assistants integrate natively            |
+| **Analytics**                  | Per-account engagement metrics across every supported platform         |
+| **Multi-language**             | English, Spanish, Portuguese                                           |
 
 ## Supported Platforms
 
@@ -71,75 +91,26 @@ Tired of paying expensive monthly fees for social media scheduling tools? Want f
   </tr>
 </table>
 
-## Tech Stack
-
-| Layer | Technology |
-| ----- | ---------- |
-| **Backend** | Laravel 13, PHP 8.4 |
-| **Frontend** | Vue 3, Inertia.js v3, Tailwind CSS v4 |
-| **Database** | PostgreSQL |
-| **Queue** | Redis + Laravel Horizon |
-| **WebSockets** | Laravel Reverb |
-| **API** | REST with Bearer token auth |
-| **MCP** | Laravel MCP for AI integrations |
-| **Payments** | Laravel Cashier (Stripe) |
-
-## Getting Started
-
-Get TryPost running in minutes:
+## Get Started
 
 | | |
 | --- | --- |
-| [Installation Guide](https://trypost.it/docs/getting-started/installation) | Step-by-step setup |
-| [Docker Setup](https://trypost.it/docs/self-hosting/docker) | Run with Laravel Sail |
-| [Configuration](https://trypost.it/docs/getting-started/configuration) | Environment setup |
-| [Platform Setup](https://trypost.it/docs/platforms/) | Connect your social accounts |
-
-### Quick Start
-
-```bash
-git clone https://github.com/trypost-it/trypost.git
-cd trypost
-cp .env.example .env
-composer install
-npm install
-php artisan key:generate
-php artisan migrate
-npm run build
-```
-
-## API
-
-TryPost includes a REST API for programmatic access. All endpoints are under `/api` and require a Bearer token.
-
-```bash
-curl -H "Authorization: Bearer tp_your_token" \
-  https://your-domain.com/api/posts
-```
-
-See the [API documentation](https://trypost.it/docs/api) for all available endpoints.
-
-## MCP Server
-
-TryPost ships with a Model Context Protocol (MCP) server at `/mcp/trypost`, enabling AI assistants to manage your social media directly.
+| **Try it on Cloud** | The fastest way. [Sign up at trypost.it](https://trypost.it) |
+| **Self-host** | Free forever. [Installation guide &rarr;](https://trypost.it/docs/getting-started/installation) |
+| **Run with AI assistants** | [Connect Claude / Cursor / ChatGPT via MCP &rarr;](https://trypost.it/docs/mcp) |
 
 ## Contributing
 
-We love contributions! Check the [issues](https://github.com/trypost-it/trypost/issues) for open tasks.
+We love contributions, no matter how small. Pick an [issue](https://github.com/trypost-it/trypost/issues), say hi in [Discussions](https://github.com/trypost-it/trypost/discussions), or just open a PR with what you'd like to see.
 
-- [Discussions](https://github.com/trypost-it/trypost/discussions) - Ask questions, share ideas
-- [Issues](https://github.com/trypost-it/trypost/issues) - Report bugs, request features
+If TryPost is useful to you, **a star helps more people find it.** That's the most valuable contribution if you're short on time.
 
 ## License
 
-TryPost is licensed under the [Functional Source License (FSL)](LICENSE.md).
-
-**You can:** Use for personal or business use, self-host, modify and contribute.
-
-**You cannot:** Offer as a competing SaaS, white-label and resell.
+[GNU Affero General Public License v3.0](LICENSE.md) — use, modify, fork, self-host, and redistribute, including commercially. If you run a modified version as a network service, you need to make your changes available to its users (AGPL §13).
 
 ---
 
 <p align="center">
-  <strong>If TryPost helps you, please give us a star</strong>
+  Built openly by the community. <a href="https://github.com/trypost-it/trypost/stargazers">Star us on GitHub</a> and tell a friend.
 </p>

@@ -165,15 +165,18 @@ test('can store asset from url', function () {
 });
 
 test('chunked upload completes with single chunk', function () {
-    $content = str_repeat('x', 1000);
+    // Use real PNG bytes so mime_content_type detects image/png. The MIME
+    // is sniffed from content magic bytes, not the X-File-Name header.
+    $content = file_get_contents(__DIR__.'/../fixtures/1x1.png');
+    $size = strlen($content);
 
     $response = $this->actingAs($this->user)->call(
         'POST',
         route('app.assets.store-chunked'),
         [], [], [],
         [
-            'HTTP_CONTENT_RANGE' => 'bytes 0-999/1000',
-            'HTTP_X_FILE_NAME' => 'test-video.mp4',
+            'HTTP_CONTENT_RANGE' => 'bytes 0-'.($size - 1).'/'.$size,
+            'HTTP_X_FILE_NAME' => 'test.png',
             'HTTP_ACCEPT' => 'application/json',
             'CONTENT_TYPE' => 'application/octet-stream',
         ],
@@ -236,7 +239,9 @@ test('chunked upload rejects invalid Content-Range header', function () {
         'data',
     );
 
-    $response->assertStatus(400);
+    // FormRequest validation surfaces parse failures as 422
+    // (range_start / range_end / total_size all required).
+    $response->assertUnprocessable();
 });
 
 test('chunked upload rejects unauthenticated', function () {

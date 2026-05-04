@@ -11,10 +11,16 @@ use App\Mcp\Tools\Label\CreateLabelTool;
 use App\Mcp\Tools\Label\DeleteLabelTool;
 use App\Mcp\Tools\Label\ListLabelsTool;
 use App\Mcp\Tools\Label\UpdateLabelTool;
+use App\Mcp\Tools\Platform\ListContentTypesTool;
+use App\Mcp\Tools\Post\AttachMediaFromUrlTool;
 use App\Mcp\Tools\Post\CreatePostTool;
 use App\Mcp\Tools\Post\DeletePostTool;
+use App\Mcp\Tools\Post\GetPostMetricsTool;
 use App\Mcp\Tools\Post\GetPostTool;
 use App\Mcp\Tools\Post\ListPostsTool;
+use App\Mcp\Tools\Post\PreviewPostTool;
+use App\Mcp\Tools\Post\PublishPostTool;
+use App\Mcp\Tools\Post\UpdatePostTool;
 use App\Mcp\Tools\Signature\CreateSignatureTool;
 use App\Mcp\Tools\Signature\DeleteSignatureTool;
 use App\Mcp\Tools\Signature\ListSignaturesTool;
@@ -39,7 +45,15 @@ class TryPostServer extends Server
         ListPostsTool::class,
         GetPostTool::class,
         CreatePostTool::class,
+        UpdatePostTool::class,
+        PublishPostTool::class,
+        PreviewPostTool::class,
         DeletePostTool::class,
+        AttachMediaFromUrlTool::class,
+        GetPostMetricsTool::class,
+
+        // Platforms (read-only metadata)
+        ListContentTypesTool::class,
 
         // Signatures
         ListSignaturesTool::class,

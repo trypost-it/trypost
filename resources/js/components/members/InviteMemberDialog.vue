@@ -3,7 +3,6 @@ import { Form } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
-import { WorkspaceRole } from '@/enums/workspace-role';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { WorkspaceRole } from '@/enums/workspace-role';
 import { store as storeInvite } from '@/routes/app/invites';
 
 const open = defineModel<boolean>('open', { default: false });

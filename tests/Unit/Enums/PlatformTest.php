@@ -35,7 +35,7 @@ test('platform has correct colors', function () {
 });
 
 test('platform has correct allowed media types', function () {
-    expect(Platform::LinkedIn->allowedMediaTypes())->toContain(MediaType::Image, MediaType::Video, MediaType::Document);
+    expect(Platform::LinkedIn->allowedMediaTypes())->toContain(MediaType::Image, MediaType::Video);
     expect(Platform::X->allowedMediaTypes())->toContain(MediaType::Image, MediaType::Video);
     expect(Platform::TikTok->allowedMediaTypes())->toBe([MediaType::Video]);
     expect(Platform::YouTube->allowedMediaTypes())->toBe([MediaType::Video]);

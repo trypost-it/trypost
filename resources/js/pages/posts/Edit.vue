@@ -10,9 +10,9 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch } from 'vue';
 
+import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import AiGenerateDialog from '@/components/posts/ai/AiGenerateDialog.vue';
 import AiReviewDialog from '@/components/posts/ai/AiReviewDialog.vue';
-import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import PostEditorComposer from '@/components/posts/editor/PostEditorComposer.vue';
 import PostEditorSidebar from '@/components/posts/editor/PostEditorSidebar.vue';
 import PickTimePopover from '@/components/posts/PickTimePopover.vue';

@@ -10,9 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { settings as settingsHub } from '@/routes/app';
+import { edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as preferencesRoute } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';
-import { edit as editAuthentication } from '@/routes/app/authentication';
 import type { BreadcrumbItem } from '@/types';
 
 interface Preferences {

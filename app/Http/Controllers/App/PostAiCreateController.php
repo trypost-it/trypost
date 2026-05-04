@@ -9,7 +9,6 @@ use App\Enums\Media\Type as MediaType;
 use App\Enums\PostPlatform\ContentType;
 use App\Http\Requests\App\Ai\StartPostCreationRequest;
 use App\Jobs\Ai\StreamPostCreation;
-use App\Models\Media;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
@@ -198,7 +197,9 @@ class PostAiCreateController extends Controller
      */
     private function createMediaItem(Workspace $workspace, string $path, array $meta = []): array
     {
-        $media = new Media([
+        // Use the relationship (not `mediable_type = Workspace::class`) so
+        // the morph map alias `'workspace'` is persisted instead of the FQCN.
+        $media = $workspace->media()->create([
             'collection' => 'ai-generated',
             'type' => MediaType::Image,
             'path' => $path,
@@ -207,10 +208,6 @@ class PostAiCreateController extends Controller
             'size' => Storage::size($path),
             'order' => 0,
         ]);
-
-        $media->mediable_type = Workspace::class;
-        $media->mediable_id = $workspace->id;
-        $media->save();
 
         return [
             'id' => $media->id,

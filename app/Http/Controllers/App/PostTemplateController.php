@@ -7,7 +7,6 @@ namespace App\Http\Controllers\App;
 use App\Actions\Post\CreatePost;
 use App\Enums\Media\Type as MediaType;
 use App\Http\Resources\App\PostTemplateResource;
-use App\Models\Media;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Services\Image\TemplateImageGenerator;
@@ -122,7 +121,9 @@ class PostTemplateController extends Controller
      */
     private function createMediaItem(Workspace $workspace, string $path): array
     {
-        $media = new Media([
+        // Use the relationship (not `mediable_type = Workspace::class`) so
+        // the morph map alias `'workspace'` is persisted instead of the FQCN.
+        $media = $workspace->media()->create([
             'collection' => 'ai-generated',
             'type' => MediaType::Image,
             'path' => $path,
@@ -131,10 +132,6 @@ class PostTemplateController extends Controller
             'size' => Storage::size($path),
             'order' => 0,
         ]);
-
-        $media->mediable_type = Workspace::class;
-        $media->mediable_id = $workspace->id;
-        $media->save();
 
         return [
             'id' => $media->id,

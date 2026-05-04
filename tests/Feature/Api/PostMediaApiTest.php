@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
@@ -46,7 +47,7 @@ it('attaches media from url', function () {
     ]);
 
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
-        ->postJson(route('api.posts.attach-media', $this->post), [
+        ->postJson(route('api.posts.attach-media-from-url', $this->post), [
             'urls' => ['https://example.com/photo.png'],
         ])
         ->assertOk()
@@ -63,7 +64,7 @@ it('reports failures for unreachable urls', function () {
     ]);
 
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
-        ->postJson(route('api.posts.attach-media', $this->post), [
+        ->postJson(route('api.posts.attach-media-from-url', $this->post), [
             'urls' => ['https://example.com/missing.png'],
         ])
         ->assertOk()
@@ -76,7 +77,7 @@ it('cannot attach media to a post from another workspace', function () {
     $post = Post::factory()->create(['workspace_id' => $other->id, 'user_id' => $this->user->id]);
 
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
-        ->postJson(route('api.posts.attach-media', $post), [
+        ->postJson(route('api.posts.attach-media-from-url', $post), [
             'urls' => ['https://example.com/photo.png'],
         ])
         ->assertNotFound();
@@ -143,7 +144,78 @@ it('cannot get metrics from another workspace post', function () {
 
 it('rejects attach media payload without urls', function () {
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
-        ->postJson(route('api.posts.attach-media', $this->post), [])
+        ->postJson(route('api.posts.attach-media-from-url', $this->post), [])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['urls']);
+});
+
+it('uploads a media file and attaches it to the post', function () {
+    $file = UploadedFile::fake()->createWithContent(
+        'photo.png',
+        file_get_contents(__DIR__.'/../../fixtures/1x1.png'),
+    );
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken, 'Accept' => 'application/json'])
+        ->post(route('api.posts.store-media', $this->post), ['media' => $file])
+        ->assertOk();
+
+    expect(Media::where('mediable_id', $this->workspace->id)->count())->toBe(1);
+    expect($this->post->fresh()->media)->toHaveCount(1);
+});
+
+it('rejects upload of an unsupported mime type', function () {
+    $file = UploadedFile::fake()->createWithContent('doc.txt', 'plain text content');
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken, 'Accept' => 'application/json'])
+        ->post(route('api.posts.store-media', $this->post), ['media' => $file])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['media']);
+});
+
+it('rejects upload when the file type is not supported by enabled platforms', function () {
+    $tiktokAccount = SocialAccount::factory()->tiktok()->create([
+        'workspace_id' => $this->workspace->id,
+    ]);
+
+    $tiktokOnlyPost = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    PostPlatform::factory()->tiktok()->create([
+        'post_id' => $tiktokOnlyPost->id,
+        'social_account_id' => $tiktokAccount->id,
+        'enabled' => true,
+    ]);
+
+    $file = UploadedFile::fake()->createWithContent(
+        'photo.png',
+        file_get_contents(__DIR__.'/../../fixtures/1x1.png'),
+    );
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken, 'Accept' => 'application/json'])
+        ->post(route('api.posts.store-media', $tiktokOnlyPost), ['media' => $file])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['media']);
+});
+
+it('cannot upload media to a post from another workspace', function () {
+    $other = Workspace::factory()->create();
+    $post = Post::factory()->create(['workspace_id' => $other->id, 'user_id' => $this->user->id]);
+
+    $file = UploadedFile::fake()->createWithContent(
+        'photo.png',
+        file_get_contents(__DIR__.'/../../fixtures/1x1.png'),
+    );
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken, 'Accept' => 'application/json'])
+        ->post(route('api.posts.store-media', $post), ['media' => $file])
+        ->assertNotFound();
+});
+
+it('rejects upload without a media file', function () {
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store-media', $this->post), [])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['media']);
 });

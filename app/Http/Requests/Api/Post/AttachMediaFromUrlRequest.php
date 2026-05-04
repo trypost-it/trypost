@@ -6,7 +6,7 @@ namespace App\Http\Requests\Api\Post;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AttachMediaRequest extends FormRequest
+class AttachMediaFromUrlRequest extends FormRequest
 {
     public function authorize(): bool
     {

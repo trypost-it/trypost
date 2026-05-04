@@ -96,7 +96,7 @@ class Post extends Model
 
     public function scopePublished(Builder $query): Builder
     {
-        return $query->where('status', PostStatus::Published);
+        return $query->whereIn('status', [PostStatus::Published, PostStatus::PartiallyPublished]);
     }
 
     public function scopeFailed(Builder $query): Builder

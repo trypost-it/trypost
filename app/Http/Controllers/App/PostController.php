@@ -12,6 +12,7 @@ use App\Enums\Post\Action as PostAction;
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\SocialAccount\Platform;
 use App\Http\Requests\App\Post\UpdatePostRequest;
+use App\Http\Resources\Api\PostResource;
 use App\Http\Resources\App\PlatformConfigResource;
 use App\Http\Resources\App\SocialAccountResource;
 use App\Models\Post;
@@ -228,7 +229,7 @@ class PostController extends Controller
 
         return Inertia::render('posts/Show', [
             'workspace' => $workspace,
-            'post' => $post,
+            'post' => (new PostResource($post))->resolve(),
         ]);
     }
 

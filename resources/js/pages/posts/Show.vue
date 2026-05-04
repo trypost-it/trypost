@@ -33,9 +33,9 @@ interface SocialAccount {
 interface PostPlatform {
     id: string;
     platform: string;
-    platform_name: string | null;
-    platform_username: string | null;
-    platform_avatar: string | null;
+    display_name: string;
+    display_username: string | null;
+    display_avatar: string | null;
     content_type: string | null;
     status: 'pending' | 'publishing' | 'published' | 'failed';
     platform_url: string | null;
@@ -52,7 +52,7 @@ interface Post {
     status: string;
     scheduled_at: string | null;
     published_at: string | null;
-    post_platforms: PostPlatform[];
+    platforms: PostPlatform[];
     labels?: { id: string; name: string; color: string }[];
 }
 
@@ -66,7 +66,7 @@ const props = defineProps<{
     post: Post;
 }>();
 
-const enabledPlatforms = computed(() => props.post.post_platforms.filter((pp) => pp.enabled));
+const enabledPlatforms = computed(() => props.post.platforms.filter((pp) => pp.enabled));
 const publishedCount = computed(() => enabledPlatforms.value.filter((pp) => pp.status === 'published').length);
 const failedCount = computed(() => enabledPlatforms.value.filter((pp) => pp.status === 'failed').length);
 
@@ -79,14 +79,11 @@ const pageTitle = computed(() => {
     return snippet ? `${trans('posts.show.title')} · ${snippet}${props.post.content.length > 60 ? '…' : ''}` : trans('posts.show.title');
 });
 
-const getDisplayName = (pp: PostPlatform): string =>
-    pp.social_account?.display_name ?? pp.platform_name ?? pp.platform;
+const getDisplayName = (pp: PostPlatform): string => pp.display_name ?? pp.platform;
 
-const getDisplayUsername = (pp: PostPlatform): string | null =>
-    pp.social_account?.username ?? pp.platform_username;
+const getDisplayUsername = (pp: PostPlatform): string | null => pp.display_username;
 
-const getDisplayAvatar = (pp: PostPlatform): string | null =>
-    pp.social_account?.avatar_url ?? pp.platform_avatar;
+const getDisplayAvatar = (pp: PostPlatform): string | null => pp.display_avatar;
 
 const formatDateTime = (date: string | null): string =>
     date ? dayjs.utc(date).local().format('D MMM YYYY, HH:mm') : '';

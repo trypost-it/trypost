@@ -653,7 +653,7 @@ test('show page renders for non-editable posts', function () {
     $response->assertOk();
     $response->assertInertia(fn ($page) => $page
         ->component('posts/Show', false)
-        ->has('post.post_platforms', 1)
+        ->has('post.platforms', 1)
     );
 });
 

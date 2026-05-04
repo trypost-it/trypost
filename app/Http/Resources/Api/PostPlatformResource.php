@@ -20,6 +20,14 @@ class PostPlatformResource extends JsonResource
             'content_type' => $this->content_type?->value,
             'status' => $this->status?->value,
             'enabled' => $this->enabled,
+            'platform_url' => $this->platform_url,
+            'published_at' => $this->published_at?->format('Y-m-d H:i:s'),
+            'error_message' => $this->error_message,
+            // Display fields fall back to snapshots (platform_name/username/avatar)
+            // so deleted accounts still render correctly in the post history.
+            'display_name' => $this->display_name,
+            'display_username' => $this->display_username,
+            'display_avatar' => $this->display_avatar,
             'social_account' => new SocialAccountResource($this->whenLoaded('socialAccount')),
         ];
     }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Form, Head } from '@inertiajs/vue3';
 import { IconDeviceDesktop, IconDeviceMobile } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
@@ -327,18 +327,16 @@ const logoutDialogOpen = ref(false);
                                     {{ $t('settings.authentication.providers.disconnect') }}
                                 </Button>
                             </Form>
-                            <Link
+                            <Button
                                 v-else-if="!account.connected"
+                                variant="outline"
+                                size="sm"
+                                as="a"
                                 :href="connectProvider(account.provider).url"
+                                :data-test="`connect-${account.provider}`"
                             >
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    :data-test="`connect-${account.provider}`"
-                                >
-                                    {{ $t('settings.authentication.providers.connect') }}
-                                </Button>
-                            </Link>
+                                {{ $t('settings.authentication.providers.connect') }}
+                            </Button>
                         </div>
                     </div>
                 </div>

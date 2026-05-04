@@ -29,7 +29,7 @@ use Laravel\Mcp\Server\Attributes\Version;
 
 #[Name('TryPost')]
 #[Version('1.0.0')]
-#[Instructions('TryPost is a social media scheduling platform. Use this server to manage posts, signatures, labels, workspaces, and API keys.')]
+#[Instructions('TryPost is a social media scheduling platform. Use this server to manage posts, signatures, labels, social accounts, workspaces, and API keys.')]
 class TryPostServer extends Server
 {
     public int $defaultPaginationLength = 100;

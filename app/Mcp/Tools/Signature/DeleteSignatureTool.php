@@ -12,14 +12,18 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
-#[Description('Delete a signature by ID.')]
+#[IsDestructive]
+#[Description('Delete a signature permanently. This cannot be undone.')]
 class DeleteSignatureTool extends Tool
 {
     public function handle(Request $request): Response|ResponseFactory
     {
+        $validated = $request->validate(['signature_id' => ['required', 'string']]);
+
         $signature = WorkspaceSignature::where('workspace_id', $request->user()->current_workspace_id)
-            ->find(data_get($request->validate(['signature_id' => ['required', 'string']]), 'signature_id'));
+            ->find(data_get($validated, 'signature_id'));
 
         if (! $signature) {
             return Response::error('Signature not found.');

@@ -18,7 +18,7 @@ class PostResource extends JsonResource
             'id' => $this->id,
             'content' => $this->content,
             'media' => $this->media,
-            'status' => $this->status,
+            'status' => $this->status?->value,
             'scheduled_at' => $this->scheduled_at?->format('Y-m-d H:i:s'),
             'published_at' => $this->published_at?->format('Y-m-d H:i:s'),
             'platforms' => PostPlatformResource::collection($this->whenLoaded('postPlatforms')),

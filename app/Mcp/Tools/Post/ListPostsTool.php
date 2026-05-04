@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\Post;
 
+use App\Http\Resources\Api\PostResource;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -12,7 +13,7 @@ use Laravel\Mcp\Server\Tool;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
 #[IsReadOnly]
-#[Description('List all posts for the current workspace. Returns posts with their platforms, status, and scheduled date.')]
+#[Description('List posts for the current workspace, ordered by scheduled date (newest first).')]
 class ListPostsTool extends Tool
 {
     public function handle(Request $request): ResponseFactory
@@ -21,8 +22,11 @@ class ListPostsTool extends Tool
             ->posts()
             ->with(['postPlatforms.socialAccount', 'labels'])
             ->latest('scheduled_at')
-            ->paginate(50);
+            ->limit(50)
+            ->get();
 
-        return Response::structured($posts->toArray());
+        return Response::structured([
+            'posts' => PostResource::collection($posts)->resolve(),
+        ]);
     }
 }

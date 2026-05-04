@@ -10,6 +10,7 @@ use App\Mcp\Tools\ApiKey\ListApiKeysTool;
 use App\Models\AccessToken;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Testing\Fluent\AssertableJson;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -31,22 +32,55 @@ function attachToken(User $user, Workspace $workspace): AccessToken
     return $token->refresh();
 }
 
-test('can list api keys', function () {
+test('list api keys returns wrapped api_keys array with ApiKeyResource shape', function () {
     attachToken($this->user, $this->workspace);
     attachToken($this->user, $this->workspace);
 
     $response = TryPostServer::actingAs($this->user)
         ->tool(ListApiKeysTool::class, []);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->has('api_keys', 2, function (AssertableJson $key) {
+                $key->hasAll(['id', 'name', 'last_used_at', 'expires_at', 'created_at'])
+                    ->missing('token')
+                    ->missing('user_id')
+                    ->missing('workspace_id')
+                    ->missing('client_id');
+            });
+        });
 });
 
-test('can create api key', function () {
+test('list api keys excludes OAuth tokens (workspace_id null)', function () {
+    // Personal Access Token (workspace bound)
+    attachToken($this->user, $this->workspace);
+
+    // OAuth-flow token (workspace_id null — like ChatGPT MCP session)
+    $oauthResult = $this->user->createToken('OAuth Session');
+    AccessToken::find($oauthResult->token->id)
+        ->forceFill(['workspace_id' => null])
+        ->saveQuietly();
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(ListApiKeysTool::class, []);
+
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->has('api_keys', 1)->etc();
+        });
+});
+
+test('create api key returns plain token only at creation', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(CreateApiKeyTool::class, ['name' => 'My Key']);
 
-    $response->assertOk();
-    $response->assertSee('My Key');
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->where('name', 'My Key')
+                ->has('token')
+                ->hasAll(['id', 'last_used_at', 'expires_at', 'created_at'])
+                ->etc();
+        });
 
     expect(AccessToken::where('user_id', $this->user->id)
         ->where('workspace_id', $this->workspace->id)
@@ -60,17 +94,29 @@ test('create api key validates name required', function () {
     $response->assertHasErrors();
 });
 
-test('can revoke api key', function () {
+test('create api key rejects expires_at in the past', function () {
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreateApiKeyTool::class, [
+            'name' => 'Past Key',
+            'expires_at' => '2020-01-01',
+        ]);
+
+    $response->assertHasErrors();
+});
+
+test('delete api key marks revoked', function () {
     $token = attachToken($this->user, $this->workspace);
 
     $response = TryPostServer::actingAs($this->user)
         ->tool(DeleteApiKeyTool::class, ['api_key_id' => $token->id]);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(['deleted' => true]);
+
     expect($token->refresh()->revoked)->toBeTrue();
 });
 
-test('cannot delete api key from another workspace', function () {
+test('cannot delete api key from another user', function () {
     $otherUser = User::factory()->create();
     $otherWorkspace = Workspace::factory()->create([
         'account_id' => $otherUser->account_id,
@@ -82,6 +128,19 @@ test('cannot delete api key from another workspace', function () {
         ->tool(DeleteApiKeyTool::class, ['api_key_id' => $token->id]);
 
     $response->assertHasErrors(['API key not found.']);
+});
+
+test('cannot delete OAuth-flow token through this tool', function () {
+    // OAuth token has workspace_id null — DeleteApiKeyTool filter excludes it
+    $oauthResult = $this->user->createToken('OAuth Session');
+    $oauthToken = AccessToken::find($oauthResult->token->id);
+    $oauthToken->forceFill(['workspace_id' => null])->saveQuietly();
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(DeleteApiKeyTool::class, ['api_key_id' => $oauthToken->id]);
+
+    $response->assertHasErrors(['API key not found.']);
+    expect($oauthToken->refresh()->revoked)->toBeFalse();
 });
 
 test('delete api key validates api_key_id required', function () {

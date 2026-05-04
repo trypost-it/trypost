@@ -10,6 +10,7 @@ use App\Mcp\Tools\SocialAccount\ToggleSocialAccountTool;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Testing\Fluent\AssertableJson;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -18,9 +19,7 @@ beforeEach(function () {
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
-// ListSocialAccountsTool
-
-test('can list social accounts', function () {
+test('list returns wrapped social_accounts array with SocialAccountResource shape', function () {
     SocialAccount::factory()->create([
         'workspace_id' => $this->workspace->id,
         'platform' => Platform::LinkedIn,
@@ -33,10 +32,18 @@ test('can list social accounts', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(ListSocialAccountsTool::class, []);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->has('social_accounts', 2, function (AssertableJson $account) {
+                $account->hasAll(['id', 'platform', 'display_name', 'username', 'is_active', 'status'])
+                    ->missing('access_token')
+                    ->missing('refresh_token')
+                    ->missing('workspace_id');
+            });
+        });
 });
 
-test('listing only returns own workspace accounts', function () {
+test('list only returns own workspace accounts', function () {
     SocialAccount::factory()->create([
         'workspace_id' => $this->workspace->id,
         'platform' => Platform::LinkedIn,
@@ -51,11 +58,13 @@ test('listing only returns own workspace accounts', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(ListSocialAccountsTool::class, []);
 
-    $response->assertOk();
-    $response->assertDontSee(Platform::X->value);
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->has('social_accounts', 1)->etc();
+        });
 });
 
-test('list does not expose tokens', function () {
+test('list never exposes access_token or refresh_token', function () {
     SocialAccount::factory()->create([
         'workspace_id' => $this->workspace->id,
         'platform' => Platform::LinkedIn,
@@ -69,9 +78,7 @@ test('list does not expose tokens', function () {
     $response->assertDontSee('secret-token-123');
 });
 
-// ToggleSocialAccountTool
-
-test('can toggle social account to inactive', function () {
+test('toggle returns updated SocialAccountResource', function () {
     $account = SocialAccount::factory()->create([
         'workspace_id' => $this->workspace->id,
         'platform' => Platform::LinkedIn,
@@ -79,15 +86,20 @@ test('can toggle social account to inactive', function () {
     ]);
 
     $response = TryPostServer::actingAs($this->user)
-        ->tool(ToggleSocialAccountTool::class, [
-            'account_id' => $account->id,
-        ]);
+        ->tool(ToggleSocialAccountTool::class, ['account_id' => $account->id]);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) use ($account) {
+            $json->where('id', $account->id)
+                ->where('is_active', false)
+                ->where('platform', 'linkedin')
+                ->etc();
+        });
+
     expect($account->fresh()->is_active)->toBeFalse();
 });
 
-test('can toggle social account to active', function () {
+test('toggle inactive account becomes active', function () {
     $account = SocialAccount::factory()->create([
         'workspace_id' => $this->workspace->id,
         'platform' => Platform::LinkedIn,
@@ -95,9 +107,7 @@ test('can toggle social account to active', function () {
     ]);
 
     $response = TryPostServer::actingAs($this->user)
-        ->tool(ToggleSocialAccountTool::class, [
-            'account_id' => $account->id,
-        ]);
+        ->tool(ToggleSocialAccountTool::class, ['account_id' => $account->id]);
 
     $response->assertOk();
     expect($account->fresh()->is_active)->toBeTrue();
@@ -111,16 +121,21 @@ test('cannot toggle account from another workspace', function () {
     ]);
 
     $response = TryPostServer::actingAs($this->user)
-        ->tool(ToggleSocialAccountTool::class, [
-            'account_id' => $account->id,
-        ]);
+        ->tool(ToggleSocialAccountTool::class, ['account_id' => $account->id]);
+
+    $response->assertHasErrors(['Social account not found.']);
+});
+
+test('toggle validates account_id required', function () {
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(ToggleSocialAccountTool::class, []);
 
     $response->assertHasErrors();
 });
 
-test('toggle validates account_id is required', function () {
+test('toggle validates account_id is uuid', function () {
     $response = TryPostServer::actingAs($this->user)
-        ->tool(ToggleSocialAccountTool::class, []);
+        ->tool(ToggleSocialAccountTool::class, ['account_id' => 'not-a-uuid']);
 
     $response->assertHasErrors();
 });

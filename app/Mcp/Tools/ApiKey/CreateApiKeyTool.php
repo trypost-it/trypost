@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\ApiKey;
 
+use App\Http\Resources\Api\ApiKeyResource;
 use App\Models\AccessToken;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -12,7 +13,7 @@ use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Create a new API key. Returns the plain text token which is only shown once.')]
+#[Description('Create a new Personal Access Token (API key) for the current workspace. The plain token value is returned ONCE — store it immediately, it cannot be retrieved later.')]
 class CreateApiKeyTool extends Tool
 {
     public function handle(Request $request): ResponseFactory
@@ -23,30 +24,26 @@ class CreateApiKeyTool extends Tool
         ]);
 
         $user = $request->user();
-        $workspace = $user->currentWorkspace;
 
-        $result = $user->createToken($validated['name']);
+        $result = $user->createToken(data_get($validated, 'name'));
 
         $token = AccessToken::find($result->token->id);
         $token->forceFill([
-            'workspace_id' => $workspace->id,
-            'expires_at' => $validated['expires_at'] ?? null,
+            'workspace_id' => $user->current_workspace_id,
+            'expires_at' => data_get($validated, 'expires_at'),
         ])->saveQuietly();
 
-        return Response::structured([
-            'id' => $token->id,
-            'name' => $token->name,
-            'workspace_id' => $token->workspace_id,
-            'expires_at' => $token->expires_at?->toIso8601String(),
-            'token' => $result->accessToken,
-        ]);
+        return Response::structured(array_merge(
+            (new ApiKeyResource($token))->resolve(),
+            ['token' => $result->accessToken],
+        ));
     }
 
     public function schema(JsonSchema $schema): array
     {
         return [
-            'name' => $schema->string()->required()->description('The API key name.'),
-            'expires_at' => $schema->string()->description('Optional expiration date.'),
+            'name' => $schema->string()->required()->description('A human-readable name to identify the key (e.g. "My integration").'),
+            'expires_at' => $schema->string()->description('Optional ISO 8601 expiration date (e.g. 2026-12-31). Must be in the future.'),
         ];
     }
 }

@@ -12,14 +12,18 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
-#[Description('Delete a post by ID.')]
+#[IsDestructive]
+#[Description('Delete a post permanently. This cannot be undone.')]
 class DeletePostTool extends Tool
 {
     public function handle(Request $request): Response|ResponseFactory
     {
+        $validated = $request->validate(['post_id' => ['required', 'string']]);
+
         $post = Post::where('workspace_id', $request->user()->current_workspace_id)
-            ->find(data_get($request->validate(['post_id' => ['required', 'string']]), 'post_id'));
+            ->find(data_get($validated, 'post_id'));
 
         if (! $post) {
             return Response::error('Post not found.');

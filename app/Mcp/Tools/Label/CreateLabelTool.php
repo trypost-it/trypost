@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tools\Label;
 
 use App\Actions\Label\CreateLabel;
+use App\Http\Resources\Api\LabelResource;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -24,7 +25,7 @@ class CreateLabelTool extends Tool
 
         $label = CreateLabel::execute($request->user()->currentWorkspace, $validated);
 
-        return Response::structured($label->toArray());
+        return Response::structured((new LabelResource($label))->resolve());
     }
 
     public function schema(JsonSchema $schema): array

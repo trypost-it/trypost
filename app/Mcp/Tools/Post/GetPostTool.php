@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\Post;
 
+use App\Http\Resources\Api\PostResource;
 use App\Models\Post;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -19,15 +20,17 @@ class GetPostTool extends Tool
 {
     public function handle(Request $request): Response|ResponseFactory
     {
+        $validated = $request->validate(['post_id' => ['required', 'string']]);
+
         $post = Post::where('workspace_id', $request->user()->current_workspace_id)
             ->with(['postPlatforms.socialAccount', 'labels'])
-            ->find(data_get($request->validate(['post_id' => ['required', 'string']]), 'post_id'));
+            ->find(data_get($validated, 'post_id'));
 
         if (! $post) {
             return Response::error('Post not found.');
         }
 
-        return Response::structured($post->toArray());
+        return Response::structured((new PostResource($post))->resolve());
     }
 
     public function schema(JsonSchema $schema): array

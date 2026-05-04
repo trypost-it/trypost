@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tools\Label;
 
 use App\Actions\Label\UpdateLabel;
+use App\Http\Resources\Api\LabelResource;
 use App\Models\WorkspaceLabel;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -33,7 +34,7 @@ class UpdateLabelTool extends Tool
 
         $label = UpdateLabel::execute($label, $validated);
 
-        return Response::structured($label->toArray());
+        return Response::structured((new LabelResource($label))->resolve());
     }
 
     public function schema(JsonSchema $schema): array

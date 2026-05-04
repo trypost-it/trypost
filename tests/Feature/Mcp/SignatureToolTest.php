@@ -11,6 +11,7 @@ use App\Mcp\Tools\Signature\UpdateSignatureTool;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceSignature;
+use Illuminate\Testing\Fluent\AssertableJson;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -19,24 +20,50 @@ beforeEach(function () {
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
-test('can list signatures', function () {
+test('list signatures returns wrapped signatures array with SignatureResource shape', function () {
     WorkspaceSignature::factory()->count(2)->create(['workspace_id' => $this->workspace->id]);
 
     $response = TryPostServer::actingAs($this->user)
         ->tool(ListSignaturesTool::class, []);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->has('signatures', 2, function (AssertableJson $sig) {
+                $sig->hasAll(['id', 'name', 'content', 'created_at', 'updated_at'])
+                    ->missing('workspace_id');
+            });
+        });
 });
 
-test('can create signature', function () {
+test('list signatures only returns own workspace signatures', function () {
+    WorkspaceSignature::factory()->create(['workspace_id' => $this->workspace->id]);
+    $otherWorkspace = Workspace::factory()->create();
+    WorkspaceSignature::factory()->create(['workspace_id' => $otherWorkspace->id]);
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(ListSignaturesTool::class, []);
+
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->has('signatures', 1)->etc();
+        });
+});
+
+test('create signature returns SignatureResource shape', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(CreateSignatureTool::class, [
             'name' => 'Marketing',
             'content' => '#marketing #social',
         ]);
 
-    $response->assertOk();
-    $response->assertSee('Marketing');
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->where('name', 'Marketing')
+                ->where('content', '#marketing #social')
+                ->missing('workspace_id')
+                ->etc();
+        });
+
     expect($this->workspace->signatures()->count())->toBe(1);
 });
 
@@ -47,7 +74,7 @@ test('create signature validates required fields', function () {
     $response->assertHasErrors();
 });
 
-test('can update signature', function () {
+test('update signature returns updated SignatureResource', function () {
     $signature = WorkspaceSignature::factory()->create(['workspace_id' => $this->workspace->id]);
 
     $response = TryPostServer::actingAs($this->user)
@@ -57,8 +84,12 @@ test('can update signature', function () {
             'content' => '#updated',
         ]);
 
-    $response->assertOk();
-    $response->assertSee('Updated');
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->where('name', 'Updated')
+                ->where('content', '#updated')
+                ->etc();
+        });
 });
 
 test('cannot update signature from another workspace', function () {
@@ -75,13 +106,15 @@ test('cannot update signature from another workspace', function () {
     $response->assertHasErrors(['Signature not found.']);
 });
 
-test('can delete signature', function () {
+test('delete signature removes from db', function () {
     $signature = WorkspaceSignature::factory()->create(['workspace_id' => $this->workspace->id]);
 
     $response = TryPostServer::actingAs($this->user)
         ->tool(DeleteSignatureTool::class, ['signature_id' => $signature->id]);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(['deleted' => true]);
+
     expect(WorkspaceSignature::find($signature->id))->toBeNull();
 });
 

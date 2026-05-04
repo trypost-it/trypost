@@ -11,6 +11,7 @@ use App\Mcp\Tools\Label\UpdateLabelTool;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceLabel;
+use Illuminate\Testing\Fluent\AssertableJson;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -19,24 +20,50 @@ beforeEach(function () {
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
 
-test('can list labels', function () {
+test('list labels returns wrapped labels array with LabelResource shape', function () {
     WorkspaceLabel::factory()->count(2)->create(['workspace_id' => $this->workspace->id]);
 
     $response = TryPostServer::actingAs($this->user)
         ->tool(ListLabelsTool::class, []);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->has('labels', 2, function (AssertableJson $label) {
+                $label->hasAll(['id', 'name', 'color', 'created_at', 'updated_at'])
+                    ->missing('workspace_id');
+            });
+        });
 });
 
-test('can create label', function () {
+test('list labels only returns own workspace labels', function () {
+    WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+    $otherWorkspace = Workspace::factory()->create();
+    WorkspaceLabel::factory()->create(['workspace_id' => $otherWorkspace->id]);
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(ListLabelsTool::class, []);
+
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->has('labels', 1)->etc();
+        });
+});
+
+test('create label returns LabelResource shape', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(CreateLabelTool::class, [
             'name' => 'Important',
             'color' => '#FF0000',
         ]);
 
-    $response->assertOk();
-    $response->assertSee('Important');
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->where('name', 'Important')
+                ->where('color', '#FF0000')
+                ->missing('workspace_id')
+                ->etc();
+        });
+
     expect($this->workspace->labels()->count())->toBe(1);
 });
 
@@ -57,7 +84,7 @@ test('create label validates color format', function () {
     $response->assertHasErrors();
 });
 
-test('can update label', function () {
+test('update label returns updated LabelResource', function () {
     $label = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
 
     $response = TryPostServer::actingAs($this->user)
@@ -67,8 +94,12 @@ test('can update label', function () {
             'color' => '#00FF00',
         ]);
 
-    $response->assertOk();
-    $response->assertSee('Updated');
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->where('name', 'Updated')
+                ->where('color', '#00FF00')
+                ->etc();
+        });
 });
 
 test('cannot update label from another workspace', function () {
@@ -85,13 +116,15 @@ test('cannot update label from another workspace', function () {
     $response->assertHasErrors(['Label not found.']);
 });
 
-test('can delete label', function () {
+test('delete label removes from db', function () {
     $label = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
 
     $response = TryPostServer::actingAs($this->user)
         ->tool(DeleteLabelTool::class, ['label_id' => $label->id]);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(['deleted' => true]);
+
     expect(WorkspaceLabel::find($label->id))->toBeNull();
 });
 

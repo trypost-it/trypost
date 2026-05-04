@@ -13,6 +13,7 @@ use App\Models\Post;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Testing\Fluent\AssertableJson;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -26,7 +27,7 @@ beforeEach(function () {
     ]);
 });
 
-test('can list posts', function () {
+test('list posts returns wrapped posts array with PostResource shape', function () {
     Post::factory()->count(3)->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
@@ -35,10 +36,17 @@ test('can list posts', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(ListPostsTool::class, []);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->has('posts', 3, function (AssertableJson $post) {
+                $post->hasAll(['id', 'content', 'media', 'status', 'scheduled_at', 'published_at', 'platforms', 'labels', 'created_at', 'updated_at'])
+                    ->missing('user_id')
+                    ->missing('workspace_id');
+            });
+        });
 });
 
-test('listing only returns own workspace posts', function () {
+test('list posts only returns own workspace posts', function () {
     Post::factory()->create(['workspace_id' => $this->workspace->id, 'user_id' => $this->user->id]);
 
     $otherWorkspace = Workspace::factory()->create();
@@ -47,22 +55,33 @@ test('listing only returns own workspace posts', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(ListPostsTool::class, []);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->has('posts', 1)->etc();
+        });
 });
 
-test('can get a post by id', function () {
+test('get post returns PostResource shape', function () {
     $post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
+        'content' => 'Hello world',
     ]);
 
     $response = TryPostServer::actingAs($this->user)
         ->tool(GetPostTool::class, ['post_id' => $post->id]);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) use ($post) {
+            $json->where('id', $post->id)
+                ->where('content', 'Hello world')
+                ->missing('user_id')
+                ->missing('workspace_id')
+                ->etc();
+        });
 });
 
-test('cannot get post from another workspace', function () {
+test('get post 404 from another workspace', function () {
     $otherWorkspace = Workspace::factory()->create();
     $post = Post::factory()->create(['workspace_id' => $otherWorkspace->id, 'user_id' => $this->user->id]);
 
@@ -72,22 +91,46 @@ test('cannot get post from another workspace', function () {
     $response->assertHasErrors(['Post not found.']);
 });
 
-test('can create a post', function () {
+test('create post with content and date', function () {
     $response = TryPostServer::actingAs($this->user)
-        ->tool(CreatePostTool::class, []);
+        ->tool(CreatePostTool::class, [
+            'content' => 'My new post',
+            'date' => '2026-04-15',
+        ]);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->where('content', 'My new post')
+                ->where('status', 'draft')
+                ->where('scheduled_at', '2026-04-15 09:00:00')
+                ->etc();
+        });
+
     expect(Post::where('workspace_id', $this->workspace->id)->count())->toBe(1);
 });
 
-test('can create a post with date', function () {
+test('create post without args creates empty draft for today', function () {
     $response = TryPostServer::actingAs($this->user)
-        ->tool(CreatePostTool::class, ['date' => '2026-04-15']);
+        ->tool(CreatePostTool::class, []);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(function (AssertableJson $json) {
+            $json->where('content', '')
+                ->where('status', 'draft')
+                ->etc();
+        });
+
+    expect(Post::where('workspace_id', $this->workspace->id)->count())->toBe(1);
 });
 
-test('can delete a post', function () {
+test('create post rejects invalid date format', function () {
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreatePostTool::class, ['date' => 'not-a-date']);
+
+    $response->assertHasErrors();
+});
+
+test('delete post removes from db', function () {
     $post = Post::factory()->create([
         'workspace_id' => $this->workspace->id,
         'user_id' => $this->user->id,
@@ -96,11 +139,13 @@ test('can delete a post', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(DeletePostTool::class, ['post_id' => $post->id]);
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertStructuredContent(['deleted' => true]);
+
     expect(Post::find($post->id))->toBeNull();
 });
 
-test('cannot delete post from another workspace', function () {
+test('delete post 404 from another workspace', function () {
     $otherWorkspace = Workspace::factory()->create();
     $post = Post::factory()->create(['workspace_id' => $otherWorkspace->id, 'user_id' => $this->user->id]);
 

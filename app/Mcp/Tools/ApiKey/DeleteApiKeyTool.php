@@ -11,18 +11,23 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
-#[Description('Revoke an API key by ID.')]
+#[IsDestructive]
+#[Description('Revoke (delete) a Personal Access Token by ID. The current OAuth session token cannot be revoked through this tool. Existing integrations using the token will stop working.')]
 class DeleteApiKeyTool extends Tool
 {
     public function handle(Request $request): Response|ResponseFactory
     {
         $validated = $request->validate(['api_key_id' => ['required', 'string']]);
 
+        // workspace_id filter excludes OAuth-flow tokens (which have null
+        // workspace_id), so the caller can't accidentally revoke their own
+        // ChatGPT/MCP session token through this tool.
         $token = AccessToken::where('user_id', $request->user()->id)
-            ->where('workspace_id', $request->user()->currentWorkspace->id)
+            ->where('workspace_id', $request->user()->current_workspace_id)
             ->where('revoked', false)
-            ->find($validated['api_key_id']);
+            ->find(data_get($validated, 'api_key_id'));
 
         if (! $token) {
             return Response::error('API key not found.');
@@ -36,7 +41,7 @@ class DeleteApiKeyTool extends Tool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'api_key_id' => $schema->string()->required()->description('The API key ID to delete.'),
+            'api_key_id' => $schema->string()->required()->description('The API key ID to revoke.'),
         ];
     }
 }

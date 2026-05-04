@@ -16,9 +16,9 @@ class PostPlatformResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'platform' => $this->platform,
-            'content_type' => $this->content_type,
-            'status' => $this->status,
+            'platform' => $this->platform?->value,
+            'content_type' => $this->content_type?->value,
+            'status' => $this->status?->value,
             'enabled' => $this->enabled,
             'social_account' => new SocialAccountResource($this->whenLoaded('socialAccount')),
         ];

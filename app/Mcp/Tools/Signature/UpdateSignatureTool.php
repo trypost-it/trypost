@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mcp\Tools\Signature;
 
 use App\Actions\Signature\UpdateSignature;
+use App\Http\Resources\Api\SignatureResource;
 use App\Models\WorkspaceSignature;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -33,7 +34,7 @@ class UpdateSignatureTool extends Tool
 
         $signature = UpdateSignature::execute($signature, $validated);
 
-        return Response::structured($signature->toArray());
+        return Response::structured((new SignatureResource($signature))->resolve());
     }
 
     public function schema(JsonSchema $schema): array

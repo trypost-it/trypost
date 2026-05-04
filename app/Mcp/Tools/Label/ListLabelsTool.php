@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mcp\Tools\Label;
 
+use App\Http\Resources\Api\LabelResource;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -12,13 +13,18 @@ use Laravel\Mcp\Server\Tool;
 use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 
 #[IsReadOnly]
-#[Description('List all labels for the current workspace.')]
+#[Description('List all labels for the current workspace. Labels are colored tags used to categorize posts.')]
 class ListLabelsTool extends Tool
 {
     public function handle(Request $request): ResponseFactory
     {
-        $labels = $request->user()->currentWorkspace->labels()->latest()->get();
+        $labels = $request->user()->currentWorkspace
+            ->labels()
+            ->latest()
+            ->get();
 
-        return Response::structured($labels->toArray());
+        return Response::structured([
+            'labels' => LabelResource::collection($labels)->resolve(),
+        ]);
     }
 }

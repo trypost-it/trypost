@@ -16,11 +16,11 @@ class SocialAccountResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'platform' => $this->platform,
+            'platform' => $this->platform?->value,
             'display_name' => $this->display_name,
             'username' => $this->username,
             'is_active' => $this->is_active,
-            'status' => $this->status,
+            'status' => $this->status?->value,
         ];
     }
 }

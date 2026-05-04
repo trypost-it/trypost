@@ -102,3 +102,37 @@ test('post 404 from another workspace', function () {
 
     $response->assertHasErrors(['Post not found.']);
 });
+
+test('rejects urls with non-http(s) schemes', function () {
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(AttachMediaFromUrlTool::class, [
+            'post_id' => $this->post->id,
+            'urls' => ['ftp://cdn.example.com/photo.jpg'],
+        ]);
+
+    $response->assertHasErrors();
+
+    expect($this->post->fresh()->media)->toBeEmpty();
+});
+
+test('rejects malformed url strings', function () {
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(AttachMediaFromUrlTool::class, [
+            'post_id' => $this->post->id,
+            'urls' => ['not-a-url-at-all'],
+        ]);
+
+    $response->assertHasErrors();
+});
+
+test('rejects more than 10 urls per call', function () {
+    $urls = collect(range(1, 11))->map(fn ($i) => "https://cdn.example.com/photo-{$i}.jpg")->all();
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(AttachMediaFromUrlTool::class, [
+            'post_id' => $this->post->id,
+            'urls' => $urls,
+        ]);
+
+    $response->assertHasErrors();
+});

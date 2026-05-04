@@ -297,6 +297,131 @@ it('validates post update label_ids must be uuids', function () {
         ->assertJsonValidationErrors(['label_ids.0']);
 });
 
+it('rejects creating a post with content_type not in the enum', function () {
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store'), [
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'made_up_type'],
+            ],
+        ])
+        ->assertJsonValidationErrors(['platforms.0.content_type']);
+});
+
+it('rejects creating a post when content_type does not match the social account platform', function () {
+    // x_post on a LinkedIn account — ContentTypeMatchesPlatform should reject.
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store'), [
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'x_post'],
+            ],
+        ])
+        ->assertJsonValidationErrors(['platforms.0.content_type']);
+});
+
+it('rejects creating a post with a label from another workspace', function () {
+    $otherWorkspace = Workspace::factory()->create();
+    $foreignLabel = WorkspaceLabel::factory()->create(['workspace_id' => $otherWorkspace->id]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store'), [
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'linkedin_post'],
+            ],
+            'label_ids' => [$foreignLabel->id],
+        ])
+        ->assertJsonValidationErrors(['label_ids.0']);
+});
+
+it('rejects updating a post with a platforms[].id that belongs to another post', function () {
+    $myPost = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $otherPost = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+    $foreignPlatform = PostPlatform::factory()->linkedin()->create([
+        'post_id' => $otherPost->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $myPost), [
+            'status' => 'draft',
+            'platforms' => [
+                ['id' => $foreignPlatform->id, 'content_type' => ContentType::LinkedInPost->value],
+            ],
+        ])
+        ->assertJsonValidationErrors(['platforms.0.id']);
+});
+
+it('rejects updating a post when content_type does not match the post_platform', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+    $postPlatform = PostPlatform::factory()->linkedin()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+        'enabled' => true,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [
+            'status' => 'draft',
+            'platforms' => [
+                ['id' => $postPlatform->id, 'content_type' => 'x_post'],
+            ],
+        ])
+        ->assertJsonValidationErrors(['platforms.0.content_type']);
+});
+
+it('rejects scheduled status without a future scheduled_at', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+        'scheduled_at' => now()->subDay(),
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [
+            'status' => 'scheduled',
+            'scheduled_at' => now()->subHour()->toIso8601String(),
+        ])
+        ->assertJsonValidationErrors(['scheduled_at']);
+});
+
+it('accepts draft status with no scheduled_at', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [
+            'status' => 'draft',
+        ])
+        ->assertOk();
+});
+
+it('rejects creating a post with a past scheduled_at', function () {
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store'), [
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'linkedin_post'],
+            ],
+            'scheduled_at' => now()->subDay()->toIso8601String(),
+        ])
+        ->assertJsonValidationErrors(['scheduled_at']);
+});
+
 it('list posts returns correct structure', function () {
     Post::factory()->create([
         'workspace_id' => $this->workspace->id,

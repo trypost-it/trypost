@@ -119,6 +119,57 @@ test('update post rejects already-published post', function () {
     $response->assertHasErrors(['Cannot edit a published post.']);
 });
 
+test('update post rejects a platforms[].id that belongs to another post', function () {
+    $myPost = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+
+    $otherPost = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+    $foreignPlatform = PostPlatform::factory()->linkedin()->create([
+        'post_id' => $otherPost->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(UpdatePostTool::class, [
+            'post_id' => $myPost->id,
+            'platforms' => [
+                ['id' => $foreignPlatform->id, 'content_type' => ContentType::LinkedInPost->value],
+            ],
+        ]);
+
+    $response->assertHasErrors();
+});
+
+test('update post rejects a content_type that does not match the post_platform', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Draft,
+    ]);
+    $postPlatform = PostPlatform::factory()->linkedin()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+        'enabled' => true,
+    ]);
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(UpdatePostTool::class, [
+            'post_id' => $post->id,
+            'platforms' => [
+                ['id' => $postPlatform->id, 'content_type' => 'x_post'],
+            ],
+        ]);
+
+    $response->assertHasErrors();
+});
+
 // PublishPostTool
 
 test('publish post immediate dispatches PublishPost job', function () {

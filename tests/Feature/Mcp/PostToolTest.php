@@ -13,6 +13,7 @@ use App\Models\Post;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceLabel;
 use Illuminate\Testing\Fluent\AssertableJson;
 
 beforeEach(function () {
@@ -144,6 +145,61 @@ test('create post without args creates empty draft for today', function () {
 test('create post rejects scheduled_at in the past', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(CreatePostTool::class, ['scheduled_at' => '2020-01-01T00:00:00Z']);
+
+    $response->assertHasErrors();
+});
+
+test('create post rejects an inactive social account', function () {
+    $inactive = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::LinkedIn,
+        'is_active' => false,
+    ]);
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreatePostTool::class, [
+            'platforms' => [
+                ['social_account_id' => $inactive->id, 'content_type' => 'linkedin_post'],
+            ],
+        ]);
+
+    $response->assertHasErrors();
+});
+
+test('create post rejects a content_type not in the enum', function () {
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreatePostTool::class, [
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'made_up_type'],
+            ],
+        ]);
+
+    $response->assertHasErrors();
+});
+
+test('create post rejects a content_type that does not match the social account platform', function () {
+    // x_post on a LinkedIn account — ContentTypeMatchesPlatform should reject.
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreatePostTool::class, [
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'x_post'],
+            ],
+        ]);
+
+    $response->assertHasErrors();
+});
+
+test('create post rejects a label_id from another workspace', function () {
+    $otherWorkspace = Workspace::factory()->create();
+    $foreignLabel = WorkspaceLabel::factory()->create(['workspace_id' => $otherWorkspace->id]);
+
+    $response = TryPostServer::actingAs($this->user)
+        ->tool(CreatePostTool::class, [
+            'platforms' => [
+                ['social_account_id' => $this->socialAccount->id, 'content_type' => 'linkedin_post'],
+            ],
+            'label_ids' => [$foreignLabel->id],
+        ]);
 
     $response->assertHasErrors();
 });

@@ -9,6 +9,7 @@ use App\Models\PostPlatform;
 use Closure;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Str;
 
 /**
  * Cross-validates platforms[].content_type against the platform of the
@@ -32,8 +33,8 @@ class ContentTypeMatchesPostPlatform implements DataAwareRule, ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $idKey = preg_replace('/\.content_type$/', '.id', $attribute);
-        $postPlatformId = data_get($this->data, $idKey);
+        $parentKey = Str::beforeLast($attribute, '.');
+        $postPlatformId = data_get($this->data, $parentKey.'.id');
 
         if (! $postPlatformId) {
             return;

@@ -9,6 +9,7 @@ use App\Models\SocialAccount;
 use Closure;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Str;
 
 /**
  * Cross-validates platforms[].content_type against platforms[].social_account_id
@@ -34,10 +35,10 @@ class ContentTypeMatchesPlatform implements DataAwareRule, ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        // attribute is e.g. "platforms.0.content_type" — the sibling
-        // social_account_id lives at "platforms.0.social_account_id".
-        $accountKey = preg_replace('/\.content_type$/', '.social_account_id', $attribute);
-        $accountId = data_get($this->data, $accountKey);
+        // attribute is e.g. "platforms.0.content_type" — peel off the leaf
+        // and look up the sibling social_account_id under the same parent.
+        $parentKey = Str::beforeLast($attribute, '.');
+        $accountId = data_get($this->data, $parentKey.'.social_account_id');
 
         if (! $accountId) {
             return;

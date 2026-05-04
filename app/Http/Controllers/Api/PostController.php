@@ -10,8 +10,12 @@ use App\Actions\Post\UpdatePost;
 use App\Enums\Post\Action as PostAction;
 use App\Http\Requests\Api\Post\StorePostRequest;
 use App\Http\Requests\Api\Post\UpdatePostRequest;
+use App\Http\Resources\Api\PostMediaAttachResource;
+use App\Http\Resources\Api\PostMetricsResource;
+use App\Http\Resources\Api\PostPreviewResource;
 use App\Http\Resources\Api\PostResource;
 use App\Models\Post;
+use App\Services\Post\MediaAttacher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -31,9 +35,7 @@ class PostController extends Controller
 
     public function show(Request $request, Post $post): PostResource
     {
-        if ($post->workspace_id !== $request->user()->currentWorkspace->id) {
-            abort(Response::HTTP_NOT_FOUND);
-        }
+        $this->ensurePostInCurrentWorkspace($request, $post);
 
         $post->load(['postPlatforms.socialAccount', 'user', 'labels']);
 
@@ -57,9 +59,7 @@ class PostController extends Controller
 
     public function update(UpdatePostRequest $request, Post $post): PostResource|JsonResponse
     {
-        if ($post->workspace_id !== $request->user()->currentWorkspace->id) {
-            abort(Response::HTTP_NOT_FOUND);
-        }
+        $this->ensurePostInCurrentWorkspace($request, $post);
 
         $result = UpdatePost::execute($request->user()->currentWorkspace, $post, $request->validated());
 
@@ -75,12 +75,51 @@ class PostController extends Controller
 
     public function destroy(Request $request, Post $post): JsonResponse
     {
-        if ($post->workspace_id !== $request->user()->currentWorkspace->id) {
-            abort(Response::HTTP_NOT_FOUND);
-        }
+        $this->ensurePostInCurrentWorkspace($request, $post);
 
         DeletePost::execute($post);
 
         return response()->json(null, Response::HTTP_NO_CONTENT);
+    }
+
+    public function attachMedia(Request $request, Post $post): PostMediaAttachResource
+    {
+        $this->ensurePostInCurrentWorkspace($request, $post);
+
+        $validated = $request->validate([
+            'urls' => ['required', 'array', 'min:1', 'max:10'],
+            'urls.*' => ['url:http,https'],
+        ]);
+
+        $result = app(MediaAttacher::class)->attachFromUrls($post, $validated['urls']);
+
+        $post->refresh()->load(['postPlatforms.socialAccount', 'labels']);
+
+        return new PostMediaAttachResource($post, $result);
+    }
+
+    public function metrics(Request $request, Post $post): PostMetricsResource
+    {
+        $this->ensurePostInCurrentWorkspace($request, $post);
+
+        $post->load(['postPlatforms.socialAccount']);
+
+        return new PostMetricsResource($post);
+    }
+
+    public function preview(Request $request, Post $post): PostPreviewResource
+    {
+        $this->ensurePostInCurrentWorkspace($request, $post);
+
+        $post->load(['postPlatforms.socialAccount']);
+
+        return new PostPreviewResource($post);
+    }
+
+    private function ensurePostInCurrentWorkspace(Request $request, Post $post): void
+    {
+        if ($post->workspace_id !== $request->user()->currentWorkspace->id) {
+            abort(Response::HTTP_NOT_FOUND);
+        }
     }
 }

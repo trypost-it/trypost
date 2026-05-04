@@ -18,22 +18,13 @@ use App\Http\Resources\App\PlatformConfigResource;
 use App\Http\Resources\App\SocialAccountResource;
 use App\Models\Post;
 use App\Models\PostPlatform;
-use App\Services\Social\BlueskyAnalytics;
-use App\Services\Social\FacebookAnalytics;
-use App\Services\Social\InstagramAnalytics;
-use App\Services\Social\LinkedInPageAnalytics;
-use App\Services\Social\MastodonAnalytics;
-use App\Services\Social\PinterestAnalytics;
+use App\Services\Post\PostMetricsFetcher;
 use App\Services\Social\PinterestPublisher;
-use App\Services\Social\ThreadsAnalytics;
 use App\Services\Social\TikTokCreatorInfo;
-use App\Services\Social\XAnalytics;
-use App\Services\Social\YouTubeAnalytics;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -186,26 +177,7 @@ class PostController extends Controller
             abort(404);
         }
 
-        if ($postPlatform->status->value !== 'published' || ! $postPlatform->platform_post_id) {
-            return response()->json(['unsupported' => true, 'reason' => 'not_published']);
-        }
-
-        $cacheKey = "post_metrics:{$postPlatform->id}";
-
-        $metrics = Cache::remember($cacheKey, 300, fn () => match ($postPlatform->platform) {
-            Platform::X => app(XAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Bluesky => app(BlueskyAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Mastodon => app(MastodonAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Instagram, Platform::InstagramFacebook => app(InstagramAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Facebook => app(FacebookAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Threads => app(ThreadsAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::LinkedInPage => app(LinkedInPageAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::YouTube => app(YouTubeAnalytics::class)->fetchPostMetrics($postPlatform),
-            Platform::Pinterest => app(PinterestAnalytics::class)->fetchPostMetrics($postPlatform),
-            default => ['unsupported' => true, 'reason' => 'platform_not_supported'],
-        });
-
-        return response()->json($metrics);
+        return response()->json(app(PostMetricsFetcher::class)->forPlatform($postPlatform));
     }
 
     public function show(Request $request, Post $post): Response|RedirectResponse

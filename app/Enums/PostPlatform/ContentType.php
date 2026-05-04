@@ -264,15 +264,39 @@ enum ContentType: string
     }
 
     /**
-     * Get all content types for a specific platform.
+     * Platforms this content_type can be assigned to. Most content types are
+     * tied to a single platform; Instagram-family types (feed/carousel/reel/
+     * story) work for both `Instagram` (Basic Display) and `InstagramFacebook`
+     * (Business via Facebook Page) accounts.
+     *
+     * @return array<SocialPlatform>
+     */
+    public function compatiblePlatforms(): array
+    {
+        $primary = $this->platform();
+
+        return match ($primary) {
+            SocialPlatform::Instagram => [SocialPlatform::Instagram, SocialPlatform::InstagramFacebook],
+            default => [$primary],
+        };
+    }
+
+    /**
+     * Get all content types for a specific platform. Treats InstagramFacebook
+     * as an alias for Instagram so both flavors get the same content types.
      *
      * @return array<self>
      */
     public static function forPlatform(SocialPlatform $platform): array
     {
+        $effective = match ($platform) {
+            SocialPlatform::InstagramFacebook => SocialPlatform::Instagram,
+            default => $platform,
+        };
+
         return array_filter(
             self::cases(),
-            fn (self $type) => $type->platform() === $platform
+            fn (self $type) => $type->platform() === $effective
         );
     }
 

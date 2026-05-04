@@ -9,26 +9,74 @@ use App\Models\Post;
 use App\Models\User;
 use App\Models\Workspace;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CreatePost
 {
+    /**
+     * Create a Post with optional platform selection.
+     *
+     * `platforms[]` enables specific social accounts. Each entry takes
+     * `social_account_id` and an optional `content_type` (defaults to the
+     * platform's default). Accounts not listed remain disabled but are still
+     * created via SyncPostPlatforms so the user can toggle them later in the
+     * editor.
+     *
+     * @param  array{
+     *     content?: ?string,
+     *     media?: array<int, mixed>,
+     *     date?: ?string,
+     *     scheduled_at?: ?string,
+     *     platforms?: array<int, array{social_account_id: string, content_type?: string}>
+     * }  $data
+     */
     public static function execute(Workspace $workspace, User $user, array $data): Post
     {
+        $scheduledAt = self::resolveScheduledAt($data);
+
+        return DB::transaction(function () use ($workspace, $user, $data, $scheduledAt): Post {
+            $post = $workspace->posts()->create([
+                'user_id' => $user->id,
+                'content' => data_get($data, 'content', ''),
+                'media' => data_get($data, 'media', []),
+                'status' => PostStatus::Draft,
+                'scheduled_at' => $scheduledAt,
+            ]);
+
+            SyncPostPlatforms::execute($post);
+
+            foreach (data_get($data, 'platforms', []) as $platformData) {
+                $accountId = data_get($platformData, 'social_account_id');
+                if (! $accountId) {
+                    continue;
+                }
+
+                $updates = ['enabled' => true];
+
+                if ($contentType = data_get($platformData, 'content_type')) {
+                    $updates['content_type'] = $contentType;
+                }
+
+                $post->postPlatforms()
+                    ->where('social_account_id', $accountId)
+                    ->update($updates);
+            }
+
+            return $post;
+        });
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private static function resolveScheduledAt(array $data): Carbon
+    {
+        if ($scheduledAt = data_get($data, 'scheduled_at')) {
+            return Carbon::parse($scheduledAt)->utc();
+        }
+
         $date = data_get($data, 'date') ?: Carbon::now('UTC')->format('Y-m-d');
-        $scheduledAt = Carbon::parse($date, 'UTC')
-            ->setTime(9, 0)
-            ->utc();
 
-        $post = $workspace->posts()->create([
-            'user_id' => $user->id,
-            'content' => data_get($data, 'content', ''),
-            'media' => data_get($data, 'media', []),
-            'status' => PostStatus::Draft,
-            'scheduled_at' => $scheduledAt,
-        ]);
-
-        SyncPostPlatforms::execute($post);
-
-        return $post;
+        return Carbon::parse($date, 'UTC')->setTime(9, 0)->utc();
     }
 }

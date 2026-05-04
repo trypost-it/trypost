@@ -1,0 +1,84 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Mcp\Tools\Post;
+
+use App\Actions\Post\UpdatePost;
+use App\Enums\Post\Action as PostAction;
+use App\Enums\Post\Status;
+use App\Enums\PostPlatform\ContentType;
+use App\Http\Resources\Api\PostResource;
+use App\Models\Post;
+use App\Rules\ContentTypeMatchesPostPlatform;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\Validation\Rule;
+use Laravel\Mcp\Request;
+use Laravel\Mcp\Response;
+use Laravel\Mcp\ResponseFactory;
+use Laravel\Mcp\Server\Attributes\Description;
+use Laravel\Mcp\Server\Tool;
+
+#[Description('Update a draft post — content, media, scheduled_at, labels, and which platforms are enabled. Cannot edit a post that has already been published.')]
+class UpdatePostTool extends Tool
+{
+    public function handle(Request $request): Response|ResponseFactory
+    {
+        $workspace = $request->user()->currentWorkspace;
+
+        $validated = $request->validate([
+            'post_id' => ['required', 'uuid'],
+            'content' => ['nullable', 'string', 'max:63206'],
+            'scheduled_at' => ['nullable', 'date', 'after:now'],
+            'status' => ['sometimes', 'string', Rule::in([Status::Draft->value, Status::Scheduled->value])],
+            'label_ids' => ['sometimes', 'array'],
+            'label_ids.*' => ['uuid', Rule::exists('workspace_labels', 'id')->where('workspace_id', $workspace->id)],
+            'platforms' => ['sometimes', 'array'],
+            'platforms.*.id' => ['required', 'uuid'],
+            'platforms.*.content_type' => ['sometimes', 'string', Rule::in(array_column(ContentType::cases(), 'value')), new ContentTypeMatchesPostPlatform],
+            'platforms.*.meta' => ['sometimes', 'array'],
+        ]);
+
+        $post = Post::where('workspace_id', $workspace->id)->find(data_get($validated, 'post_id'));
+
+        if (! $post) {
+            return Response::error('Post not found.');
+        }
+
+        $payload = collect($validated)->except('post_id')->all();
+
+        $result = UpdatePost::execute($workspace, $post, $payload);
+
+        if (data_get($result, 'action') === PostAction::AlreadyPublished) {
+            return Response::error('Cannot edit a published post.');
+        }
+
+        /** @var Post $updated */
+        $updated = data_get($result, 'post');
+        $updated->load(['postPlatforms.socialAccount', 'labels']);
+
+        return Response::structured((new PostResource($updated))->resolve());
+    }
+
+    public function schema(JsonSchema $schema): array
+    {
+        return [
+            'post_id' => $schema->string()->required()->description('UUID of the post to update.'),
+            'content' => $schema->string()->description('New caption/text body.'),
+            'scheduled_at' => $schema->string()->description('ISO 8601 datetime in the future. Required if status is "scheduled".'),
+            'status' => $schema->string()
+                ->enum([Status::Draft->value, Status::Scheduled->value])
+                ->description('Post status. Use "draft" to keep editing, "scheduled" to schedule the post. Use publish-post-tool for immediate publish.'),
+            'label_ids' => $schema->array()
+                ->items($schema->string())
+                ->description('Workspace label IDs to attach (replaces existing labels).'),
+            'platforms' => $schema->array()
+                ->items($schema->object(fn ($p) => [
+                    'id' => $p->string()->required()->description('UUID of the post_platform row (from get-post-tool / list-posts-tool).'),
+                    'content_type' => $p->string()->description('New content_type for this platform.'),
+                    'meta' => $p->object()->description('Per-platform metadata override (e.g. aspect_ratio, board_id for Pinterest).'),
+                ]))
+                ->description('Platforms to enable for publishing. Any platform NOT listed will be disabled. Pass an empty array to disable all.'),
+        ];
+    }
+}

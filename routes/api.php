@@ -4,19 +4,26 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\ApiKeyController;
 use App\Http\Controllers\Api\LabelController;
+use App\Http\Controllers\Api\PlatformController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\SignatureController;
 use App\Http\Controllers\Api\SocialAccountController;
 use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('api')->middleware(['auth:api', 'workspace.token', 'throttle:api'])->group(function () {
+Route::middleware(['auth:api', 'workspace.token', 'throttle:api'])->group(function () {
     // Posts
     Route::get('/posts', [PostController::class, 'index'])->name('api.posts.index');
     Route::post('/posts', [PostController::class, 'store'])->name('api.posts.store');
     Route::get('/posts/{post}', [PostController::class, 'show'])->name('api.posts.show');
     Route::put('/posts/{post}', [PostController::class, 'update'])->name('api.posts.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('api.posts.destroy');
+    Route::post('/posts/{post}/media', [PostController::class, 'attachMedia'])->name('api.posts.attach-media');
+    Route::get('/posts/{post}/metrics', [PostController::class, 'metrics'])->name('api.posts.metrics');
+    Route::get('/posts/{post}/preview', [PostController::class, 'preview'])->name('api.posts.preview');
+
+    // Platforms (read-only metadata)
+    Route::get('/content-types', [PlatformController::class, 'contentTypes'])->name('api.content-types');
 
     // Workspace
     Route::get('/workspace', [WorkspaceController::class, 'show'])->name('api.workspace.show');

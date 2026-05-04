@@ -20,7 +20,7 @@
         "threads",
         "pinterest"
     ],
-    "license": "MIT",
+    "license": "AGPL-3.0-only",
     "homepage": "https://trypost.it",
     "support": {
         "issues": "https://github.com/trypost-it/trypost/issues",

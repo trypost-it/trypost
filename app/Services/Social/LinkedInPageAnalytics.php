@@ -24,7 +24,11 @@ class LinkedInPageAnalytics
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.linkedin-page.api').'/v2';
+        // Versioned API (`/rest/`) is the only one that honours the
+        // LinkedIn-Version header and the current analytics schemas.
+        // The legacy `/v2/` path rejects newer parameter formats with
+        // "Parameter 'timeIntervals' is invalid".
+        $this->baseUrl = config('trypost.platforms.linkedin-page.api').'/rest';
     }
 
     public function getMetrics(SocialAccount $account, ?CarbonInterface $since = null, ?CarbonInterface $until = null): array
@@ -85,9 +89,12 @@ class LinkedInPageAnalytics
 
         $this->accessToken = $account->access_token;
 
-        $orgUrn = urlencode("urn:li:organization:{$account->platform_user_id}");
-        $startMs = $since->startOfDay()->getTimestampMs();
-        $endMs = $until->endOfDay()->getTimestampMs();
+        $orgUrn = "urn:li:organization:{$account->platform_user_id}";
+        // LinkedIn requires both endpoints of the timeRange to be at midnight
+        // UTC (00:00:00.000). endOfDay() produces 23:59:59.999 which the API
+        // silently rejects with "Parameter 'timeIntervals' is invalid".
+        $startMs = $since->copy()->utc()->startOfDay()->getTimestampMs();
+        $endMs = $until->copy()->utc()->startOfDay()->addDay()->getTimestampMs();
         $timeInterval = "(timeRange:(start:{$startMs},end:{$endMs}),timeGranularityType:DAY)";
 
         $metrics = [];
@@ -109,12 +116,9 @@ class LinkedInPageAnalytics
 
     private function fetchPageStatistics(string $orgUrn, string $timeInterval): array
     {
+        $org = rawurlencode($orgUrn);
         $response = $this->getHttpClient()
-            ->get("{$this->baseUrl}/organizationPageStatistics", [
-                'q' => 'organization',
-                'organization' => urldecode($orgUrn),
-                'timeIntervals' => $timeInterval,
-            ]);
+            ->get("{$this->baseUrl}/organizationPageStatistics?q=organization&organization={$org}&timeIntervals={$timeInterval}");
 
         if ($response->failed()) {
             Log::warning('LinkedIn page statistics fetch failed', [
@@ -136,12 +140,9 @@ class LinkedInPageAnalytics
 
     private function fetchFollowerStatistics(string $orgUrn, string $timeInterval): array
     {
+        $org = rawurlencode($orgUrn);
         $response = $this->getHttpClient()
-            ->get("{$this->baseUrl}/organizationalEntityFollowerStatistics", [
-                'q' => 'organizationalEntity',
-                'organizationalEntity' => urldecode($orgUrn),
-                'timeIntervals' => $timeInterval,
-            ]);
+            ->get("{$this->baseUrl}/organizationalEntityFollowerStatistics?q=organizationalEntity&organizationalEntity={$org}&timeIntervals={$timeInterval}");
 
         if ($response->failed()) {
             Log::warning('LinkedIn follower statistics fetch failed', [
@@ -175,12 +176,9 @@ class LinkedInPageAnalytics
 
     private function fetchShareStatistics(string $orgUrn, string $timeInterval): array
     {
+        $org = rawurlencode($orgUrn);
         $response = $this->getHttpClient()
-            ->get("{$this->baseUrl}/organizationalEntityShareStatistics", [
-                'q' => 'organizationalEntity',
-                'organizationalEntity' => urldecode($orgUrn),
-                'timeIntervals' => $timeInterval,
-            ]);
+            ->get("{$this->baseUrl}/organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity={$org}&timeIntervals={$timeInterval}");
 
         if ($response->failed()) {
             Log::warning('LinkedIn share statistics fetch failed', [

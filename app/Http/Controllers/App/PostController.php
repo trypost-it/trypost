@@ -6,6 +6,7 @@ namespace App\Http\Controllers\App;
 
 use App\Actions\Post\CreatePost;
 use App\Actions\Post\DeletePost;
+use App\Actions\Post\DuplicatePost;
 use App\Actions\Post\SyncPostPlatforms;
 use App\Actions\Post\UpdatePost;
 use App\Enums\Post\Action as PostAction;
@@ -370,5 +371,19 @@ class PostController extends Controller
         }
 
         return redirect()->route('app.posts.index');
+    }
+
+    public function duplicate(Request $request, Post $post): RedirectResponse
+    {
+        $this->authorize('duplicate', $post);
+
+        $post->load(['postPlatforms', 'labels']);
+
+        $copy = DuplicatePost::execute($post, $request->user());
+
+        session()->flash('flash.banner', __('posts.flash.duplicated'));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return redirect()->route('app.posts.edit', $copy);
     }
 }

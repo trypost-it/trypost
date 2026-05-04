@@ -23,7 +23,10 @@ return [
 
     'actions' => [
         'view' => 'Ver post',
-        'delete' => 'Eliminar post',
+        'delete' => 'Eliminar',
+        'duplicate' => 'Duplicar',
+        'copy_id' => 'Copiar ID',
+        'copied' => 'ID copiado al portapapeles',
     ],
 
     'form' => [
@@ -450,6 +453,7 @@ return [
         'scheduled' => '¡Post programado correctamente!',
         'publishing' => '¡El post se está publicando! Puede tardar unos minutos en procesarse y aparecer en cada plataforma.',
         'deleted' => '¡Post eliminado correctamente!',
+        'duplicated' => 'Post duplicado como borrador.',
         'cannot_edit_published' => 'Los posts publicados no se pueden editar.',
         'cannot_delete_published' => 'Los posts publicados no se pueden eliminar.',
         'connect_first' => 'Conecta al menos una red social antes de crear un post.',

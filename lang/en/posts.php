@@ -23,7 +23,10 @@ return [
 
     'actions' => [
         'view' => 'View post',
-        'delete' => 'Delete post',
+        'delete' => 'Delete',
+        'duplicate' => 'Duplicate',
+        'copy_id' => 'Copy ID',
+        'copied' => 'ID copied to clipboard',
     ],
 
     'form' => [
@@ -450,6 +453,7 @@ return [
         'scheduled' => 'Post scheduled successfully!',
         'publishing' => 'Post is being published! It may take a few minutes to process and appear on each platform.',
         'deleted' => 'Post deleted successfully!',
+        'duplicated' => 'Post duplicated as a draft.',
         'cannot_edit_published' => 'Published posts cannot be edited.',
         'cannot_delete_published' => 'Published posts cannot be deleted.',
         'connect_first' => 'Connect at least one social network before creating a post.',

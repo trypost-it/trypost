@@ -154,6 +154,7 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::get('posts/{post}/platforms/{postPlatform}/metrics', [PostController::class, 'platformMetrics'])->name('app.posts.platforms.metrics');
     Route::put('posts/{post}', [PostController::class, 'update'])->name('app.posts.update');
     Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('app.posts.destroy');
+    Route::post('posts/{post}/duplicate', [PostController::class, 'duplicate'])->name('app.posts.duplicate');
 
     // Post Templates
     Route::get('post-templates', [PostTemplateController::class, 'index'])->name('app.post-templates.index');

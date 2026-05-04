@@ -1,15 +1,22 @@
 <script setup lang="ts">
 import { Head, InfiniteScroll, Link, router } from '@inertiajs/vue3';
-import { IconFileText, IconSearch, IconTrash } from '@tabler/icons-vue';
+import { IconCopy, IconCopyPlus, IconDots, IconFileText, IconSearch, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
-import { create as createPost, destroy as destroyPost, edit as editPost, index as postsIndex, show as showPost } from '@/actions/App/Http/Controllers/App/PostController';
+import { create as createPost, destroy as destroyPost, duplicate as duplicatePost, edit as editPost, index as postsIndex, show as showPost } from '@/actions/App/Http/Controllers/App/PostController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -26,6 +33,7 @@ import { getPostStatusConfig } from '@/composables/usePostStatus';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { copyToClipboard } from '@/lib/utils';
 import type { BreadcrumbItem } from '@/types';
 
 interface SocialAccount {
@@ -139,6 +147,12 @@ const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const handleDelete = (post: Post) => {
     deleteModal.value?.open({ url: destroyPost.url(post.id) });
 };
+
+const handleDuplicate = (post: Post) => {
+    router.post(duplicatePost.url(post.id));
+};
+
+const handleCopyId = (post: Post) => copyToClipboard(post.id, trans('posts.actions.copied'));
 
 const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 </script>
@@ -256,19 +270,38 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                                     {{ formatDateTime(post.scheduled_at ?? post.published_at) }}
                                 </TableCell>
                                 <TableCell class="text-right" @click.stop>
-                                    <Tooltip v-if="canEdit(post)">
-                                        <TooltipTrigger as-child>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger as-child>
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                class="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                                @click.stop="handleDelete(post)"
+                                                class="size-8 text-muted-foreground"
+                                                @click.stop
                                             >
-                                                <IconTrash class="h-4 w-4" />
+                                                <IconDots class="h-4 w-4" />
                                             </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>{{ $t('posts.actions.delete') }}</TooltipContent>
-                                    </Tooltip>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem @click="handleDuplicate(post)">
+                                                <IconCopyPlus class="size-4" />
+                                                {{ $t('posts.actions.duplicate') }}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem @click="handleCopyId(post)">
+                                                <IconCopy class="size-4" />
+                                                {{ $t('posts.actions.copy_id') }}
+                                            </DropdownMenuItem>
+                                            <template v-if="canEdit(post)">
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem
+                                                    variant="destructive"
+                                                    @click="handleDelete(post)"
+                                                >
+                                                    <IconTrash class="size-4" />
+                                                    {{ $t('posts.actions.delete') }}
+                                                </DropdownMenuItem>
+                                            </template>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </TableCell>
                             </TableRow>
                         </TableBody>

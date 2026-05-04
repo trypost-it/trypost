@@ -11,7 +11,8 @@ use RuntimeException;
 
 /**
  * Downloads public URLs and attaches them as media to a post — used by
- * the MCP `AttachMediaFromUrlTool` and the REST attach-media endpoint.
+ * the MCP `AttachMediaFromUrlTool` and the REST `attach-media-from-url`
+ * endpoint.
  *
  * URL syntax + DNS resolvability are validated at the request layer
  * (`url:http,https`, `active_url`). Locking, intersection of accepted

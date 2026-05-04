@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * Wraps a Post with the result of an attach-media operation
+ * Wraps a Post with the result of an attach-media-from-url operation
  * (counts + list of failed URLs).
  */
 class PostMediaAttachResource extends JsonResource

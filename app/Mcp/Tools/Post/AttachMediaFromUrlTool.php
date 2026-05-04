@@ -22,7 +22,7 @@ class AttachMediaFromUrlTool extends Tool
         $validated = $request->validate([
             'post_id' => ['required', 'uuid'],
             'urls' => ['required', 'array', 'min:1', 'max:10'],
-            'urls.*' => ['url:http,https'],
+            'urls.*' => ['url:http,https', 'active_url'],
         ]);
 
         $post = Post::where('workspace_id', $request->user()->current_workspace_id)

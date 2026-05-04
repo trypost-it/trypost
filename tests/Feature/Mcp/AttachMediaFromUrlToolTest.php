@@ -28,7 +28,7 @@ beforeEach(function () {
 
 test('attaches an image from url and creates a media row', function () {
     Http::fake([
-        'cdn.example.com/photo.jpg' => Http::response(
+        'example.com/photo.jpg' => Http::response(
             file_get_contents(__DIR__.'/../../fixtures/1x1.png'),
             200,
             ['Content-Type' => 'image/png'],
@@ -38,7 +38,7 @@ test('attaches an image from url and creates a media row', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $this->post->id,
-            'urls' => ['https://cdn.example.com/photo.jpg'],
+            'urls' => ['https://example.com/photo.jpg'],
         ]);
 
     $response->assertOk();
@@ -49,13 +49,13 @@ test('attaches an image from url and creates a media row', function () {
 
 test('rejects url that returns non-image content type', function () {
     Http::fake([
-        'evil.example.com/payload' => Http::response('not an image', 200, ['Content-Type' => 'text/html']),
+        'example.org/payload' => Http::response('not an image', 200, ['Content-Type' => 'text/html']),
     ]);
 
     $response = TryPostServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $this->post->id,
-            'urls' => ['https://evil.example.com/payload'],
+            'urls' => ['https://example.org/payload'],
         ]);
 
     $response->assertOk();
@@ -66,25 +66,25 @@ test('rejects url that returns non-image content type', function () {
 
 test('reports failures and successes separately', function () {
     Http::fake([
-        'cdn.example.com/ok.png' => Http::response(
+        'example.com/ok.png' => Http::response(
             file_get_contents(__DIR__.'/../../fixtures/1x1.png'),
             200,
             ['Content-Type' => 'image/png'],
         ),
-        'cdn.example.com/missing.png' => Http::response(null, 404),
+        'example.com/missing.png' => Http::response(null, 404),
     ]);
 
     $response = TryPostServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $this->post->id,
             'urls' => [
-                'https://cdn.example.com/ok.png',
-                'https://cdn.example.com/missing.png',
+                'https://example.com/ok.png',
+                'https://example.com/missing.png',
             ],
         ]);
 
     $response->assertOk()
-        ->assertSee(['cdn.example.com/missing.png']);
+        ->assertSee(['example.com/missing.png']);
 
     expect(Media::where('mediable_id', $this->workspace->id)->count())->toBe(1);
     expect($this->post->fresh()->media)->toHaveCount(1);
@@ -97,7 +97,7 @@ test('post 404 from another workspace', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $post->id,
-            'urls' => ['https://cdn.example.com/photo.jpg'],
+            'urls' => ['https://example.com/photo.jpg'],
         ]);
 
     $response->assertHasErrors(['Post not found.']);
@@ -107,7 +107,7 @@ test('rejects urls with non-http(s) schemes', function () {
     $response = TryPostServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $this->post->id,
-            'urls' => ['ftp://cdn.example.com/photo.jpg'],
+            'urls' => ['ftp://example.com/photo.jpg'],
         ]);
 
     $response->assertHasErrors();
@@ -126,7 +126,7 @@ test('rejects malformed url strings', function () {
 });
 
 test('rejects more than 10 urls per call', function () {
-    $urls = collect(range(1, 11))->map(fn ($i) => "https://cdn.example.com/photo-{$i}.jpg")->all();
+    $urls = collect(range(1, 11))->map(fn ($i) => "https://example.com/photo-{$i}.jpg")->all();
 
     $response = TryPostServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [

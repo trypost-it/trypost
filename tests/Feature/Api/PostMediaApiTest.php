@@ -38,7 +38,7 @@ beforeEach(function () {
 
 it('attaches media from url', function () {
     Http::fake([
-        'cdn.example.com/photo.png' => Http::response(
+        'example.com/photo.png' => Http::response(
             file_get_contents(__DIR__.'/../../fixtures/1x1.png'),
             200,
             ['Content-Type' => 'image/png'],
@@ -47,7 +47,7 @@ it('attaches media from url', function () {
 
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
         ->postJson(route('api.posts.attach-media', $this->post), [
-            'urls' => ['https://cdn.example.com/photo.png'],
+            'urls' => ['https://example.com/photo.png'],
         ])
         ->assertOk()
         ->assertJsonPath('attached_count', 1)
@@ -59,16 +59,16 @@ it('attaches media from url', function () {
 
 it('reports failures for unreachable urls', function () {
     Http::fake([
-        'cdn.example.com/missing.png' => Http::response(null, 404),
+        'example.com/missing.png' => Http::response(null, 404),
     ]);
 
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
         ->postJson(route('api.posts.attach-media', $this->post), [
-            'urls' => ['https://cdn.example.com/missing.png'],
+            'urls' => ['https://example.com/missing.png'],
         ])
         ->assertOk()
         ->assertJsonPath('attached_count', 0)
-        ->assertJsonPath('failed_urls.0', 'https://cdn.example.com/missing.png');
+        ->assertJsonPath('failed_urls.0', 'https://example.com/missing.png');
 });
 
 it('cannot attach media to a post from another workspace', function () {
@@ -77,7 +77,7 @@ it('cannot attach media to a post from another workspace', function () {
 
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
         ->postJson(route('api.posts.attach-media', $post), [
-            'urls' => ['https://cdn.example.com/photo.png'],
+            'urls' => ['https://example.com/photo.png'],
         ])
         ->assertNotFound();
 });

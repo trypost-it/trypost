@@ -88,7 +88,7 @@ class PostController extends Controller
 
         $validated = $request->validate([
             'urls' => ['required', 'array', 'min:1', 'max:10'],
-            'urls.*' => ['url:http,https'],
+            'urls.*' => ['url:http,https', 'active_url'],
         ]);
 
         $result = app(MediaAttacher::class)->attachFromUrls($post, $validated['urls']);

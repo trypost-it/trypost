@@ -263,7 +263,68 @@ test('refreshes instagram token when expired', function () {
     Http::assertSent(fn ($request) => str_contains($request->url(), 'refresh_access_token'));
 });
 
-test('refreshes token when expiring soon', function () {
+test('does NOT refresh proactively when token still works (lazy refresh)', function () {
+    Http::fake([
+        'api.linkedin.com/*' => Http::response(['sub' => '123'], 200),
+    ]);
+
+    // Token is "expiring soon" but access_token still works.
+    $account = SocialAccount::factory()->linkedin()->create([
+        'token_expires_at' => now()->addMinutes(10),
+        'refresh_token' => 'old_refresh_token',
+    ]);
+
+    $verifier = new ConnectionVerifier;
+
+    expect($verifier->verify($account))->toBeTrue();
+
+    // Refresh endpoint must NOT have been called — verify worked without it.
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), 'oauth/v2/accessToken'));
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'api.linkedin.com/rest/userinfo'));
+});
+
+test('refreshes lazily on 401 then retries verify', function () {
+    Http::fake([
+        // First verify call returns 401, second (after refresh) returns 200.
+        'api.linkedin.com/*' => Http::sequence()
+            ->push(['error' => 'unauthorized'], 401)
+            ->push(['sub' => '123'], 200),
+        'www.linkedin.com/oauth/v2/accessToken' => Http::response([
+            'access_token' => 'new_token',
+            'refresh_token' => 'new_refresh_token',
+            'expires_in' => 5184000,
+        ], 200),
+    ]);
+
+    $account = SocialAccount::factory()->linkedin()->create([
+        'token_expires_at' => now()->addHours(2),
+        'refresh_token' => 'old_refresh_token',
+    ]);
+
+    $verifier = new ConnectionVerifier;
+
+    expect($verifier->verify($account))->toBeTrue();
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'oauth/v2/accessToken'));
+});
+
+test('throws when verify returns 401 AND refresh also fails', function () {
+    Http::fake([
+        'api.linkedin.com/*' => Http::response(['error' => 'unauthorized'], 401),
+        'www.linkedin.com/oauth/v2/accessToken' => Http::response(['error' => 'invalid_grant'], 400),
+    ]);
+
+    $account = SocialAccount::factory()->linkedin()->create([
+        'token_expires_at' => now()->addHours(2),
+        'refresh_token' => 'old_refresh_token',
+    ]);
+
+    $verifier = new ConnectionVerifier;
+
+    expect(fn () => $verifier->verify($account))->toThrow(TokenExpiredException::class);
+});
+
+test('forces refresh when token is hard-expired', function () {
     Http::fake([
         'www.linkedin.com/oauth/v2/accessToken' => Http::response([
             'access_token' => 'new_token',
@@ -273,16 +334,29 @@ test('refreshes token when expiring soon', function () {
         'api.linkedin.com/*' => Http::response(['sub' => '123'], 200),
     ]);
 
-    // Token expires in 30 minutes (less than 1 hour threshold)
     $account = SocialAccount::factory()->linkedin()->create([
-        'token_expires_at' => now()->addMinutes(30),
+        'token_expires_at' => now()->subMinutes(5),
         'refresh_token' => 'old_refresh_token',
     ]);
 
     $verifier = new ConnectionVerifier;
-    $result = $verifier->verify($account);
 
-    expect($result)->toBeTrue();
+    expect($verifier->verify($account))->toBeTrue();
 
-    Http::assertSent(fn ($request) => str_contains($request->url(), 'linkedin.com/oauth/v2/accessToken'));
+    Http::assertSent(fn ($request) => str_contains($request->url(), 'oauth/v2/accessToken'));
+});
+
+test('throws when refresh fails AND token is hard-expired', function () {
+    Http::fake([
+        'www.linkedin.com/oauth/v2/accessToken' => Http::response(['error' => 'invalid_grant'], 400),
+    ]);
+
+    $account = SocialAccount::factory()->linkedin()->create([
+        'token_expires_at' => now()->subMinutes(5),
+        'refresh_token' => 'old_refresh_token',
+    ]);
+
+    $verifier = new ConnectionVerifier;
+
+    expect(fn () => $verifier->verify($account))->toThrow(TokenExpiredException::class);
 });

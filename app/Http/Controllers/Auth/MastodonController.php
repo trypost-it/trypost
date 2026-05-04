@@ -183,6 +183,12 @@ class MastodonController extends SocialController
 
             $avatarPath = data_get($profile, 'avatar') ? uploadFromUrl(data_get($profile, 'avatar')) : null;
 
+            // Mastodon returns the granted scopes in the token response as a
+            // space-separated string. We persist them so the publisher can
+            // verify required scopes (write:statuses, write:media) before
+            // attempting to post.
+            $grantedScopes = array_values(array_filter(explode(' ', (string) data_get($tokenData, 'scope', self::SCOPES))));
+
             $workspace->socialAccounts()->updateOrCreate(
                 [
                     'platform' => $this->platform->value,
@@ -195,6 +201,7 @@ class MastodonController extends SocialController
                     'access_token' => $accessToken,
                     'refresh_token' => null,
                     'token_expires_at' => null,
+                    'scopes' => $grantedScopes,
                     'status' => Status::Connected,
                     'error_message' => null,
                     'disconnected_at' => null,

@@ -102,6 +102,9 @@ test('mastodon oauth callback creates account', function () {
         'username' => 'testuser',
         'status' => Status::Connected->value,
     ]);
+
+    $account = SocialAccount::where('platform', Platform::Mastodon->value)->first();
+    expect($account->scopes)->toBe(['read:accounts', 'write:statuses', 'write:media']);
 });
 
 test('mastodon callback fails with invalid state', function () {

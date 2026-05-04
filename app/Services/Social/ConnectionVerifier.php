@@ -20,11 +20,39 @@ class ConnectionVerifier
      */
     public function verify(SocialAccount $account): bool
     {
-        // Refresh token if expired or expiring soon before verifying
-        if ($account->is_token_expired || $account->is_token_expiring_soon) {
+        // Hard-expired tokens cannot make API calls — refresh is mandatory.
+        // For tokens that are still valid OR only "expiring soon", try the
+        // verify endpoint FIRST with the current access_token. This avoids
+        // rotating refresh_tokens unnecessarily — many providers (X v2,
+        // LinkedIn, etc.) invalidate the previous refresh_token on each
+        // refresh, so proactive refreshes during races cause false-positive
+        // disconnects even though the access_token still works fine.
+        if ($account->is_token_expired) {
             $this->refreshTokenIfNeeded($account);
+
+            return $this->callVerifyEndpoint($account);
         }
 
+        try {
+            return $this->callVerifyEndpoint($account);
+        } catch (TokenExpiredException $e) {
+            // Verify returned 401: the access_token is actually invalid.
+            // Refresh and retry once with the new token.
+            try {
+                $this->refreshTokenIfNeeded($account);
+            } catch (TokenExpiredException) {
+                throw $e;
+            }
+
+            return $this->callVerifyEndpoint($account);
+        }
+    }
+
+    /**
+     * @throws TokenExpiredException
+     */
+    private function callVerifyEndpoint(SocialAccount $account): bool
+    {
         return match ($account->platform) {
             Platform::LinkedIn => $this->verifyLinkedIn($account),
             Platform::LinkedInPage => $this->verifyLinkedInPage($account),
@@ -377,7 +405,13 @@ class ConnectionVerifier
 
     private function verifyInstagram(SocialAccount $account): bool
     {
-        $response = Http::get(config('trypost.platforms.instagram.graph_api').'/me', [
+        // Basic Instagram tokens hit graph.instagram.com; Instagram via
+        // Facebook Business uses a Facebook Page token, which only validates
+        // against graph.facebook.com — using the wrong endpoint produces a
+        // false-positive "token expired".
+        $baseUrl = $account->platform->instagramGraphBaseUrl();
+
+        $response = Http::get("{$baseUrl}/me", [
             'fields' => 'id,username',
             'access_token' => $account->access_token,
         ]);

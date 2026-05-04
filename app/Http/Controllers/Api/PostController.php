@@ -8,6 +8,7 @@ use App\Actions\Post\CreatePost;
 use App\Actions\Post\DeletePost;
 use App\Actions\Post\UpdatePost;
 use App\Enums\Post\Action as PostAction;
+use App\Http\Requests\Api\Post\AttachMediaRequest;
 use App\Http\Requests\Api\Post\StorePostRequest;
 use App\Http\Requests\Api\Post\UpdatePostRequest;
 use App\Http\Resources\Api\PostMediaAttachResource;
@@ -82,16 +83,11 @@ class PostController extends Controller
         return response()->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    public function attachMedia(Request $request, Post $post): PostMediaAttachResource
+    public function attachMedia(AttachMediaRequest $request, Post $post): PostMediaAttachResource
     {
         $this->authorize('update', $post);
 
-        $validated = $request->validate([
-            'urls' => ['required', 'array', 'min:1', 'max:10'],
-            'urls.*' => ['url:http,https', 'active_url'],
-        ]);
-
-        $result = app(MediaAttacher::class)->attachFromUrls($post, $validated['urls']);
+        $result = app(MediaAttacher::class)->attachFromUrls($post, $request->validated('urls'));
 
         $post->refresh()->load(['postPlatforms.socialAccount', 'labels']);
 

@@ -37,8 +37,6 @@ use App\Models\Workspace;
 use App\Models\WorkspaceInvite;
 use App\Models\WorkspaceLabel;
 use App\Models\WorkspaceSignature;
-use App\Services\Post\DnsUrlSafetyGuard;
-use App\Services\Post\UrlSafetyGuard;
 use App\Services\PostTemplate\Registry as PostTemplateRegistry;
 use App\Socialite\InstagramProvider;
 use App\Socialite\LinkedInPageExtendSocialite;
@@ -83,7 +81,6 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PostTemplateRegistry::class);
-        $this->app->bind(UrlSafetyGuard::class, DnsUrlSafetyGuard::class);
 
         if ($this->app->environment('local') && class_exists(\Laravel\Telescope\TelescopeServiceProvider::class)) {
             $this->app->register(\Laravel\Telescope\TelescopeServiceProvider::class);

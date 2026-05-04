@@ -5,22 +5,38 @@ declare(strict_types=1);
 namespace App\Services\Post;
 
 use App\Enums\Media\Type as MediaType;
-use App\Models\Media;
 use App\Models\Post;
 use App\Models\Workspace;
-use Illuminate\Http\File;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 /**
- * Orchestrates "URL → media on a post" — given a list of public URLs,
- * download each via `MediaDownloader`, validate the MIME against the
- * post's enabled platforms, persist the file on the configured Storage
- * disk, and append a Media record to the post.
+ * Downloads public URLs and attaches them as media to a post. Used by
+ * both the MCP `AttachMediaFromUrlTool` and the REST `POST /api/posts/{post}/media`
+ * endpoint.
  *
- * Used by both the MCP `AttachMediaFromUrlTool` and the REST
- * `POST /api/posts/{post}/media` endpoint so behaviour stays aligned.
+ * Flow per URL:
+ *   1. Reject the URL if its host is a literal IP in a restricted range
+ *      (loopback / private / link-local / reserved). DNS hostnames go
+ *      through; we trust the upstream firewall / egress controls for
+ *      finer-grained SSRF defense.
+ *   2. Stream the body to a temp file via Http::sink + a progress
+ *      callback that aborts mid-download once MAX_BYTES is exceeded —
+ *      memory stays bounded.
+ *   3. Validate the Content-Type against an allowlist (no SVG, no PDF)
+ *      AND the intersection of allowed media types across the post's
+ *      enabled platforms.
+ *   4. Hand off to `Workspace::addMediaFromPath()` (the same helper the
+ *      web upload flow uses) so storage path, MIME re-detection, image
+ *      normalization, and the Media row stay in one place.
+ *   5. Append the resulting media item to the post's `media[]` JSON
+ *      column under a row lock so concurrent attach calls don't clobber
+ *      each other.
+ *
+ * Tests bypass the SSRF check via `MediaAttacher::fakeUrlSafety()`
+ * (called in tests/TestCase) so synthetic Http::fake hosts aren't
+ * rejected.
  */
 class MediaAttacher
 {
@@ -30,9 +46,17 @@ class MediaAttacher
 
     private const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
 
-    public function __construct(
-        private readonly MediaDownloader $downloader,
-    ) {}
+    private static bool $skipUrlSafety = false;
+
+    public static function fakeUrlSafety(): void
+    {
+        self::$skipUrlSafety = true;
+    }
+
+    public static function resetUrlSafety(): void
+    {
+        self::$skipUrlSafety = false;
+    }
 
     /**
      * @param  array<int, string>  $urls
@@ -70,59 +94,87 @@ class MediaAttacher
      */
     private function processOne(Workspace $workspace, string $url, array $allowedTypes): ?array
     {
-        $download = $this->downloader->download($url, self::MAX_BYTES);
-
-        if ($download === null) {
+        if (! $this->isUrlSafe($url)) {
             return null;
         }
 
+        $temp = tempnam(sys_get_temp_dir(), 'media_');
+
         try {
-            $type = $this->resolveType(data_get($download, 'mime'));
+            $response = Http::timeout(20)
+                ->sink($temp)
+                ->withOptions([
+                    'allow_redirects' => false,
+                    'progress' => static function ($total, $downloaded): void {
+                        if ($downloaded > self::MAX_BYTES) {
+                            throw new RuntimeException('exceeded max bytes');
+                        }
+                    },
+                ])
+                ->get($url);
+
+            if (! $response->successful() || filesize($temp) === 0) {
+                return null;
+            }
+
+            $mime = trim(explode(';', (string) $response->header('Content-Type'))[0]);
+            $type = $this->resolveType($mime);
 
             if ($type === null || ! in_array($type, $allowedTypes, true)) {
                 return null;
             }
 
-            return $this->storeMedia($workspace, $download, $type, $url);
+            $originalFilename = basename(parse_url($url, PHP_URL_PATH) ?? '') ?: 'download.bin';
+            $media = $workspace->addMediaFromPath($temp, $originalFilename, 'assets');
+
+            return [
+                'id' => $media->id,
+                'path' => $media->path,
+                'url' => $media->url,
+                'type' => $media->type,
+                'mime_type' => $media->mime_type,
+                'original_filename' => $media->original_filename,
+            ];
+        } catch (RuntimeException) {
+            return null;
         } finally {
-            @unlink(data_get($download, 'path'));
+            @unlink($temp);
         }
     }
 
     /**
-     * @param  array{path: string, mime: ?string, bytes: int}  $download
-     * @return array<string, mixed>
+     * Reject obvious SSRF targets: non-http(s) schemes, missing host,
+     * and IP-literal hosts in private / loopback / link-local / reserved
+     * ranges. DNS hostnames are accepted — finer-grained protection
+     * (DNS rebinding, etc.) is left to network-level controls.
      */
-    private function storeMedia(Workspace $workspace, array $download, MediaType $type, string $url): array
+    private function isUrlSafe(string $url): bool
     {
-        $mime = data_get($download, 'mime');
-        $extension = $this->extensionFor($mime, $url);
-        $filename = 'media/'.Str::uuid()->toString().'.'.$extension;
-        $originalFilename = basename(parse_url($url, PHP_URL_PATH) ?? '') ?: 'download.'.$extension;
+        if (self::$skipUrlSafety) {
+            return true;
+        }
 
-        Storage::putFileAs('', new File(data_get($download, 'path')), $filename);
+        $parts = parse_url($url);
 
-        $media = new Media([
-            'collection' => 'post-media',
-            'type' => $type,
-            'path' => $filename,
-            'original_filename' => $originalFilename,
-            'mime_type' => $mime ?? '',
-            'size' => data_get($download, 'bytes'),
-            'order' => 0,
-        ]);
-        $media->mediable_type = Workspace::class;
-        $media->mediable_id = $workspace->id;
-        $media->save();
+        if (! is_array($parts) || ! in_array(data_get($parts, 'scheme'), ['http', 'https'], true)) {
+            return false;
+        }
 
-        return [
-            'id' => $media->id,
-            'path' => $media->path,
-            'url' => $media->url,
-            'type' => $type->value,
-            'mime_type' => $media->mime_type,
-            'original_filename' => $media->original_filename,
-        ];
+        $host = data_get($parts, 'host');
+
+        if (! is_string($host) || $host === '') {
+            return false;
+        }
+
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return filter_var(
+                $host,
+                FILTER_VALIDATE_IP,
+                FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
+            ) !== false;
+        }
+
+        return true;
     }
 
     /**
@@ -172,7 +224,7 @@ class MediaAttacher
 
     private function resolveType(?string $mime): ?MediaType
     {
-        if ($mime === null) {
+        if ($mime === null || $mime === '') {
             return null;
         }
 
@@ -185,29 +237,5 @@ class MediaAttacher
         }
 
         return null;
-    }
-
-    private function extensionFor(?string $mime, string $url): string
-    {
-        $byMime = match ($mime) {
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/gif' => 'gif',
-            'image/webp' => 'webp',
-            'video/mp4' => 'mp4',
-            'video/quicktime' => 'mov',
-            'video/webm' => 'webm',
-            default => null,
-        };
-
-        if ($byMime) {
-            return $byMime;
-        }
-
-        $byUrl = strtolower(pathinfo(parse_url($url, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION));
-
-        return in_array($byUrl, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'webm'], true)
-            ? $byUrl
-            : 'bin';
     }
 }

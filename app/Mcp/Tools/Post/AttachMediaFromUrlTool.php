@@ -53,7 +53,7 @@ class AttachMediaFromUrlTool extends Tool
             'urls' => $schema->array()
                 ->items($schema->string())
                 ->required()
-                ->description('Public HTTP/HTTPS URLs of images or videos. Max 10 URLs per call, 50MB per file. Allowed types: image/jpeg, image/png, image/gif, image/webp, video/mp4, video/quicktime, video/webm.'),
+                ->description('Public HTTP/HTTPS URLs of images or videos. Max 10 URLs per call. Per-file size caps: 10 MB for images, 1 GB for videos. Allowed types: image/jpeg, image/png, image/gif, image/webp, video/mp4, video/quicktime.'),
         ];
     }
 }

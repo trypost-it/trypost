@@ -3,9 +3,9 @@ import { Form, Head } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
-import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
+import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

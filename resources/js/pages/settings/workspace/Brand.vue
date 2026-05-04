@@ -6,8 +6,8 @@ import { computed } from 'vue';
 import BrandTab from '@/components/settings/BrandTab.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { index as apiKeysRoute } from '@/routes/app/api-keys';
 import { members as membersRoute, settings as settingsHub } from '@/routes/app';
+import { index as apiKeysRoute } from '@/routes/app/api-keys';
 import { brand as brandRoute, settings as workspaceSettings } from '@/routes/app/workspace';
 import type { BreadcrumbItem } from '@/types';
 

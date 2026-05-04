@@ -5,7 +5,7 @@ import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { redirect as googleRedirect } from '@/routes/auth/google';
 
-const props = defineProps<{
+defineProps<{
     label: string;
 }>();
 

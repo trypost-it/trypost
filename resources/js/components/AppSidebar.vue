@@ -19,8 +19,6 @@ import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
 import { create as createPost, index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
-import { useFeatureAccess } from '@/composables/useFeatureAccess';
-import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Avatar } from '@/components/ui/avatar';
@@ -43,6 +41,8 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
+import { useFeatureAccess } from '@/composables/useFeatureAccess';
+import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 import { accounts, analytics, calendar, settings as settingsHub } from '@/routes/app';
 import { index as assets } from '@/routes/app/assets';
 import { index as labels } from '@/routes/app/labels';

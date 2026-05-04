@@ -82,8 +82,9 @@ class MediaAttacher
 
     /**
      * Stream the URL to a temp file, aborting once we exceed the largest
-     * configured per-type cap (video). The actual per-type limit is
-     * enforced by the caller after we know the MIME.
+     * configured per-type cap (video). MIME is sniffed from the file's
+     * magic bytes — far more reliable than trusting the upstream
+     * `Content-Type` header (CDNs misconfigure, attackers spoof).
      *
      * @return array{path: string, mime: ?string, bytes: int}|null
      */
@@ -118,11 +119,9 @@ class MediaAttacher
             return null;
         }
 
-        $mime = trim(explode(';', (string) $response->header('Content-Type'))[0]);
-
         return [
             'path' => $temp,
-            'mime' => $mime !== '' ? $mime : null,
+            'mime' => mime_content_type($temp) ?: null,
             'bytes' => $bytes,
         ];
     }

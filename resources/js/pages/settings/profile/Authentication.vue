@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Form, Head } from '@inertiajs/vue3';
 import { IconDeviceDesktop, IconDeviceMobile } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
@@ -26,11 +26,9 @@ import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { isMobileDevice, parseBrowserName, parseOsName } from '@/lib/userAgent';
 import { settings as settingsHub } from '@/routes/app';
-import { edit as editAuthentication } from '@/routes/app/authentication';
+import { connectProvider, edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';
-import { redirect as githubRedirect } from '@/routes/auth/github';
-import { redirect as googleRedirect } from '@/routes/auth/google';
 import type { BreadcrumbItem } from '@/types';
 
 type Session = {
@@ -66,10 +64,6 @@ const tabs = computed(() => [
     { name: 'notifications', label: trans('settings.nav.notifications'), href: notificationPreferences().url },
 ]);
 
-const providerRedirects: Record<ConnectedAccount['provider'], () => { url: string }> = {
-    google: googleRedirect,
-    github: githubRedirect,
-};
 
 const passwordHeading = computed(() =>
     props.hasPassword
@@ -333,18 +327,16 @@ const logoutDialogOpen = ref(false);
                                     {{ $t('settings.authentication.providers.disconnect') }}
                                 </Button>
                             </Form>
-                            <Link
+                            <Button
                                 v-else-if="!account.connected"
-                                :href="providerRedirects[account.provider]().url"
+                                variant="outline"
+                                size="sm"
+                                as="a"
+                                :href="connectProvider(account.provider).url"
+                                :data-test="`connect-${account.provider}`"
                             >
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    :data-test="`connect-${account.provider}`"
-                                >
-                                    {{ $t('settings.authentication.providers.connect') }}
-                                </Button>
-                            </Link>
+                                {{ $t('settings.authentication.providers.connect') }}
+                            </Button>
                         </div>
                     </div>
                 </div>

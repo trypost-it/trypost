@@ -249,6 +249,8 @@ Route::middleware(['auth'])->group(function () {
         ->name('app.authentication.update-password');
     Route::delete('settings/authentication/sessions', [AuthenticationController::class, 'destroyOtherSessions'])
         ->name('app.authentication.destroy-other-sessions');
+    Route::get('settings/authentication/providers/{provider}/connect', [AuthenticationController::class, 'connectProvider'])
+        ->name('app.authentication.connect-provider');
     Route::delete('settings/authentication/providers/{provider}', [AuthenticationController::class, 'disconnectProvider'])
         ->name('app.authentication.disconnect-provider');
 

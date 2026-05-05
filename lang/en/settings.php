@@ -100,6 +100,8 @@ return [
             'connect' => 'Connect',
             'disconnect' => 'Disconnect',
             'flash_disconnected' => ':provider disconnected successfully.',
+            'flash_connected' => ':provider connected successfully.',
+            'flash_already_linked' => 'That :provider account is already linked to another user.',
             'flash_cannot_disconnect' => 'You cannot disconnect your only sign-in method. Set a password or connect another provider first.',
         ],
     ],

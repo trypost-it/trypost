@@ -111,7 +111,6 @@ class WorkspaceController extends Controller
         }
 
         $validated = $request->validated();
-        $isFirstWorkspace = ! $user->workspaces()->exists();
 
         $workspace = CreateWorkspace::execute($user, $validated);
 
@@ -127,9 +126,8 @@ class WorkspaceController extends Controller
             }
         }
 
-        return $isFirstWorkspace
-            ? redirect()->route('app.accounts')->with('success', __('workspaces.create.first_workspace_success'))
-            : redirect()->route('app.calendar')->with('success', __('workspaces.create.success'));
+        return redirect()->route('app.accounts', ['openDialog' => 'true'])
+            ->with('success', __('workspaces.create.success'));
     }
 
     public function switch(Request $request, Workspace $workspace): RedirectResponse

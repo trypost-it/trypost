@@ -207,7 +207,7 @@ const huePointerStyle = computed(() => ({
                 <button
                     type="button"
                     :disabled="disabled"
-                    class="size-9 shrink-0 cursor-pointer rounded-md border-2 border-foreground bg-card shadow-xs transition-shadow hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                    class="size-10 shrink-0 cursor-pointer rounded-md border-2 border-foreground bg-card shadow-xs transition-shadow hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
                     :style="swatchColor ? { backgroundColor: swatchColor } : undefined"
                     :aria-label="placeholder"
                 />

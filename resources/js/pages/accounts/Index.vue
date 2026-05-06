@@ -70,11 +70,12 @@ interface Props {
     accounts: ScrollAccounts;
     platforms: AvailablePlatform[];
     filters: { search: string };
+    openDialog: boolean;
 }
 
 const props = defineProps<Props>();
 
-const isAddDialogOpen = ref(false);
+const isAddDialogOpen = ref(props.openDialog);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const searchQuery = ref(props.filters.search);
 

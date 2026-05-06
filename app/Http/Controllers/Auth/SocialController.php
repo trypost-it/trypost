@@ -82,6 +82,7 @@ class SocialController extends Controller
             'filters' => [
                 'search' => $request->input('search', ''),
             ],
+            'openDialog' => $request->boolean('openDialog'),
         ]);
     }
 

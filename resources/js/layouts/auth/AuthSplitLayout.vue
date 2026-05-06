@@ -10,13 +10,10 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
 
-withDefaults(defineProps<{
+defineProps<{
     title?: string;
     description?: string;
-    showLegal?: boolean;
-}>(), {
-    showLegal: false,
-});
+}>();
 
 const slideKeys = ['calendar', 'scheduling', 'media', 'video', 'team', 'signatures'] as const;
 
@@ -112,13 +109,6 @@ const platforms = [
                     </div>
                 </div>
             </div>
-
-            <!-- eslint-disable-next-line vue/no-v-html -->
-            <div
-                v-if="showLegal"
-                class="text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary"
-                v-html="trans('auth.legal')"
-            />
         </div>
 
         <div

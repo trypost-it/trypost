@@ -17,34 +17,28 @@ export const useTracking = () => ({
         });
     },
 
-    trackBeginCheckout: (plan: { name: string; price: number; interval: string }) => {
+    trackBeginCheckout: (plan: { name: string; interval: string }) => {
         posthog.capture('checkout.started', {
             plan_name: plan.name,
-            plan_price: plan.price,
             interval: plan.interval,
         });
 
         push({
             event: 'begin_checkout',
-            currency: 'USD',
             plan_name: plan.name,
-            plan_price: plan.price,
             plan_interval: plan.interval,
         });
     },
 
-    trackPurchase: (plan: { name: string; price: number; interval: string }) => {
+    trackPurchase: (plan: { name: string; interval: string }) => {
         posthog.capture('checkout.completed', {
             plan_name: plan.name,
-            plan_price: plan.price,
             interval: plan.interval,
         });
 
         push({
             event: 'purchase',
-            currency: 'USD',
             plan_name: plan.name,
-            plan_price: plan.price,
             plan_interval: plan.interval,
         });
     },

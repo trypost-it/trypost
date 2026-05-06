@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware\App;
 
+use App\Http\Resources\App\HandleInertiaRequests\AuthAccountResource;
+use App\Http\Resources\App\HandleInertiaRequests\AuthPlanResource;
 use App\Http\Resources\App\HandleInertiaRequests\AuthUserResource;
 use App\Http\Resources\App\HandleInertiaRequests\AuthWorkspaceResource;
 use App\Models\Account;
@@ -40,7 +42,8 @@ class HandleInertiaRequests extends Middleware
                 'workspaces' => $user
                     ? $user->workspaces()->with('media')->get()->map(fn ($ws) => AuthWorkspaceResource::summary($ws))
                     : [],
-                'plan' => $account?->plan,
+                'account' => $account ? AuthAccountResource::make($account) : null,
+                'plan' => $account && $account->plan ? AuthPlanResource::make($account, $account->plan) : null,
                 'hasActiveSubscription' => $account ? $account->hasActiveSubscription() : false,
                 'currentPriceId' => $account?->subscription(Account::SUBSCRIPTION_NAME)?->stripe_price,
             ],

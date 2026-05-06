@@ -11,11 +11,28 @@ export interface Workspace {
     [key: string]: unknown;
 }
 
+export interface AuthPlan {
+    id: string;
+    slug: string;
+    name: string;
+    interval: 'monthly' | 'yearly';
+}
+
+export interface AuthAccount {
+    id: string;
+    name: string;
+    created_at: string | null;
+}
+
 export interface Auth {
     user: User;
     role: WorkspaceRole | null;
     currentWorkspace: Workspace | null;
     workspaces: Workspace[];
+    account: AuthAccount | null;
+    plan: AuthPlan | null;
+    hasActiveSubscription: boolean;
+    currentPriceId: string | null;
 }
 
 export interface FlashData {

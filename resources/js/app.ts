@@ -8,6 +8,7 @@ import type { DefineComponent } from 'vue';
 import { createApp, h } from 'vue';
 
 import { initializeTheme } from './composables/useAppearance';
+import { initializeDataLayer } from './datalayer';
 import dayjs from './dayjs';
 import posthog from './posthog';
 import type { Auth } from './types';
@@ -33,6 +34,16 @@ createInertiaApp({
         dayjs.locale(locale.toLowerCase());
 
         const auth = props.initialPage.props.auth as Auth | undefined;
+        const flash = props.initialPage.props.flash as
+            | { conversion_event?: string; [key: string]: unknown }
+            | undefined;
+
+        initializeDataLayer(
+            auth,
+            flash,
+            props.initialPage.props.applicationUrl as string,
+            props.initialPage.props.env as string,
+        );
 
         if (auth?.user) {
             posthog.identify(auth.user.id, {

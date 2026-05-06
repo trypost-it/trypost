@@ -112,7 +112,7 @@ const stepHeader = computed(() => {
                         </button>
 
                         <Link
-                            :href="templatesIndex.url()"
+                            :href="templatesIndex.url({ query: { date: props.date } })"
                             class="group flex flex-col items-start gap-4 rounded-2xl border-2 border-foreground bg-card p-5 text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
                         >
                             <div class="inline-flex size-12 -rotate-1 items-center justify-center rounded-2xl border-2 border-foreground bg-emerald-200 shadow-2xs transition-transform group-hover:rotate-0">
@@ -132,6 +132,7 @@ const stepHeader = computed(() => {
                 <AiPostWizard
                     v-else-if="view === 'ai'"
                     :social-accounts="socialAccounts"
+                    :date="props.date"
                     @update:step-header="aiHeader = $event"
                     @cancel="view = 'choice'; aiHeader = null"
                 />

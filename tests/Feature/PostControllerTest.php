@@ -150,6 +150,30 @@ test('store post creates draft and redirects to edit', function () {
     expect($post->postPlatforms)->toHaveCount(1);
 });
 
+test('store post defaults scheduled_at to today when no date is provided', function () {
+    $this->actingAs($this->user)->post(route('app.posts.store'))->assertRedirect();
+
+    $post = Post::where('workspace_id', $this->workspace->id)->first();
+    expect($post->scheduled_at->format('Y-m-d'))->toBe(now('UTC')->format('Y-m-d'));
+});
+
+test('store post schedules draft on the date param when provided', function () {
+    $this->actingAs($this->user)->post(route('app.posts.store'), [
+        'date' => '2026-06-15',
+    ])->assertRedirect();
+
+    $post = Post::where('workspace_id', $this->workspace->id)->first();
+    expect($post->scheduled_at->format('Y-m-d'))->toBe('2026-06-15');
+});
+
+test('store post rejects invalid date format', function () {
+    $this->actingAs($this->user)
+        ->post(route('app.posts.store'), ['date' => 'not-a-date'])
+        ->assertSessionHasErrors(['date']);
+
+    expect(Post::where('workspace_id', $this->workspace->id)->count())->toBe(0);
+});
+
 // Edit tests
 test('edit post requires authentication', function () {
     $post = Post::factory()->create([

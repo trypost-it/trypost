@@ -6,13 +6,14 @@ namespace App\Http\Controllers\App;
 
 use App\Actions\Post\CreatePost;
 use App\Enums\Media\Type as MediaType;
+use App\Http\Requests\App\PostTemplate\ApplyPostTemplateRequest;
+use App\Http\Requests\App\PostTemplate\IndexPostTemplateRequest;
 use App\Http\Resources\App\PostTemplateResource;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
 use App\Services\Image\TemplateImageGenerator;
 use App\Services\PostTemplate\Registry;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -22,13 +23,8 @@ class PostTemplateController extends Controller
 {
     public function __construct(private readonly Registry $registry) {}
 
-    public function index(Request $request): InertiaResponse
+    public function index(IndexPostTemplateRequest $request): InertiaResponse
     {
-        $request->validate([
-            'platform' => ['nullable', 'string'],
-            'search' => ['nullable', 'string', 'max:120'],
-        ]);
-
         $paginator = $this->registry->paginate(
             locale: app()->getLocale(),
             platform: $request->input('platform'),
@@ -45,18 +41,15 @@ class PostTemplateController extends Controller
                 'search' => $request->input('search', ''),
                 'platform' => $request->input('platform', ''),
             ],
+            'date' => $request->input('date'),
         ]);
     }
 
-    public function apply(Request $request, string $slug, TemplateImageGenerator $generator): JsonResponse
+    public function apply(ApplyPostTemplateRequest $request, string $slug, TemplateImageGenerator $generator): JsonResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
         $this->authorize('createPost', $workspace);
-
-        $request->validate([
-            'social_account_id' => ['nullable', 'uuid'],
-        ]);
 
         $template = $this->registry->find($slug, app()->getLocale());
 
@@ -98,6 +91,7 @@ class PostTemplateController extends Controller
         $post = CreatePost::execute($workspace, $request->user(), [
             'content' => $content,
             'media' => $media,
+            'date' => $request->input('date'),
         ]);
 
         return response()->json([

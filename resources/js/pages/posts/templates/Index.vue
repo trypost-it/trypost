@@ -53,9 +53,13 @@ interface Props {
         search: string;
         platform: string;
     };
+    /** ISO date carried over from the calendar's per-day "+" button. */
+    date?: string | null;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    date: null,
+});
 
 const searchQuery = ref(props.filters.search);
 const selectedPlatform = ref<string>(props.filters.platform || '');
@@ -130,6 +134,7 @@ const reload = (params: { search?: string; platform?: string }) => {
         {
             search: params.search || undefined,
             platform: params.platform || undefined,
+            date: props.date || undefined,
         },
         { preserveState: true, preserveScroll: true, replace: true },
     );
@@ -158,7 +163,8 @@ const applyTemplate = async (template: PostTemplate) => {
     applyingSlug.value = template.slug;
 
     try {
-        const data = (await useHttp().post(applyRoute.url(template.slug))) as {
+        const http = useHttp<{ date: string | null }>({ date: props.date ?? null });
+        const data = (await http.post(applyRoute.url(template.slug))) as {
             post_id: string;
             redirect_url: string;
         };

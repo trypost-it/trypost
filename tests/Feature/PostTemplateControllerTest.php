@@ -123,6 +123,39 @@ test('apply returns 404 for unknown slug', function () {
         ->assertNotFound();
 });
 
+test('apply defaults scheduled_at to today when no date is provided', function () {
+    Http::fake(['api.unsplash.com/*' => Http::response(['results' => []])]);
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.post-templates.apply', 'success_story'))
+        ->assertOk();
+
+    $post = $this->workspace->posts()->latest()->first();
+    expect($post->scheduled_at->format('Y-m-d'))->toBe(now('UTC')->format('Y-m-d'));
+});
+
+test('apply schedules the post on the date param when provided', function () {
+    Http::fake(['api.unsplash.com/*' => Http::response(['results' => []])]);
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.post-templates.apply', 'success_story'), [
+            'date' => '2026-06-15',
+        ])
+        ->assertOk();
+
+    $post = $this->workspace->posts()->latest()->first();
+    expect($post->scheduled_at->format('Y-m-d'))->toBe('2026-06-15');
+});
+
+test('apply rejects invalid date format', function () {
+    $this->actingAs($this->user)
+        ->postJson(route('app.post-templates.apply', 'success_story'), [
+            'date' => 'not-a-date',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['date']);
+});
+
 test('apply with slides creates post even when image rendering fails', function () {
     // Unsplash returns no results → generator returns null → no media attached, post still created.
     Http::fake(['api.unsplash.com/*' => Http::response(['results' => []])]);

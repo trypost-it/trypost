@@ -54,6 +54,7 @@ class PostAiCreateController extends Controller
             socialAccountId: $socialAccountId,
             imageCount: (int) $request->input('image_count', 0),
             prompt: $request->string('prompt')->toString(),
+            date: $request->input('date'),
         );
 
         return response()->json([
@@ -100,6 +101,7 @@ class PostAiCreateController extends Controller
         $post = CreatePost::execute($workspace, $request->user(), [
             'content' => $caption,
             'media' => $media,
+            'date' => data_get($state, 'date'),
         ]);
 
         // Sync the post_platform with the wizard choice: set content_type to

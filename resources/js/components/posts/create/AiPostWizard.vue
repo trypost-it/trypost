@@ -28,9 +28,13 @@ interface SocialAccount {
 
 interface Props {
     socialAccounts: SocialAccount[];
+    /** ISO date (YYYY-MM-DD) carried over from the calendar's per-day "+" button. */
+    date?: string | null;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    date: null,
+});
 
 type WizardStep = 'configure' | 'preview';
 
@@ -67,7 +71,8 @@ const httpStart = useHttp<{
     social_account_id: string | null;
     image_count: number;
     prompt: string;
-}>({ format: null, social_account_id: null, image_count: 0, prompt: '' });
+    date: string | null;
+}>({ format: null, social_account_id: null, image_count: 0, prompt: '', date: null });
 
 const httpFinalize = useHttp<{ content: string; image_title: string; image_body: string }>({
     content: '',
@@ -253,6 +258,7 @@ const startGeneration = async () => {
     httpStart.social_account_id = selectedAccountId.value;
     httpStart.image_count = submittedImageCount.value;
     httpStart.prompt = promptText.value.trim();
+    httpStart.date = props.date;
 
     try {
         const data = await httpStart.post(startRoute.url()) as { creation_id: string; channel: string };

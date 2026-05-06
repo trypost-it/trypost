@@ -15,6 +15,11 @@ return [
         'created_at' => 'Criado em',
     ],
 
+    'actions' => [
+        'edit' => 'Editar assinatura',
+        'delete' => 'Excluir assinatura',
+    ],
+
     'create' => [
         'title' => 'Criar assinatura',
         'description' => 'Dê um nome à sua assinatura e o conteúdo pra anexar (hashtags, links, texto livre — o que você reutiliza).',

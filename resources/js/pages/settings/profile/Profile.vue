@@ -46,7 +46,7 @@ const tabs = computed(() => [
     <Head :title="$t('settings.profile.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+        <div class="mx-auto max-w-4xl space-y-8 px-4 py-8">
             <SettingsTabsNav :tabs="tabs" active="profile" />
 
             <section class="space-y-12">
@@ -104,12 +104,12 @@ const tabs = computed(() => [
                         </div>
 
                         <div v-if="mustVerifyEmail && !user.email_verified_at">
-                            <p class="-mt-4 text-sm text-muted-foreground">
+                            <p class="-mt-4 text-sm text-foreground/70">
                                 {{ $t('settings.profile.email_unverified') }}
                                 <Link
                                     :href="send()"
                                     as="button"
-                                    class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                                    class="font-semibold text-foreground underline decoration-foreground/30 underline-offset-4 transition-colors hover:decoration-foreground"
                                 >
                                     {{ $t('settings.profile.resend_verification') }}
                                 </Link>
@@ -117,7 +117,7 @@ const tabs = computed(() => [
 
                             <div
                                 v-if="status === 'verification-link-sent'"
-                                class="mt-2 text-sm font-medium text-green-600"
+                                class="mt-2 text-sm font-semibold text-emerald-700"
                             >
                                 {{ $t('settings.profile.verification_sent') }}
                             </div>

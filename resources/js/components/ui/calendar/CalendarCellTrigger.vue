@@ -20,16 +20,17 @@ const forwardedProps = useForwardProps(delegatedProps)
     data-slot="calendar-cell-trigger"
     :class="cn(
       buttonVariants({ variant: 'ghost' }),
-      'size-8 p-0 font-normal aria-selected:opacity-100 cursor-default',
-      '[&[data-today]:not([data-selected])]:bg-accent [&[data-today]:not([data-selected])]:text-accent-foreground',
-      // Selected
-      'data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[selected]:opacity-100 data-[selected]:hover:bg-primary data-[selected]:hover:text-primary-foreground data-[selected]:focus:bg-primary data-[selected]:focus:text-primary-foreground',
+      'size-8 p-0 font-medium cursor-pointer aria-selected:opacity-100 hover:bg-foreground/5',
+      // Today (not selected): violet pastel pill
+      '[&[data-today]:not([data-selected])]:bg-violet-100 [&[data-today]:not([data-selected])]:text-foreground [&[data-today]:not([data-selected])]:font-bold',
+      // Selected: ink sticker pill
+      'data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[selected]:font-bold data-[selected]:opacity-100 data-[selected]:hover:bg-primary data-[selected]:hover:text-primary-foreground data-[selected]:focus:bg-primary data-[selected]:focus:text-primary-foreground',
       // Disabled
-      'data-[disabled]:text-muted-foreground data-[disabled]:opacity-50',
+      'data-[disabled]:text-foreground/40 data-[disabled]:opacity-50',
       // Unavailable
       'data-[unavailable]:text-destructive-foreground data-[unavailable]:line-through',
       // Outside months
-      'data-[outside-view]:text-muted-foreground',
+      'data-[outside-view]:text-foreground/40',
       props.class,
     )"
     v-bind="forwardedProps"

@@ -10,6 +10,7 @@ return [
     'try_different_search' => 'Try a different keyword or clear the search.',
     'start_creating' => 'Start by creating your first post.',
     'table' => [
+        'post' => 'Post',
         'status' => 'Status',
         'content' => 'Content',
         'platforms' => 'Platforms',
@@ -230,8 +231,9 @@ return [
         'cancel' => 'Cancel',
         'delete' => 'Delete',
         'schedule_for' => 'Schedule for',
-        'scheduled_for' => 'Scheduled for',
+        'scheduled_for' => 'Scheduled · :date',
         'schedule_date' => 'Schedule date',
+        'unschedule' => 'Unschedule',
         'saving' => 'Saving...',
         'saved' => 'Saved',
         'draft' => 'Draft',
@@ -305,6 +307,7 @@ return [
         ],
 
         'status' => [
+            'scheduled' => 'Scheduled',
             'published' => 'Published',
             'publishing' => 'Publishing...',
             'failed' => 'Failed',
@@ -539,6 +542,8 @@ return [
         'try_different_search' => 'Try a different keyword or clear the search.',
         'slides_count' => '{count} slide|{count} slides',
         'all_platforms' => 'All platforms',
+        'platform_search_placeholder' => 'Search platform…',
+        'no_platform_match' => 'No platform matches.',
         'use_this' => 'Use this template',
         'no_templates' => 'No templates available.',
         'applying' => 'Applying template…',

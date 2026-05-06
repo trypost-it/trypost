@@ -76,19 +76,19 @@ const stepHeader = computed(() => {
 
                 <!-- Choice screen -->
                 <template v-if="view === 'choice'">
-                    <div class="grid gap-3 sm:grid-cols-3">
+                    <div class="grid gap-4 sm:grid-cols-3">
                         <button
                             type="button"
-                            class="group flex flex-col items-start gap-3 rounded-xl border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:border-border disabled:hover:shadow-none"
+                            class="group flex flex-col items-start gap-4 rounded-2xl border-2 border-foreground bg-card p-5 text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-2xs"
                             :disabled="submitting"
                             @click="startFromScratch"
                         >
-                            <div class="flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-foreground group-hover:text-background">
-                                <IconPencil class="size-5" />
+                            <div class="inline-flex size-12 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs transition-transform group-hover:rotate-0">
+                                <IconPencil class="size-6 text-foreground" stroke-width="2" />
                             </div>
                             <div class="space-y-1">
-                                <p class="text-sm font-semibold">{{ $t('posts.create.scratch_title') }}</p>
-                                <p class="text-xs leading-relaxed text-muted-foreground">
+                                <p class="text-base font-bold text-foreground">{{ $t('posts.create.scratch_title') }}</p>
+                                <p class="text-xs leading-relaxed text-foreground/70">
                                     {{ $t('posts.create.scratch_description') }}
                                 </p>
                             </div>
@@ -96,16 +96,16 @@ const stepHeader = computed(() => {
 
                         <button
                             type="button"
-                            class="group flex flex-col items-start gap-3 rounded-xl border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:border-border disabled:hover:shadow-none"
+                            class="group flex flex-col items-start gap-4 rounded-2xl border-2 border-foreground bg-card p-5 text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-2xs"
                             :disabled="!hasConnectedAccounts"
                             @click="view = 'ai'"
                         >
-                            <div class="flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-foreground group-hover:text-background">
-                                <IconSparkles class="size-5" />
+                            <div class="inline-flex size-12 rotate-1 items-center justify-center rounded-2xl border-2 border-foreground bg-amber-200 shadow-2xs transition-transform group-hover:rotate-0">
+                                <IconSparkles class="size-6 text-foreground" stroke-width="2" />
                             </div>
                             <div class="space-y-1">
-                                <p class="text-sm font-semibold">{{ $t('posts.create.ai_title') }}</p>
-                                <p class="text-xs leading-relaxed text-muted-foreground">
+                                <p class="text-base font-bold text-foreground">{{ $t('posts.create.ai_title') }}</p>
+                                <p class="text-xs leading-relaxed text-foreground/70">
                                     <template v-if="!hasConnectedAccounts">
                                         {{ $t('posts.create.steps.connect_first') }}
                                     </template>
@@ -118,14 +118,14 @@ const stepHeader = computed(() => {
 
                         <Link
                             :href="templatesIndex.url()"
-                            class="group flex flex-col items-start gap-3 rounded-xl border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
+                            class="group flex flex-col items-start gap-4 rounded-2xl border-2 border-foreground bg-card p-5 text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
                         >
-                            <div class="flex size-11 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors group-hover:bg-foreground group-hover:text-background">
-                                <IconBookmarks class="size-5" />
+                            <div class="inline-flex size-12 -rotate-1 items-center justify-center rounded-2xl border-2 border-foreground bg-emerald-200 shadow-2xs transition-transform group-hover:rotate-0">
+                                <IconBookmarks class="size-6 text-foreground" stroke-width="2" />
                             </div>
                             <div class="space-y-1">
-                                <p class="text-sm font-semibold">{{ $t('posts.create.template_title') }}</p>
-                                <p class="text-xs leading-relaxed text-muted-foreground">
+                                <p class="text-base font-bold text-foreground">{{ $t('posts.create.template_title') }}</p>
+                                <p class="text-xs leading-relaxed text-foreground/70">
                                     {{ $t('posts.create.template_description') }}
                                 </p>
                             </div>

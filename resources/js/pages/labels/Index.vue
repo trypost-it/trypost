@@ -71,8 +71,11 @@ const openEditDialog = (label: Label) => {
     isEditDialogOpen.value = true;
 };
 
-const handleDelete = (labelId: string) => {
-    deleteModal.value?.open({ url: labelsDestroy.url(labelId) });
+const handleDelete = (label: Label) => {
+    deleteModal.value?.open({
+        url: labelsDestroy.url(label.id),
+        confirmText: label.name,
+    });
 };
 
 const formatDate = (date: string): string => dayjs.utc(date).local().format('D MMM YYYY');
@@ -107,7 +110,7 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                 :description="hasActiveSearch ? $t('labels.try_different_search') : $t('labels.description')"
             />
 
-            <div v-else class="rounded-md border">
+            <div v-else>
                 <InfiniteScroll data="labels" items-element="#labels-body" preserve-url>
                     <Table>
                         <TableHeader>
@@ -126,27 +129,32 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                                 @click="openEditDialog(label)"
                             >
                                 <TableCell>
-                                    <div class="size-5 rounded-md" :style="{ backgroundColor: label.color }" />
+                                    <div
+                                        class="size-6 rounded-md border-2 border-foreground shadow-2xs"
+                                        :style="{ backgroundColor: label.color }"
+                                    />
                                 </TableCell>
-                                <TableCell class="font-medium">{{ label.name }}</TableCell>
-                                <TableCell class="text-muted-foreground">{{ formatDate(label.created_at) }}</TableCell>
+                                <TableCell>{{ label.name }}</TableCell>
+                                <TableCell>{{ formatDate(label.created_at) }}</TableCell>
                                 <TableCell class="text-right" @click.stop>
-                                    <div class="flex justify-end gap-1">
+                                    <div class="flex justify-end gap-2">
                                         <Button
-                                            variant="ghost"
+                                            variant="outline"
                                             size="icon"
                                             class="size-8"
+                                            :aria-label="$t('labels.actions.edit')"
                                             @click="openEditDialog(label)"
                                         >
-                                            <IconPencil class="h-4 w-4" />
+                                            <IconPencil class="size-4" />
                                         </Button>
                                         <Button
-                                            variant="ghost"
+                                            variant="outline"
                                             size="icon"
-                                            class="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                            @click="handleDelete(label.id)"
+                                            class="size-8 bg-rose-100 hover:bg-rose-200"
+                                            :aria-label="$t('labels.actions.delete')"
+                                            @click="handleDelete(label)"
                                         >
-                                            <IconTrash class="h-4 w-4" />
+                                            <IconTrash class="size-4 text-rose-700" />
                                         </Button>
                                     </div>
                                 </TableCell>

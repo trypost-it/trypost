@@ -127,7 +127,7 @@ const runAutofill = async () => {
                         />
                         <Button
                             type="button"
-                            variant="secondary"
+                            variant="default"
                             :disabled="isAutofilling || !form.brand_website"
                             @click="runAutofill"
                         >

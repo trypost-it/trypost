@@ -72,8 +72,8 @@ defineExpose({ supportsDateRange: true });
     <div v-else-if="metrics.length > 0" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card v-for="metric in metrics" :key="metric.label">
             <CardContent class="p-6">
-                <p class="text-sm text-muted-foreground">{{ metric.label }}</p>
-                <p class="mt-2 text-3xl font-bold tracking-tight">
+                <p class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ metric.label }}</p>
+                <p class="mt-2 text-3xl font-bold tabular-nums tracking-tight text-foreground">
                     {{ formatNumber(metric.value) }}
                 </p>
             </CardContent>
@@ -81,7 +81,7 @@ defineExpose({ supportsDateRange: true });
     </div>
 
     <!-- No Data -->
-    <div v-else class="flex h-full items-center justify-center text-muted-foreground">
+    <div v-else class="flex h-full items-center justify-center text-sm font-medium text-foreground/60">
         {{ $t('analytics.no_data') }}
     </div>
 </template>

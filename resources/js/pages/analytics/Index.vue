@@ -59,7 +59,7 @@ const platformSupportsDateRange = computed(() => {
 
             <div class="flex min-w-0 flex-1 flex-col">
                 <div class="flex-1 overflow-y-auto p-6">
-                    <div v-if="!selectedAccountId" class="flex h-full items-center justify-center text-muted-foreground">
+                    <div v-if="!selectedAccountId" class="flex h-full items-center justify-center text-sm font-medium text-foreground/60">
                         {{ $t('analytics.select_account') }}
                     </div>
 
@@ -110,7 +110,7 @@ const platformSupportsDateRange = computed(() => {
                         :date-range="dateRange"
                     />
 
-                    <div v-else class="flex h-full items-center justify-center text-muted-foreground">
+                    <div v-else class="flex h-full items-center justify-center text-sm font-medium text-foreground/60">
                         {{ $t('analytics.no_data') }}
                     </div>
                 </div>

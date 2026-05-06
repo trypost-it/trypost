@@ -13,4 +13,6 @@ return [
     'replying_to' => 'Replying to :name',
     'empty' => 'No comments yet. Start the conversation.',
     'load_more' => 'Load older comments',
+    'today' => 'Today',
+    'yesterday' => 'Yesterday',
 ];

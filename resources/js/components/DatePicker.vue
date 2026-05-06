@@ -175,20 +175,20 @@ const displayText = computed(() => {
 <template>
     <Popover v-model:open="popoverOpen">
         <PopoverTrigger as-child :disabled="disabled">
-            <Button :id="name" type="button" variant="outline" class="w-full justify-between text-left font-normal"
-                :class="[{ 'text-muted-foreground': !displayText }, $attrs.class]" :disabled="disabled">
+            <Button :id="name" type="button" variant="outline" class="w-full justify-between text-left font-medium"
+                :class="[{ 'text-foreground/60': !displayText }, $attrs.class]" :disabled="disabled">
                 <span>{{ displayText || placeholder || $t('common.date_picker.select') }}</span>
-                <IconCalendar class="h-4 w-4 shrink-0" />
+                <IconCalendar class="size-4 shrink-0" />
             </Button>
         </PopoverTrigger>
         <PopoverContent class="w-auto p-0" :align="align">
             <Calendar v-model="internalDate as any" :placeholder="(internalDate as any)" layout="month-and-year" locale="en"
                 calendar-label="Date picker" initial-focus />
             <!-- Time Picker -->
-            <div v-if="showTime" class="border-t p-3">
+            <div v-if="showTime" class="border-t-2 border-foreground/10 p-3">
                 <div class="flex items-center gap-2">
                     <Select v-model="selectedHour" @update:model-value="onTimeChange">
-                        <SelectTrigger class="w-[70px]">
+                        <SelectTrigger class="w-[80px]">
                             <SelectValue placeholder="HH" />
                         </SelectTrigger>
                         <SelectContent>
@@ -197,9 +197,9 @@ const displayText = computed(() => {
                             </SelectItem>
                         </SelectContent>
                     </Select>
-                    <span class="text-muted-foreground">:</span>
+                    <span class="font-bold text-foreground/40">:</span>
                     <Select v-model="selectedMinute" @update:model-value="onTimeChange">
-                        <SelectTrigger class="w-[70px]">
+                        <SelectTrigger class="w-[80px]">
                             <SelectValue placeholder="MM" />
                         </SelectTrigger>
                         <SelectContent>

@@ -69,106 +69,97 @@ const changeRole = (member: Member, role: string) => {
 
 <template>
     <div class="flex flex-col space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-4">
             <HeadingSmall
                 :title="$t('settings.workspace.members_heading')"
                 :description="$t('settings.workspace.members_description')"
             />
 
-            <Button variant="secondary" @click="handleInviteClick">
+            <Button @click="handleInviteClick">
                 {{ $t('settings.members.invite.submit') }}
             </Button>
         </div>
 
-        <div class="rounded-md border">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>{{ $t('settings.workspace.name') }}</TableHead>
-                        <TableHead>{{ $t('settings.members.invite.email') }}</TableHead>
-                        <TableHead>{{ $t('settings.members.invite.role') }}</TableHead>
-                        <TableHead class="w-10" />
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    <TableRow v-for="member in members" :key="member.id">
-                        <TableCell class="font-medium">
-                            {{ member.name }}
-                        </TableCell>
-                        <TableCell class="text-muted-foreground">
-                            {{ member.email }}
-                        </TableCell>
-                        <TableCell>
-                            <Badge :variant="member.role === WorkspaceRole.Admin ? 'default' : 'secondary'">
-                                {{ member.role }}
-                            </Badge>
-                        </TableCell>
-                        <TableCell>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger as-child>
-                                    <Button variant="ghost" size="icon" class="h-8 w-8">
-                                        <IconDots class="size-3.5" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                        v-if="member.role === WorkspaceRole.Member"
-                                        @click="changeRole(member, WorkspaceRole.Admin)"
-                                    >
-                                        <IconShield class="size-3.5" />
-                                        {{ $t('settings.members.make_admin') }}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        v-if="member.role === WorkspaceRole.Admin"
-                                        @click="changeRole(member, WorkspaceRole.Member)"
-                                    >
-                                        <IconUser class="size-3.5" />
-                                        {{ $t('settings.members.make_member') }}
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        variant="destructive"
-                                        @click="removeMemberModal?.open({ url: removeMemberRoute.url(member.id) })"
-                                    >
-                                        <IconTrash class="size-3.5" />
-                                        {{ $t('settings.members.remove') }}
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                    <TableRow
-                        v-for="invitation in invitations"
-                        :key="`inv-${invitation.id}`"
-                        class="text-muted-foreground"
-                    >
-                        <TableCell>
-                            <div class="flex items-center gap-2">
-                                <IconClock class="size-3.5" />
-                                <span class="italic">{{ $t('settings.members.pending.title') }}</span>
-                            </div>
-                        </TableCell>
-                        <TableCell>
-                            {{ invitation.email }}
-                        </TableCell>
-                        <TableCell>
-                            <Badge variant="outline">
-                                {{ invitation.role }}
-                            </Badge>
-                        </TableCell>
-                        <TableCell>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                class="h-8 w-8 text-destructive"
-                                @click="cancelInvitationModal?.open({ url: destroyInvite.url(invitation.id) })"
-                            >
-                                <IconTrash class="size-3.5" />
-                            </Button>
-                        </TableCell>
-                    </TableRow>
-                </TableBody>
-            </Table>
-        </div>
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>{{ $t('settings.workspace.name') }}</TableHead>
+                    <TableHead>{{ $t('settings.members.invite.email') }}</TableHead>
+                    <TableHead>{{ $t('settings.members.invite.role') }}</TableHead>
+                    <TableHead class="w-10" />
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                <TableRow v-for="member in members" :key="member.id">
+                    <TableCell>{{ member.name }}</TableCell>
+                    <TableCell>{{ member.email }}</TableCell>
+                    <TableCell>
+                        <Badge :variant="member.role === WorkspaceRole.Admin ? 'default' : 'secondary'">
+                            {{ member.role }}
+                        </Badge>
+                    </TableCell>
+                    <TableCell>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger as-child>
+                                <Button variant="outline" size="icon" class="size-8">
+                                    <IconDots class="size-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    v-if="member.role === WorkspaceRole.Member"
+                                    @click="changeRole(member, WorkspaceRole.Admin)"
+                                >
+                                    <IconShield class="size-4" />
+                                    {{ $t('settings.members.make_admin') }}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    v-if="member.role === WorkspaceRole.Admin"
+                                    @click="changeRole(member, WorkspaceRole.Member)"
+                                >
+                                    <IconUser class="size-4" />
+                                    {{ $t('settings.members.make_member') }}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    variant="destructive"
+                                    @click="removeMemberModal?.open({ url: removeMemberRoute.url(member.id) })"
+                                >
+                                    <IconTrash class="size-4" />
+                                    {{ $t('settings.members.remove') }}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TableCell>
+                </TableRow>
+                <TableRow v-for="invitation in invitations" :key="`inv-${invitation.id}`">
+                    <TableCell class="text-foreground/60">
+                        <div class="flex items-center gap-2">
+                            <IconClock class="size-4" />
+                            <span class="italic">{{ $t('settings.members.pending.title') }}</span>
+                        </div>
+                    </TableCell>
+                    <TableCell class="text-foreground/60">
+                        {{ invitation.email }}
+                    </TableCell>
+                    <TableCell>
+                        <Badge variant="outline">
+                            {{ invitation.role }}
+                        </Badge>
+                    </TableCell>
+                    <TableCell>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            class="size-8 bg-rose-100 hover:bg-rose-200"
+                            :aria-label="$t('settings.members.cancel_invite_modal.action')"
+                            @click="cancelInvitationModal?.open({ url: destroyInvite.url(invitation.id) })"
+                        >
+                            <IconTrash class="size-4 text-rose-700" />
+                        </Button>
+                    </TableCell>
+                </TableRow>
+            </TableBody>
+        </Table>
 
         <InviteMemberDialog v-model:open="inviteDialogOpen" />
 

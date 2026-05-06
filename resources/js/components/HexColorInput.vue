@@ -22,8 +22,8 @@ const emit = defineEmits<{
 
 const HEX_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 const PRESETS = [
-    '#000000', '#ffffff', '#ef4444', '#f97316', '#eab308',
-    '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899',
+    '#000000', '#737373', '#ffffff', '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e',
+    '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#ec4899',
 ];
 
 const text = ref(props.modelValue ?? '');
@@ -207,8 +207,8 @@ const huePointerStyle = computed(() => ({
                 <button
                     type="button"
                     :disabled="disabled"
-                    class="size-9 shrink-0 rounded-md border transition-shadow hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-                    :style="{ backgroundColor: swatchColor || 'transparent' }"
+                    class="size-9 shrink-0 cursor-pointer rounded-md border-2 border-foreground bg-card shadow-xs transition-shadow hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                    :style="swatchColor ? { backgroundColor: swatchColor } : undefined"
                     :aria-label="placeholder"
                 />
             </PopoverTrigger>
@@ -262,7 +262,7 @@ const huePointerStyle = computed(() => ({
                         v-for="hex in PRESETS"
                         :key="hex"
                         type="button"
-                        class="size-5 rounded-full border border-border/50 transition-transform hover:scale-110"
+                        class="size-5 cursor-pointer rounded-full border-2 border-foreground transition-transform hover:scale-110"
                         :style="{ backgroundColor: hex }"
                         :aria-label="hex"
                         @click="pickPreset(hex)"

@@ -29,5 +29,6 @@ return [
 
     'cancel' => 'Cancelar',
     'clear' => 'Limpiar',
+    'close' => 'Cerrar',
     'loading_more' => 'Cargando más...',
 ];

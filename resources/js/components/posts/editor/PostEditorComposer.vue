@@ -112,9 +112,9 @@ const limitsWithUsage = computed(() =>
 );
 
 const limitClass = (state: string): string => {
-    if (state === 'over') return 'text-destructive';
-    if (state === 'warn') return 'text-amber-600 dark:text-amber-400';
-    return 'text-muted-foreground';
+    if (state === 'over') return 'border-foreground bg-rose-100 text-rose-700';
+    if (state === 'warn') return 'border-foreground bg-amber-100 text-amber-800';
+    return 'border-foreground bg-card text-foreground';
 };
 
 const smallestLimit = computed(() => {
@@ -289,11 +289,11 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                         v-for="(item, index) in media"
                         :key="item.id"
                         :ref="(el) => { if (el) mediaThumbRefs[index] = el as HTMLElement; }"
-                        class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl bg-muted transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                        class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl border-2 border-foreground bg-muted shadow-2xs transition-all focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2"
                         :class="[
                             dragMediaIndex === index ? 'opacity-40' : '',
-                            dragOverIndex === index && dragMediaIndex !== index ? 'ring-2 ring-primary ring-offset-2' : '',
-                            mediaIssues[item.id] ? 'ring-1 ring-destructive ring-offset-1' : '',
+                            dragOverIndex === index && dragMediaIndex !== index ? 'ring-2 ring-foreground ring-offset-2' : '',
+                            mediaIssues[item.id] ? '!border-rose-500' : '',
                         ]"
                         tabindex="0"
                         :draggable="media.length > 1"
@@ -339,7 +339,7 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                         <TooltipProvider v-if="mediaIssues[item.id]" :delay-duration="100">
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <span class="absolute bottom-1.5 right-1.5 flex h-5 items-center gap-0.5 rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-destructive-foreground shadow-sm">
+                                    <span class="absolute bottom-1.5 right-1.5 inline-flex h-5 items-center gap-0.5 rounded-full border-2 border-foreground bg-rose-100 px-1.5 text-[10px] font-bold text-rose-700 shadow-2xs">
                                         <IconAlertTriangle class="size-2.5" />
                                         {{ mediaIssues[item.id].length }}
                                     </span>
@@ -358,47 +358,45 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
 
                         <span
                             v-if="media.length > 1"
-                            class="absolute left-1.5 top-1.5 flex h-6 w-6 cursor-grab items-center justify-center rounded-md bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100 group-focus:opacity-100"
+                            class="absolute left-1.5 top-1.5 inline-flex size-6 cursor-grab items-center justify-center rounded-md border-2 border-foreground bg-card text-foreground opacity-0 shadow-2xs transition-opacity group-hover:opacity-100 group-focus:opacity-100"
                         >
-                            <IconGripVertical class="h-3.5 w-3.5" />
+                            <IconGripVertical class="size-3.5" />
                         </span>
 
                         <button
                             type="button"
-                            class="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-md bg-black/55 text-white opacity-0 backdrop-blur-sm transition-all hover:bg-destructive group-hover:opacity-100 group-focus:opacity-100"
+                            class="absolute right-1.5 top-1.5 inline-flex size-6 cursor-pointer items-center justify-center rounded-md border-2 border-foreground bg-card text-foreground opacity-0 shadow-2xs transition-all hover:bg-rose-100 hover:text-rose-700 group-hover:opacity-100 group-focus:opacity-100"
                             @click.stop="removeMedia(item.id)"
                         >
-                            <IconTrash class="h-3.5 w-3.5" />
+                            <IconTrash class="size-3.5" />
                         </button>
                     </div>
 
                     <button
                         type="button"
-                        class="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border/60 text-muted-foreground transition-colors hover:border-primary/50 hover:bg-primary/5 hover:text-primary"
+                        class="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-foreground/25 text-foreground/60 transition-colors hover:border-foreground hover:bg-foreground/5 hover:text-foreground"
                         @click="mediaPickerDialog?.open()"
                     >
-                        <IconLibraryPhoto class="h-5 w-5" />
-                        <span class="text-[10px] font-medium">{{ $t('posts.edit.add') }}</span>
+                        <IconLibraryPhoto class="size-5" />
+                        <span class="text-[10px] font-bold uppercase tracking-widest">{{ $t('posts.edit.add') }}</span>
                     </button>
                 </div>
             </div>
 
             <!-- Toolbar: between photos and textarea -->
-            <div class="mb-4 flex items-center gap-0.5">
+            <div class="mb-4 flex items-center gap-2">
                 <Popover v-model:open="emojiOpen">
                     <PopoverAnchor as-child>
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <Button
+                                    <button
                                         type="button"
-                                        variant="ghost"
-                                        size="icon-sm"
-                                        class="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                                        class="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:-translate-y-0.5 hover:bg-violet-100 hover:shadow-sm"
                                         @click="emojiOpen = !emojiOpen"
                                     >
                                         <IconMoodSmile class="size-4" />
-                                    </Button>
+                                    </button>
                                 </TooltipTrigger>
                                 <TooltipContent>{{ $t('posts.edit.emoji_picker.search') }}</TooltipContent>
                             </Tooltip>
@@ -412,15 +410,13 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger as-child>
-                            <Button
+                            <button
                                 type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                class="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                                class="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:-translate-y-0.5 hover:bg-violet-100 hover:shadow-sm"
                                 @click="signaturesModal?.open()"
                             >
                                 <IconHash class="size-4" />
-                            </Button>
+                            </button>
                         </TooltipTrigger>
                         <TooltipContent>{{ $t('posts.edit.signatures') }}</TooltipContent>
                     </Tooltip>
@@ -429,15 +425,13 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger as-child>
-                            <Button
+                            <button
                                 type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                class="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                                class="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:-translate-y-0.5 hover:bg-violet-100 hover:shadow-sm"
                                 @click="emit('open-ai-generate')"
                             >
                                 <IconSparkles class="size-4" />
-                            </Button>
+                            </button>
                         </TooltipTrigger>
                         <TooltipContent>{{ $t('posts.ai.generate.button_tooltip') }}</TooltipContent>
                     </Tooltip>
@@ -446,21 +440,19 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger as-child>
-                            <Button
+                            <button
                                 type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                class="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                                class="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:-translate-y-0.5 hover:bg-violet-100 hover:shadow-sm"
                                 @click="emit('open-ai-review')"
                             >
                                 <IconWriting class="size-4" />
-                            </Button>
+                            </button>
                         </TooltipTrigger>
                         <TooltipContent>{{ $t('posts.ai.review.button_tooltip') }}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
 
-                <span v-if="uploading" class="ml-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span v-if="uploading" class="flex items-center gap-1.5 text-xs font-medium text-foreground/60">
                     <IconLoader2 class="size-3.5 animate-spin" />
                 </span>
             </div>
@@ -468,17 +460,19 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
             <!-- Per-platform counters (below menu, above textarea) -->
             <div
                 v-if="limitsWithUsage.length > 0"
-                class="mb-4 flex flex-wrap items-center gap-3"
+                class="mb-4 flex flex-wrap items-center gap-2"
             >
                 <TooltipProvider v-for="limit in limitsWithUsage" :key="limit.platform" :delay-duration="200">
                     <Tooltip>
                         <TooltipTrigger as-child>
                             <span
-                                class="inline-flex items-center gap-1 text-[11px] font-medium tabular-nums"
+                                class="inline-flex items-center gap-1.5 rounded-full border-2 px-2 py-1 text-[11px] font-bold leading-none tabular-nums shadow-2xs transition-colors"
                                 :class="limitClass(limit.state)"
                             >
-                                <img :src="getPlatformLogo(limit.platform)" :alt="limit.platform" class="size-3 object-contain" />
-                                {{ limit.used }}<span class="opacity-50">/{{ limit.maxLength }}</span>
+                                <span class="inline-flex size-3.5 shrink-0 items-center justify-center overflow-hidden rounded-full">
+                                    <img :src="getPlatformLogo(limit.platform)" :alt="limit.platform" class="size-full object-cover" />
+                                </span>
+                                <span>{{ limit.used }}<span class="opacity-60">/{{ limit.maxLength }}</span></span>
                             </span>
                         </TooltipTrigger>
                         <TooltipContent>{{ getPlatformLabel(limit.platform) }}</TooltipContent>
@@ -495,12 +489,12 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                     aria-hidden="true"
                     class="pointer-events-none absolute inset-0 whitespace-pre-wrap break-words p-0 font-sans text-base leading-[1.7] text-transparent"
                 >
-                    <span>{{ overflowParts.fits }}</span><span class="rounded-sm bg-destructive/15 text-destructive">{{ overflowParts.overflow }}</span>
+                    <span>{{ overflowParts.fits }}</span><span class="rounded-sm bg-rose-100 text-rose-700">{{ overflowParts.overflow }}</span>
                 </div>
                 <textarea
                     v-model="content"
                     :placeholder="$t('posts.edit.caption_placeholder')"
-                    class="relative block w-full resize-none border-0 bg-transparent p-0 font-sans text-base leading-[1.7] shadow-none outline-none placeholder:text-muted-foreground/50"
+                    class="relative block w-full resize-none border-0 bg-transparent p-0 font-sans text-base leading-[1.7] shadow-none outline-none placeholder:text-foreground/40"
                     style="min-height: 280px; field-sizing: content;"
                 />
             </div>
@@ -508,10 +502,17 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
             <!-- Drag-drop overlay (full-bleed over the editor area) -->
             <div
                 v-if="isDragging"
-                class="pointer-events-none absolute -inset-6 z-10 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm"
+                class="pointer-events-none absolute -inset-6 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-foreground bg-violet-100/80 backdrop-blur-sm"
             >
-                <IconCloudUpload class="size-10 text-primary" />
-                <p class="text-base font-semibold text-primary">{{ $t('posts.edit.drag_drop') }}</p>
+                <div class="inline-flex size-12 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
+                    <IconCloudUpload class="size-6 text-foreground" stroke-width="2" />
+                </div>
+                <p
+                    class="text-xl font-semibold text-foreground"
+                    style="font-family: var(--font-display)"
+                >
+                    {{ $t('posts.edit.drag_drop') }}
+                </p>
             </div>
         </div>
 

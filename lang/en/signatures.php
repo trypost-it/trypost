@@ -15,6 +15,11 @@ return [
         'created_at' => 'Created',
     ],
 
+    'actions' => [
+        'edit' => 'Edit signature',
+        'delete' => 'Delete signature',
+    ],
+
     'create' => [
         'title' => 'Create signature',
         'description' => 'Give your signature a name and the content to append (hashtags, links, custom text — anything you reuse).',

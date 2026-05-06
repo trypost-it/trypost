@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, InfiniteScroll, router, useHttp } from '@inertiajs/vue3';
-import { IconBookmarks, IconLoader2, IconSearch } from '@tabler/icons-vue';
+import { IconBookmarks, IconCheck, IconChevronDown, IconLoader2, IconSearch } from '@tabler/icons-vue';
 import { trans, transChoice } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
 
@@ -9,11 +9,20 @@ import EmptyState from '@/components/EmptyState.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { getPlatformLogo } from '@/composables/usePlatformLogo';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { cn } from '@/lib/utils';
 import { calendar } from '@/routes/app';
 
 interface Slide {
@@ -50,6 +59,7 @@ const props = defineProps<Props>();
 
 const searchQuery = ref(props.filters.search);
 const selectedPlatform = ref<string>(props.filters.platform || '');
+const platformPickerOpen = ref(false);
 const applyingSlug = ref<string | null>(null);
 
 const PLATFORM_BRAND: Record<string, string> = {
@@ -131,11 +141,15 @@ const search = debounce(() => {
 
 watch(searchQuery, () => search());
 
-const onPlatformChange = (next: string | number | undefined) => {
-    const value = next === 'all' || !next ? '' : String(next);
+const onPlatformChange = (next: string) => {
+    const value = next === 'all' ? '' : next;
     selectedPlatform.value = value;
+    platformPickerOpen.value = false;
     reload({ search: searchQuery.value, platform: value });
 };
+
+const isCurrentPlatform = (value: string): boolean =>
+    value === 'all' ? selectedPlatform.value === '' : selectedPlatform.value === value;
 
 const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()) || Boolean(selectedPlatform.value));
 
@@ -171,44 +185,63 @@ const pageTitle = computed(() => trans('posts.templates.browser_title'));
 
             <!-- Filters: platform + search -->
             <div class="flex flex-wrap items-center gap-3">
-                <Select
-                    :model-value="selectedPlatform || 'all'"
-                    @update:model-value="onPlatformChange"
-                >
-                    <SelectTrigger class="w-56">
-                        <SelectValue>
-                            <span v-if="!selectedPlatformOption" class="text-muted-foreground">
+                <Popover v-model:open="platformPickerOpen">
+                    <PopoverTrigger as-child>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            :aria-expanded="platformPickerOpen"
+                            class="w-56 justify-between font-medium"
+                        >
+                            <span v-if="!selectedPlatformOption" class="text-foreground/60">
                                 {{ $t('posts.templates.all_platforms') }}
                             </span>
-                            <span v-else class="flex items-center gap-2">
-                                <img
-                                    :src="selectedPlatformOption.logo"
-                                    :alt="selectedPlatformOption.brand"
-                                    class="size-4 shrink-0 rounded-full"
-                                />
-                                <span class="truncate">{{ selectedPlatformOption.brand }}</span>
-                                <span class="text-xs text-muted-foreground">{{ selectedPlatformOption.format }}</span>
+                            <span v-else class="flex min-w-0 items-center gap-2">
+                                <span class="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card">
+                                    <img
+                                        :src="selectedPlatformOption.logo"
+                                        :alt="selectedPlatformOption.brand"
+                                        class="size-full object-cover"
+                                    />
+                                </span>
+                                <span class="truncate font-semibold">{{ selectedPlatformOption.brand }}</span>
+                                <span class="shrink-0 text-xs font-medium text-foreground/60">{{ selectedPlatformOption.format }}</span>
                             </span>
-                        </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">{{ $t('posts.templates.all_platforms') }}</SelectItem>
-                        <SelectItem
-                            v-for="opt in platformOptions"
-                            :key="opt.value"
-                            :value="opt.value"
-                        >
-                            <span class="flex items-center gap-2">
-                                <img :src="opt.logo" :alt="opt.brand" class="size-4 shrink-0 rounded-full" />
-                                <span class="truncate">{{ opt.brand }}</span>
-                                <span class="text-xs text-muted-foreground">{{ opt.format }}</span>
-                            </span>
-                        </SelectItem>
-                    </SelectContent>
-                </Select>
+                            <IconChevronDown class="ml-2 size-4 shrink-0 text-foreground/60" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent class="w-[--reka-popover-trigger-width] p-0" align="start">
+                        <Command>
+                            <CommandInput :placeholder="$t('posts.templates.platform_search_placeholder')" />
+                            <CommandList>
+                                <CommandEmpty>{{ $t('posts.templates.no_platform_match') }}</CommandEmpty>
+                                <CommandGroup>
+                                    <CommandItem value="all" @select="onPlatformChange('all')">
+                                        <span>{{ $t('posts.templates.all_platforms') }}</span>
+                                        <IconCheck :class="cn('ml-auto size-4', isCurrentPlatform('all') ? 'opacity-100' : 'opacity-0')" stroke-width="3" />
+                                    </CommandItem>
+                                    <CommandItem
+                                        v-for="opt in platformOptions"
+                                        :key="opt.value"
+                                        :value="`${opt.brand} ${opt.format} ${opt.value}`"
+                                        @select="onPlatformChange(opt.value)"
+                                    >
+                                        <span class="inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card">
+                                            <img :src="opt.logo" :alt="opt.brand" class="size-full object-cover" />
+                                        </span>
+                                        <span class="truncate font-semibold">{{ opt.brand }}</span>
+                                        <span class="shrink-0 text-xs font-medium text-foreground/60">{{ opt.format }}</span>
+                                        <IconCheck :class="cn('ml-auto size-4', isCurrentPlatform(opt.value) ? 'opacity-100' : 'opacity-0')" stroke-width="3" />
+                                    </CommandItem>
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
 
                 <div class="relative w-full max-w-sm">
-                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/60" />
                     <Input
                         v-model="searchQuery"
                         :placeholder="$t('posts.templates.search_placeholder')"
@@ -230,39 +263,38 @@ const pageTitle = computed(() => trans('posts.templates.browser_title'));
                     <article
                         v-for="template in templates.data"
                         :key="template.slug"
-                        class="mb-4 flex break-inside-avoid flex-col rounded-xl border bg-card p-5 transition-colors hover:border-primary/40"
+                        class="group mb-4 flex break-inside-avoid flex-col rounded-2xl border-2 border-foreground bg-card p-5 shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
                     >
                         <header class="flex items-center gap-2">
-                            <img
-                                :src="platformLogo(template.platform)"
-                                :alt="platformBrand(template.platform)"
-                                class="size-6 shrink-0 rounded-full ring-1 ring-border"
-                            />
-                            <span class="truncate text-xs font-medium">{{ platformBrand(template.platform) }}</span>
-                            <Badge
-                                variant="outline"
-                                class="ml-auto shrink-0 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
-                            >
+                            <span class="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
+                                <img
+                                    :src="platformLogo(template.platform)"
+                                    :alt="platformBrand(template.platform)"
+                                    class="size-full object-cover"
+                                />
+                            </span>
+                            <span class="truncate text-sm font-bold text-foreground">{{ platformBrand(template.platform) }}</span>
+                            <Badge variant="warning" class="ml-auto shrink-0 -rotate-2">
                                 {{ formatLabel(template.platform) }}
                             </Badge>
                         </header>
 
-                        <h3 class="mt-3 text-base font-semibold leading-snug tracking-tight">{{ template.name }}</h3>
+                        <h3 class="mt-3 text-base font-bold leading-snug text-foreground">{{ template.name }}</h3>
 
                         <p
                             v-if="template.description"
-                            class="mt-2 text-sm leading-relaxed text-muted-foreground"
+                            class="mt-2 text-sm leading-relaxed text-foreground/70"
                         >
                             {{ template.description }}
                         </p>
 
                         <div class="mt-3 flex items-center gap-2">
-                            <Badge variant="secondary" class="shrink-0 text-xs font-normal">
+                            <Badge variant="secondary" class="shrink-0">
                                 {{ $t(`posts.templates.category.${template.category}`) }}
                             </Badge>
                             <span
                                 v-if="template.slides && template.slides.length > 0"
-                                class="text-xs text-muted-foreground"
+                                class="text-xs font-medium text-foreground/60"
                             >
                                 {{ transChoice('posts.templates.slides_count', template.slides.length, { count: template.slides.length }) }}
                             </span>
@@ -270,12 +302,11 @@ const pageTitle = computed(() => trans('posts.templates.browser_title'));
 
                         <Button
                             size="sm"
-                            variant="outline"
                             class="mt-4 w-full"
                             :disabled="applyingSlug === template.slug"
                             @click="applyTemplate(template)"
                         >
-                            <IconLoader2 v-if="applyingSlug === template.slug" class="mr-1 size-3 animate-spin" />
+                            <IconLoader2 v-if="applyingSlug === template.slug" class="size-4 animate-spin" />
                             {{ applyingSlug === template.slug ? $t('posts.templates.applying') : $t('posts.templates.use_this') }}
                         </Button>
                     </article>

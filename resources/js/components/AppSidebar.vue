@@ -41,6 +41,7 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
+import { useActiveUrl } from '@/composables/useActiveUrl';
 import { useFeatureAccess } from '@/composables/useFeatureAccess';
 import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 import { accounts, analytics, calendar, settings as settingsHub } from '@/routes/app';
@@ -130,6 +131,7 @@ const switchWorkspace = (workspaceId: string) => {
 
 const { canCreateWorkspace } = useFeatureAccess();
 const { openUpgrade } = useUpgradeDialog();
+const { urlIsActive } = useActiveUrl();
 
 const handleCreateWorkspace = () => {
     if (!canCreateWorkspace.value) {
@@ -150,8 +152,8 @@ const handleCreateWorkspace = () => {
                             <SidebarMenuButton size="lg"
                                 class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                                 <Avatar :src="currentWorkspace?.logo_url" :name="currentWorkspace?.name ?? '?'"
-                                    class="h-8 w-8 shrink-0 rounded-lg"
-                                    fallback-class="bg-sidebar-accent text-sidebar-accent-foreground" />
+                                    class="h-8 w-8 shrink-0 rounded-md border-2 border-foreground"
+                                    fallback-class="bg-violet-100 text-violet-700 font-bold" />
                                 <div class="grid flex-1 text-left text-sm leading-tight">
                                     <span class="truncate font-semibold">
                                         {{ currentWorkspace?.name ?? $t('sidebar.select_workspace') }}
@@ -160,22 +162,22 @@ const handleCreateWorkspace = () => {
                                 <IconChevronRight class="ml-auto size-4" />
                             </SidebarMenuButton>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent class="w-[--reka-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                        <DropdownMenuContent class="w-[--reka-dropdown-menu-trigger-width] min-w-56"
                             align="start" side="right" :side-offset="4">
-                            <DropdownMenuLabel class="text-xs text-muted-foreground">
+                            <DropdownMenuLabel>
                                 {{ $t('sidebar.workspaces') }}
                             </DropdownMenuLabel>
                             <div class="space-y-0.5">
-                                <DropdownMenuItem v-for="workspace in workspaces" :key="workspace.id" class="gap-2"
-                                    :class="workspace.id === currentWorkspace?.id ? 'bg-accent' : ''"
+                                <DropdownMenuItem v-for="workspace in workspaces" :key="workspace.id"
+                                    :class="workspace.id === currentWorkspace?.id ? 'bg-accent text-accent-foreground' : ''"
                                     @click="switchWorkspace(workspace.id)">
                                     <Avatar :src="workspace.logo_url" :name="workspace.name"
-                                        class="h-5 w-5 shrink-0 rounded-md" fallback-class="text-[10px]" />
+                                        class="h-6 w-6 shrink-0 rounded-md border-2 border-foreground" fallback-class="text-[10px] bg-violet-100 text-violet-700 font-bold" />
                                     {{ workspace.name }}
                                 </DropdownMenuItem>
                             </div>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem class="gap-2" @click="handleCreateWorkspace">
+                            <DropdownMenuItem @click="handleCreateWorkspace">
                                 <IconPlus class="size-4" />
                                 {{ $t('sidebar.create_workspace') }}
                             </DropdownMenuItem>
@@ -204,7 +206,11 @@ const handleCreateWorkspace = () => {
         <SidebarFooter>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton as-child :tooltip="trans('sidebar.settings')">
+                    <SidebarMenuButton
+                        as-child
+                        :tooltip="trans('sidebar.settings')"
+                        :is-active="urlIsActive(settingsHub.url())"
+                    >
                         <Link :href="settingsHub.url()">
                             <IconSettings />
                             <span>{{ $t('sidebar.settings') }}</span>

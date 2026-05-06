@@ -553,18 +553,20 @@ onUnmounted(() => {
             </TabsList>
 
             <!-- ───── My Uploads ───── -->
-            <TabsContent value="uploads" class="mt-4">
+            <TabsContent value="uploads" class="mt-6">
                 <div
-                    class="relative mb-4 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors"
-                    :class="isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'"
+                    class="relative mb-4 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center transition-colors"
+                    :class="isDragging ? 'border-foreground bg-violet-100' : 'border-foreground/25 bg-card hover:bg-foreground/5'"
                     @click="triggerFileInput"
                     @dragover.prevent="isDragging = true"
                     @dragleave.prevent="isDragging = false"
                     @drop.prevent="handleDrop"
                 >
-                    <IconCloudUpload class="mb-2 size-8 text-muted-foreground" />
-                    <p class="text-sm font-medium">{{ trans('assets.upload.drag_drop') }}</p>
-                    <p class="mt-1 text-xs text-muted-foreground">{{ trans('assets.upload.formats') }}</p>
+                    <div class="inline-flex size-12 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
+                        <IconCloudUpload class="size-6 text-foreground" stroke-width="2" />
+                    </div>
+                    <p class="text-sm font-semibold text-foreground">{{ trans('assets.upload.drag_drop') }}</p>
+                    <p class="text-xs text-foreground/60">{{ trans('assets.upload.formats') }}</p>
                     <input
                         ref="fileInput"
                         type="file"
@@ -573,8 +575,8 @@ onUnmounted(() => {
                         accept="image/jpeg,image/png,image/gif,image/webp,video/mp4"
                         @change="handleFileSelect"
                     />
-                    <div v-if="uploading" class="absolute inset-0 flex items-center justify-center rounded-lg bg-background/80">
-                        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div v-if="uploading" class="absolute inset-0 flex items-center justify-center rounded-2xl bg-card/85">
+                        <div class="flex items-center gap-2 text-sm font-semibold text-foreground">
                             <IconLoader2 class="size-4 animate-spin" />
                             {{ trans('assets.upload.uploading') }}
                         </div>
@@ -582,7 +584,7 @@ onUnmounted(() => {
                 </div>
 
                 <div class="relative mb-4">
-                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/60" />
                     <Input
                         v-model="uploadsSearch"
                         type="search"
@@ -592,24 +594,24 @@ onUnmounted(() => {
                 </div>
 
                 <div v-if="uploadsLoading" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                    <Skeleton v-for="i in 8" :key="i" class="aspect-square rounded-lg" />
+                    <Skeleton v-for="i in 8" :key="i" class="aspect-square rounded-xl" />
                 </div>
 
-                <div v-else-if="uploads.length === 0" class="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
-                    <IconPhoto class="size-10" />
-                    <p class="text-sm">{{ trans('assets.empty.title') }}</p>
-                </div>
+                <EmptyState
+                    v-else-if="uploads.length === 0"
+                    :icon="IconPhoto"
+                    :title="trans('assets.empty.title')"
+                    :description="trans('assets.empty.description')"
+                />
 
                 <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                     <div
                         v-for="asset in uploads"
                         :key="asset.id"
-                        class="group relative overflow-hidden rounded-lg border-2 bg-muted transition-all"
+                        class="group relative overflow-hidden rounded-xl border-2 border-foreground bg-muted shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
                         :class="[
                             (isPicker || asset.type !== 'video') ? 'cursor-pointer' : '',
-                            isPicker && isSelected(asset.id)
-                                ? 'border-primary ring-2 ring-primary/30'
-                                : 'border-transparent',
+                            isPicker && isSelected(asset.id) ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : '',
                         ]"
                         @click="handleAssetClick(asset)"
                     >
@@ -632,32 +634,37 @@ onUnmounted(() => {
 
                         <div
                             v-if="isPicker && isSelected(asset.id)"
-                            class="absolute right-2 top-2 flex size-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground"
+                            class="absolute right-2 top-2 inline-flex size-6 items-center justify-center rounded-full border-2 border-foreground bg-primary text-xs font-bold text-primary-foreground shadow-2xs"
                         >
                             {{ selectionIndex(asset.id) }}
                         </div>
 
                         <div
                             v-if="!isPicker"
-                            class="absolute inset-0 flex flex-col justify-between bg-black/60 p-2 opacity-0 transition-opacity group-hover:opacity-100"
+                            class="absolute inset-0 flex flex-col justify-between bg-foreground/60 p-2 opacity-0 transition-opacity group-hover:opacity-100"
                         >
-                            <div class="flex justify-end gap-1">
+                            <div class="flex justify-end gap-1.5">
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger as-child>
-                                            <Button variant="secondary" size="icon" class="size-7" @click.stop="createPostFromAsset(asset)">
-                                                <IconPencilPlus class="size-3.5" />
+                                            <Button variant="outline" size="icon" class="size-8" @click.stop="createPostFromAsset(asset)">
+                                                <IconPencilPlus class="size-4" />
                                             </Button>
                                         </TooltipTrigger>
                                         <TooltipContent>{{ trans('assets.create_post') }}</TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
-                                <Button variant="destructive" size="icon" class="size-7" @click.stop="handleDelete(asset.id)">
-                                    <IconTrash class="size-3.5" />
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    class="size-8 bg-rose-100 hover:bg-rose-200"
+                                    @click.stop="handleDelete(asset.id)"
+                                >
+                                    <IconTrash class="size-4 text-rose-700" />
                                 </Button>
                             </div>
                             <div class="space-y-0.5">
-                                <p class="truncate text-xs font-medium text-white">{{ asset.original_filename }}</p>
+                                <p class="truncate text-xs font-semibold text-white">{{ asset.original_filename }}</p>
                                 <p class="text-xs text-white/70">{{ formatFileSize(asset.size) }}</p>
                             </div>
                         </div>
@@ -665,14 +672,14 @@ onUnmounted(() => {
                 </div>
 
                 <div v-if="uploadsHasMore" ref="uploadsSentinel" class="mt-4 flex justify-center">
-                    <IconLoader2 v-if="uploadsLoadingMore" class="size-5 animate-spin text-muted-foreground" />
+                    <IconLoader2 v-if="uploadsLoadingMore" class="size-5 animate-spin text-foreground/60" />
                 </div>
             </TabsContent>
 
             <!-- ───── Stock Photos (Unsplash) ───── -->
-            <TabsContent value="stock" class="mt-4" @vue:mounted="onUnsplashTabMounted">
+            <TabsContent value="stock" class="mt-6" @vue:mounted="onUnsplashTabMounted">
                 <div class="relative mb-4">
-                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/60" />
                     <Input
                         v-model="unsplashQuery"
                         :placeholder="trans('assets.unsplash.search_placeholder')"
@@ -682,7 +689,10 @@ onUnmounted(() => {
                 </div>
 
                 <div v-if="displayedPhotos.length > 0" class="space-y-3">
-                    <p v-if="!unsplashQuery && trendingPhotos.length > 0" class="text-sm font-medium text-muted-foreground">
+                    <p
+                        v-if="!unsplashQuery && trendingPhotos.length > 0"
+                        class="text-[11px] font-black uppercase tracking-widest text-foreground/60"
+                    >
                         {{ trans('assets.unsplash.trending') }}
                     </p>
 
@@ -690,7 +700,7 @@ onUnmounted(() => {
                         <div
                             v-for="photo in displayedPhotos"
                             :key="photo.id"
-                            class="group relative cursor-pointer overflow-hidden rounded-lg bg-muted"
+                            class="group relative cursor-pointer overflow-hidden rounded-xl border-2 border-foreground bg-muted shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
                             @click="previewImage = photo.url_regular"
                         >
                             <div class="aspect-[4/3]">
@@ -702,19 +712,19 @@ onUnmounted(() => {
                                 />
                             </div>
 
-                            <div class="absolute inset-0 flex flex-col justify-between bg-black/60 p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                <div class="flex justify-end gap-1">
+                            <div class="absolute inset-0 flex flex-col justify-between bg-foreground/60 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                <div class="flex justify-end gap-1.5">
                                     <TooltipProvider v-if="!isPicker">
                                         <Tooltip>
                                             <TooltipTrigger as-child>
                                                 <Button
-                                                    variant="secondary"
+                                                    variant="outline"
                                                     size="icon"
-                                                    class="size-7"
+                                                    class="size-8"
                                                     :disabled="savingPhotoId === photo.id"
                                                     @click.stop="createPostFromUnsplash(photo)"
                                                 >
-                                                    <IconPencilPlus class="size-3.5" />
+                                                    <IconPencilPlus class="size-4" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>{{ trans('assets.create_post') }}</TooltipContent>
@@ -724,14 +734,14 @@ onUnmounted(() => {
                                         <Tooltip>
                                             <TooltipTrigger as-child>
                                                 <Button
-                                                    variant="secondary"
+                                                    variant="outline"
                                                     size="icon"
-                                                    class="size-7"
+                                                    class="size-8 bg-violet-100 hover:bg-violet-200"
                                                     :disabled="savingPhotoId === photo.id"
                                                     @click.stop="saveAndPickUnsplash(photo)"
                                                 >
-                                                    <IconLoader2 v-if="savingPhotoId === photo.id" class="size-3.5 animate-spin" />
-                                                    <IconPlus v-else class="size-3.5" />
+                                                    <IconLoader2 v-if="savingPhotoId === photo.id" class="size-4 animate-spin" />
+                                                    <IconPlus v-else class="size-4" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -762,16 +772,16 @@ onUnmounted(() => {
                 />
 
                 <div v-if="unsplashLoading" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                    <Skeleton v-for="i in 8" :key="i" class="aspect-[4/3] rounded-lg" />
+                    <Skeleton v-for="i in 8" :key="i" class="aspect-[4/3] rounded-xl" />
                 </div>
 
                 <div v-if="hasMorePhotos" ref="unsplashSentinel" class="h-1" />
             </TabsContent>
 
             <!-- ───── GIFs (Giphy) ───── -->
-            <TabsContent value="gifs" class="mt-4" @vue:mounted="onGiphyTabMounted">
+            <TabsContent value="gifs" class="mt-6" @vue:mounted="onGiphyTabMounted">
                 <div class="relative mb-4">
-                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/60" />
                     <Input
                         v-model="giphyQuery"
                         :placeholder="trans('assets.giphy.search_placeholder')"
@@ -781,7 +791,10 @@ onUnmounted(() => {
                 </div>
 
                 <div v-if="displayedGifs.length > 0" class="space-y-3">
-                    <p v-if="!giphyQuery && giphyTrendingItems.length > 0" class="text-sm font-medium text-muted-foreground">
+                    <p
+                        v-if="!giphyQuery && giphyTrendingItems.length > 0"
+                        class="text-[11px] font-black uppercase tracking-widest text-foreground/60"
+                    >
                         {{ trans('assets.giphy.trending') }}
                     </p>
 
@@ -789,26 +802,26 @@ onUnmounted(() => {
                         <div
                             v-for="gif in displayedGifs"
                             :key="gif.id"
-                            class="group relative cursor-pointer overflow-hidden rounded-lg bg-muted"
+                            class="group relative cursor-pointer overflow-hidden rounded-xl border-2 border-foreground bg-muted shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
                             @click="previewImage = gif.url_original"
                         >
                             <div class="aspect-[4/3]">
                                 <img :src="gif.url_preview" :alt="gif.title || 'GIF'" class="size-full object-cover" loading="lazy" />
                             </div>
 
-                            <div class="absolute inset-0 flex flex-col justify-between bg-black/60 p-2 opacity-0 transition-opacity group-hover:opacity-100">
-                                <div class="flex justify-end gap-1">
+                            <div class="absolute inset-0 flex flex-col justify-between bg-foreground/60 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                                <div class="flex justify-end gap-1.5">
                                     <TooltipProvider v-if="!isPicker">
                                         <Tooltip>
                                             <TooltipTrigger as-child>
                                                 <Button
-                                                    variant="secondary"
+                                                    variant="outline"
                                                     size="icon"
-                                                    class="size-7"
+                                                    class="size-8"
                                                     :disabled="savingGifId === gif.id"
                                                     @click.stop="createPostFromGiphy(gif)"
                                                 >
-                                                    <IconPencilPlus class="size-3.5" />
+                                                    <IconPencilPlus class="size-4" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>{{ trans('assets.create_post') }}</TooltipContent>
@@ -818,14 +831,14 @@ onUnmounted(() => {
                                         <Tooltip>
                                             <TooltipTrigger as-child>
                                                 <Button
-                                                    variant="secondary"
+                                                    variant="outline"
                                                     size="icon"
-                                                    class="size-7"
+                                                    class="size-8 bg-violet-100 hover:bg-violet-200"
                                                     :disabled="savingGifId === gif.id"
                                                     @click.stop="saveAndPickGiphy(gif)"
                                                 >
-                                                    <IconLoader2 v-if="savingGifId === gif.id" class="size-3.5 animate-spin" />
-                                                    <IconPlus v-else class="size-3.5" />
+                                                    <IconLoader2 v-if="savingGifId === gif.id" class="size-4 animate-spin" />
+                                                    <IconPlus v-else class="size-4" />
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -848,13 +861,13 @@ onUnmounted(() => {
                 />
 
                 <div v-if="giphyLoading" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                    <Skeleton v-for="i in 8" :key="i" class="aspect-[4/3] rounded-lg" />
+                    <Skeleton v-for="i in 8" :key="i" class="aspect-[4/3] rounded-xl" />
                 </div>
 
                 <div v-if="hasMoreGifs" ref="giphySentinel" class="h-1" />
 
                 <div v-if="displayedGifs.length > 0" class="mt-4 text-center">
-                    <a href="https://giphy.com" target="_blank" rel="noopener noreferrer" class="text-xs text-muted-foreground hover:text-foreground">
+                    <a href="https://giphy.com" target="_blank" rel="noopener noreferrer" class="text-xs font-medium text-foreground/60 hover:text-foreground">
                         {{ trans('assets.giphy.powered_by') }}
                     </a>
                 </div>

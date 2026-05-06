@@ -15,4 +15,6 @@ return [
     'replying_to' => 'Respondiendo a :name',
     'empty' => 'Todavía no hay comentarios. Inicia la conversación.',
     'load_more' => 'Cargar comentarios anteriores',
+    'today' => 'Hoy',
+    'yesterday' => 'Ayer',
 ];

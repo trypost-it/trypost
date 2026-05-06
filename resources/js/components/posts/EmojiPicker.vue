@@ -121,8 +121,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="flex w-[340px] flex-col overflow-hidden rounded-md bg-popover text-popover-foreground">
-        <div class="border-b p-2">
+    <div class="flex w-[340px] flex-col overflow-hidden rounded-[10px] bg-card text-foreground">
+        <div class="border-b-2 border-foreground/10 p-2">
             <Input
                 v-model="search"
                 type="search"
@@ -139,7 +139,7 @@ onBeforeUnmount(() => {
             <template v-if="isSearching">
                 <div
                     v-if="searchResults.length === 0"
-                    class="flex h-full items-center justify-center px-4 text-center text-xs text-muted-foreground"
+                    class="flex h-full items-center justify-center px-4 text-center text-xs font-medium text-foreground/60"
                 >
                     {{ trans('posts.edit.emoji_picker.empty') }}
                 </div>
@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
                         v-for="emoji in searchResults"
                         :key="emoji.c"
                         type="button"
-                        class="flex h-9 w-9 items-center justify-center rounded text-xl transition-colors hover:bg-muted focus:bg-muted focus:outline-none"
+                        class="flex size-9 cursor-pointer items-center justify-center rounded-md text-xl transition-colors hover:bg-foreground/5 focus:bg-foreground/5 focus:outline-none"
                         :title="emoji.n"
                         :aria-label="emoji.n"
                         @click="onPick(emoji)"
@@ -162,7 +162,7 @@ onBeforeUnmount(() => {
                 <section v-if="recentEmojis.length > 0">
                     <h3
                         :ref="setHeaderRef('recent')"
-                        class="sticky top-0 z-10 bg-popover/95 px-1 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur"
+                        class="sticky top-0 z-10 bg-card/95 px-1 py-1.5 text-[11px] font-black uppercase tracking-widest text-foreground/60 backdrop-blur"
                     >
                         {{ categoryLabel('recent') }}
                     </h3>
@@ -171,7 +171,7 @@ onBeforeUnmount(() => {
                             v-for="emoji in recentEmojis"
                             :key="`recent-${emoji.c}`"
                             type="button"
-                            class="flex h-9 w-9 items-center justify-center rounded text-xl transition-colors hover:bg-muted focus:bg-muted focus:outline-none"
+                            class="flex size-9 cursor-pointer items-center justify-center rounded-md text-xl transition-colors hover:bg-foreground/5 focus:bg-foreground/5 focus:outline-none"
                             :title="emoji.n"
                             :aria-label="emoji.n"
                             @click="onPick(emoji)"
@@ -184,7 +184,7 @@ onBeforeUnmount(() => {
                 <section v-for="category in EMOJI_CATEGORIES" :key="category">
                     <h3
                         :ref="setHeaderRef(category)"
-                        class="sticky top-0 z-10 bg-popover/95 px-1 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur"
+                        class="sticky top-0 z-10 bg-card/95 px-1 py-1.5 text-[11px] font-black uppercase tracking-widest text-foreground/60 backdrop-blur"
                     >
                         {{ categoryLabel(category) }}
                     </h3>
@@ -193,7 +193,7 @@ onBeforeUnmount(() => {
                             v-for="emoji in grouped[category]"
                             :key="emoji.c"
                             type="button"
-                            class="flex h-9 w-9 items-center justify-center rounded text-xl transition-colors hover:bg-muted focus:bg-muted focus:outline-none"
+                            class="flex size-9 cursor-pointer items-center justify-center rounded-md text-xl transition-colors hover:bg-foreground/5 focus:bg-foreground/5 focus:outline-none"
                             :title="emoji.n"
                             :aria-label="emoji.n"
                             @click="onPick(emoji)"
@@ -205,12 +205,12 @@ onBeforeUnmount(() => {
             </template>
         </div>
 
-        <div class="flex items-center justify-between border-t px-1 py-1">
+        <div class="flex items-center justify-between border-t-2 border-foreground/10 px-1 py-1">
             <button
                 v-if="recentEmojis.length > 0"
                 type="button"
-                class="flex h-8 w-8 items-center justify-center rounded text-base transition-colors hover:bg-muted focus:bg-muted focus:outline-none"
-                :class="activeCategory === 'recent' && !isSearching ? 'bg-muted' : ''"
+                class="flex size-8 cursor-pointer items-center justify-center rounded-md text-base transition-colors hover:bg-foreground/5 focus:bg-foreground/5 focus:outline-none"
+                :class="activeCategory === 'recent' && !isSearching ? 'bg-violet-100 ring-2 ring-foreground' : ''"
                 :title="categoryLabel('recent')"
                 :aria-label="categoryLabel('recent')"
                 @click="scrollToCategory('recent')"
@@ -221,8 +221,8 @@ onBeforeUnmount(() => {
                 v-for="category in EMOJI_CATEGORIES"
                 :key="category"
                 type="button"
-                class="flex h-8 w-8 items-center justify-center rounded text-base transition-colors hover:bg-muted focus:bg-muted focus:outline-none"
-                :class="activeCategory === category && !isSearching ? 'bg-muted' : ''"
+                class="flex size-8 cursor-pointer items-center justify-center rounded-md text-base transition-colors hover:bg-foreground/5 focus:bg-foreground/5 focus:outline-none"
+                :class="activeCategory === category && !isSearching ? 'bg-violet-100 ring-2 ring-foreground' : ''"
                 :title="categoryLabel(category)"
                 :aria-label="categoryLabel(category)"
                 @click="scrollToCategory(category)"

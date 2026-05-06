@@ -87,9 +87,9 @@ watch(open, () => {
                 </div>
 
                 <div v-if="status !== 'idle'" class="grid gap-2">
-                    <Label>{{ $t('posts.ai.generate.preview_label') }}</Label>
-                    <div class="min-h-[120px] whitespace-pre-wrap rounded-md border bg-muted/30 px-3 py-2 text-sm">{{ text || '...' }}</div>
-                    <p v-if="status === 'failed'" class="text-xs text-destructive">{{ errorMessage }}</p>
+                    <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.ai.generate.preview_label') }}</Label>
+                    <div class="min-h-[120px] whitespace-pre-wrap rounded-lg border-2 border-foreground bg-card px-3 py-2 text-sm font-medium text-foreground shadow-2xs">{{ text || '...' }}</div>
+                    <p v-if="status === 'failed'" class="text-xs font-semibold text-rose-700">{{ errorMessage }}</p>
                 </div>
             </div>
 
@@ -104,7 +104,7 @@ watch(open, () => {
                 <Button v-if="canApply" @click="apply">
                     {{ $t('posts.ai.generate.apply') }}
                 </Button>
-                <Button v-if="canRetry" variant="secondary" @click="retry">
+                <Button v-if="canRetry" variant="outline" @click="retry">
                     {{ $t('posts.ai.generate.retry') }}
                 </Button>
                 <Button variant="outline" @click="open = false">

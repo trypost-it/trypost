@@ -64,7 +64,7 @@ const submit = () => {
     <Head :title="$t('settings.notifications.title')" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+        <div class="mx-auto max-w-4xl space-y-8 px-4 py-8">
             <SettingsTabsNav :tabs="tabs" active="notifications" />
 
             <section class="space-y-12">
@@ -74,31 +74,31 @@ const submit = () => {
                         :description="$t('settings.notifications.description')"
                     />
 
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between rounded-lg border p-4">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-4 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs">
                             <div class="space-y-0.5">
-                                <Label for="post_published">{{ $t('settings.notifications.post_published') }}</Label>
-                                <p class="text-sm text-muted-foreground">
+                                <Label for="post_published" class="text-sm font-bold">{{ $t('settings.notifications.post_published') }}</Label>
+                                <p class="text-sm text-foreground/70">
                                     {{ $t('settings.notifications.post_published_description') }}
                                 </p>
                             </div>
                             <Switch id="post_published" v-model="postPublished" />
                         </div>
 
-                        <div class="flex items-center justify-between rounded-lg border p-4">
+                        <div class="flex items-center justify-between gap-4 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs">
                             <div class="space-y-0.5">
-                                <Label for="post_failed">{{ $t('settings.notifications.post_failed') }}</Label>
-                                <p class="text-sm text-muted-foreground">
+                                <Label for="post_failed" class="text-sm font-bold">{{ $t('settings.notifications.post_failed') }}</Label>
+                                <p class="text-sm text-foreground/70">
                                     {{ $t('settings.notifications.post_failed_description') }}
                                 </p>
                             </div>
                             <Switch id="post_failed" v-model="postFailed" />
                         </div>
 
-                        <div class="flex items-center justify-between rounded-lg border p-4">
+                        <div class="flex items-center justify-between gap-4 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs">
                             <div class="space-y-0.5">
-                                <Label for="account_disconnected">{{ $t('settings.notifications.account_disconnected') }}</Label>
-                                <p class="text-sm text-muted-foreground">
+                                <Label for="account_disconnected" class="text-sm font-bold">{{ $t('settings.notifications.account_disconnected') }}</Label>
+                                <p class="text-sm text-foreground/70">
                                     {{ $t('settings.notifications.account_disconnected_description') }}
                                 </p>
                             </div>

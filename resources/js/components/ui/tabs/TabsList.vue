@@ -15,7 +15,7 @@ const delegatedProps = reactiveOmit(props, "class")
     data-slot="tabs-list"
     v-bind="delegatedProps"
     :class="cn(
-      'inline-flex h-10 w-fit items-center justify-center gap-1 rounded-full border-2 border-foreground bg-card p-1 shadow-2xs',
+      'inline-flex w-fit items-center gap-2',
       props.class,
     )"
   >

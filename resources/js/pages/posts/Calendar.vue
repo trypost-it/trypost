@@ -246,39 +246,39 @@ const formatTime = (scheduledAt: string): string => {
     <Head :title="$t('calendar.title')" />
 
     <AppLayout :fullWidth="true">
-        <template #header>
-            <Button variant="outline" size="icon" @click="navigate(-1)">
-                <IconChevronLeft class="size-4" />
-            </Button>
-            <Button variant="outline" @click="goToToday">
-                {{ $t('calendar.today') }}
-            </Button>
-            <Button variant="outline" size="icon" @click="navigate(1)">
-                <IconChevronRight class="size-4" />
-            </Button>
-            <DatePicker v-if="isMobile" v-model="selectedDate" @update:model-value="(v: any) => goToDate(v)" />
-            <span class="text-sm font-bold capitalize text-foreground">
-                {{ headerTitle }}
-            </span>
-        </template>
-
-        <template #header-actions>
-            <div class="flex items-center gap-2">
-                <Tabs v-if="!isMobile" :default-value="view" @update:model-value="switchView">
-                    <TabsList>
-                        <TabsTrigger value="day">{{ $t('calendar.day') }}</TabsTrigger>
-                        <TabsTrigger value="week">{{ $t('calendar.week') }}</TabsTrigger>
-                        <TabsTrigger value="month">{{ $t('calendar.month') }}</TabsTrigger>
-                    </TabsList>
-                </Tabs>
-
-                <Link :href="createPost.url()">
-                    <Button>{{ $t('calendar.new_post') }}</Button>
-                </Link>
-            </div>
-        </template>
-
         <div class="flex flex-col h-full">
+            <header class="grid shrink-0 grid-cols-[auto_1fr_auto] items-center gap-3 border-b-2 border-foreground bg-card px-4 py-3 md:px-6">
+                <div class="flex items-center gap-2 pl-12 md:pl-0">
+                    <Button variant="outline" size="icon" @click="navigate(-1)">
+                        <IconChevronLeft class="size-4" />
+                    </Button>
+                    <Button variant="outline" @click="goToToday">
+                        {{ $t('calendar.today') }}
+                    </Button>
+                    <Button variant="outline" size="icon" @click="navigate(1)">
+                        <IconChevronRight class="size-4" />
+                    </Button>
+                    <DatePicker v-if="isMobile" v-model="selectedDate" @update:model-value="(v: any) => goToDate(v)" />
+                </div>
+                <div class="flex items-center justify-center">
+                    <span class="truncate text-sm font-bold capitalize text-foreground">
+                        {{ headerTitle }}
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Tabs v-if="!isMobile" :default-value="view" @update:model-value="switchView">
+                        <TabsList>
+                            <TabsTrigger value="day">{{ $t('calendar.day') }}</TabsTrigger>
+                            <TabsTrigger value="week">{{ $t('calendar.week') }}</TabsTrigger>
+                            <TabsTrigger value="month">{{ $t('calendar.month') }}</TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+
+                    <Link :href="createPost.url()">
+                        <Button>{{ $t('calendar.new_post') }}</Button>
+                    </Link>
+                </div>
+            </header>
 
             <!-- Day View (mobile or when view=day) -->
             <div v-if="effectiveView === 'day'" class="flex-1 overflow-y-auto">

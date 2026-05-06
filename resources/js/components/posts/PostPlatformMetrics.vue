@@ -10,6 +10,8 @@ interface Metric {
     value: number;
 }
 
+type MetricsResponse = Metric[] | { unsupported: true; reason: string };
+
 interface Props {
     postId: string;
     postPlatformId: string;
@@ -28,15 +30,16 @@ const formatNumber = (n: number): string => {
     return n.toString();
 };
 
+const http = useHttp<Record<string, never>, MetricsResponse>({});
+
 onMounted(async () => {
     try {
-        const response = await useHttp().get(
+        const response = await http.get(
             metricsRoute.url({ post: props.postId, postPlatform: props.postPlatformId }),
-        ) as { data: unknown };
-        const data = response.data;
+        );
 
-        if (Array.isArray(data)) {
-            metrics.value = data;
+        if (Array.isArray(response)) {
+            metrics.value = response;
         }
     } catch {
         // Swallow — empty state hides itself.

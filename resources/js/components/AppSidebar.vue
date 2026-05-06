@@ -39,7 +39,6 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    useSidebar,
 } from '@/components/ui/sidebar';
 import { useActiveUrl } from '@/composables/useActiveUrl';
 import { useFeatureAccess } from '@/composables/useFeatureAccess';
@@ -60,8 +59,6 @@ interface Workspace {
 const page = usePage();
 const currentWorkspace = computed<Workspace | null>(() => page.props.auth.currentWorkspace as Workspace | null);
 const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Workspace[]);
-
-const { state: sidebarState } = useSidebar();
 
 const mainNavItems = computed<NavItem[]>(() => [
     {
@@ -143,7 +140,7 @@ const handleCreateWorkspace = () => {
 </script>
 
 <template>
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="offcanvas">
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
@@ -191,9 +188,8 @@ const handleCreateWorkspace = () => {
             <!-- Create Post Button -->
             <div v-if="currentWorkspace" class="px-2 py-2">
                 <Link :href="createPost.url()" class="block">
-                    <Button :size="sidebarState === 'collapsed' ? 'icon' : 'default'" class="w-full">
-                        <IconPlus v-if="sidebarState === 'collapsed'" class="size-4" />
-                        <span v-if="sidebarState === 'expanded'">{{ $t('sidebar.create_post') }}</span>
+                    <Button class="w-full">
+                        {{ $t('sidebar.create_post') }}
                     </Button>
                 </Link>
             </div>

@@ -440,99 +440,96 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
     <Head :title="$t('posts.edit.title')" />
 
     <AppLayout :full-width="true">
-        <template #header-actions>
-            <span v-if="isSaving" class="flex items-center gap-1.5 text-xs font-semibold text-foreground/70">
-                <IconLoader2 class="size-3.5 animate-spin" />
-                {{ $t('posts.edit.saving') }}
-            </span>
-            <span v-else-if="showSaved" class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
-                <IconCircleCheck class="size-3.5" stroke-width="2.5" />
-                {{ $t('posts.edit.saved') }}
-            </span>
-            <span v-else-if="isPublished" class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
-                <IconCircleCheck class="size-3.5" stroke-width="2.5" />
-                {{ $t('posts.edit.status.published') }}
-            </span>
-            <span v-else-if="!isScheduled" class="flex items-center gap-1.5 text-xs font-semibold text-foreground/60">
-                <span class="size-2 rounded-full bg-foreground/40" />
-                {{ $t('posts.edit.draft') }}
-            </span>
+        <div class="flex flex-col flex-1 min-h-0">
+            <header class="flex shrink-0 items-center justify-between gap-3 border-b-2 border-foreground bg-card px-4 py-3 md:px-6">
+                <div class="flex items-center gap-3 pl-12 md:pl-0">
+                    <span v-if="isSaving" class="flex items-center gap-1.5 text-xs font-semibold text-foreground/70">
+                        <IconLoader2 class="size-3.5 animate-spin" />
+                        {{ $t('posts.edit.saving') }}
+                    </span>
+                    <span v-else-if="showSaved" class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                        <IconCircleCheck class="size-3.5" stroke-width="2.5" />
+                        {{ $t('posts.edit.saved') }}
+                    </span>
+                    <span v-else-if="isPublished" class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                        <IconCircleCheck class="size-3.5" stroke-width="2.5" />
+                        {{ $t('posts.edit.status.published') }}
+                    </span>
+                    <span v-else-if="!isScheduled" class="flex items-center gap-1.5 text-xs font-semibold text-foreground/60">
+                        <span class="size-2 rounded-full bg-foreground/40" />
+                        {{ $t('posts.edit.draft') }}
+                    </span>
+                </div>
 
-            <template v-if="!isReadOnly">
-                <span class="h-5 w-px bg-foreground/15" />
+                <div v-if="!isReadOnly" class="flex items-center gap-2">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    class="bg-rose-100 hover:bg-rose-200"
+                                    :disabled="isSaving || isSubmitting"
+                                    @click="deletePost"
+                                >
+                                    <IconTrash class="size-4 text-rose-700" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{{ $t('posts.edit.delete') }}</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
 
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger as-child>
+                    <template v-if="isScheduled">
+                        <PickTimePopover
+                            v-model="scheduledDateTime"
+                            :disabled="isSubmitting"
+                            show-remove
+                            @confirm="hasPickedTime = true"
+                            @remove="unschedulePost"
+                        >
                             <Button
                                 type="button"
                                 variant="outline"
-                                size="icon"
-                                class="size-8 bg-rose-100 hover:bg-rose-200"
-                                :disabled="isSaving || isSubmitting"
-                                @click="deletePost"
+                                class="bg-violet-100 hover:bg-violet-200"
+                                :disabled="isSubmitting"
                             >
-                                <IconTrash class="size-4 text-rose-700" />
+                                <IconCalendar class="size-4 text-violet-700" />
+                                <span class="font-bold text-violet-900">
+                                    {{ $t('posts.edit.scheduled_for', { date: pickTimeLabel }) }}
+                                </span>
                             </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{{ $t('posts.edit.delete') }}</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-
-                <template v-if="isScheduled">
-                    <PickTimePopover
-                        v-model="scheduledDateTime"
-                        :disabled="isSubmitting"
-                        show-remove
-                        @confirm="hasPickedTime = true"
-                        @remove="unschedulePost"
-                    >
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            class="bg-violet-100 hover:bg-violet-200"
-                            :disabled="isSubmitting"
+                        </PickTimePopover>
+                    </template>
+                    <template v-else>
+                        <PickTimePopover
+                            v-model="scheduledDateTime"
+                            :disabled="isPostActionDisabled"
+                            @confirm="hasPickedTime = true"
                         >
-                            <IconCalendar class="size-4 text-violet-700" />
-                            <span class="font-bold text-violet-900">
-                                {{ $t('posts.edit.scheduled_for', { date: pickTimeLabel }) }}
-                            </span>
-                        </Button>
-                    </PickTimePopover>
-                </template>
-                <template v-else>
-                    <PickTimePopover
-                        v-model="scheduledDateTime"
-                        :disabled="isPostActionDisabled"
-                        @confirm="hasPickedTime = true"
-                    >
+                            <Button
+                                type="button"
+                                variant="outline"
+                                :disabled="isPostActionDisabled"
+                                :title="postActionTooltip"
+                            >
+                                <IconCalendar class="size-4" />
+                                {{ pickTimeLabel }}
+                            </Button>
+                        </PickTimePopover>
+
                         <Button
                             type="button"
-                            variant="outline"
-                            size="sm"
                             :disabled="isPostActionDisabled"
                             :title="postActionTooltip"
+                            @click="submit(hasPickedTime ? 'scheduled' : 'publishing')"
                         >
-                            <IconCalendar class="size-4" />
-                            {{ pickTimeLabel }}
+                            {{ hasPickedTime ? $t('posts.edit.schedule') : $t('posts.edit.post_now') }}
                         </Button>
-                    </PickTimePopover>
+                    </template>
+                </div>
+            </header>
 
-                    <Button
-                        type="button"
-                        size="sm"
-                        :disabled="isPostActionDisabled"
-                        :title="postActionTooltip"
-                        @click="submit(hasPickedTime ? 'scheduled' : 'publishing')"
-                    >
-                        {{ hasPickedTime ? $t('posts.edit.schedule') : $t('posts.edit.post_now') }}
-                    </Button>
-                </template>
-            </template>
-        </template>
-
-        <div class="flex flex-col flex-1 min-h-0">
             <div class="relative flex-1 overflow-hidden">
                 <div
                     v-if="isPublishing"

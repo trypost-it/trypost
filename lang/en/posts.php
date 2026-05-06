@@ -200,6 +200,7 @@ return [
     'show' => [
         'title' => 'Post Details',
         'edit' => 'Edit',
+        'back' => 'Back',
         'no_content' => 'No caption',
         'platforms' => 'Platforms',
         'no_platforms' => 'No platforms selected.',
@@ -212,11 +213,6 @@ return [
         'metrics_loading' => 'Loading metrics…',
         'metrics_unavailable' => 'Metrics unavailable for this platform yet.',
         'metrics_empty' => 'No metrics returned.',
-        'summary' => [
-            'platforms' => 'Platforms',
-            'published' => 'Published',
-            'failed' => 'Failed',
-        ],
     ],
 
     'edit' => [

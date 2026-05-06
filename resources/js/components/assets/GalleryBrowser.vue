@@ -584,12 +584,12 @@ onUnmounted(() => {
                 </div>
 
                 <div class="relative mb-4">
-                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/60" />
+                    <IconSearch class="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-foreground/60" />
                     <Input
                         v-model="uploadsSearch"
                         type="search"
                         :placeholder="trans('assets.search_placeholder')"
-                        class="pl-9"
+                        class="h-12 pl-11 text-base"
                     />
                 </div>
 
@@ -679,11 +679,11 @@ onUnmounted(() => {
             <!-- ───── Stock Photos (Unsplash) ───── -->
             <TabsContent value="stock" class="mt-6" @vue:mounted="onUnsplashTabMounted">
                 <div class="relative mb-4">
-                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/60" />
+                    <IconSearch class="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-foreground/60" />
                     <Input
                         v-model="unsplashQuery"
                         :placeholder="trans('assets.unsplash.search_placeholder')"
-                        class="pl-9"
+                        class="h-12 pl-11 text-base"
                         @input="searchUnsplashFn"
                     />
                 </div>
@@ -781,11 +781,11 @@ onUnmounted(() => {
             <!-- ───── GIFs (Giphy) ───── -->
             <TabsContent value="gifs" class="mt-6" @vue:mounted="onGiphyTabMounted">
                 <div class="relative mb-4">
-                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/60" />
+                    <IconSearch class="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-foreground/60" />
                     <Input
                         v-model="giphyQuery"
                         :placeholder="trans('assets.giphy.search_placeholder')"
-                        class="pl-9"
+                        class="h-12 pl-11 text-base"
                         @input="searchGiphyFn"
                     />
                 </div>

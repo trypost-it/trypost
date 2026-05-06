@@ -117,12 +117,7 @@ class BillingController extends Controller
                 'status' => $invoice->status,
                 'invoice_pdf' => $invoice->invoice_pdf,
             ]),
-            'defaultPaymentMethod' => $account->defaultPaymentMethod()?->card?->only([
-                'brand',
-                'last4',
-                'exp_month',
-                'exp_year',
-            ]),
+            'defaultPaymentMethod' => $account->displayablePaymentMethod(),
         ]);
     }
 

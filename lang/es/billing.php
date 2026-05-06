@@ -77,6 +77,8 @@ return [
         'title' => 'Suscripción',
         'description' => 'Gestiona tu método de pago, datos de facturación y suscripción.',
         'payment_method' => 'Método de pago',
+        'no_payment_method' => 'Aún no hay método de pago registrado.',
+        'expires_on' => 'Vence el :month/:year',
         'manage_label' => 'Suscripción',
         'manage_stripe' => 'Gestionar en Stripe',
     ],

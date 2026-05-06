@@ -77,6 +77,8 @@ return [
         'title' => 'Subscription',
         'description' => 'Manage your payment method, billing details, and subscription.',
         'payment_method' => 'Payment method',
+        'no_payment_method' => 'No payment method on file yet.',
+        'expires_on' => 'Expires :month/:year',
         'manage_label' => 'Subscription',
         'manage_stripe' => 'Manage on Stripe',
     ],

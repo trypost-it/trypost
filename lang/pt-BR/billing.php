@@ -77,6 +77,8 @@ return [
         'title' => 'Assinatura',
         'description' => 'Gerencie seu método de pagamento, dados de cobrança e assinatura.',
         'payment_method' => 'Método de pagamento',
+        'no_payment_method' => 'Nenhum método de pagamento cadastrado.',
+        'expires_on' => 'Expira em :month/:year',
         'manage_label' => 'Assinatura',
         'manage_stripe' => 'Gerenciar no Stripe',
     ],

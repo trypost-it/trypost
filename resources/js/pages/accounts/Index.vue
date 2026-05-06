@@ -45,7 +45,6 @@ import date from '@/date';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { disconnect as disconnectAccount, toggle as toggleAccount } from '@/routes/app/accounts';
-import type { BreadcrumbItem } from '@/types';
 
 interface SocialAccount {
     id: string;
@@ -74,8 +73,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: trans('accounts.page_title') }]);
 
 const isAddDialogOpen = ref(false);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
@@ -128,8 +125,8 @@ const handleDisconnect = (accountId: string) => {
 <template>
     <Head :title="$t('accounts.page_title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <AppLayout>
+        <div class="flex h-full flex-1 flex-col gap-6 px-6 py-8">
             <PageHeader :title="$t('accounts.page_title')" />
 
             <div class="flex items-center justify-between gap-3">

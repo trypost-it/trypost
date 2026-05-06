@@ -6,6 +6,7 @@ import {
   getLocalTimeZone,
 } from "@internationalized/date"
 import { IconCalendar } from "@tabler/icons-vue"
+import { trans } from "laravel-vue-i18n"
 import { computed, nextTick, ref, watch } from "vue"
 import { useWindowSize } from "@vueuse/core"
 import { Button } from "@/components/ui/button"
@@ -20,6 +21,7 @@ import dayjs from "@/dayjs"
 
 const props = defineProps<{
   modelValue: { start: Date, end: Date }
+  triggerClass?: string
 }>()
 
 const emit = defineEmits<{
@@ -54,25 +56,25 @@ const range = (start: dayjs.Dayjs, end: dayjs.Dayjs) => ({
   end: toCalendarDate(end.toDate()),
 })
 
-const presetGroups = [
+const presetGroups = computed(() => [
   [
-    { label: "Today", getValue: () => range(dayjs(), dayjs()) },
-    { label: "Yesterday", getValue: () => range(dayjs().subtract(1, "day"), dayjs().subtract(1, "day")) },
+    { label: trans('common.date_range_picker.today'), getValue: () => range(dayjs(), dayjs()) },
+    { label: trans('common.date_range_picker.yesterday'), getValue: () => range(dayjs().subtract(1, "day"), dayjs().subtract(1, "day")) },
   ],
   [
-    { label: "Last 7 days", getValue: () => range(dayjs().subtract(6, "day"), dayjs()) },
-    { label: "Last 30 days", getValue: () => range(dayjs().subtract(29, "day"), dayjs()) },
-    { label: "Last 3 months", getValue: () => range(dayjs().subtract(3, "month"), dayjs()) },
-    { label: "Last 6 months", getValue: () => range(dayjs().subtract(6, "month"), dayjs()) },
-    { label: "Last 12 months", getValue: () => range(dayjs().subtract(12, "month").add(1, "day"), dayjs()) },
+    { label: trans('common.date_range_picker.last_7_days'), getValue: () => range(dayjs().subtract(6, "day"), dayjs()) },
+    { label: trans('common.date_range_picker.last_30_days'), getValue: () => range(dayjs().subtract(29, "day"), dayjs()) },
+    { label: trans('common.date_range_picker.last_3_months'), getValue: () => range(dayjs().subtract(3, "month"), dayjs()) },
+    { label: trans('common.date_range_picker.last_6_months'), getValue: () => range(dayjs().subtract(6, "month"), dayjs()) },
+    { label: trans('common.date_range_picker.last_12_months'), getValue: () => range(dayjs().subtract(12, "month").add(1, "day"), dayjs()) },
   ],
   [
-    { label: "This month", getValue: () => range(dayjs().startOf("month"), dayjs().endOf("month")) },
-    { label: "Last month", getValue: () => range(dayjs().subtract(1, "month").startOf("month"), dayjs().subtract(1, "month").endOf("month")) },
-    { label: "Year to date", getValue: () => range(dayjs().startOf("year"), dayjs()) },
-    { label: "Last year", getValue: () => range(dayjs().subtract(1, "year").startOf("year"), dayjs().subtract(1, "year").endOf("year")) },
+    { label: trans('common.date_range_picker.this_month'), getValue: () => range(dayjs().startOf("month"), dayjs().endOf("month")) },
+    { label: trans('common.date_range_picker.last_month'), getValue: () => range(dayjs().subtract(1, "month").startOf("month"), dayjs().subtract(1, "month").endOf("month")) },
+    { label: trans('common.date_range_picker.year_to_date'), getValue: () => range(dayjs().startOf("year"), dayjs()) },
+    { label: trans('common.date_range_picker.last_year'), getValue: () => range(dayjs().subtract(1, "year").startOf("year"), dayjs().subtract(1, "year").endOf("year")) },
   ],
-]
+])
 
 type Preset = { label: string, getValue: () => { start: any, end: any } }
 
@@ -118,37 +120,38 @@ watch(
       <Button
         variant="outline"
         :class="cn(
-          'w-full justify-start text-left font-normal sm:w-auto',
-          !value && 'text-muted-foreground',
+          'w-full justify-start text-left font-medium sm:w-auto',
+          !value && 'text-foreground/60',
+          props.triggerClass,
         )"
       >
         <template v-if="value.start">
           <template v-if="value.end">
-            {{ dayjs(toDate(value.start)).format('MMM D, YYYY') }} -
-            {{ dayjs(toDate(value.end)).format('MMM D, YYYY') }}
+            {{ dayjs(toDate(value.start)).format('D MMM YYYY') }} -
+            {{ dayjs(toDate(value.end)).format('D MMM YYYY') }}
           </template>
           <template v-else>
-            {{ dayjs(toDate(value.start)).format('MMM D, YYYY') }}
+            {{ dayjs(toDate(value.start)).format('D MMM YYYY') }}
           </template>
         </template>
         <template v-else>
-          Pick a date range
+          {{ $t('common.date_range_picker.placeholder') }}
         </template>
-        <IconCalendar class="ml-auto size-4 opacity-50" />
+        <IconCalendar class="ml-auto size-4 text-foreground/60" />
       </Button>
     </PopoverTrigger>
     <PopoverContent class="w-auto p-0" align="end">
       <div class="flex flex-col sm:flex-row">
-        <div class="hidden flex-col border-b border-border py-2 sm:flex sm:w-[150px] sm:shrink-0 sm:border-b-0 sm:border-r">
+        <div class="hidden flex-col border-b-2 border-foreground py-2 sm:flex sm:w-[170px] sm:shrink-0 sm:border-b-0 sm:border-r-2">
           <template v-for="(group, groupIndex) in presetGroups" :key="groupIndex">
-            <div v-if="groupIndex > 0" class="border-t border-border my-1" />
+            <div v-if="groupIndex > 0" class="my-1 border-t-2 border-dashed border-foreground/20" />
             <div class="space-y-0.5 px-2">
               <Button
                 v-for="preset in group"
                 :key="preset.label"
                 variant="ghost"
                 size="sm"
-                class="w-full justify-start text-xs font-normal h-7"
+                class="h-7 w-full justify-start text-xs font-bold text-foreground hover:bg-violet-100 hover:text-foreground"
                 @click="applyPreset(preset)"
               >
                 {{ preset.label }}

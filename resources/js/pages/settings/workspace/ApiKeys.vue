@@ -9,6 +9,7 @@ import CreateApiKeyDialog from '@/components/api-keys/CreateApiKeyDialog.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,7 +33,6 @@ import { copyToClipboard } from '@/lib/utils';
 import { members as membersRoute, settings as settingsHub } from '@/routes/app';
 import { index as apiKeysRoute } from '@/routes/app/api-keys';
 import { brand as brandRoute, settings as workspaceSettings } from '@/routes/app/workspace';
-import type { BreadcrumbItem } from '@/types';
 interface ApiToken {
     id: string;
     name: string;
@@ -53,12 +53,6 @@ const newToken = computed(() => (page.props.flash as Record<string, unknown>)?.p
 const createDialogOpen = ref(false);
 const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.workspace.title'), href: workspaceSettings.url() },
-    { title: trans('settings.workspace.tabs.api_keys') },
-]);
-
 const tabs = computed(() => [
     { name: 'workspace', label: trans('settings.workspace.tabs.workspace'), href: workspaceSettings.url() },
     { name: 'brand', label: trans('settings.workspace.tabs.brand'), href: brandRoute.url() },
@@ -70,8 +64,13 @@ const tabs = computed(() => [
 <template>
     <Head :title="$t('settings.api_keys.page_title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-8 px-4 py-8">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+                />
+
             <SettingsTabsNav :tabs="tabs" active="api-keys" />
 
             <div class="flex items-center justify-between gap-4">

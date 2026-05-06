@@ -1,18 +1,5 @@
 <script setup lang="ts">
-import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import type { BreadcrumbItem } from '@/types';
-
-withDefaults(
-    defineProps<{
-        title?: string;
-        breadcrumbs?: BreadcrumbItem[];
-    }>(),
-    {
-        title: '',
-        breadcrumbs: () => [],
-    },
-);
 </script>
 
 <template>
@@ -21,16 +8,7 @@ withDefaults(
     >
         <div class="flex items-center gap-2">
             <SidebarTrigger class="-ml-1" />
-            <slot name="left">
-                <Breadcrumbs v-if="breadcrumbs.length > 0" :breadcrumbs="breadcrumbs" />
-                <h2
-                    v-else-if="title"
-                    class="text-lg text-foreground"
-                    style="font-family: var(--font-display)"
-                >
-                    {{ title }}
-                </h2>
-            </slot>
+            <slot name="left" />
         </div>
         <div class="flex items-center gap-2">
             <slot name="right" />

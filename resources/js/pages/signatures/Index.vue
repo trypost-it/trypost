@@ -24,7 +24,6 @@ import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { destroy as signaturesDestroy, index as signaturesIndex } from '@/routes/app/signatures';
-import type { BreadcrumbItem } from '@/types';
 
 interface Workspace {
     id: string;
@@ -63,10 +62,6 @@ const search = debounce(() => {
 
 watch(searchQuery, () => search());
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('signatures.title') },
-]);
-
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const isCreateDialogOpen = ref(false);
 const isEditDialogOpen = ref(false);
@@ -92,8 +87,8 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 <template>
     <Head :title="$t('signatures.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <AppLayout>
+        <div class="flex h-full flex-1 flex-col gap-6 px-6 py-8">
             <PageHeader :title="$t('signatures.title')" />
 
             <div class="flex items-center justify-between gap-3">

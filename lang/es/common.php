@@ -27,6 +27,21 @@ return [
         'select' => 'Seleccionar fecha',
     ],
 
+    'date_range_picker' => [
+        'placeholder' => 'Elige un período',
+        'today' => 'Hoy',
+        'yesterday' => 'Ayer',
+        'last_7_days' => 'Últimos 7 días',
+        'last_30_days' => 'Últimos 30 días',
+        'last_3_months' => 'Últimos 3 meses',
+        'last_6_months' => 'Últimos 6 meses',
+        'last_12_months' => 'Últimos 12 meses',
+        'this_month' => 'Este mes',
+        'last_month' => 'Mes pasado',
+        'year_to_date' => 'Desde inicio del año',
+        'last_year' => 'Año pasado',
+    ],
+
     'cancel' => 'Cancelar',
     'clear' => 'Limpiar',
     'close' => 'Cerrar',

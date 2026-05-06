@@ -16,7 +16,6 @@ import { getPlatformStatusConfig, getPostStatusConfig } from '@/composables/useP
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { index as postsIndex } from '@/routes/app/posts';
-import type { BreadcrumbItem } from '@/types';
 
 interface MediaItem {
     id: string;
@@ -83,15 +82,6 @@ const pageTitle = computed(() => {
     return snippet ? `${trans('posts.show.title')} · ${snippet}${props.post.content.length > 60 ? '…' : ''}` : trans('posts.show.title');
 });
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('posts.title'), href: postsIndex.url() },
-    {
-        title: trans(`posts.status.${props.post.status}`),
-        href: postsIndex.url(props.post.status),
-    },
-    { title: trans('posts.show.title') },
-]);
-
 const getDisplayName = (pp: PostPlatform): string => pp.display_name ?? pp.platform;
 
 const getDisplayUsername = (pp: PostPlatform): string | null => pp.display_username;
@@ -123,7 +113,7 @@ useEcho(`post.${props.post.id}`, '.PostPlatformStatusUpdated', () => {
 <template>
     <Head :title="pageTitle" />
 
-    <AppLayout :breadcrumbs="breadcrumbs" full-width>
+    <AppLayout full-width>
         <!-- Publishing state: clean centered loader, nothing else visible. -->
         <div v-if="isPublishing" class="flex flex-1 flex-col items-center justify-center gap-4 p-6">
             <div class="inline-flex size-14 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">

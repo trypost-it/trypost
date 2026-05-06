@@ -22,13 +22,10 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     :class="cn('p-3', props.class)"
     v-bind="forwarded"
   >
-    <RangeCalendarHeader>
+    <RangeCalendarHeader class="justify-between gap-2">
+      <RangeCalendarPrevButton />
       <RangeCalendarHeading />
-
-      <div class="flex items-center gap-1">
-        <RangeCalendarPrevButton />
-        <RangeCalendarNextButton />
-      </div>
+      <RangeCalendarNextButton />
     </RangeCalendarHeader>
 
     <div class="flex flex-col gap-y-4 mt-4 sm:flex-row sm:gap-x-4 sm:gap-y-0">

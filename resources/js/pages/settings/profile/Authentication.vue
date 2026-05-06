@@ -8,6 +8,7 @@ import AuthenticationController from '@/actions/App/Http/Controllers/App/Setting
 import DeleteUser from '@/components/DeleteUser.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,7 +30,6 @@ import { settings as settingsHub } from '@/routes/app';
 import { connectProvider, edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';
-import type { BreadcrumbItem } from '@/types';
 
 type Session = {
     id: string;
@@ -51,12 +51,6 @@ const props = defineProps<{
     hasPassword: boolean;
     connectedAccounts: ConnectedAccount[];
 }>();
-
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.profile.title'), href: editProfile().url },
-    { title: trans('settings.authentication.title') },
-]);
 
 const tabs = computed(() => [
     { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
@@ -83,8 +77,13 @@ const logoutDialogOpen = ref(false);
 <template>
     <Head :title="$t('settings.authentication.page_title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-8 px-4 py-8">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+            />
+
             <SettingsTabsNav :tabs="tabs" active="authentication" />
 
             <section class="space-y-12">

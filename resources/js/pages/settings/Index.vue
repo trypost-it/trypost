@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { IconBuildingCommunity, IconChevronRight, IconCreditCard, IconUser } from '@tabler/icons-vue';
-import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
-
+import PageHeader from '@/components/PageHeader.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { edit as accountEdit } from '@/routes/app/account';
 import { edit as profileEdit } from '@/routes/app/profile';
 import { settings as workspaceSettings } from '@/routes/app/workspace';
-import type { BreadcrumbItem } from '@/types';
 
 interface Permissions {
     canManageProfile: boolean;
@@ -19,25 +16,17 @@ interface Permissions {
 defineProps<{
     permissions: Permissions;
 }>();
-
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title') },
-]);
 </script>
 
 <template>
     <Head :title="$t('settings.hub.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout>
         <div class="mx-auto max-w-4xl space-y-8 px-4 py-8">
-            <div class="space-y-2">
-                <h1 class="text-3xl text-foreground" style="font-family: var(--font-display)">
-                    {{ $t('settings.hub.title') }}
-                </h1>
-                <p class="text-sm text-foreground/70">
-                    {{ $t('settings.hub.description') }}
-                </p>
-            </div>
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+            />
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Link

@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
         <IconBell class="size-4" />
         <span
             v-if="unreadCount > 0"
-            class="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground"
+            class="absolute -right-1 -top-1 inline-flex size-4 items-center justify-center rounded-full border-2 border-foreground bg-rose-100 text-[9px] font-bold text-rose-700 shadow-2xs"
         >
             {{ unreadCount > 9 ? '9+' : unreadCount }}
         </span>
@@ -214,20 +214,22 @@ onBeforeUnmount(() => {
             <div
                 v-if="show"
                 ref="panel"
-                class="fixed left-[17rem] bottom-2 z-50 w-[22rem] h-[32rem] flex flex-col rounded-xl border border-border bg-card shadow-lg"
+                class="fixed bottom-2 left-[17rem] z-50 flex h-[32rem] w-[22rem] flex-col overflow-hidden rounded-xl border-2 border-foreground bg-card shadow-md"
             >
                 <!-- Header -->
-                <div class="flex items-center justify-between px-4 pt-3 pb-2">
-                    <h3 class="text-sm font-semibold">{{ $t('sidebar.notifications') }}</h3>
-                    <div class="flex items-center gap-0.5">
+                <div class="flex items-center justify-between gap-2 border-b-2 border-foreground/10 px-4 py-3">
+                    <h3 class="text-[11px] font-black uppercase tracking-widest text-foreground/60">
+                        {{ $t('sidebar.notifications') }}
+                    </h3>
+                    <div class="flex items-center gap-1.5">
                         <Tooltip v-if="notifications.length > 0">
                             <TooltipTrigger as-child>
                                 <button
                                     type="button"
-                                    class="p-1 text-muted-foreground hover:text-foreground transition-colors rounded"
+                                    class="inline-flex size-7 cursor-pointer items-center justify-center rounded-md border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:bg-violet-100"
                                     @click="handleMarkAllAsRead"
                                 >
-                                    <IconChecks class="size-4" />
+                                    <IconChecks class="size-3.5" stroke-width="2.5" />
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent>{{ $t('sidebar.mark_all_read') }}</TooltipContent>
@@ -236,67 +238,69 @@ onBeforeUnmount(() => {
                             <TooltipTrigger as-child>
                                 <button
                                     type="button"
-                                    class="p-1 text-muted-foreground hover:text-foreground transition-colors rounded"
+                                    class="inline-flex size-7 cursor-pointer items-center justify-center rounded-md border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:bg-violet-100"
                                     @click="handleArchiveAll"
                                 >
-                                    <IconArchive class="size-4" />
+                                    <IconArchive class="size-3.5" stroke-width="2.5" />
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent>{{ $t('sidebar.archive_all') }}</TooltipContent>
                         </Tooltip>
                         <button
                             type="button"
-                            class="p-1 text-muted-foreground hover:text-foreground transition-colors rounded"
+                            class="inline-flex size-7 cursor-pointer items-center justify-center rounded-full border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:-rotate-90 hover:bg-rose-100"
                             @click="close"
                         >
-                            <IconX class="size-4" />
+                            <IconX class="size-3.5" stroke-width="2.5" />
                         </button>
                     </div>
                 </div>
 
                 <!-- Notification list -->
                 <div class="flex-1 overflow-y-auto">
-                    <div v-if="notifications.length > 0" class="divide-y divide-border">
-                        <div
+                    <div v-if="notifications.length > 0" class="divide-y-2 divide-dashed divide-foreground/15">
+                        <button
                             v-for="notification in notifications"
                             :key="notification.id"
-                            class="px-3 py-2.5 flex items-start gap-2.5 hover:bg-muted/50 transition-colors cursor-pointer"
+                            type="button"
+                            class="flex w-full cursor-pointer items-start gap-2.5 px-3 py-3 text-left transition-colors hover:bg-foreground/5"
+                            :class="!notification.read_at ? 'bg-violet-100/40' : ''"
                             @click="handleNotificationClick(notification)"
                         >
-                            <div class="flex items-center mt-1.5 shrink-0">
-                                <div
-                                    :class="[
-                                        'size-1.5 rounded-full',
-                                        !notification.read_at ? 'bg-primary' : 'bg-transparent',
-                                    ]"
-                                />
-                            </div>
+                            <span
+                                class="mt-1.5 inline-block size-2 shrink-0 rounded-full"
+                                :class="!notification.read_at ? 'bg-violet-500 ring-2 ring-violet-200' : 'bg-transparent'"
+                            />
                             <div class="min-w-0 flex-1">
-                                <p class="text-xs font-medium truncate">{{ notification.title }}</p>
-                                <p class="text-xs text-muted-foreground truncate">{{ notification.body }}</p>
-                                <p class="text-[11px] text-muted-foreground/70 mt-0.5">{{ formatTime(notification.created_at) }}</p>
+                                <p class="truncate text-sm font-bold text-foreground">{{ notification.title }}</p>
+                                <p class="truncate text-xs text-foreground/70">{{ notification.body }}</p>
+                                <p class="mt-0.5 text-[11px] font-medium text-foreground/50">{{ formatTime(notification.created_at) }}</p>
                             </div>
                             <div class="shrink-0" @click.stop>
                                 <Tooltip v-if="!notification.read_at">
                                     <TooltipTrigger as-child>
                                         <button
                                             type="button"
-                                            class="p-1 text-muted-foreground hover:text-foreground transition-colors rounded"
+                                            class="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-foreground/10 hover:text-foreground"
                                             @click="handleMarkAsRead(notification)"
                                         >
-                                            <IconCheck class="size-3.5" />
+                                            <IconCheck class="size-3.5" stroke-width="2.5" />
                                         </button>
                                     </TooltipTrigger>
                                     <TooltipContent>{{ $t('sidebar.mark_as_read') }}</TooltipContent>
                                 </Tooltip>
                             </div>
-                        </div>
+                        </button>
                     </div>
 
                     <!-- Empty state -->
-                    <div v-else-if="!loading" class="flex flex-col items-center justify-center py-12 px-6 text-center">
-                        <IconInbox class="size-8 text-muted-foreground/50 mb-3" />
-                        <p class="text-sm font-medium">{{ $t('sidebar.no_notifications') }}</p>
+                    <div v-else-if="!loading" class="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+                        <div class="inline-flex size-12 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
+                            <IconInbox class="size-6 text-foreground" stroke-width="2" />
+                        </div>
+                        <p class="text-base font-bold text-foreground" style="font-family: var(--font-display)">
+                            {{ $t('sidebar.no_notifications') }}
+                        </p>
                     </div>
                 </div>
             </div>

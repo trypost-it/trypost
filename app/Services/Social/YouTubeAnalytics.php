@@ -81,12 +81,12 @@ class YouTubeAnalytics
         $row = data_get($data, 'rows.0', []);
 
         $labels = [
-            'views' => 'Views',
-            'estimatedMinutesWatched' => 'Minutes watched',
-            'averageViewDuration' => 'Avg view duration (s)',
-            'likes' => 'Likes',
-            'comments' => 'Comments',
-            'shares' => 'Shares',
+            'views' => __('analytics.metrics.views'),
+            'estimatedMinutesWatched' => __('analytics.metrics.minutes_watched'),
+            'averageViewDuration' => __('analytics.metrics.avg_view_duration'),
+            'likes' => __('analytics.metrics.likes'),
+            'comments' => __('analytics.metrics.comments'),
+            'shares' => __('analytics.metrics.shares'),
         ];
 
         return collect($columns)
@@ -141,13 +141,13 @@ class YouTubeAnalytics
             $value = data_get($values, $index, 0);
 
             $label = match ($name) {
-                'views' => 'Views',
-                'estimatedMinutesWatched' => 'Minutes Watched',
-                'averageViewDuration' => 'Avg. View Duration (s)',
-                'averageViewPercentage' => 'Avg. View Percentage',
-                'subscribersGained' => 'Subscribers Gained',
-                'subscribersLost' => 'Subscribers Lost',
-                'likes' => 'Likes',
+                'views' => __('analytics.metrics.views'),
+                'estimatedMinutesWatched' => __('analytics.metrics.minutes_watched'),
+                'averageViewDuration' => __('analytics.metrics.avg_view_duration'),
+                'averageViewPercentage' => __('analytics.metrics.avg_view_percentage'),
+                'subscribersGained' => __('analytics.metrics.subscribers_gained'),
+                'subscribersLost' => __('analytics.metrics.subscribers_lost'),
+                'likes' => __('analytics.metrics.likes'),
                 default => ucfirst(str_replace('_', ' ', $name)),
             };
 

@@ -24,7 +24,6 @@ import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { destroy as destroyPost, index as postsIndex, update as updatePost } from '@/routes/app/posts';
-import type { BreadcrumbItem } from '@/types';
 
 interface MediaItem {
     id: string;
@@ -103,11 +102,6 @@ const props = defineProps<{
 
 const post = computed(() => props.post);
 const isReadOnly = computed(() => ['publishing', 'published', 'partially_published'].includes(post.value.status));
-
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('posts.title'), href: postsIndex.url() },
-    { title: trans('posts.edit.title') },
-]);
 const isPublishing = computed(() => post.value.status === 'publishing');
 const isPublished = computed(() => ['published', 'partially_published'].includes(post.value.status));
 const isScheduled = computed(() => post.value.status === 'scheduled');
@@ -445,7 +439,7 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
 <template>
     <Head :title="$t('posts.edit.title')" />
 
-    <AppLayout :full-width="true" :breadcrumbs="breadcrumbs">
+    <AppLayout :full-width="true">
         <template #header-actions>
             <span v-if="isSaving" class="flex items-center gap-1.5 text-xs font-semibold text-foreground/70">
                 <IconLoader2 class="size-3.5 animate-spin" />

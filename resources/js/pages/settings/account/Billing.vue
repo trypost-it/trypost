@@ -4,6 +4,7 @@ import { IconDownload, IconFileText } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
+import PageHeader from '@/components/PageHeader.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,6 @@ import { settings as settingsHub } from '@/routes/app';
 import { edit as accountEdit } from '@/routes/app/account';
 import { index as billingIndex, portal } from '@/routes/app/billing';
 import { index as usageIndex } from '@/routes/app/usage';
-import type { BreadcrumbItem } from '@/types';
 
 interface Plan {
     name: string;
@@ -52,12 +52,6 @@ defineProps<{
     defaultPaymentMethod: PaymentMethod | null;
 }>();
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.account.title'), href: accountEdit().url },
-    { title: trans('settings.account.tabs.billing') },
-]);
-
 const tabs = computed(() => [
     { name: 'account', label: trans('settings.account.tabs.account'), href: accountEdit().url },
     { name: 'usage', label: trans('settings.account.tabs.usage'), href: usageIndex().url },
@@ -75,8 +69,13 @@ const { openUpgrade } = useUpgradeDialog();
 <template>
     <Head :title="$t('billing.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+            />
+
             <SettingsTabsNav :tabs="tabs" active="billing" />
 
             <section class="space-y-12">

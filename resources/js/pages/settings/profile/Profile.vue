@@ -6,6 +6,7 @@ import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/App/Settings/ProfileController';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import PhotoUpload from '@/components/PhotoUpload.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,6 @@ import { edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { deletePhoto, edit as editProfile, uploadPhoto } from '@/routes/app/profile';
 import { send } from '@/routes/verification';
-import type { BreadcrumbItem } from '@/types';
 
 interface Props {
     mustVerifyEmail: boolean;
@@ -30,11 +30,6 @@ defineProps<Props>();
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.profile.title') },
-]);
-
 const tabs = computed(() => [
     { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
     { name: 'authentication', label: trans('settings.nav.authentication'), href: editAuthentication().url },
@@ -45,8 +40,13 @@ const tabs = computed(() => [
 <template>
     <Head :title="$t('settings.profile.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-8 px-4 py-8">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+            />
+
             <SettingsTabsNav :tabs="tabs" active="profile" />
 
             <section class="space-y-12">

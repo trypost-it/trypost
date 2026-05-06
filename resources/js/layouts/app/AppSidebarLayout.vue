@@ -5,23 +5,18 @@ import { onBeforeUnmount, onMounted } from 'vue';
 import AppHeader from '@/components/AppHeader.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import Toast from '@/components/Toast.vue';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import UpgradeDialog from '@/components/UpgradeDialog.vue';
 import { heartbeat as heartbeatRoute } from '@/routes/app/presence';
-import type { BreadcrumbItem } from '@/types';
 
 const page = usePage();
 const isOpen = page.props.sidebarOpen;
 
 type Props = {
-    title?: string;
-    breadcrumbs?: BreadcrumbItem[];
     fullWidth?: boolean;
 };
 
 withDefaults(defineProps<Props>(), {
-    title: '',
-    breadcrumbs: () => [],
     fullWidth: false,
 });
 
@@ -48,11 +43,7 @@ onBeforeUnmount(() => {
     <SidebarProvider :default-open="isOpen">
         <AppSidebar />
         <SidebarInset class="overflow-x-hidden">
-            <AppHeader
-                v-if="$slots['header'] || $slots['header-actions'] || title || breadcrumbs.length > 0"
-                :title="$slots['header'] ? '' : title"
-                :breadcrumbs="breadcrumbs"
-            >
+            <AppHeader v-if="$slots['header'] || $slots['header-actions']">
                 <template v-if="$slots['header']" #left>
                     <slot name="header" />
                 </template>
@@ -60,6 +51,10 @@ onBeforeUnmount(() => {
                     <slot name="header-actions" />
                 </template>
             </AppHeader>
+            <SidebarTrigger
+                v-else
+                class="absolute left-2 top-2 z-30 size-9 rounded-md border-2 border-foreground bg-card text-foreground shadow-2xs md:hidden"
+            />
             <div
                 :class="
                     fullWidth

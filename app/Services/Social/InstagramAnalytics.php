@@ -142,8 +142,8 @@ class InstagramAnalytics
             $total = collect($values)->sum('value');
 
             $label = match ($name) {
-                'reach' => 'Reach',
-                'follower_count' => 'Followers',
+                'reach' => __('analytics.metrics.reach'),
+                'follower_count' => __('analytics.metrics.followers'),
                 default => ucfirst(str_replace('_', ' ', $name)),
             };
 
@@ -181,7 +181,12 @@ class InstagramAnalytics
             $value = data_get($metric, 'total_value.value', 0);
 
             $label = match ($name) {
-                'total_interactions' => 'Interactions',
+                'total_interactions' => __('analytics.metrics.interactions'),
+                'likes' => __('analytics.metrics.likes'),
+                'comments' => __('analytics.metrics.comments'),
+                'shares' => __('analytics.metrics.shares'),
+                'saves' => __('analytics.metrics.saves'),
+                'views' => __('analytics.metrics.views'),
                 default => ucfirst(str_replace('_', ' ', $name)),
             };
 

@@ -50,11 +50,6 @@ const startFromScratch = () => {
     });
 };
 
-const breadcrumbs = computed(() => [
-    { title: trans('sidebar.posts.calendar'), href: calendar.url() },
-    { title: trans('posts.create.title'), href: '' },
-]);
-
 const pageTitle = computed(() => trans('posts.create.title'));
 
 const stepHeader = computed(() => {
@@ -69,7 +64,7 @@ const stepHeader = computed(() => {
 <template>
     <Head :title="pageTitle" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <AppLayout>
         <div class="flex h-full flex-1 flex-col p-4">
             <div class="mx-auto flex w-full max-w-2xl flex-col gap-6">
                 <PageHeader :title="stepHeader.title" :description="stepHeader.description" />

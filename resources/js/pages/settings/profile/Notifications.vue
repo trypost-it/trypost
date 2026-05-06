@@ -4,6 +4,7 @@ import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -13,7 +14,6 @@ import { settings as settingsHub } from '@/routes/app';
 import { edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as preferencesRoute } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';
-import type { BreadcrumbItem } from '@/types';
 
 interface Preferences {
     post_published: boolean;
@@ -31,12 +31,6 @@ const postPublished = ref(props.preferences.post_published);
 const postFailed = ref(props.preferences.post_failed);
 const accountDisconnected = ref(props.preferences.account_disconnected);
 const processing = ref(false);
-
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.profile.title'), href: editProfile().url },
-    { title: trans('settings.nav.notifications') },
-]);
 
 const tabs = computed(() => [
     { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
@@ -63,8 +57,13 @@ const submit = () => {
 <template>
     <Head :title="$t('settings.notifications.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-8 px-4 py-8">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+            />
+
             <SettingsTabsNav :tabs="tabs" active="notifications" />
 
             <section class="space-y-12">

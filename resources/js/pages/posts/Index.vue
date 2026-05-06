@@ -35,8 +35,6 @@ import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { copyToClipboard } from '@/lib/utils';
-import type { BreadcrumbItem } from '@/types';
-
 interface SocialAccount {
     id: string;
     platform: string;
@@ -117,14 +115,6 @@ const pageTitle = computed(() => {
     return trans('posts.all_posts');
 });
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => {
-    const items: BreadcrumbItem[] = [{ title: trans('posts.title'), href: postsIndex.url() }];
-    if (props.currentStatus) {
-        items.push({ title: trans(`posts.status.${props.currentStatus}`) });
-    }
-    return items;
-});
-
 const formatDateTime = (date: string | null): string => {
     if (!date) return '—';
     return dayjs.utc(date).local().format('D MMM YYYY, HH:mm');
@@ -158,8 +148,8 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 <template>
     <Head :title="pageTitle" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <AppLayout>
+        <div class="flex h-full flex-1 flex-col gap-6 px-6 py-8">
             <PageHeader :title="pageTitle" />
 
             <!-- Toolbar -->

@@ -146,12 +146,12 @@ class XAnalytics
         }
 
         return [
-            ['label' => 'Impressions', 'value' => $totals['impression_count']],
-            ['label' => 'Likes', 'value' => $totals['like_count']],
-            ['label' => 'Retweets', 'value' => $totals['retweet_count']],
-            ['label' => 'Replies', 'value' => $totals['reply_count']],
-            ['label' => 'Quotes', 'value' => $totals['quote_count']],
-            ['label' => 'Bookmarks', 'value' => $totals['bookmark_count']],
+            ['label' => __('analytics.metrics.impressions'), 'value' => $totals['impression_count']],
+            ['label' => __('analytics.metrics.likes'), 'value' => $totals['like_count']],
+            ['label' => __('analytics.metrics.retweets'), 'value' => $totals['retweet_count']],
+            ['label' => __('analytics.metrics.replies'), 'value' => $totals['reply_count']],
+            ['label' => __('analytics.metrics.quotes'), 'value' => $totals['quote_count']],
+            ['label' => __('analytics.metrics.bookmarks'), 'value' => $totals['bookmark_count']],
         ];
     }
 
@@ -186,12 +186,12 @@ class XAnalytics
         $metrics = data_get($response->json(), 'data.public_metrics', []);
 
         return [
-            ['label' => 'Impressions', 'value' => data_get($metrics, 'impression_count', 0)],
-            ['label' => 'Likes', 'value' => data_get($metrics, 'like_count', 0)],
-            ['label' => 'Retweets', 'value' => data_get($metrics, 'retweet_count', 0)],
-            ['label' => 'Replies', 'value' => data_get($metrics, 'reply_count', 0)],
-            ['label' => 'Quotes', 'value' => data_get($metrics, 'quote_count', 0)],
-            ['label' => 'Bookmarks', 'value' => data_get($metrics, 'bookmark_count', 0)],
+            ['label' => __('analytics.metrics.impressions'), 'value' => data_get($metrics, 'impression_count', 0)],
+            ['label' => __('analytics.metrics.likes'), 'value' => data_get($metrics, 'like_count', 0)],
+            ['label' => __('analytics.metrics.retweets'), 'value' => data_get($metrics, 'retweet_count', 0)],
+            ['label' => __('analytics.metrics.replies'), 'value' => data_get($metrics, 'reply_count', 0)],
+            ['label' => __('analytics.metrics.quotes'), 'value' => data_get($metrics, 'quote_count', 0)],
+            ['label' => __('analytics.metrics.bookmarks'), 'value' => data_get($metrics, 'bookmark_count', 0)],
         ];
     }
 

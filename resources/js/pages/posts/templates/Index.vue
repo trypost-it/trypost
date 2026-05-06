@@ -168,19 +168,14 @@ const applyTemplate = async (template: PostTemplate) => {
     }
 };
 
-const breadcrumbs = computed(() => [
-    { title: trans('sidebar.posts.calendar'), href: calendar.url() },
-    { title: trans('posts.templates.browser_title'), href: '' },
-]);
-
 const pageTitle = computed(() => trans('posts.templates.browser_title'));
 </script>
 
 <template>
     <Head :title="pageTitle" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <AppLayout>
+        <div class="flex h-full flex-1 flex-col gap-6 px-6 py-8">
             <PageHeader :title="pageTitle" :description="$t('posts.templates.browser_description')" />
 
             <!-- Filters: platform + search -->

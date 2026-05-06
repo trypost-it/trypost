@@ -120,6 +120,22 @@ test('billing processing shows processing page', function () {
     );
 });
 
+test('shared auth.plan exposes name slug and interval via AuthPlanResource', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $plan = Plan::where('slug', 'pro')->firstOrFail();
+    $this->account->update(['plan_id' => $plan->id]);
+
+    $response = $this->actingAs($this->user->fresh())->get(route('app.billing.processing'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->where('auth.plan.name', 'Pro')
+        ->where('auth.plan.slug', 'pro')
+        ->where('auth.plan.interval', 'monthly')
+    );
+});
+
 test('billing processing redirects to calendar in self hosted mode', function () {
     config(['trypost.self_hosted' => true]);
 

@@ -7,6 +7,7 @@ import { ref } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { useTracking } from '@/composables/useTracking';
 import { checkout } from '@/routes/app/billing';
 
 interface Plan {
@@ -29,6 +30,8 @@ defineProps<{
 const isYearly = ref(false);
 const processing = ref<string | null>(null);
 
+const { trackBeginCheckout } = useTracking();
+
 const getPrice = (plan: Plan): string => {
     const key = `billing.subscribe.prices.${plan.slug}.${isYearly.value ? 'yearly' : 'monthly'}`;
     return trans(key);
@@ -36,7 +39,15 @@ const getPrice = (plan: Plan): string => {
 
 const selectPlan = (plan: Plan) => {
     processing.value = plan.id;
+
+    const interval = isYearly.value ? 'yearly' : 'monthly';
     const priceId = isYearly.value ? plan.stripe_yearly_price_id : plan.stripe_monthly_price_id;
+
+    trackBeginCheckout({
+        name: plan.name,
+        interval,
+    });
+
     router.post(checkout.url(plan.id), {
         price_id: priceId,
     });

@@ -10,6 +10,7 @@ return [
     'try_different_search' => 'Prueba otra palabra clave o limpia la búsqueda.',
     'start_creating' => 'Empieza creando tu primer post.',
     'table' => [
+        'post' => 'Post',
         'status' => 'Estado',
         'content' => 'Contenido',
         'platforms' => 'Plataformas',
@@ -199,6 +200,7 @@ return [
     'show' => [
         'title' => 'Detalles del post',
         'edit' => 'Editar',
+        'back' => 'Volver',
         'no_content' => 'Sin texto',
         'platforms' => 'Plataformas',
         'no_platforms' => 'Ninguna plataforma seleccionada.',
@@ -211,11 +213,6 @@ return [
         'metrics_loading' => 'Cargando métricas…',
         'metrics_unavailable' => 'Métricas aún no disponibles para esta plataforma.',
         'metrics_empty' => 'No se devolvieron métricas.',
-        'summary' => [
-            'platforms' => 'Plataformas',
-            'published' => 'Publicado',
-            'failed' => 'Falló',
-        ],
     ],
 
     'edit' => [
@@ -226,7 +223,8 @@ return [
         'schedule' => 'Programar',
         'delete' => 'Eliminar',
         'schedule_for' => 'Programar para',
-        'scheduled_for' => 'Programado para',
+        'scheduled_for' => 'Programado · :date',
+        'unschedule' => 'Desprogramar',
         'saving' => 'Guardando...',
         'saved' => 'Guardado',
         'draft' => 'Borrador',
@@ -305,6 +303,7 @@ return [
         ],
 
         'status' => [
+            'scheduled' => 'Programado',
             'published' => 'Publicado',
             'publishing' => 'Publicando...',
             'failed' => 'Fallido',
@@ -540,6 +539,8 @@ return [
         'try_different_search' => 'Prueba otra palabra clave o limpia la búsqueda.',
         'slides_count' => '{count} slide|{count} slides',
         'all_platforms' => 'Todas las plataformas',
+        'platform_search_placeholder' => 'Buscar plataforma…',
+        'no_platform_match' => 'Ninguna plataforma coincide.',
         'use_this' => 'Usar esta plantilla',
         'no_templates' => 'No hay plantillas disponibles.',
         'applying' => 'Aplicando plantilla…',

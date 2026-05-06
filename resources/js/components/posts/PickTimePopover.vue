@@ -11,6 +11,7 @@ import dayjs from '@/dayjs';
 const props = defineProps<{
     modelValue: string;
     disabled?: boolean;
+    showRemove?: boolean;
 }>();
 
 const timezoneAbbr = computed(() => dayjs().format('z'));
@@ -18,6 +19,7 @@ const timezoneAbbr = computed(() => dayjs().format('z'));
 const emit = defineEmits<{
     'update:modelValue': [value: string];
     confirm: [value: string];
+    remove: [];
 }>();
 
 const open = ref(false);
@@ -73,6 +75,11 @@ const confirm = () => {
     emit('confirm', value);
     open.value = false;
 };
+
+const remove = () => {
+    emit('remove');
+    open.value = false;
+};
 </script>
 
 <template>
@@ -91,14 +98,14 @@ const confirm = () => {
                 <div class="flex items-center gap-2">
                     <span class="text-sm text-muted-foreground">{{ $t('posts.edit.time') }}</span>
                     <Select v-model="selectedHour">
-                        <SelectTrigger class="w-[70px]"><SelectValue placeholder="HH" /></SelectTrigger>
+                        <SelectTrigger class="w-[84px]"><SelectValue placeholder="HH" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem v-for="h in hours" :key="h" :value="h">{{ h }}</SelectItem>
                         </SelectContent>
                     </Select>
                     <span class="text-muted-foreground">:</span>
                     <Select v-model="selectedMinute">
-                        <SelectTrigger class="w-[70px]"><SelectValue placeholder="MM" /></SelectTrigger>
+                        <SelectTrigger class="w-[84px]"><SelectValue placeholder="MM" /></SelectTrigger>
                         <SelectContent>
                             <SelectItem v-for="m in minutes" :key="m" :value="m">{{ m }}</SelectItem>
                         </SelectContent>
@@ -108,7 +115,17 @@ const confirm = () => {
             </div>
 
             <div class="flex items-center justify-between gap-2 border-t p-3">
-                <Button type="button" variant="ghost" size="sm" @click="cancel">{{ $t('posts.edit.cancel') }}</Button>
+                <Button
+                    v-if="showRemove"
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="bg-rose-100 text-rose-700 hover:bg-rose-200"
+                    @click="remove"
+                >
+                    {{ $t('posts.edit.unschedule') }}
+                </Button>
+                <Button v-else type="button" variant="ghost" size="sm" @click="cancel">{{ $t('posts.edit.cancel') }}</Button>
                 <Button type="button" size="sm" @click="confirm">{{ $t('posts.edit.pick_time') }}</Button>
             </div>
         </DialogContent>

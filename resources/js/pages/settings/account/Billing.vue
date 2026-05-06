@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { IconDownload, IconFileText } from '@tabler/icons-vue';
+import { IconCreditCard, IconDownload, IconFileText, IconSparkles } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
+import HeadingSmall from '@/components/HeadingSmall.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,7 +16,6 @@ import { settings as settingsHub } from '@/routes/app';
 import { edit as accountEdit } from '@/routes/app/account';
 import { index as billingIndex, portal } from '@/routes/app/billing';
 import { index as usageIndex } from '@/routes/app/usage';
-import type { BreadcrumbItem } from '@/types';
 
 interface Plan {
     name: string;
@@ -52,12 +53,6 @@ defineProps<{
     defaultPaymentMethod: PaymentMethod | null;
 }>();
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.account.title'), href: accountEdit().url },
-    { title: trans('settings.account.tabs.billing') },
-]);
-
 const tabs = computed(() => [
     { name: 'account', label: trans('settings.account.tabs.account'), href: accountEdit().url },
     { name: 'usage', label: trans('settings.account.tabs.usage'), href: usageIndex().url },
@@ -75,109 +70,129 @@ const { openUpgrade } = useUpgradeDialog();
 <template>
     <Head :title="$t('billing.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+            />
+
             <SettingsTabsNav :tabs="tabs" active="billing" />
 
             <section class="space-y-12">
-                <div class="grid grid-cols-1 gap-8 md:grid-cols-[280px_1fr] md:gap-16">
-                    <div>
-                        <h2 class="text-lg font-semibold tracking-tight">{{ $t('billing.plan.title') }}</h2>
-                        <p class="mt-1 text-sm text-muted-foreground">
-                            {{ $t('billing.plan.description') }}
-                        </p>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            class="mt-4"
-                            @click="openUpgrade()"
-                        >
-                            {{ $t('billing.plan.change') }}
+                <!-- ───── Current plan hero card ───── -->
+                <div class="space-y-6">
+                    <HeadingSmall
+                        :title="$t('billing.plan.title')"
+                        :description="$t('billing.plan.description')"
+                    />
+
+                    <div class="rounded-2xl border-2 border-foreground bg-card p-6 shadow-2xs">
+                        <div class="flex items-start justify-between gap-6">
+                            <div class="space-y-2">
+                                <p class="text-[11px] font-black uppercase tracking-widest text-foreground/60">
+                                    {{ $t('billing.plan.label') }}
+                                </p>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <h3
+                                        class="text-3xl font-semibold leading-tight text-foreground"
+                                        style="font-family: var(--font-display)"
+                                    >
+                                        {{ plan?.name ?? 'No plan' }}
+                                    </h3>
+                                    <Badge v-if="onTrial" variant="secondary">{{ $t('billing.plan.trial') }}</Badge>
+                                    <Badge v-else-if="subscription?.stripe_status === 'active'" variant="success">{{ $t('billing.plan.active') }}</Badge>
+                                    <Badge v-else-if="subscription?.stripe_status === 'past_due'" variant="destructive">{{ $t('billing.plan.past_due') }}</Badge>
+                                    <Badge v-else-if="subscription?.ends_at" variant="secondary">{{ $t('billing.plan.cancelling') }}</Badge>
+                                </div>
+                                <p class="text-base text-foreground/70">
+                                    <span class="text-2xl font-bold tabular-nums text-foreground">{{ monthlyPrice(plan?.slug) }}</span>
+                                    <span class="ml-1">/{{ $t('billing.plan.month') }}</span>
+                                </p>
+                                <p
+                                    v-if="onTrial && trialEndsAt"
+                                    class="text-sm font-semibold text-foreground/70"
+                                >
+                                    {{ $t('billing.plan.trial_ends') }}: <span class="text-foreground">{{ date.formatDate(trialEndsAt) }}</span>
+                                </p>
+                            </div>
+                            <div class="flex flex-col items-end gap-4 shrink-0">
+                                <span class="inline-flex size-14 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-amber-200 shadow-2xs">
+                                    <IconSparkles class="size-7 text-foreground" stroke-width="2" />
+                                </span>
+                                <Button @click="openUpgrade()">
+                                    {{ $t('billing.plan.change') }}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ───── Payment method ───── -->
+                <div v-if="hasSubscription" class="space-y-6">
+                    <HeadingSmall
+                        :title="$t('billing.subscription.title')"
+                        :description="$t('billing.subscription.description')"
+                    />
+
+                    <div class="flex flex-wrap items-center gap-4 rounded-2xl border-2 border-foreground bg-card p-4 shadow-2xs">
+                        <span class="inline-flex size-12 rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
+                            <IconCreditCard class="size-6 text-foreground" stroke-width="2" />
+                        </span>
+                        <div v-if="defaultPaymentMethod" class="min-w-0 flex-1">
+                            <p class="text-[11px] font-black uppercase tracking-widest text-foreground/60">
+                                {{ $t('billing.subscription.payment_method') }}
+                            </p>
+                            <p class="text-base font-bold capitalize text-foreground">
+                                {{ defaultPaymentMethod.brand }} •••• {{ defaultPaymentMethod.last4 }}
+                            </p>
+                            <p class="text-xs font-medium text-foreground/60">
+                                {{ $t('billing.subscription.expires_on', {
+                                    month: defaultPaymentMethod.exp_month.toString().padStart(2, '0'),
+                                    year: defaultPaymentMethod.exp_year.toString(),
+                                }) }}
+                            </p>
+                        </div>
+                        <div v-else class="min-w-0 flex-1">
+                            <p class="text-[11px] font-black uppercase tracking-widest text-foreground/60">
+                                {{ $t('billing.subscription.payment_method') }}
+                            </p>
+                            <p class="text-sm font-semibold text-foreground/70">
+                                {{ $t('billing.subscription.no_payment_method') }}
+                            </p>
+                        </div>
+                        <Button as="a" :href="portal.url()" class="shrink-0">
+                            {{ $t('billing.subscription.manage_stripe') }}
                         </Button>
                     </div>
-
-                    <div class="divide-y">
-                        <div class="flex items-center gap-3 py-3">
-                            <span class="flex items-center gap-2 text-sm">
-                                <span>{{ $t('billing.plan.label') }}</span>
-                                <Badge v-if="onTrial" variant="secondary">{{ $t('billing.plan.trial') }}</Badge>
-                                <Badge v-else-if="subscription?.stripe_status === 'active'" variant="default">{{ $t('billing.plan.active') }}</Badge>
-                                <Badge v-else-if="subscription?.stripe_status === 'past_due'" variant="destructive">{{ $t('billing.plan.past_due') }}</Badge>
-                                <Badge v-else-if="subscription?.ends_at" variant="secondary">{{ $t('billing.plan.cancelling') }}</Badge>
-                            </span>
-                            <span class="ml-auto text-sm font-medium">{{ plan?.name ?? 'No plan' }}</span>
-                        </div>
-
-                        <div class="flex items-center gap-3 py-3">
-                            <span class="text-sm">{{ $t('billing.plan.price') }}</span>
-                            <span class="ml-auto text-sm font-medium tabular-nums">
-                                {{ monthlyPrice(plan?.slug) }}/{{ $t('billing.plan.month') }}
-                            </span>
-                        </div>
-
-                        <div v-if="onTrial && trialEndsAt" class="flex items-center gap-3 py-3">
-                            <span class="text-sm">{{ $t('billing.plan.trial_ends') }}</span>
-                            <span class="ml-auto text-sm font-medium">{{ date.formatDate(trialEndsAt) }}</span>
-                        </div>
-                    </div>
                 </div>
 
-                <div v-if="hasSubscription" class="grid grid-cols-1 gap-8 md:grid-cols-[280px_1fr] md:gap-16">
-                    <div>
-                        <h2 class="text-lg font-semibold tracking-tight">{{ $t('billing.subscription.title') }}</h2>
-                        <p class="mt-1 text-sm text-muted-foreground">
-                            {{ $t('billing.subscription.description') }}
-                        </p>
-                    </div>
+                <!-- ───── Invoices ───── -->
+                <div v-if="invoices.length > 0" class="space-y-6">
+                    <HeadingSmall
+                        :title="$t('billing.invoices.title')"
+                        :description="$t('billing.invoices.description')"
+                    />
 
-                    <div class="divide-y">
-                        <div v-if="defaultPaymentMethod" class="flex items-center gap-3 py-3">
-                            <span class="text-sm">{{ $t('billing.subscription.payment_method') }}</span>
-                            <span class="ml-auto text-sm font-medium capitalize">
-                                {{ defaultPaymentMethod.brand }} **** {{ defaultPaymentMethod.last4 }}
-                                <span class="text-muted-foreground">
-                                    ({{ defaultPaymentMethod.exp_month }}/{{ defaultPaymentMethod.exp_year }})
-                                </span>
-                            </span>
-                        </div>
-
-                        <div class="flex items-center gap-3 py-3">
-                            <span class="text-sm">{{ $t('billing.subscription.manage_label') }}</span>
-                            <a :href="portal.url()" class="ml-auto">
-                                <Button variant="outline" size="sm">
-                                    {{ $t('billing.subscription.manage_stripe') }}
-                                </Button>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
-                <div v-if="invoices.length > 0" class="grid grid-cols-1 gap-8 md:grid-cols-[280px_1fr] md:gap-16">
-                    <div>
-                        <h2 class="text-lg font-semibold tracking-tight">{{ $t('billing.invoices.title') }}</h2>
-                        <p class="mt-1 text-sm text-muted-foreground">
-                            {{ $t('billing.invoices.description') }}
-                        </p>
-                    </div>
-
-                    <div class="divide-y">
+                    <div class="space-y-3">
                         <div
                             v-for="invoice in invoices"
                             :key="invoice.id"
-                            class="flex items-center gap-3 py-3"
+                            class="flex items-center gap-4 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs"
                         >
-                            <IconFileText class="size-4 shrink-0 text-muted-foreground" />
+                            <span class="inline-flex size-10 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-100 shadow-2xs">
+                                <IconFileText class="size-5 text-foreground" stroke-width="2" />
+                            </span>
                             <div class="min-w-0 flex-1">
-                                <span class="text-sm">{{ date.formatDate(invoice.date) }}</span>
-                                <span class="ml-2 text-sm text-muted-foreground">{{ invoice.total }}</span>
+                                <p class="text-sm font-bold text-foreground">{{ date.formatDate(invoice.date) }}</p>
+                                <p class="text-xs font-medium tabular-nums text-foreground/60">{{ invoice.total }}</p>
                             </div>
-                            <Badge variant="outline">
+                            <Badge :variant="invoice.status === 'paid' ? 'success' : 'outline'">
                                 {{ invoice.status === 'paid' ? $t('billing.invoices.paid') : invoice.status }}
                             </Badge>
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="icon"
-                                class="size-8"
                                 as="a"
                                 :href="invoice.invoice_pdf"
                                 target="_blank"

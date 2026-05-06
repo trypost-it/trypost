@@ -6,6 +6,7 @@ import { computed } from 'vue';
 import ProfileController from '@/actions/App/Http/Controllers/App/Settings/ProfileController';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import PhotoUpload from '@/components/PhotoUpload.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,6 @@ import { edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { deletePhoto, edit as editProfile, uploadPhoto } from '@/routes/app/profile';
 import { send } from '@/routes/verification';
-import type { BreadcrumbItem } from '@/types';
 
 interface Props {
     mustVerifyEmail: boolean;
@@ -30,11 +30,6 @@ defineProps<Props>();
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.profile.title') },
-]);
-
 const tabs = computed(() => [
     { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
     { name: 'authentication', label: trans('settings.nav.authentication'), href: editAuthentication().url },
@@ -45,8 +40,13 @@ const tabs = computed(() => [
 <template>
     <Head :title="$t('settings.profile.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+            />
+
             <SettingsTabsNav :tabs="tabs" active="profile" />
 
             <section class="space-y-12">
@@ -104,12 +104,12 @@ const tabs = computed(() => [
                         </div>
 
                         <div v-if="mustVerifyEmail && !user.email_verified_at">
-                            <p class="-mt-4 text-sm text-muted-foreground">
+                            <p class="-mt-4 text-sm text-foreground/70">
                                 {{ $t('settings.profile.email_unverified') }}
                                 <Link
                                     :href="send()"
                                     as="button"
-                                    class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                                    class="font-semibold text-foreground underline decoration-foreground/30 underline-offset-4 transition-colors hover:decoration-foreground"
                                 >
                                     {{ $t('settings.profile.resend_verification') }}
                                 </Link>
@@ -117,7 +117,7 @@ const tabs = computed(() => [
 
                             <div
                                 v-if="status === 'verification-link-sent'"
-                                class="mt-2 text-sm font-medium text-green-600"
+                                class="mt-2 text-sm font-semibold text-emerald-700"
                             >
                                 {{ $t('settings.profile.verification_sent') }}
                             </div>

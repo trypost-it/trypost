@@ -24,7 +24,6 @@ import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { destroy as labelsDestroy, index as labelsIndex } from '@/routes/app/labels';
-import type { BreadcrumbItem } from '@/types';
 
 interface Label {
     id: string;
@@ -57,10 +56,6 @@ const search = debounce(() => {
 
 watch(searchQuery, () => search());
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('labels.title') },
-]);
-
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const isCreateDialogOpen = ref(false);
 const isEditDialogOpen = ref(false);
@@ -71,8 +66,11 @@ const openEditDialog = (label: Label) => {
     isEditDialogOpen.value = true;
 };
 
-const handleDelete = (labelId: string) => {
-    deleteModal.value?.open({ url: labelsDestroy.url(labelId) });
+const handleDelete = (label: Label) => {
+    deleteModal.value?.open({
+        url: labelsDestroy.url(label.id),
+        confirmText: label.name,
+    });
 };
 
 const formatDate = (date: string): string => dayjs.utc(date).local().format('D MMM YYYY');
@@ -83,8 +81,8 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 <template>
     <Head :title="$t('labels.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <AppLayout>
+        <div class="flex h-full flex-1 flex-col gap-6 px-6 py-8">
             <PageHeader :title="$t('labels.title')" :description="$t('labels.description')" />
 
             <div class="flex items-center justify-between gap-3">
@@ -107,7 +105,7 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                 :description="hasActiveSearch ? $t('labels.try_different_search') : $t('labels.description')"
             />
 
-            <div v-else class="rounded-md border">
+            <div v-else>
                 <InfiniteScroll data="labels" items-element="#labels-body" preserve-url>
                     <Table>
                         <TableHeader>
@@ -126,27 +124,32 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                                 @click="openEditDialog(label)"
                             >
                                 <TableCell>
-                                    <div class="size-5 rounded-md" :style="{ backgroundColor: label.color }" />
+                                    <div
+                                        class="size-6 rounded-md border-2 border-foreground shadow-2xs"
+                                        :style="{ backgroundColor: label.color }"
+                                    />
                                 </TableCell>
-                                <TableCell class="font-medium">{{ label.name }}</TableCell>
-                                <TableCell class="text-muted-foreground">{{ formatDate(label.created_at) }}</TableCell>
+                                <TableCell>{{ label.name }}</TableCell>
+                                <TableCell>{{ formatDate(label.created_at) }}</TableCell>
                                 <TableCell class="text-right" @click.stop>
-                                    <div class="flex justify-end gap-1">
+                                    <div class="flex justify-end gap-2">
                                         <Button
-                                            variant="ghost"
+                                            variant="outline"
                                             size="icon"
                                             class="size-8"
+                                            :aria-label="$t('labels.actions.edit')"
                                             @click="openEditDialog(label)"
                                         >
-                                            <IconPencil class="h-4 w-4" />
+                                            <IconPencil class="size-4" />
                                         </Button>
                                         <Button
-                                            variant="ghost"
+                                            variant="outline"
                                             size="icon"
-                                            class="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                            @click="handleDelete(label.id)"
+                                            class="size-8 bg-rose-100 hover:bg-rose-200"
+                                            :aria-label="$t('labels.actions.delete')"
+                                            @click="handleDelete(label)"
                                         >
-                                            <IconTrash class="h-4 w-4" />
+                                            <IconTrash class="size-4 text-rose-700" />
                                         </Button>
                                     </div>
                                 </TableCell>

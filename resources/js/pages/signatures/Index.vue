@@ -24,7 +24,6 @@ import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { destroy as signaturesDestroy, index as signaturesIndex } from '@/routes/app/signatures';
-import type { BreadcrumbItem } from '@/types';
 
 interface Workspace {
     id: string;
@@ -63,10 +62,6 @@ const search = debounce(() => {
 
 watch(searchQuery, () => search());
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('signatures.title') },
-]);
-
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const isCreateDialogOpen = ref(false);
 const isEditDialogOpen = ref(false);
@@ -77,8 +72,11 @@ const openEditDialog = (signature: Signature) => {
     isEditDialogOpen.value = true;
 };
 
-const handleDelete = (signatureId: string) => {
-    deleteModal.value?.open({ url: signaturesDestroy.url(signatureId) });
+const handleDelete = (signature: Signature) => {
+    deleteModal.value?.open({
+        url: signaturesDestroy.url(signature.id),
+        confirmText: signature.name,
+    });
 };
 
 const formatDate = (date: string): string => dayjs.utc(date).local().format('D MMM YYYY');
@@ -89,8 +87,8 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 <template>
     <Head :title="$t('signatures.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <AppLayout>
+        <div class="flex h-full flex-1 flex-col gap-6 px-6 py-8">
             <PageHeader :title="$t('signatures.title')" />
 
             <div class="flex items-center justify-between gap-3">
@@ -113,7 +111,7 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                 :description="hasActiveSearch ? $t('signatures.try_different_search') : $t('signatures.empty_description')"
             />
 
-            <div v-else class="rounded-md border">
+            <div v-else>
                 <InfiniteScroll data="signatures" items-element="#signatures-body" preserve-url>
                     <Table>
                         <TableHeader>
@@ -131,28 +129,30 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                                 class="cursor-pointer"
                                 @click="openEditDialog(signature)"
                             >
-                                <TableCell class="font-medium">{{ signature.name }}</TableCell>
+                                <TableCell>{{ signature.name }}</TableCell>
                                 <TableCell class="max-w-md">
-                                    <p class="truncate text-sm text-muted-foreground">{{ signature.content }}</p>
+                                    <p class="truncate">{{ signature.content }}</p>
                                 </TableCell>
-                                <TableCell class="text-muted-foreground">{{ formatDate(signature.created_at) }}</TableCell>
+                                <TableCell>{{ formatDate(signature.created_at) }}</TableCell>
                                 <TableCell class="text-right" @click.stop>
-                                    <div class="flex justify-end gap-1">
+                                    <div class="flex justify-end gap-2">
                                         <Button
-                                            variant="ghost"
+                                            variant="outline"
                                             size="icon"
                                             class="size-8"
+                                            :aria-label="$t('signatures.actions.edit')"
                                             @click="openEditDialog(signature)"
                                         >
-                                            <IconPencil class="h-4 w-4" />
+                                            <IconPencil class="size-4" />
                                         </Button>
                                         <Button
-                                            variant="ghost"
+                                            variant="outline"
                                             size="icon"
-                                            class="size-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                                            @click="handleDelete(signature.id)"
+                                            class="size-8 bg-rose-100 hover:bg-rose-200"
+                                            :aria-label="$t('signatures.actions.delete')"
+                                            @click="handleDelete(signature)"
                                         >
-                                            <IconTrash class="h-4 w-4" />
+                                            <IconTrash class="size-4 text-rose-700" />
                                         </Button>
                                     </div>
                                 </TableCell>

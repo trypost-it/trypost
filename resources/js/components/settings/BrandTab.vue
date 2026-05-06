@@ -140,7 +140,7 @@ const languageLabel = computed(() => {
                 </div>
             </div>
 
-            <p class="-mt-4 text-xs text-muted-foreground">
+            <p class="-mt-4 text-xs font-medium text-foreground/60">
                 {{ $t('settings.brand.content_language_description') }}
             </p>
 

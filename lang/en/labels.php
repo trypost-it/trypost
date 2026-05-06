@@ -14,6 +14,11 @@ return [
         'created_at' => 'Created',
     ],
 
+    'actions' => [
+        'edit' => 'Edit label',
+        'delete' => 'Delete label',
+    ],
+
     'create' => [
         'title' => 'Create Label',
         'description' => 'Give your label a name and pick a color',

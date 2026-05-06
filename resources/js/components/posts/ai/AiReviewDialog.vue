@@ -93,39 +93,39 @@ watch(open, (isOpen) => {
                 <DialogDescription>{{ $t('posts.ai.review.description') }}</DialogDescription>
             </DialogHeader>
 
-            <p v-if="status === 'loading'" class="py-8 text-center text-sm text-muted-foreground">
+            <p v-if="status === 'loading'" class="py-8 text-center text-sm font-medium text-foreground/60">
                 {{ $t('posts.ai.review.loading') }}
             </p>
 
-            <p v-else-if="status === 'failed'" class="py-4 text-sm text-destructive">{{ errorMessage }}</p>
+            <p v-else-if="status === 'failed'" class="py-4 text-sm font-semibold text-rose-700">{{ errorMessage }}</p>
 
-            <p v-else-if="noIssues" class="py-8 text-center text-sm text-muted-foreground">
+            <p v-else-if="noIssues" class="py-8 text-center text-sm font-medium text-foreground/60">
                 {{ $t('posts.ai.review.no_issues') }}
             </p>
 
-            <div v-else-if="suggestions.length > 0" class="max-h-[400px] space-y-2 overflow-y-auto pr-1">
+            <div v-else-if="suggestions.length > 0" class="max-h-[400px] space-y-3 overflow-y-auto pr-1">
                 <article
                     v-for="(s, idx) in suggestions"
                     :key="idx"
-                    class="rounded-md border bg-card px-4 py-3 transition-opacity"
+                    class="rounded-xl border-2 border-foreground bg-card px-4 py-3 shadow-2xs transition-opacity"
                     :class="appliedSet.has(idx) ? 'opacity-50' : ''"
                 >
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0 flex-1 space-y-1.5">
                             <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm leading-relaxed">
-                                <span class="rounded bg-destructive/15 px-1.5 py-0.5 text-destructive line-through decoration-destructive/50">
+                                <span class="rounded-md border-2 border-foreground bg-rose-100 px-1.5 py-0.5 font-bold text-rose-700 line-through decoration-rose-700/60 shadow-2xs">
                                     {{ s.original }}
                                 </span>
-                                <span class="text-muted-foreground">→</span>
-                                <span class="rounded bg-emerald-500/15 px-1.5 py-0.5 font-medium text-emerald-700 dark:text-emerald-400">
+                                <span class="font-bold text-foreground/40">→</span>
+                                <span class="rounded-md border-2 border-foreground bg-emerald-100 px-1.5 py-0.5 font-bold text-emerald-700 shadow-2xs">
                                     {{ s.suggestion }}
                                 </span>
                             </p>
-                            <p class="text-xs text-muted-foreground">{{ s.reason }}</p>
+                            <p class="text-xs font-medium text-foreground/60">{{ s.reason }}</p>
                         </div>
                         <Button
                             size="sm"
-                            variant="secondary"
+                            variant="outline"
                             :disabled="appliedSet.has(idx)"
                             @click="applySuggestion(idx, s)"
                         >

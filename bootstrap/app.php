@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Middleware\Api\LoadWorkspaceFromToken;
-use App\Http\Middleware\App\HandleAppearance;
 use App\Http\Middleware\App\HandleInertiaRequests;
 use App\Http\Middleware\App\SetLocale;
 use Illuminate\Foundation\Application;
@@ -23,11 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'locale']);
+        $middleware->encryptCookies(except: ['sidebar_state', 'locale']);
 
         $middleware->web(append: [
             SetLocale::class,
-            HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);

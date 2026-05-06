@@ -39,9 +39,9 @@ class MastodonAnalytics
         $status = $response->json();
 
         return [
-            ['label' => 'Favourites', 'value' => data_get($status, 'favourites_count', 0)],
-            ['label' => 'Reblogs', 'value' => data_get($status, 'reblogs_count', 0)],
-            ['label' => 'Replies', 'value' => data_get($status, 'replies_count', 0)],
+            ['label' => __('analytics.metrics.favourites'), 'value' => data_get($status, 'favourites_count', 0)],
+            ['label' => __('analytics.metrics.reblogs'), 'value' => data_get($status, 'reblogs_count', 0)],
+            ['label' => __('analytics.metrics.replies'), 'value' => data_get($status, 'replies_count', 0)],
         ];
     }
 }

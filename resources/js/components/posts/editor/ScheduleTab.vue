@@ -2,6 +2,7 @@
 import { IconAlertCircle, IconCircleCheck, IconExternalLink, IconLoader2 } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
+import LabelBadge from '@/components/labels/LabelBadge.vue';
 import FacebookSettings from '@/components/posts/editor/FacebookSettings.vue';
 import InstagramSettings from '@/components/posts/editor/InstagramSettings.vue';
 import LinkedInSettings from '@/components/posts/editor/LinkedInSettings.vue';
@@ -149,7 +150,7 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
 <template>
     <div class="space-y-6">
         <div>
-            <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p class="mb-3 text-[11px] font-black uppercase tracking-widest text-foreground/60">
                 {{ $t('posts.edit.publish_to') }}
             </p>
             <div class="flex flex-wrap gap-3">
@@ -158,7 +159,7 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                         <TooltipTrigger as-child>
                             <button
                                 type="button"
-                                class="flex w-20 flex-col items-center gap-1.5 transition-opacity"
+                                class="flex w-20 cursor-pointer flex-col items-center gap-1.5 transition-opacity"
                                 :class="[
                                     platformIssues?.[pp.id] && !selectedPlatformIds.includes(pp.id) ? 'cursor-not-allowed opacity-40' : '',
                                     platformIssues?.[pp.id] && selectedPlatformIds.includes(pp.id) ? 'opacity-100' : '',
@@ -171,18 +172,20 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                                     <Avatar
                                         :src="getPlatformAvatar(pp)"
                                         :name="getPlatformDisplayName(pp)"
-                                        class="h-10 w-10 shrink-0 rounded-full ring-2 ring-offset-2"
+                                        class="size-10 shrink-0 rounded-full border-2"
                                         :class="[
-                                            platformIssues?.[pp.id] && selectedPlatformIds.includes(pp.id) ? 'ring-destructive' : '',
-                                            !platformIssues?.[pp.id] && selectedPlatformIds.includes(pp.id) ? 'ring-primary' : '',
-                                            !selectedPlatformIds.includes(pp.id) ? 'ring-transparent' : '',
+                                            platformIssues?.[pp.id] && selectedPlatformIds.includes(pp.id) ? 'border-rose-500 shadow-2xs' : '',
+                                            !platformIssues?.[pp.id] && selectedPlatformIds.includes(pp.id) ? 'border-foreground shadow-2xs' : '',
+                                            !selectedPlatformIds.includes(pp.id) ? 'border-foreground/20' : '',
                                         ]"
                                     />
-                                    <img
-                                        :src="getPlatformLogo(pp.platform)"
-                                        :alt="pp.platform"
-                                        class="absolute -bottom-1.5 -right-1.5 h-5 w-5 rounded-full bg-background object-contain ring-1 ring-border"
-                                    />
+                                    <span class="absolute -bottom-1 -right-1 inline-flex size-5 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
+                                        <img
+                                            :src="getPlatformLogo(pp.platform)"
+                                            :alt="pp.platform"
+                                            class="size-full object-cover"
+                                        />
+                                    </span>
                                     <Badge
                                         v-if="platformIssues?.[pp.id] && selectedPlatformIds.includes(pp.id)"
                                         variant="destructive"
@@ -190,12 +193,17 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                                     >
                                         <IconAlertCircle class="h-2.5 w-2.5" />
                                     </Badge>
-                                    <Badge v-else-if="pp.status === 'published'" variant="default" class="absolute -top-1 -right-1 h-4 w-4 p-0">
+                                    <Badge v-else-if="pp.status === 'published'" variant="success" class="absolute -top-1 -right-1 h-4 w-4 p-0">
                                         <IconCircleCheck class="h-2.5 w-2.5" />
                                     </Badge>
                                     <Badge v-else-if="pp.status === 'failed'" variant="destructive" class="absolute -top-1 -right-1 h-4 w-4 p-0 text-[9px]">!</Badge>
                                 </div>
-                                <span class="line-clamp-2 text-center text-xs leading-tight">{{ getPlatformDisplayName(pp) }}</span>
+                                <span
+                                    class="line-clamp-2 text-center text-xs leading-tight"
+                                    :class="selectedPlatformIds.includes(pp.id) ? 'font-bold text-foreground' : 'font-medium text-foreground/70'"
+                                >
+                                    {{ getPlatformDisplayName(pp) }}
+                                </span>
                             </button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -213,24 +221,36 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
         </div>
 
         <div v-if="postPlatforms.some(pp => pp.status !== 'pending')">
-            <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p class="mb-2 text-[11px] font-black uppercase tracking-widest text-foreground/60">
                 {{ $t('posts.edit.platform_status') }}
             </p>
             <div class="space-y-2">
-                <div v-for="pp in postPlatforms.filter(p => p.enabled)" :key="pp.id" class="flex items-center justify-between rounded-lg border p-3">
+                <div
+                    v-for="pp in postPlatforms.filter(p => p.enabled)"
+                    :key="pp.id"
+                    class="flex items-center justify-between rounded-xl border-2 border-foreground bg-card p-3 shadow-2xs"
+                >
                     <div class="flex items-center gap-2">
-                        <img :src="getPlatformLogo(pp.platform)" :alt="pp.platform" class="h-4 w-4 object-contain" />
-                        <span class="text-sm">{{ getPlatformDisplayName(pp) }}</span>
+                        <span class="inline-flex size-5 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card">
+                            <img :src="getPlatformLogo(pp.platform)" :alt="pp.platform" class="size-full object-cover" />
+                        </span>
+                        <span class="text-sm font-bold text-foreground">{{ getPlatformDisplayName(pp) }}</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <Badge v-if="pp.status === 'published'" variant="default">{{ $t('posts.edit.status.published') }}</Badge>
-                        <Badge v-else-if="pp.status === 'publishing'" variant="secondary">
-                            <IconLoader2 class="mr-1 h-3 w-3 animate-spin" />
+                        <Badge v-if="pp.status === 'published'" variant="success">{{ $t('posts.edit.status.published') }}</Badge>
+                        <Badge v-else-if="pp.status === 'publishing'" variant="warning">
+                            <IconLoader2 class="size-3 animate-spin" />
                             {{ $t('posts.edit.status.publishing') }}
                         </Badge>
                         <Badge v-else-if="pp.status === 'failed'" variant="destructive">{{ $t('posts.edit.status.failed') }}</Badge>
-                        <a v-if="pp.platform_url" :href="pp.platform_url" target="_blank" rel="noopener noreferrer">
-                            <IconExternalLink class="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                        <a
+                            v-if="pp.platform_url"
+                            :href="pp.platform_url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex size-7 items-center justify-center rounded-full border-2 border-foreground bg-card text-foreground shadow-2xs transition-transform hover:rotate-3 hover:bg-violet-100"
+                        >
+                            <IconExternalLink class="size-3.5" stroke-width="2.5" />
                         </a>
                     </div>
                 </div>
@@ -305,24 +325,21 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
         </div>
 
         <div>
-            <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p class="mb-3 text-[11px] font-black uppercase tracking-widest text-foreground/60">
                 {{ $t('posts.edit.labels') }}
             </p>
             <div v-if="labels.length > 0" class="flex flex-wrap gap-2">
-                <button
+                <LabelBadge
                     v-for="label in labels"
                     :key="label.id"
-                    type="button"
-                    class="flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors"
-                    :class="selectedLabelIds.includes(label.id) ? 'border-primary bg-primary/10' : 'border-border opacity-70 hover:opacity-100'"
+                    :label="label"
+                    interactive
+                    :selected="selectedLabelIds.includes(label.id)"
                     :disabled="isReadOnly"
                     @click="emit('toggleLabel', label.id)"
-                >
-                    <span class="h-2.5 w-2.5 shrink-0 rounded-full" :style="{ backgroundColor: label.color }" />
-                    <span class="truncate">{{ label.name }}</span>
-                </button>
+                />
             </div>
-            <p v-else class="text-sm text-muted-foreground">{{ $t('posts.edit.no_labels') }}</p>
+            <p v-else class="text-sm font-medium text-foreground/60">{{ $t('posts.edit.no_labels') }}</p>
         </div>
     </div>
 </template>

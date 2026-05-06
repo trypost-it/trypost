@@ -259,6 +259,17 @@ Vue components must have a single root element.
 
 - NEVER use HTML5 validation attributes (`required`, `minlength`, `pattern`, etc.) on form inputs. Always rely solely on backend validation.
 
+## Backend Validation
+
+- Validation rules always live in a dedicated `Illuminate\Foundation\Http\FormRequest` subclass under `app/Http/Requests/App/<Group>/`. Controller actions must type-hint the FormRequest as the parameter — NEVER call `$request->validate([...])` inline in the controller.
+- Naming: `<Verb><Resource>Request.php` (e.g. `StorePostRequest`, `ApplyPostTemplateRequest`, `IndexPostTemplateRequest`).
+
+## Pest / Feature Tests
+
+- ALWAYS use named routes via the `route()` helper in feature tests. NEVER hardcode URL strings like `'/posts/ai/create'`.
+    - Example: `$this->postJson(route('app.posts.store'))` instead of `$this->postJson('/posts')`.
+    - With params: `route('app.posts.ai.create.finalize', $creationId)`.
+
 ## Dusk (Browser Tests)
 
 - In Dusk tests, ALWAYS use named routes via `route()` helper. NEVER hardcode URLs like `'https://trypost.test/login'`.

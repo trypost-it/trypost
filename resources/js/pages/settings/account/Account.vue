@@ -5,6 +5,7 @@ import { computed } from 'vue';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,6 @@ import { settings as settingsHub } from '@/routes/app';
 import { edit as accountEdit, update as accountUpdate } from '@/routes/app/account';
 import { index as billingIndex } from '@/routes/app/billing';
 import { index as usageIndex } from '@/routes/app/usage';
-import type { BreadcrumbItem } from '@/types';
 
 interface AccountData {
     id: string;
@@ -27,11 +27,6 @@ defineProps<{
     selfHosted: boolean;
 }>();
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.account.title') },
-]);
-
 const tabs = computed(() => [
     { name: 'account', label: trans('settings.account.tabs.account'), href: accountEdit().url },
     { name: 'usage', label: trans('settings.account.tabs.usage'), href: usageIndex().url },
@@ -42,8 +37,13 @@ const tabs = computed(() => [
 <template>
     <Head :title="$t('settings.account.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+            />
+
             <SettingsTabsNav :tabs="tabs" active="account" />
 
             <section class="space-y-12">

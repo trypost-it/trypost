@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { IconCopy, IconX } from '@tabler/icons-vue';
+import { IconAlertTriangle, IconCopy } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -120,31 +121,30 @@ defineExpose({
 <template>
     <Dialog :open="isOpen" @update:open="onOpenChange">
         <DialogContent :show-close-button="false" class="sm:max-w-md">
-            <Button
-                variant="ghost"
-                size="icon"
-                class="absolute top-4 right-4 size-7"
-                @click="close"
-            >
-                <IconX class="size-4" />
-                <span class="sr-only">Close</span>
-            </Button>
-            <DialogHeader>
-                <DialogTitle>{{ title }}</DialogTitle>
-                <DialogDescription class="space-y-1">
-                    <span class="block">{{ description }}</span>
-                    <span class="block font-semibold text-destructive">
-                        {{ trans('common.confirm_modal.cannot_be_undone') }}
-                    </span>
-                </DialogDescription>
+            <DialogHeader class="items-start text-left">
+                <div class="flex items-start gap-3">
+                    <div
+                        class="inline-flex size-12 -rotate-3 shrink-0 items-center justify-center rounded-2xl border-2 border-foreground bg-rose-200 shadow-2xs"
+                    >
+                        <IconAlertTriangle class="size-6 text-rose-700" stroke-width="2.25" />
+                    </div>
+                    <div class="flex-1 space-y-1">
+                        <DialogTitle>{{ title }}</DialogTitle>
+                        <DialogDescription class="space-y-1">
+                            <span class="block">{{ description }}</span>
+                            <span class="block font-semibold text-rose-700">
+                                {{ trans('common.confirm_modal.cannot_be_undone') }}
+                            </span>
+                        </DialogDescription>
+                    </div>
+                </div>
             </DialogHeader>
-            <div v-if="requiresConfirmation" class="py-2">
-                <p
-                    class="mb-2 flex flex-wrap items-center gap-1 text-sm text-muted-foreground"
-                >
+
+            <div v-if="requiresConfirmation" class="space-y-2">
+                <p class="flex flex-wrap items-center gap-1 text-sm text-foreground/80">
                     <span>{{ trans('common.confirm_modal.type') }}</span>
                     <code
-                        class="inline-flex items-center gap-1 rounded-sm border bg-zinc-200 px-1.5 text-sm break-all text-foreground dark:bg-zinc-700"
+                        class="inline-flex items-center gap-1.5 rounded-md border-2 border-foreground bg-amber-100 px-1.5 py-0.5 font-mono text-xs font-bold break-all text-foreground shadow-2xs"
                     >
                         {{ confirmText }}
                         <TooltipProvider>
@@ -153,7 +153,7 @@ defineExpose({
                                     <button
                                         type="button"
                                         tabindex="-1"
-                                        class="inline-flex shrink-0 items-center rounded text-muted-foreground hover:text-foreground"
+                                        class="inline-flex shrink-0 cursor-pointer items-center rounded text-foreground/60 hover:text-foreground"
                                         @click="
                                             copyToClipboard(
                                                 confirmText,
@@ -175,9 +175,11 @@ defineExpose({
                 <Input
                     v-model="confirmInput"
                     autocomplete="off"
+                    autofocus
                 />
             </div>
-            <DialogFooter>
+
+            <DialogFooter class="sm:justify-start sm:gap-2">
                 <Button
                     variant="destructive"
                     :disabled="processing || !isConfirmed"
@@ -186,7 +188,7 @@ defineExpose({
                     {{ action }}
                 </Button>
                 <Button
-                    variant="secondary"
+                    variant="outline"
                     @click="close"
                 >
                     {{ cancel }}

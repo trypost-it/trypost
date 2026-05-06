@@ -75,8 +75,8 @@ class LinkedInPageAnalytics
         $data = $response->json();
 
         return [
-            ['label' => 'Likes', 'value' => (int) data_get($data, 'likesSummary.totalLikes', 0)],
-            ['label' => 'Comments', 'value' => (int) data_get($data, 'commentsSummary.aggregatedTotalComments', 0)],
+            ['label' => __('analytics.metrics.likes'), 'value' => (int) data_get($data, 'likesSummary.totalLikes', 0)],
+            ['label' => __('analytics.metrics.comments'), 'value' => (int) data_get($data, 'commentsSummary.aggregatedTotalComments', 0)],
         ];
     }
 
@@ -135,7 +135,7 @@ class LinkedInPageAnalytics
             $totalPageViews += data_get($element, 'totalPageStatistics.views.allPageViews.pageViews', 0);
         }
 
-        return $totalPageViews > 0 ? [['label' => 'Page Views', 'value' => $totalPageViews]] : [];
+        return $totalPageViews > 0 ? [['label' => __('analytics.metrics.page_views'), 'value' => $totalPageViews]] : [];
     }
 
     private function fetchFollowerStatistics(string $orgUrn, string $timeInterval): array
@@ -164,11 +164,11 @@ class LinkedInPageAnalytics
         $metrics = [];
 
         if ($organicFollowers > 0) {
-            $metrics[] = ['label' => 'Organic Followers', 'value' => $organicFollowers];
+            $metrics[] = ['label' => __('analytics.metrics.organic_followers'), 'value' => $organicFollowers];
         }
 
         if ($paidFollowers > 0) {
-            $metrics[] = ['label' => 'Paid Followers', 'value' => $paidFollowers];
+            $metrics[] = ['label' => __('analytics.metrics.paid_followers'), 'value' => $paidFollowers];
         }
 
         return $metrics;
@@ -207,19 +207,19 @@ class LinkedInPageAnalytics
         $metrics = [];
 
         if ($totalImpressions > 0) {
-            $metrics[] = ['label' => 'Impressions', 'value' => $totalImpressions];
+            $metrics[] = ['label' => __('analytics.metrics.impressions'), 'value' => $totalImpressions];
         }
         if ($totalClicks > 0) {
-            $metrics[] = ['label' => 'Clicks', 'value' => $totalClicks];
+            $metrics[] = ['label' => __('analytics.metrics.clicks'), 'value' => $totalClicks];
         }
         if ($totalLikes > 0) {
-            $metrics[] = ['label' => 'Likes', 'value' => $totalLikes];
+            $metrics[] = ['label' => __('analytics.metrics.likes'), 'value' => $totalLikes];
         }
         if ($totalComments > 0) {
-            $metrics[] = ['label' => 'Comments', 'value' => $totalComments];
+            $metrics[] = ['label' => __('analytics.metrics.comments'), 'value' => $totalComments];
         }
         if ($totalShares > 0) {
-            $metrics[] = ['label' => 'Shares', 'value' => $totalShares];
+            $metrics[] = ['label' => __('analytics.metrics.shares'), 'value' => $totalShares];
         }
 
         return $metrics;

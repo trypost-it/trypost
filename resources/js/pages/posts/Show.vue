@@ -1,18 +1,22 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
-import { IconCalendar, IconExternalLink, IconLoader2, IconX } from '@tabler/icons-vue';
+import { IconArrowLeft, IconCalendar, IconExternalLink, IconLoader2, IconX } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
+import LabelBadge from '@/components/labels/LabelBadge.vue';
 import PostPlatformMetrics from '@/components/posts/PostPlatformMetrics.vue';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 import { getPlatformStatusConfig, getPostStatusConfig } from '@/composables/usePostStatus';
 import dayjs from '@/dayjs';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { index as postsIndex } from '@/routes/app/posts';
 
 interface MediaItem {
     id: string;
@@ -67,8 +71,6 @@ const props = defineProps<{
 }>();
 
 const enabledPlatforms = computed(() => props.post.platforms.filter((pp) => pp.enabled));
-const publishedCount = computed(() => enabledPlatforms.value.filter((pp) => pp.status === 'published').length);
-const failedCount = computed(() => enabledPlatforms.value.filter((pp) => pp.status === 'failed').length);
 
 const isPublishing = computed(() => props.post.status === 'publishing');
 
@@ -110,66 +112,84 @@ useEcho(`post.${props.post.id}`, '.PostPlatformStatusUpdated', () => {
 <template>
     <Head :title="pageTitle" />
 
-    <AppLayout :title="pageTitle" full-width>
+    <AppLayout full-width>
         <!-- Publishing state: clean centered loader, nothing else visible. -->
-        <div v-if="isPublishing" class="flex flex-1 flex-col items-center justify-center gap-3 p-6">
-            <IconLoader2 class="h-10 w-10 animate-spin text-primary" />
-            <p class="text-base font-medium">{{ $t('posts.edit.publishing_overlay_title') }}</p>
-            <p class="max-w-md text-center text-sm text-muted-foreground">
+        <div v-if="isPublishing" class="flex flex-1 flex-col items-center justify-center gap-4 p-6">
+            <div class="inline-flex size-14 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
+                <IconLoader2 class="size-7 animate-spin text-foreground" stroke-width="2" />
+            </div>
+            <p
+                class="text-2xl font-semibold leading-tight text-foreground"
+                style="font-family: var(--font-display)"
+            >
+                {{ $t('posts.edit.publishing_overlay_title') }}
+            </p>
+            <p class="max-w-md text-center text-sm text-foreground/70">
                 {{ $t('posts.edit.publishing_overlay_subtitle') }}
             </p>
         </div>
 
-        <div v-else class="grid flex-1 grid-cols-1 lg:grid-cols-2 lg:divide-x">
-            <!-- LEFT: post preview -->
-            <div class="border-b p-6 lg:border-b-0">
-                <div class="flex flex-col gap-4">
-                    <!-- Status row -->
-                    <div class="flex flex-wrap items-center gap-3">
-                        <Badge :class="postStatus.color">
-                            <component :is="postStatus.icon" class="mr-1 h-3 w-3" />
-                            {{ postStatus.label }}
-                        </Badge>
-                        <span class="flex items-center gap-1.5 text-sm text-muted-foreground">
-                            <IconCalendar class="h-4 w-4" />
-                            <span v-if="post.published_at">
-                                {{ $t('posts.show.published_on', { date: formatDateTime(post.published_at) }) }}
-                            </span>
-                            <span v-else-if="post.scheduled_at">
-                                {{ $t('posts.show.scheduled_for', { date: formatDateTime(post.scheduled_at) }) }}
-                            </span>
-                            <span v-else>{{ $t('posts.show.draft') }}</span>
+        <div v-else class="flex flex-col flex-1 min-h-0">
+            <header class="flex shrink-0 items-center justify-between gap-3 border-b-2 border-foreground bg-card px-4 py-3 md:px-6">
+                <div class="flex items-center gap-2 pl-12 md:pl-0">
+                    <Link :href="postsIndex.url()">
+                        <Button variant="outline">
+                            <IconArrowLeft class="size-4" />
+                            {{ $t('posts.show.back') }}
+                        </Button>
+                    </Link>
+                </div>
+                <div class="flex flex-wrap items-center justify-end gap-3">
+                    <span class="flex items-center gap-1.5 text-sm font-medium text-foreground/70">
+                        <IconCalendar class="size-4 text-foreground/60" />
+                        <span v-if="post.published_at">
+                            {{ $t('posts.show.published_on', { date: formatDateTime(post.published_at) }) }}
                         </span>
-                    </div>
+                        <span v-else-if="post.scheduled_at">
+                            {{ $t('posts.show.scheduled_for', { date: formatDateTime(post.scheduled_at) }) }}
+                        </span>
+                        <span v-else>{{ $t('posts.show.draft') }}</span>
+                    </span>
+                    <Badge :variant="postStatus.variant">
+                        <component :is="postStatus.icon" class="size-3" />
+                        {{ postStatus.label }}
+                    </Badge>
+                </div>
+            </header>
 
-                    <!-- Post preview card -->
-                    <Card class="overflow-hidden py-0">
+            <div class="grid flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:overflow-hidden">
+                <!-- LEFT: post preview -->
+                <div class="border-b-2 border-foreground/10 p-6 lg:overflow-y-auto lg:border-b-0 lg:border-r-2 lg:border-foreground">
+                    <Card class="mx-auto max-w-xl overflow-hidden py-0">
                         <CardContent v-if="post.content" class="p-6">
-                            <p class="whitespace-pre-wrap text-sm leading-relaxed">{{ post.content }}</p>
+                            <p class="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{{ post.content }}</p>
                         </CardContent>
 
                         <div
                             v-if="post.media.length > 0"
-                            :class="['grid gap-1 bg-black', mediaGridClass, post.content ? 'border-t' : '']"
+                            :class="['grid gap-1 bg-foreground', mediaGridClass, post.content ? 'border-t-2 border-foreground/10' : '']"
                         >
                             <button
                                 v-for="(item, i) in post.media"
                                 :key="item.id"
                                 type="button"
-                                class="group relative aspect-square overflow-hidden bg-muted transition-opacity hover:opacity-90"
+                                :class="[
+                                    'group relative cursor-pointer overflow-hidden bg-muted transition-opacity hover:opacity-90',
+                                    post.media.length === 1 ? 'flex items-center justify-center' : 'aspect-square',
+                                ]"
                                 @click="openLightbox(i)"
                             >
                                 <video
                                     v-if="item.type === 'video' || item.mime_type?.startsWith('video/')"
                                     :src="item.url"
-                                    class="h-full w-full object-cover"
+                                    :class="post.media.length === 1 ? 'max-h-[480px] w-full object-contain' : 'size-full object-cover'"
                                     muted
                                 />
                                 <img
                                     v-else
                                     :src="item.url"
                                     :alt="item.original_filename"
-                                    class="h-full w-full object-cover"
+                                    :class="post.media.length === 1 ? 'max-h-[480px] w-full object-contain' : 'size-full object-cover'"
                                     loading="lazy"
                                 />
                             </button>
@@ -177,121 +197,100 @@ useEcho(`post.${props.post.id}`, '.PostPlatformStatusUpdated', () => {
 
                         <div
                             v-if="post.labels && post.labels.length > 0"
-                            class="flex flex-wrap gap-2 border-t bg-muted/30 px-6 py-3"
+                            class="flex flex-wrap gap-2 border-t-2 border-foreground/10 px-6 py-3"
                         >
-                            <span
+                            <LabelBadge
                                 v-for="label in post.labels"
                                 :key="label.id"
-                                class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"
-                                :style="{ backgroundColor: label.color + '20', color: label.color }"
-                            >
-                                {{ label.name }}
-                            </span>
+                                :label="label"
+                            />
                         </div>
                     </Card>
                 </div>
-            </div>
 
-            <!-- RIGHT: platforms breakdown -->
-            <div class="flex flex-col gap-4 p-6">
-                <!-- Summary stats -->
-                <div v-if="enabledPlatforms.length > 0" class="grid grid-cols-3 gap-4">
-                    <Card>
-                        <CardContent class="p-6">
-                            <p class="text-sm text-muted-foreground">{{ $t('posts.show.summary.platforms') }}</p>
-                            <p class="mt-2 text-3xl font-bold tracking-tight tabular-nums">{{ enabledPlatforms.length }}</p>
+                <!-- RIGHT: platforms breakdown -->
+                <div class="flex flex-col gap-4 p-6 lg:overflow-y-auto">
+                    <h2 class="text-[11px] font-black uppercase tracking-widest text-foreground/60">
+                        {{ $t('posts.show.platforms') }}
+                        <span class="ml-1 text-foreground/40">({{ enabledPlatforms.length }})</span>
+                    </h2>
+
+                    <Card v-if="enabledPlatforms.length === 0" class="py-0">
+                        <CardContent class="p-8 text-center text-sm font-medium text-foreground/60">
+                            {{ $t('posts.show.no_platforms') }}
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardContent class="p-6">
-                            <p class="text-sm text-muted-foreground">{{ $t('posts.show.summary.published') }}</p>
-                            <p class="mt-2 text-3xl font-bold tracking-tight tabular-nums">{{ publishedCount }}</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent class="p-6">
-                            <p class="text-sm text-muted-foreground">{{ $t('posts.show.summary.failed') }}</p>
-                            <p class="mt-2 text-3xl font-bold tracking-tight tabular-nums">{{ failedCount }}</p>
-                        </CardContent>
-                    </Card>
-                </div>
 
-                <!-- Platforms list -->
-                <h2 class="text-sm font-semibold">{{ $t('posts.show.platforms') }}</h2>
+                    <div v-else class="space-y-3">
+                        <Card v-for="pp in enabledPlatforms" :key="pp.id" class="overflow-hidden py-0">
+                            <CardContent class="p-0">
+                                <div class="flex items-center gap-3 p-4">
+                                    <div class="relative shrink-0">
+                                        <Avatar
+                                            :src="getDisplayAvatar(pp)"
+                                            :name="getDisplayName(pp)"
+                                            class="size-11 rounded-full border-2 border-foreground shadow-2xs"
+                                        />
+                                        <span class="absolute -bottom-1 -right-1 inline-flex size-5 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
+                                            <img
+                                                :src="getPlatformLogo(pp.platform)"
+                                                :alt="pp.platform"
+                                                class="size-full object-cover"
+                                            />
+                                        </span>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-bold text-foreground">{{ getDisplayName(pp) }}</p>
+                                        <p class="truncate text-xs font-medium text-foreground/60">
+                                            <span v-if="getDisplayUsername(pp)">@{{ getDisplayUsername(pp) }} · </span>
+                                            {{ getPlatformLabel(pp.platform) }}
+                                        </p>
+                                    </div>
 
-                <Card v-if="enabledPlatforms.length === 0" class="py-0">
-                    <CardContent class="p-8 text-center text-sm text-muted-foreground">
-                        {{ $t('posts.show.no_platforms') }}
-                    </CardContent>
-                </Card>
-
-                <div v-else class="space-y-3">
-                    <Card v-for="pp in enabledPlatforms" :key="pp.id" class="overflow-hidden py-0">
-                        <CardContent class="p-0">
-                            <div class="flex items-center gap-3 p-4">
-                                <div class="relative shrink-0">
-                                    <Avatar
-                                        :src="getDisplayAvatar(pp)"
-                                        :name="getDisplayName(pp)"
-                                        class="size-11 rounded-full"
-                                    />
-                                    <img
-                                        :src="getPlatformLogo(pp.platform)"
-                                        :alt="pp.platform"
-                                        class="absolute -bottom-0.5 -right-0.5 size-5 rounded-full bg-background object-contain ring-2 ring-card"
-                                    />
+                                    <div class="flex shrink-0 items-center gap-2">
+                                        <Badge :variant="getPlatformStatusConfig(pp.status).variant">
+                                            <component
+                                                :is="getPlatformStatusConfig(pp.status).icon"
+                                                class="size-3"
+                                                :class="pp.status === 'publishing' ? 'animate-spin' : ''"
+                                            />
+                                            {{ getPlatformStatusConfig(pp.status).label }}
+                                        </Badge>
+                                        <TooltipProvider v-if="pp.status === 'published' && pp.platform_url" :delay-duration="200">
+                                            <Tooltip>
+                                                <TooltipTrigger as-child>
+                                                    <a
+                                                        :href="pp.platform_url"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        class="inline-flex size-8 cursor-pointer items-center justify-center rounded-full border-2 border-foreground bg-card text-foreground shadow-2xs transition-transform hover:rotate-3 hover:bg-violet-100"
+                                                    >
+                                                        <IconExternalLink class="size-4" stroke-width="2.5" />
+                                                    </a>
+                                                </TooltipTrigger>
+                                                <TooltipContent>{{ $t('posts.show.view_on_platform') }}</TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </div>
                                 </div>
-                                <div class="min-w-0 flex-1">
-                                    <p class="truncate text-sm font-semibold">{{ getDisplayName(pp) }}</p>
-                                    <p class="truncate text-xs text-muted-foreground">
-                                        <span v-if="getDisplayUsername(pp)">@{{ getDisplayUsername(pp) }} · </span>
-                                        {{ getPlatformLabel(pp.platform) }}
-                                    </p>
+
+                                <!-- Failed: error message -->
+                                <div
+                                    v-if="pp.status === 'failed' && pp.error_message"
+                                    class="border-t-2 border-foreground/10 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700"
+                                >
+                                    {{ pp.error_message }}
                                 </div>
 
-                                <Badge :class="getPlatformStatusConfig(pp.status).color" class="shrink-0">
-                                    <component
-                                        :is="getPlatformStatusConfig(pp.status).icon"
-                                        class="mr-1 h-3 w-3"
-                                        :class="pp.status === 'publishing' ? 'animate-spin' : ''"
-                                    />
-                                    {{ getPlatformStatusConfig(pp.status).label }}
-                                </Badge>
-                            </div>
-
-                            <!-- Failed: error message -->
-                            <div
-                                v-if="pp.status === 'failed' && pp.error_message"
-                                class="border-t bg-destructive/5 px-4 py-3 text-xs text-destructive"
-                            >
-                                {{ pp.error_message }}
-                            </div>
-
-                            <!-- Published: metrics + footer -->
-                            <template v-if="pp.status === 'published'">
+                                <!-- Published: metrics -->
                                 <PostPlatformMetrics
+                                    v-if="pp.status === 'published'"
                                     :post-id="post.id"
                                     :post-platform-id="pp.id"
                                 />
-
-                                <div class="flex items-center justify-between border-t bg-muted/20 px-4 py-2.5 text-xs">
-                                    <span v-if="pp.published_at" class="text-muted-foreground">
-                                        {{ formatDateTime(pp.published_at) }}
-                                    </span>
-                                    <a
-                                        v-if="pp.platform_url"
-                                        :href="pp.platform_url"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-                                    >
-                                        {{ $t('posts.show.view_on_platform') }}
-                                        <IconExternalLink class="size-3.5" />
-                                    </a>
-                                </div>
-                            </template>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
             </div>
         </div>

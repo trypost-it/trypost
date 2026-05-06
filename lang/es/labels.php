@@ -14,6 +14,11 @@ return [
         'created_at' => 'Creado',
     ],
 
+    'actions' => [
+        'edit' => 'Editar etiqueta',
+        'delete' => 'Eliminar etiqueta',
+    ],
+
     'create' => [
         'title' => 'Crear etiqueta',
         'description' => 'Dale un nombre y elige un color para tu etiqueta',

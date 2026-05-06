@@ -75,11 +75,11 @@ class PinterestAnalytics
         $data = data_get($response->json(), 'all.summary_metrics', []);
 
         $rows = [
-            'IMPRESSION' => 'Impressions',
-            'SAVE' => 'Saves',
-            'PIN_CLICK' => 'Pin clicks',
-            'OUTBOUND_CLICK' => 'Outbound clicks',
-            'VIDEO_MRC_VIEW' => 'Video views',
+            'IMPRESSION' => __('analytics.metrics.impressions'),
+            'SAVE' => __('analytics.metrics.saves'),
+            'PIN_CLICK' => __('analytics.metrics.pin_clicks'),
+            'OUTBOUND_CLICK' => __('analytics.metrics.outbound_clicks'),
+            'VIDEO_MRC_VIEW' => __('analytics.metrics.video_views'),
         ];
 
         return collect($rows)
@@ -148,11 +148,11 @@ class PinterestAnalytics
         $avgClickRate = $count > 0 ? round($totals['PIN_CLICK_RATE'] / $count, 4) : 0;
 
         return [
-            ['label' => 'Impressions', 'value' => $totals['IMPRESSION']],
-            ['label' => 'Pin Clicks', 'value' => $totals['PIN_CLICK']],
-            ['label' => 'Engagement', 'value' => $totals['ENGAGEMENT']],
-            ['label' => 'Saves', 'value' => $totals['SAVE']],
-            ['label' => 'Pin Click Rate', 'value' => $avgClickRate],
+            ['label' => __('analytics.metrics.impressions'), 'value' => $totals['IMPRESSION']],
+            ['label' => __('analytics.metrics.pin_clicks'), 'value' => $totals['PIN_CLICK']],
+            ['label' => __('analytics.metrics.engagement'), 'value' => $totals['ENGAGEMENT']],
+            ['label' => __('analytics.metrics.saves'), 'value' => $totals['SAVE']],
+            ['label' => __('analytics.metrics.pin_click_rate'), 'value' => $avgClickRate],
         ];
     }
 

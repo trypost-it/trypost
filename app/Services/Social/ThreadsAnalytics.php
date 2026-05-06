@@ -119,7 +119,14 @@ class ThreadsAnalytics
                 $value = collect($values)->sum('value');
             }
 
-            $label = ucfirst(str_replace('_', ' ', $name));
+            $label = match ($name) {
+                'views' => __('analytics.metrics.views'),
+                'likes' => __('analytics.metrics.likes'),
+                'replies' => __('analytics.metrics.replies'),
+                'reposts' => __('analytics.metrics.reposts'),
+                'quotes' => __('analytics.metrics.quotes'),
+                default => ucfirst(str_replace('_', ' ', $name)),
+            };
 
             $metrics[] = ['label' => $label, 'value' => $value];
         }

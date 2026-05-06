@@ -4,6 +4,7 @@ import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -13,7 +14,6 @@ import { settings as settingsHub } from '@/routes/app';
 import { edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as preferencesRoute } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';
-import type { BreadcrumbItem } from '@/types';
 
 interface Preferences {
     post_published: boolean;
@@ -31,12 +31,6 @@ const postPublished = ref(props.preferences.post_published);
 const postFailed = ref(props.preferences.post_failed);
 const accountDisconnected = ref(props.preferences.account_disconnected);
 const processing = ref(false);
-
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.profile.title'), href: editProfile().url },
-    { title: trans('settings.nav.notifications') },
-]);
 
 const tabs = computed(() => [
     { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
@@ -63,8 +57,13 @@ const submit = () => {
 <template>
     <Head :title="$t('settings.notifications.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+            />
+
             <SettingsTabsNav :tabs="tabs" active="notifications" />
 
             <section class="space-y-12">
@@ -74,31 +73,31 @@ const submit = () => {
                         :description="$t('settings.notifications.description')"
                     />
 
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between rounded-lg border p-4">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between gap-4 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs">
                             <div class="space-y-0.5">
-                                <Label for="post_published">{{ $t('settings.notifications.post_published') }}</Label>
-                                <p class="text-sm text-muted-foreground">
+                                <Label for="post_published" class="text-sm font-bold">{{ $t('settings.notifications.post_published') }}</Label>
+                                <p class="text-sm text-foreground/70">
                                     {{ $t('settings.notifications.post_published_description') }}
                                 </p>
                             </div>
                             <Switch id="post_published" v-model="postPublished" />
                         </div>
 
-                        <div class="flex items-center justify-between rounded-lg border p-4">
+                        <div class="flex items-center justify-between gap-4 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs">
                             <div class="space-y-0.5">
-                                <Label for="post_failed">{{ $t('settings.notifications.post_failed') }}</Label>
-                                <p class="text-sm text-muted-foreground">
+                                <Label for="post_failed" class="text-sm font-bold">{{ $t('settings.notifications.post_failed') }}</Label>
+                                <p class="text-sm text-foreground/70">
                                     {{ $t('settings.notifications.post_failed_description') }}
                                 </p>
                             </div>
                             <Switch id="post_failed" v-model="postFailed" />
                         </div>
 
-                        <div class="flex items-center justify-between rounded-lg border p-4">
+                        <div class="flex items-center justify-between gap-4 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs">
                             <div class="space-y-0.5">
-                                <Label for="account_disconnected">{{ $t('settings.notifications.account_disconnected') }}</Label>
-                                <p class="text-sm text-muted-foreground">
+                                <Label for="account_disconnected" class="text-sm font-bold">{{ $t('settings.notifications.account_disconnected') }}</Label>
+                                <p class="text-sm text-foreground/70">
                                     {{ $t('settings.notifications.account_disconnected_description') }}
                                 </p>
                             </div>

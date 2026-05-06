@@ -87,7 +87,7 @@ test('store workspace creates first workspace', function () {
         'name' => 'New Workspace',
     ]);
 
-    $response->assertRedirect(route('app.accounts'));
+    $response->assertRedirect(route('app.accounts', ['openDialog' => 'true']));
 
     $this->assertDatabaseHas('workspaces', [
         'name' => 'New Workspace',
@@ -102,7 +102,7 @@ test('store workspace creates second workspace in self-hosted mode', function ()
         'name' => 'Second Workspace',
     ]);
 
-    $response->assertRedirect(route('app.calendar'));
+    $response->assertRedirect(route('app.accounts', ['openDialog' => 'true']));
 
     $this->assertDatabaseHas('workspaces', [
         'name' => 'Second Workspace',
@@ -411,7 +411,7 @@ test('autofillBrand validates url is required', function () {
 });
 
 // Brand-aware store tests
-test('store persists brand fields and redirects first workspace to /accounts', function () {
+test('store persists brand fields and redirects to /accounts with openDialog flag', function () {
     $account = Account::factory()->create();
     $user = User::factory()->create(['account_id' => $account->id]);
     $account->update(['owner_id' => $user->id]);
@@ -432,7 +432,7 @@ test('store persists brand fields and redirects first workspace to /accounts', f
         'content_language' => 'en',
     ]);
 
-    $response->assertRedirect(route('app.accounts'));
+    $response->assertRedirect(route('app.accounts', ['openDialog' => 'true']));
 
     $workspace = Workspace::where('name', 'Acme Inc')->sole();
     expect($workspace->name)->toBe('Acme Inc');
@@ -440,7 +440,7 @@ test('store persists brand fields and redirects first workspace to /accounts', f
     expect($workspace->brand_description)->toBe('We sell rockets.');
 });
 
-test('store redirects to /calendar for additional workspace (existing user)', function () {
+test('store redirects additional workspace to /accounts with openDialog flag', function () {
     $account = Account::factory()->create();
     $user = User::factory()->create(['account_id' => $account->id]);
     $account->update(['owner_id' => $user->id]);
@@ -460,7 +460,7 @@ test('store redirects to /calendar for additional workspace (existing user)', fu
         'name' => 'Second Workspace',
     ]);
 
-    $response->assertRedirect(route('app.calendar'));
+    $response->assertRedirect(route('app.accounts', ['openDialog' => 'true']));
     expect(Workspace::where('account_id', $account->id)->count())->toBe(2);
 });
 

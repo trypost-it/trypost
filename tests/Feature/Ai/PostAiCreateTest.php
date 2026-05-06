@@ -23,7 +23,7 @@ beforeEach(function () {
 // --- POST /posts/ai/create (start) ---
 
 test('start requires authentication', function () {
-    $this->postJson('/posts/ai/create', ['prompt' => 'hello', 'format' => 'x_post'])
+    $this->postJson(route('app.posts.ai.create'), ['prompt' => 'hello', 'format' => 'x_post'])
         ->assertStatus(Response::HTTP_UNAUTHORIZED);
 });
 
@@ -31,7 +31,7 @@ test('start validates prompt is required', function () {
     Bus::fake();
 
     $this->actingAs($this->user)
-        ->postJson('/posts/ai/create', ['format' => 'x_post'])
+        ->postJson(route('app.posts.ai.create'), ['format' => 'x_post'])
         ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
         ->assertJsonValidationErrors(['prompt']);
 });
@@ -40,7 +40,7 @@ test('start validates format is required', function () {
     Bus::fake();
 
     $this->actingAs($this->user)
-        ->postJson('/posts/ai/create', ['prompt' => 'hello'])
+        ->postJson(route('app.posts.ai.create'), ['prompt' => 'hello'])
         ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
         ->assertJsonValidationErrors(['format']);
 });
@@ -49,7 +49,7 @@ test('start validates format must be a known value', function () {
     Bus::fake();
 
     $this->actingAs($this->user)
-        ->postJson('/posts/ai/create', ['prompt' => 'hello', 'format' => 'tiktok_video'])
+        ->postJson(route('app.posts.ai.create'), ['prompt' => 'hello', 'format' => 'tiktok_video'])
         ->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
         ->assertJsonValidationErrors(['format']);
 });
@@ -64,7 +64,7 @@ test('start rejects social_account_id from another workspace', function () {
     ]);
 
     $this->actingAs($this->user)
-        ->postJson('/posts/ai/create', [
+        ->postJson(route('app.posts.ai.create'), [
             'prompt' => 'hello',
             'format' => 'x_post',
             'social_account_id' => $foreignAccount->id,
@@ -81,7 +81,7 @@ test('start dispatches StreamPostCreation and returns creation_id and channel', 
     ]);
 
     $response = $this->actingAs($this->user)
-        ->postJson('/posts/ai/create', [
+        ->postJson(route('app.posts.ai.create'), [
             'prompt' => 'Write a post about productivity',
             'format' => 'x_post',
             'social_account_id' => $account->id,
@@ -108,7 +108,7 @@ test('start works without social_account_id', function () {
     Bus::fake();
 
     $this->actingAs($this->user)
-        ->postJson('/posts/ai/create', [
+        ->postJson(route('app.posts.ai.create'), [
             'prompt' => 'Write a LinkedIn post',
             'format' => 'linkedin_post',
         ])
@@ -121,13 +121,13 @@ test('start works without social_account_id', function () {
 // --- POST /posts/ai/create/{creationId}/finalize ---
 
 test('finalize requires authentication', function () {
-    $this->postJson('/posts/ai/create/fake-id/finalize')
+    $this->postJson(route('app.posts.ai.create.finalize', 'fake-id'))
         ->assertStatus(Response::HTTP_UNAUTHORIZED);
 });
 
 test('finalize returns 404 if creation not found in cache', function () {
     $this->actingAs($this->user)
-        ->postJson('/posts/ai/create/nonexistent-id/finalize')
+        ->postJson(route('app.posts.ai.create.finalize', 'nonexistent-id'))
         ->assertStatus(Response::HTTP_NOT_FOUND);
 });
 
@@ -146,7 +146,7 @@ test('finalize returns 404 if creation belongs to another user', function () {
     ], now()->addMinutes(30));
 
     $this->actingAs($this->user)
-        ->postJson("/posts/ai/create/{$creationId}/finalize")
+        ->postJson(route('app.posts.ai.create.finalize', $creationId))
         ->assertStatus(Response::HTTP_NOT_FOUND);
 });
 
@@ -165,7 +165,7 @@ test('finalize creates a post and returns post_id and redirect_url', function ()
     ], now()->addMinutes(30));
 
     $response = $this->actingAs($this->user)
-        ->postJson("/posts/ai/create/{$creationId}/finalize")
+        ->postJson(route('app.posts.ai.create.finalize', $creationId))
         ->assertStatus(Response::HTTP_OK)
         ->assertJsonStructure(['post_id', 'redirect_url']);
 
@@ -182,4 +182,76 @@ test('finalize creates a post and returns post_id and redirect_url', function ()
 
     // Redirect URL should point to the edit page
     expect($response->json('redirect_url'))->toContain("/posts/{$postId}/edit");
+});
+
+test('finalize defaults scheduled_at to today when no date is in cache state', function () {
+    $creationId = 'no-date-creation';
+
+    Cache::put("ai-creation:{$creationId}", [
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'format' => 'x_post',
+        'social_account_id' => null,
+        'image_count' => 0,
+        'content' => 'hello',
+        'created_at' => now()->toIso8601String(),
+    ], now()->addMinutes(30));
+
+    $response = $this->actingAs($this->user)
+        ->postJson(route('app.posts.ai.create.finalize', $creationId))
+        ->assertOk();
+
+    $post = Post::find($response->json('post_id'));
+    expect($post->scheduled_at->format('Y-m-d'))->toBe(now('UTC')->format('Y-m-d'));
+});
+
+test('finalize schedules the post on the date stored in cache state', function () {
+    $creationId = 'with-date-creation';
+
+    Cache::put("ai-creation:{$creationId}", [
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'format' => 'x_post',
+        'social_account_id' => null,
+        'image_count' => 0,
+        'content' => 'hello',
+        'date' => '2026-06-15',
+        'created_at' => now()->toIso8601String(),
+    ], now()->addMinutes(30));
+
+    $response = $this->actingAs($this->user)
+        ->postJson(route('app.posts.ai.create.finalize', $creationId))
+        ->assertOk();
+
+    $post = Post::find($response->json('post_id'));
+    expect($post->scheduled_at->format('Y-m-d'))->toBe('2026-06-15');
+});
+
+test('start dispatches the job carrying the date param when provided', function () {
+    Bus::fake();
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.posts.ai.create'), [
+            'prompt' => 'hello',
+            'format' => 'x_post',
+            'date' => '2026-06-15',
+        ])
+        ->assertAccepted();
+
+    Bus::assertDispatched(StreamPostCreation::class, fn ($job) => $job->date === '2026-06-15');
+});
+
+test('start rejects invalid date format', function () {
+    Bus::fake();
+
+    $this->actingAs($this->user)
+        ->postJson(route('app.posts.ai.create'), [
+            'prompt' => 'hello',
+            'format' => 'x_post',
+            'date' => 'not-a-date',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['date']);
+
+    Bus::assertNotDispatched(StreamPostCreation::class);
 });

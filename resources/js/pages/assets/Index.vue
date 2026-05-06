@@ -6,16 +6,13 @@ import { computed } from 'vue';
 import GalleryBrowser from '@/components/assets/GalleryBrowser.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import type { BreadcrumbItem } from '@/types';
-
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: trans('assets.title') }]);
 </script>
 
 <template>
     <Head :title="$t('assets.title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <AppLayout>
+        <div class="flex h-full flex-1 flex-col gap-6 px-6 py-8">
             <PageHeader :title="$t('assets.title')" />
             <GalleryBrowser mode="standalone" />
         </div>

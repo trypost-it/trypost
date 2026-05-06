@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
 import {
-    IconBrightnessUp,
-    IconDeviceDesktop,
     IconLanguage,
     IconLifebuoy,
     IconLogout,
     IconMessageCircle,
-    IconMoon,
     IconUser,
 } from '@tabler/icons-vue';
 import { loadLanguageAsync } from 'laravel-vue-i18n';
@@ -25,7 +22,6 @@ import {
     DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
-import { useAppearance } from '@/composables/useAppearance';
 import dayjs from '@/dayjs';
 import { logout } from '@/routes';
 import { edit } from '@/routes/app/profile';
@@ -45,8 +41,6 @@ defineProps<Props>();
 const page = usePage();
 const languages = computed<Language[]>(() => page.props.languages as Language[]);
 const currentLanguage = computed(() => languages.value?.find((l: Language) => l.code === page.props.locale));
-
-const { appearance, updateAppearance } = useAppearance();
 
 const switchLanguage = (code: string) => {
     const previousCode = currentLanguage.value?.code || 'en';
@@ -70,12 +64,12 @@ const handleLogout = () => {
 </script>
 
 <template>
-    <DropdownMenuLabel class="p-0 font-normal">
+    <DropdownMenuLabel class="p-0 text-sm font-normal normal-case tracking-normal text-foreground">
         <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <UserInfo
                 :user="user"
                 :show-email="true"
-                fallback-class="bg-neutral-200 text-neutral-600 dark:bg-neutral-700 dark:text-neutral-200"
+                fallback-class="bg-violet-100 text-violet-700"
             />
         </div>
     </DropdownMenuLabel>
@@ -90,45 +84,9 @@ const handleLogout = () => {
     </DropdownMenuGroup>
     <DropdownMenuSeparator />
     <DropdownMenuGroup>
-        <DropdownMenuSub>
-            <DropdownMenuSubTrigger class="gap-2">
-                <IconBrightnessUp
-                    v-if="appearance === 'light'"
-                    class="size-4 text-muted-foreground"
-                />
-                <IconMoon
-                    v-else-if="appearance === 'dark'"
-                    class="size-4 text-muted-foreground"
-                />
-                <IconDeviceDesktop
-                    v-else
-                    class="size-4 text-muted-foreground"
-                />
-                {{ $t('sidebar.theme', { name: appearance === 'light' ? $t('sidebar.theme_light') : appearance === 'dark' ? $t('sidebar.theme_dark') : $t('sidebar.theme_system') }) }}
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-                <DropdownMenuSubContent>
-                    <DropdownMenuItem @click="updateAppearance('light')">
-                        <IconBrightnessUp class="size-4" />
-                        {{ $t('sidebar.theme_light') }}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem @click="updateAppearance('dark')">
-                        <IconMoon class="size-4" />
-                        {{ $t('sidebar.theme_dark') }}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem @click="updateAppearance('system')">
-                        <IconDeviceDesktop class="size-4" />
-                        {{ $t('sidebar.theme_system') }}
-                    </DropdownMenuItem>
-                </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-        </DropdownMenuSub>
-    </DropdownMenuGroup>
-    <DropdownMenuSeparator />
-    <DropdownMenuGroup>
         <DropdownMenuSub v-if="languages && languages.length > 1">
-            <DropdownMenuSubTrigger class="gap-2">
-                <IconLanguage class="size-4 text-muted-foreground" />
+            <DropdownMenuSubTrigger>
+                <IconLanguage />
                 {{ $t('sidebar.language', { name: currentLanguage?.name ?? 'English' }) }}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>

@@ -18,15 +18,15 @@ withDefaults(defineProps<Props>(), {
     <Avatar
         :src="user.photo_url"
         :name="user.name"
-        :class="['h-8 w-8 rounded-lg', avatarClass]"
+        :class="['h-8 w-8 rounded-md border-2 border-foreground', avatarClass]"
         :fallback-class="
-            fallbackClass ?? 'bg-sidebar-accent text-sidebar-accent-foreground'
+            fallbackClass ?? 'bg-violet-100 text-violet-700 font-bold'
         "
     />
 
     <div class="grid flex-1 text-left text-sm leading-tight">
-        <span class="truncate font-medium">{{ user.name }}</span>
-        <span v-if="showEmail" class="truncate text-xs text-muted-foreground">{{
+        <span class="truncate font-bold text-foreground">{{ user.name }}</span>
+        <span v-if="showEmail" class="truncate text-xs font-medium text-foreground/60">{{
             user.email
         }}</span>
     </div>

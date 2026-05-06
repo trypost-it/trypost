@@ -9,6 +9,7 @@ import CreateApiKeyDialog from '@/components/api-keys/CreateApiKeyDialog.vue';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,7 +33,6 @@ import { copyToClipboard } from '@/lib/utils';
 import { members as membersRoute, settings as settingsHub } from '@/routes/app';
 import { index as apiKeysRoute } from '@/routes/app/api-keys';
 import { brand as brandRoute, settings as workspaceSettings } from '@/routes/app/workspace';
-import type { BreadcrumbItem } from '@/types';
 interface ApiToken {
     id: string;
     name: string;
@@ -53,12 +53,6 @@ const newToken = computed(() => (page.props.flash as Record<string, unknown>)?.p
 const createDialogOpen = ref(false);
 const confirmDeleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.workspace.title'), href: workspaceSettings.url() },
-    { title: trans('settings.workspace.tabs.api_keys') },
-]);
-
 const tabs = computed(() => [
     { name: 'workspace', label: trans('settings.workspace.tabs.workspace'), href: workspaceSettings.url() },
     { name: 'brand', label: trans('settings.workspace.tabs.brand'), href: brandRoute.url() },
@@ -70,11 +64,16 @@ const tabs = computed(() => [
 <template>
     <Head :title="$t('settings.api_keys.page_title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+                />
+
             <SettingsTabsNav :tabs="tabs" active="api-keys" />
 
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between gap-4">
                 <HeadingSmall
                     :title="$t('settings.api_keys.heading')"
                     :description="$t('settings.api_keys.description')"
@@ -87,18 +86,17 @@ const tabs = computed(() => [
             <!-- New token alert -->
             <div
                 v-if="newToken"
-                class="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950"
+                class="rounded-xl border-2 border-foreground bg-emerald-50 p-4 shadow-2xs"
             >
-                <p class="mb-2 text-sm font-medium text-green-800 dark:text-green-200">
+                <p class="mb-2 text-sm font-bold text-emerald-800">
                     {{ $t('settings.api_keys.new_token_message') }}
                 </p>
-                <div class="flex items-center gap-2">
-                    <code class="block min-w-0 flex-1 truncate rounded bg-white px-3 py-2 font-mono text-sm dark:bg-black">
-                        {{ newToken }}
+                <div class="flex items-stretch gap-2">
+                    <code class="flex h-9 min-w-0 flex-1 items-center rounded-md border-2 border-foreground bg-card px-3 font-mono text-sm font-bold text-foreground shadow-2xs">
+                        <span class="block truncate">{{ newToken }}</span>
                     </code>
                     <Button
                         variant="outline"
-                        size="sm"
                         class="shrink-0"
                         @click="copyToClipboard(newToken!, trans('settings.api_keys.copy_success'))"
                     >
@@ -108,7 +106,7 @@ const tabs = computed(() => [
                 </div>
             </div>
 
-            <div v-if="apiTokens.length > 0" class="rounded-md border">
+            <div v-if="apiTokens.length > 0">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -120,17 +118,17 @@ const tabs = computed(() => [
                     </TableHeader>
                     <TableBody>
                         <TableRow v-for="token in apiTokens" :key="token.id">
-                            <TableCell class="font-medium">{{ token.name }}</TableCell>
-                            <TableCell class="text-muted-foreground">
+                            <TableCell>{{ token.name }}</TableCell>
+                            <TableCell>
                                 {{ token.expires_at ? date.formatDate(token.expires_at) : $t('settings.api_keys.table.never') }}
                             </TableCell>
-                            <TableCell class="text-muted-foreground">
+                            <TableCell>
                                 {{ token.last_used_at ? date.diffForHumans(token.last_used_at) : $t('settings.api_keys.table.never') }}
                             </TableCell>
                             <TableCell>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger as-child>
-                                        <Button variant="ghost" size="icon" class="h-8 w-8">
+                                        <Button variant="outline" size="icon" class="size-8">
                                             <IconDots class="size-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -144,7 +142,7 @@ const tabs = computed(() => [
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                             variant="destructive"
-                                            @click="confirmDeleteModal?.open({ url: ApiKeyController.destroy.url(token), confirmText: token.name })"
+                                            @click="confirmDeleteModal?.open({ url: ApiKeyController.destroy.url(token.id), confirmText: token.name })"
                                         >
                                             <IconTrash class="size-4" />
                                             {{ $t('settings.api_keys.actions.delete') }}

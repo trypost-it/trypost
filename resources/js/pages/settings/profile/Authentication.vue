@@ -8,6 +8,7 @@ import AuthenticationController from '@/actions/App/Http/Controllers/App/Setting
 import DeleteUser from '@/components/DeleteUser.vue';
 import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
+import PageHeader from '@/components/PageHeader.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,7 +30,6 @@ import { settings as settingsHub } from '@/routes/app';
 import { connectProvider, edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';
-import type { BreadcrumbItem } from '@/types';
 
 type Session = {
     id: string;
@@ -51,12 +51,6 @@ const props = defineProps<{
     hasPassword: boolean;
     connectedAccounts: ConnectedAccount[];
 }>();
-
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [
-    { title: trans('settings.hub.title'), href: settingsHub().url },
-    { title: trans('settings.profile.title'), href: editProfile().url },
-    { title: trans('settings.authentication.title') },
-]);
 
 const tabs = computed(() => [
     { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
@@ -83,8 +77,13 @@ const logoutDialogOpen = ref(false);
 <template>
     <Head :title="$t('settings.authentication.page_title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 py-6">
+    <AppLayout>
+        <div class="mx-auto max-w-4xl space-y-8 px-6 py-8">
+            <PageHeader
+                :title="$t('settings.hub.title')"
+                :description="$t('settings.hub.description')"
+            />
+
             <SettingsTabsNav :tabs="tabs" active="authentication" />
 
             <section class="space-y-12">
@@ -94,52 +93,47 @@ const logoutDialogOpen = ref(false);
                         :description="$t('settings.authentication.sessions.description')"
                     />
 
-                    <div class="space-y-2">
+                    <div class="space-y-3">
                         <div
                             v-for="session in sessions"
                             :key="session.id"
                             :class="[
-                                'flex items-center gap-4 rounded-lg border p-4 transition-colors',
-                                session.is_current
-                                    ? 'border-emerald-500/30 bg-emerald-500/[0.04] dark:border-emerald-400/25 dark:bg-emerald-500/[0.06]'
-                                    : 'border-border',
+                                'flex items-center gap-4 rounded-xl border-2 border-foreground p-4 shadow-2xs',
+                                session.is_current ? 'bg-emerald-50' : 'bg-card',
                             ]"
                             data-test="session-row"
                         >
                             <div
                                 :class="[
-                                    'flex size-10 flex-shrink-0 items-center justify-center rounded-full',
-                                    session.is_current
-                                        ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400'
-                                        : 'bg-muted text-muted-foreground',
+                                    'inline-flex size-10 -rotate-2 flex-shrink-0 items-center justify-center rounded-2xl border-2 border-foreground shadow-2xs',
+                                    session.is_current ? 'bg-emerald-200' : 'bg-violet-100',
                                 ]"
                             >
                                 <component
                                     :is="isMobileDevice(session.user_agent) ? IconDeviceMobile : IconDeviceDesktop"
-                                    class="size-5"
+                                    class="size-5 text-foreground"
+                                    stroke-width="2"
                                 />
                             </div>
                             <div class="flex-1 space-y-0.5">
-                                <div class="text-sm font-medium">
+                                <div class="text-sm font-bold text-foreground">
                                     {{ parseBrowserName(session.user_agent) }}
                                     <span
                                         v-if="parseOsName(session.user_agent)"
-                                        class="font-normal text-muted-foreground"
+                                        class="font-medium text-foreground/60"
                                     >
                                         {{ $t('settings.authentication.sessions.on') }} {{ parseOsName(session.user_agent) }}
                                     </span>
                                 </div>
-                                <div class="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <div class="flex items-center gap-1.5 text-xs font-medium text-foreground/60">
                                     <span>{{ session.ip_address ?? $t('settings.authentication.sessions.unknown_ip') }}</span>
                                     <span aria-hidden="true">·</span>
                                     <template v-if="session.is_current">
                                         <span class="relative flex size-2">
-                                            <span
-                                                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/60"
-                                            />
+                                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/60" />
                                             <span class="relative inline-flex size-2 rounded-full bg-emerald-500" />
                                         </span>
-                                        <span class="font-medium text-emerald-700 dark:text-emerald-400">
+                                        <span class="font-bold text-emerald-700">
                                             {{ $t('settings.authentication.sessions.active_now') }}
                                         </span>
                                     </template>
@@ -283,30 +277,30 @@ const logoutDialogOpen = ref(false);
                         :description="$t('settings.authentication.providers.description')"
                     />
 
-                    <div class="space-y-2">
+                    <div class="space-y-3">
                         <div
                             v-for="account in connectedAccounts"
                             :key="account.provider"
-                            class="flex items-center gap-4 rounded-lg border p-4"
+                            class="flex items-center gap-4 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs"
                             :data-test="`connected-account-${account.provider}`"
                         >
-                            <div class="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-muted">
+                            <div class="inline-flex size-10 rotate-1 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-foreground bg-card shadow-2xs">
                                 <img
                                     :src="`/images/social/${account.provider}.svg`"
                                     :alt="account.label"
-                                    :class="['size-5', account.provider === 'github' ? 'dark:invert' : '']"
+                                    class="size-6"
                                 />
                             </div>
                             <div class="flex-1 space-y-0.5">
-                                <div class="text-sm font-medium">{{ account.label }}</div>
+                                <div class="text-sm font-bold text-foreground">{{ account.label }}</div>
                                 <div
                                     v-if="account.connected"
-                                    class="flex items-center gap-1.5 text-xs text-muted-foreground"
+                                    class="flex items-center gap-1.5 text-xs font-bold text-emerald-700"
                                 >
                                     <span class="size-1.5 rounded-full bg-emerald-500" />
                                     <span>{{ $t('settings.authentication.providers.connected') }}</span>
                                 </div>
-                                <div v-else class="text-xs text-muted-foreground">
+                                <div v-else class="text-xs font-medium text-foreground/60">
                                     {{ $t('settings.authentication.providers.not_connected') }}
                                 </div>
                             </div>
@@ -318,10 +312,10 @@ const logoutDialogOpen = ref(false);
                             >
                                 <Button
                                     type="submit"
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     :disabled="processing"
-                                    class="text-muted-foreground hover:text-destructive"
+                                    class="bg-rose-100 text-rose-700 hover:bg-rose-200"
                                     :data-test="`disconnect-${account.provider}`"
                                 >
                                     {{ $t('settings.authentication.providers.disconnect') }}

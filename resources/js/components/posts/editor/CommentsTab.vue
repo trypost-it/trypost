@@ -8,6 +8,7 @@ import {
     IconTrash,
     IconX,
 } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 import CommentBody from '@/components/CommentBody.vue';
@@ -103,7 +104,11 @@ const commentsByDay = computed((): DayGroup[] => {
     const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
 
     return Array.from(groups.entries()).map(([day, items]) => ({
-        label: day === today ? 'Today' : day === yesterday ? 'Yesterday' : dayjs(day).format('MMM D, YYYY'),
+        label: day === today
+            ? trans('comments.today')
+            : day === yesterday
+              ? trans('comments.yesterday')
+              : dayjs(day).format('D MMM YYYY'),
         comments: items,
     }));
 });
@@ -475,20 +480,20 @@ watch(() => props.postId, () => {
 
             <!-- Empty state -->
             <div v-if="!loading && comments.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
-                <p class="text-sm text-muted-foreground">{{ $t('comments.empty') }}</p>
+                <p class="text-sm font-medium text-foreground/60">{{ $t('comments.empty') }}</p>
             </div>
 
             <!-- Comments grouped by day -->
             <div class="px-2 py-1">
                 <template v-for="group in commentsByDay" :key="group.label">
-                    <div class="mt-2 mb-4 text-center text-xs text-muted-foreground">{{ group.label }}</div>
+                    <div class="mb-4 mt-2 text-center text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ group.label }}</div>
 
                 <template v-for="comment in group.comments" :key="comment.id">
                     <!-- Top-level comment -->
                     <div
                         :data-comment-id="comment.id"
                         class="group relative rounded-lg py-1.5 px-2 transition-colors"
-                        :class="highlightedId === comment.id ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/50'"
+                        :class="highlightedId === comment.id ? 'bg-violet-100 ring-2 ring-foreground' : 'hover:bg-foreground/5'"
                         @mouseenter="hoveredCommentId = comment.id"
                         @mouseleave="hoveredCommentId = null; emojiPickerCommentId = null"
                     >
@@ -509,39 +514,41 @@ watch(() => props.postId, () => {
 
                         <!-- Display mode -->
                         <template v-else>
-                            <div class="flex items-start gap-2">
-                                <Avatar class="h-6 w-6 shrink-0">
+                            <div class="flex items-start gap-3">
+                                <Avatar class="size-8 shrink-0 rounded-full border-2 border-foreground shadow-2xs">
                                     <AvatarImage v-if="getAvatarUrl(comment.user)" :src="getAvatarUrl(comment.user)!" />
-                                    <AvatarFallback class="text-[10px]">{{ getInitials(comment.user.name) }}</AvatarFallback>
+                                    <AvatarFallback class="rounded-full bg-violet-100 text-[10px] font-bold text-violet-700">{{ getInitials(comment.user.name) }}</AvatarFallback>
                                 </Avatar>
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-baseline gap-1.5">
-                                        <span class="text-xs font-medium">{{ comment.user.name }}</span>
+                                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                        <span class="text-sm font-bold text-foreground">{{ comment.user.name }}</span>
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger as-child>
-                                                    <span class="text-[10px] text-muted-foreground">{{ date.diffForHumans(comment.created_at) }}</span>
+                                                    <span class="text-xs font-medium text-foreground/60">{{ date.diffForHumans(comment.created_at) }}</span>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top">
                                                     <span class="text-xs">{{ date.formatDateTime(comment.created_at) }}</span>
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
-                                        <span v-if="comment.updated_at !== comment.created_at" class="text-[10px] text-muted-foreground italic">({{ $t('comments.edited') }})</span>
+                                        <span v-if="comment.updated_at !== comment.created_at" class="text-xs font-medium italic text-foreground/60">({{ $t('comments.edited') }})</span>
                                     </div>
-                                    <CommentBody :body="comment.body" :members="memberNames" />
+                                    <div class="mt-0.5 text-sm leading-relaxed text-foreground">
+                                        <CommentBody :body="comment.body" :members="memberNames" />
+                                    </div>
 
                                     <!-- Reactions -->
                                     <div v-if="groupedReactions(comment.reactions).length > 0" class="mt-1.5 flex flex-wrap gap-1">
                                         <button
                                             v-for="r in groupedReactions(comment.reactions)"
                                             :key="r.emoji"
-                                            class="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-xs transition-colors"
-                                            :class="r.hasReacted ? 'border-primary/40 bg-primary/10' : 'border-border hover:border-primary/30'"
+                                            class="inline-flex items-center gap-1 rounded-full border-2 px-2 py-0.5 text-xs font-bold cursor-pointer transition-colors"
+                                            :class="r.hasReacted ? 'border-foreground bg-violet-100' : 'border-foreground/30 hover:border-foreground'"
                                             @click="toggleReaction(comment, r.emoji)"
                                         >
                                             <span>{{ r.emoji }}</span>
-                                            <span class="text-[10px] text-muted-foreground">{{ r.count }}</span>
+                                            <span class="text-[10px] font-medium text-foreground/60">{{ r.count }}</span>
                                         </button>
                                     </div>
 
@@ -550,31 +557,31 @@ watch(() => props.postId, () => {
                                 <!-- Floating toolbar -->
                                 <div
                                     v-if="hoveredCommentId === comment.id && editingComment?.id !== comment.id"
-                                    class="absolute -top-3 right-2 z-50 flex items-center gap-0.5 rounded-md border bg-background px-1 py-0.5 shadow-sm"
+                                    class="absolute -top-3 right-2 z-50 flex items-center gap-0.5 rounded-md border-2 border-foreground bg-card px-1 py-0.5 shadow-2xs"
                                 >
                                     <TooltipProvider :delay-duration="200">
                                         <Tooltip>
                                             <TooltipTrigger as-child>
-                                                <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @mouseenter="showEmojiPicker(comment.id)"><IconMoodSmile class="h-3.5 w-3.5" /></button>
+                                                <button class="rounded p-1 text-muted-foreground hover:bg-foreground/5 hover:text-foreground" @mouseenter="showEmojiPicker(comment.id)"><IconMoodSmile class="h-3.5 w-3.5" /></button>
                                             </TooltipTrigger>
                                             <TooltipContent side="top" class="text-xs">React</TooltipContent>
                                         </Tooltip>
                                         <Tooltip>
                                             <TooltipTrigger as-child>
-                                                <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="startReply(comment)"><IconArrowBackUp class="h-3.5 w-3.5" /></button>
+                                                <button class="rounded p-1 text-muted-foreground hover:bg-foreground/5 hover:text-foreground" @click="startReply(comment)"><IconArrowBackUp class="h-3.5 w-3.5" /></button>
                                             </TooltipTrigger>
                                             <TooltipContent side="top" class="text-xs">{{ $t('comments.reply') }}</TooltipContent>
                                         </Tooltip>
                                         <template v-if="comment.user_id === currentUserId">
                                             <Tooltip>
                                                 <TooltipTrigger as-child>
-                                                    <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="startEdit(comment)"><IconEdit class="h-3.5 w-3.5" /></button>
+                                                    <button class="rounded p-1 text-muted-foreground hover:bg-foreground/5 hover:text-foreground" @click="startEdit(comment)"><IconEdit class="h-3.5 w-3.5" /></button>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" class="text-xs">{{ $t('comments.edit') }}</TooltipContent>
                                             </Tooltip>
                                             <Tooltip>
                                                 <TooltipTrigger as-child>
-                                                    <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive" @click="deleteComment(comment)"><IconTrash class="h-3.5 w-3.5" /></button>
+                                                    <button class="rounded p-1 text-muted-foreground hover:bg-rose-100 hover:text-rose-700" @click="deleteComment(comment)"><IconTrash class="h-3.5 w-3.5" /></button>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" class="text-xs">{{ $t('comments.delete') }}</TooltipContent>
                                             </Tooltip>
@@ -585,7 +592,7 @@ watch(() => props.postId, () => {
                                 <!-- Emoji picker -->
                                 <div
                                     v-if="emojiPickerCommentId === comment.id"
-                                    class="absolute -top-10 right-2 z-50 flex items-center gap-0.5 rounded-lg border bg-popover p-1.5 shadow-md"                                >
+                                    class="absolute -top-10 right-2 z-50 flex items-center gap-0.5 rounded-lg border-2 border-foreground bg-card p-1.5 shadow-md"                                >
                                     <button v-for="emoji in EMOJIS" :key="emoji" class="rounded p-0.5 text-sm transition-transform hover:scale-125 hover:bg-muted" @click="toggleReaction(comment, emoji)">{{ emoji }}</button>
                                 </div>
                             </div>
@@ -599,7 +606,7 @@ watch(() => props.postId, () => {
                             :key="reply.id"
                             :data-comment-id="reply.id"
                             class="group relative ml-8 rounded-lg py-1.5 px-2 transition-colors"
-                            :class="highlightedId === reply.id ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/50'"
+                            :class="highlightedId === reply.id ? 'bg-violet-100 ring-2 ring-foreground' : 'hover:bg-foreground/5'"
                             @mouseenter="hoveredCommentId = reply.id"
                             @mouseleave="hoveredCommentId = null; emojiPickerCommentId = null"
                         >
@@ -620,39 +627,41 @@ watch(() => props.postId, () => {
 
                             <!-- Display reply -->
                             <template v-else>
-                                <div class="flex items-start gap-2">
-                                    <Avatar class="h-5 w-5 shrink-0">
+                                <div class="flex items-start gap-2.5">
+                                    <Avatar class="size-7 shrink-0 rounded-full border-2 border-foreground shadow-2xs">
                                         <AvatarImage v-if="getAvatarUrl(reply.user)" :src="getAvatarUrl(reply.user)!" />
-                                        <AvatarFallback class="text-[9px]">{{ getInitials(reply.user.name) }}</AvatarFallback>
+                                        <AvatarFallback class="rounded-full bg-violet-100 text-[10px] font-bold text-violet-700">{{ getInitials(reply.user.name) }}</AvatarFallback>
                                     </Avatar>
                                     <div class="min-w-0 flex-1">
-                                        <div class="flex items-baseline gap-1.5">
-                                            <span class="text-xs font-medium">{{ reply.user.name }}</span>
+                                        <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                            <span class="text-sm font-bold text-foreground">{{ reply.user.name }}</span>
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger as-child>
-                                                        <span class="text-[10px] text-muted-foreground">{{ date.diffForHumans(reply.created_at) }}</span>
+                                                        <span class="text-xs font-medium text-foreground/60">{{ date.diffForHumans(reply.created_at) }}</span>
                                                     </TooltipTrigger>
                                                     <TooltipContent side="top">
                                                         <span class="text-xs">{{ date.formatDateTime(reply.created_at) }}</span>
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </TooltipProvider>
-                                            <span v-if="reply.updated_at !== reply.created_at" class="text-[10px] text-muted-foreground italic">({{ $t('comments.edited') }})</span>
+                                            <span v-if="reply.updated_at !== reply.created_at" class="text-xs font-medium italic text-foreground/60">({{ $t('comments.edited') }})</span>
                                         </div>
-                                        <CommentBody :body="reply.body" :members="memberNames" />
+                                        <div class="mt-0.5 text-sm leading-relaxed text-foreground">
+                                            <CommentBody :body="reply.body" :members="memberNames" />
+                                        </div>
 
                                         <!-- Reply reactions -->
                                         <div v-if="groupedReactions(reply.reactions).length > 0" class="mt-1.5 flex flex-wrap gap-1">
                                             <button
                                                 v-for="r in groupedReactions(reply.reactions)"
                                                 :key="r.emoji"
-                                                class="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-xs transition-colors"
-                                                :class="r.hasReacted ? 'border-primary/40 bg-primary/10' : 'border-border hover:border-primary/30'"
+                                                class="inline-flex items-center gap-1 rounded-full border-2 px-2 py-0.5 text-xs font-bold cursor-pointer transition-colors"
+                                                :class="r.hasReacted ? 'border-foreground bg-violet-100' : 'border-foreground/30 hover:border-foreground'"
                                                 @click="toggleReaction(reply, r.emoji)"
                                             >
                                                 <span>{{ r.emoji }}</span>
-                                                <span class="text-[10px] text-muted-foreground">{{ r.count }}</span>
+                                                <span class="text-[10px] font-medium text-foreground/60">{{ r.count }}</span>
                                             </button>
                                         </div>
 
@@ -661,25 +670,25 @@ watch(() => props.postId, () => {
                                     <!-- Reply floating toolbar -->
                                     <div
                                         v-if="hoveredCommentId === reply.id && editingComment?.id !== reply.id"
-                                        class="absolute -top-3 right-2 z-50 flex items-center gap-0.5 rounded-md border bg-background px-1 py-0.5 shadow-sm"
+                                        class="absolute -top-3 right-2 z-50 flex items-center gap-0.5 rounded-md border-2 border-foreground bg-card px-1 py-0.5 shadow-2xs"
                                     >
                                         <TooltipProvider :delay-duration="200">
                                             <Tooltip>
                                                 <TooltipTrigger as-child>
-                                                    <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @mouseenter="showEmojiPicker(reply.id)"><IconMoodSmile class="h-3.5 w-3.5" /></button>
+                                                    <button class="rounded p-1 text-muted-foreground hover:bg-foreground/5 hover:text-foreground" @mouseenter="showEmojiPicker(reply.id)"><IconMoodSmile class="h-3.5 w-3.5" /></button>
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top" class="text-xs">React</TooltipContent>
                                             </Tooltip>
                                             <template v-if="reply.user_id === currentUserId">
                                                 <Tooltip>
                                                     <TooltipTrigger as-child>
-                                                        <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" @click="startEdit(reply)"><IconEdit class="h-3.5 w-3.5" /></button>
+                                                        <button class="rounded p-1 text-muted-foreground hover:bg-foreground/5 hover:text-foreground" @click="startEdit(reply)"><IconEdit class="h-3.5 w-3.5" /></button>
                                                     </TooltipTrigger>
                                                     <TooltipContent side="top" class="text-xs">{{ $t('comments.edit') }}</TooltipContent>
                                                 </Tooltip>
                                                 <Tooltip>
                                                     <TooltipTrigger as-child>
-                                                        <button class="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive" @click="deleteComment(reply)"><IconTrash class="h-3.5 w-3.5" /></button>
+                                                        <button class="rounded p-1 text-muted-foreground hover:bg-rose-100 hover:text-rose-700" @click="deleteComment(reply)"><IconTrash class="h-3.5 w-3.5" /></button>
                                                     </TooltipTrigger>
                                                     <TooltipContent side="top" class="text-xs">{{ $t('comments.delete') }}</TooltipContent>
                                                 </Tooltip>
@@ -690,7 +699,7 @@ watch(() => props.postId, () => {
                                     <!-- Reply emoji picker -->
                                     <div
                                         v-if="emojiPickerCommentId === reply.id"
-                                        class="absolute -top-10 right-2 z-50 flex items-center gap-0.5 rounded-lg border bg-popover p-1.5 shadow-md"                                    >
+                                        class="absolute -top-10 right-2 z-50 flex items-center gap-0.5 rounded-lg border-2 border-foreground bg-card p-1.5 shadow-md"                                    >
                                         <button v-for="emoji in EMOJIS" :key="emoji" class="rounded p-0.5 text-sm transition-transform hover:scale-125 hover:bg-muted" @click="toggleReaction(reply, emoji)">{{ emoji }}</button>
                                     </div>
                                 </div>
@@ -708,13 +717,13 @@ watch(() => props.postId, () => {
         </div>
 
         <!-- Input area -->
-        <div class="shrink-0 border-t p-2">
+        <div class="shrink-0 border-t-2 border-foreground/10 p-2">
             <!-- Replying to indicator -->
-            <div v-if="replyingTo" class="mb-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <IconArrowBackUp class="h-3 w-3" />
+            <div v-if="replyingTo" class="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground/70">
+                <IconArrowBackUp class="size-3" />
                 <span>{{ $t('comments.replying_to', { name: replyingTo.user.name }) }}</span>
-                <button class="ml-auto rounded p-0.5 hover:bg-muted" @click="cancelReply">
-                    <IconX class="h-3 w-3" />
+                <button class="ml-auto cursor-pointer rounded p-0.5 hover:bg-foreground/5" @click="cancelReply">
+                    <IconX class="size-3" />
                 </button>
             </div>
 
@@ -731,13 +740,12 @@ watch(() => props.postId, () => {
                 />
                 <Button
                     size="icon"
-                    variant="ghost"
-                    class="h-9 w-9 shrink-0"
+                    class="size-9 shrink-0"
                     :disabled="!newBody.trim() || sending"
                     @click="sendComment"
                 >
-                    <IconLoader2 v-if="sending" class="h-4 w-4 animate-spin" />
-                    <IconSend v-else class="h-4 w-4" />
+                    <IconLoader2 v-if="sending" class="size-4 animate-spin" />
+                    <IconSend v-else class="size-4" />
                 </Button>
             </div>
         </div>

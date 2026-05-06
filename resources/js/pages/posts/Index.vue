@@ -7,6 +7,7 @@ import { computed, ref, watch } from 'vue';
 import { create as createPost, destroy as destroyPost, duplicate as duplicatePost, edit as editPost, index as postsIndex, show as showPost } from '@/actions/App/Http/Controllers/App/PostController';
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import LabelBadge from '@/components/labels/LabelBadge.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -34,8 +35,6 @@ import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { copyToClipboard } from '@/lib/utils';
-import type { BreadcrumbItem } from '@/types';
-
 interface SocialAccount {
     id: string;
     platform: string;
@@ -49,7 +48,6 @@ interface PostPlatform {
     social_account_id: string;
     enabled: boolean;
     platform: string;
-    content: string;
     status: string;
     social_account: SocialAccount;
 }
@@ -62,6 +60,7 @@ interface Label {
 
 interface Post {
     id: string;
+    content: string | null;
     status: string;
     scheduled_at: string | null;
     published_at: string | null;
@@ -116,14 +115,6 @@ const pageTitle = computed(() => {
     return trans('posts.all_posts');
 });
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => {
-    const items: BreadcrumbItem[] = [{ title: trans('posts.title'), href: postsIndex.url() }];
-    if (props.currentStatus) {
-        items.push({ title: trans(`posts.status.${props.currentStatus}`) });
-    }
-    return items;
-});
-
 const formatDateTime = (date: string | null): string => {
     if (!date) return '—';
     return dayjs.utc(date).local().format('D MMM YYYY, HH:mm');
@@ -131,11 +122,8 @@ const formatDateTime = (date: string | null): string => {
 
 const getEnabledPlatforms = (post: Post) => post.post_platforms.filter((pp) => pp.enabled);
 
-const getPostPreview = (post: Post): string => {
-    const enabled = getEnabledPlatforms(post);
-    if (enabled.length === 0) return trans('calendar.no_content');
-    return enabled[0].content || trans('calendar.no_content');
-};
+const getPostPreview = (post: Post): string =>
+    post.content?.trim() || trans('calendar.no_content');
 
 const canEdit = (post: Post): boolean => ['draft', 'scheduled', 'failed'].includes(post.status);
 
@@ -160,14 +148,14 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 <template>
     <Head :title="pageTitle" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <AppLayout>
+        <div class="flex h-full flex-1 flex-col gap-6 px-6 py-8">
             <PageHeader :title="pageTitle" />
 
             <!-- Toolbar -->
             <div class="flex items-center justify-between gap-3">
                 <div class="relative">
-                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/60" />
                     <Input
                         v-model="searchQuery"
                         :placeholder="trans('posts.search')"
@@ -187,15 +175,13 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                 :description="hasActiveSearch ? $t('posts.try_different_search') : $t('posts.start_creating')"
             />
 
-            <div v-else class="rounded-md border">
+            <div v-else>
                 <InfiniteScroll data="posts" items-element="#posts-body" preserve-url>
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead>{{ $t('posts.table.post') }}</TableHead>
                                 <TableHead>{{ $t('posts.table.status') }}</TableHead>
-                                <TableHead>{{ $t('posts.table.content') }}</TableHead>
-                                <TableHead>{{ $t('posts.table.platforms') }}</TableHead>
-                                <TableHead>{{ $t('posts.table.labels') }}</TableHead>
                                 <TableHead>{{ $t('posts.table.scheduled_at') }}</TableHead>
                                 <TableHead class="text-right">{{ $t('posts.table.actions') }}</TableHead>
                             </TableRow>
@@ -207,78 +193,76 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                                 class="cursor-pointer"
                                 @click="router.visit(postUrl(post))"
                             >
+                                <TableCell class="max-w-md py-3">
+                                    <div class="space-y-1.5">
+                                        <div class="flex items-center gap-2">
+                                            <div v-if="getEnabledPlatforms(post).length" class="flex -space-x-1.5">
+                                                <TooltipProvider
+                                                    v-for="pp in getEnabledPlatforms(post).slice(0, 4)"
+                                                    :key="pp.id"
+                                                    :delay-duration="200"
+                                                >
+                                                    <Tooltip>
+                                                        <TooltipTrigger as-child>
+                                                            <span class="inline-flex size-6 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
+                                                                <img
+                                                                    :src="getPlatformLogo(pp.platform)"
+                                                                    :alt="pp.platform"
+                                                                    class="size-full object-cover"
+                                                                />
+                                                            </span>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <div class="space-y-0.5 text-xs">
+                                                                <p class="font-semibold">
+                                                                    {{ pp.social_account?.display_name ?? pp.platform }}<span
+                                                                        v-if="pp.social_account?.username"
+                                                                        class="font-normal opacity-80"
+                                                                    >&nbsp;·&nbsp;@{{ pp.social_account.username }}</span>
+                                                                </p>
+                                                                <p class="opacity-70">{{ getPlatformLabel(pp.platform) }}</p>
+                                                            </div>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </div>
+                                            <span
+                                                v-if="getEnabledPlatforms(post).length > 4"
+                                                class="text-xs font-bold text-foreground/60"
+                                            >+{{ getEnabledPlatforms(post).length - 4 }}</span>
+                                            <div v-if="post.labels?.length" class="ml-1 flex flex-wrap items-center gap-1">
+                                                <LabelBadge
+                                                    v-for="label in post.labels.slice(0, 3)"
+                                                    :key="label.id"
+                                                    :label="label"
+                                                />
+                                                <span v-if="post.labels.length > 3" class="text-xs font-bold text-foreground/60">
+                                                    +{{ post.labels.length - 3 }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <p class="truncate text-foreground/80">{{ getPostPreview(post) }}</p>
+                                    </div>
+                                </TableCell>
                                 <TableCell>
-                                    <Badge :class="getPostStatusConfig(post.status).color">
-                                        <component :is="getPostStatusConfig(post.status).icon" class="mr-1 h-3 w-3" />
+                                    <Badge :variant="getPostStatusConfig(post.status).variant">
+                                        <component :is="getPostStatusConfig(post.status).icon" class="size-3" />
                                         {{ getPostStatusConfig(post.status).label }}
                                     </Badge>
                                 </TableCell>
-                                <TableCell class="max-w-md">
-                                    <p class="truncate text-sm">{{ getPostPreview(post) }}</p>
-                                </TableCell>
                                 <TableCell>
-                                    <div class="flex items-center gap-2">
-                                        <div class="flex -space-x-2">
-                                            <TooltipProvider
-                                                v-for="pp in getEnabledPlatforms(post).slice(0, 4)"
-                                                :key="pp.id"
-                                                :delay-duration="200"
-                                            >
-                                                <Tooltip>
-                                                    <TooltipTrigger as-child>
-                                                        <img
-                                                            :src="getPlatformLogo(pp.platform)"
-                                                            :alt="pp.platform"
-                                                            class="size-6 rounded-full ring-2 ring-background"
-                                                        />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <div class="space-y-0.5 text-xs">
-                                                            <p class="font-semibold">
-                                                                {{ pp.social_account?.display_name ?? pp.platform }}<span
-                                                                    v-if="pp.social_account?.username"
-                                                                    class="font-normal opacity-80"
-                                                                >&nbsp;·&nbsp;@{{ pp.social_account.username }}</span>
-                                                            </p>
-                                                            <p class="opacity-70">{{ getPlatformLabel(pp.platform) }}</p>
-                                                        </div>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            </TooltipProvider>
-                                        </div>
-                                        <span
-                                            v-if="getEnabledPlatforms(post).length > 4"
-                                            class="text-xs text-muted-foreground"
-                                        >+{{ getEnabledPlatforms(post).length - 4 }}</span>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div v-if="post.labels?.length" class="flex flex-wrap items-center gap-1">
-                                        <span
-                                            v-for="label in post.labels.slice(0, 2)"
-                                            :key="label.id"
-                                            class="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium"
-                                            :style="{ backgroundColor: label.color + '20', color: label.color }"
-                                        >{{ label.name }}</span>
-                                        <span v-if="post.labels.length > 2" class="text-xs text-muted-foreground">
-                                            +{{ post.labels.length - 2 }}
-                                        </span>
-                                    </div>
-                                    <span v-else class="text-xs text-muted-foreground">—</span>
-                                </TableCell>
-                                <TableCell class="text-muted-foreground">
                                     {{ formatDateTime(post.scheduled_at ?? post.published_at) }}
                                 </TableCell>
                                 <TableCell class="text-right" @click.stop>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger as-child>
                                             <Button
-                                                variant="ghost"
+                                                variant="outline"
                                                 size="icon"
-                                                class="size-8 text-muted-foreground"
+                                                class="size-8"
                                                 @click.stop
                                             >
-                                                <IconDots class="h-4 w-4" />
+                                                <IconDots class="size-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">

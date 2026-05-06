@@ -75,19 +75,19 @@ class TikTokAnalytics
         $metrics = [];
 
         if (($value = data_get($user, 'follower_count')) !== null) {
-            $metrics[] = ['label' => 'Followers', 'value' => $value];
+            $metrics[] = ['label' => __('analytics.metrics.followers'), 'value' => $value];
         }
 
         if (($value = data_get($user, 'following_count')) !== null) {
-            $metrics[] = ['label' => 'Following', 'value' => $value];
+            $metrics[] = ['label' => __('analytics.metrics.following'), 'value' => $value];
         }
 
         if (($value = data_get($user, 'likes_count')) !== null) {
-            $metrics[] = ['label' => 'Total Likes', 'value' => $value];
+            $metrics[] = ['label' => __('analytics.metrics.total_likes'), 'value' => $value];
         }
 
         if (($value = data_get($user, 'video_count')) !== null) {
-            $metrics[] = ['label' => 'Videos', 'value' => $value];
+            $metrics[] = ['label' => __('analytics.metrics.videos'), 'value' => $value];
         }
 
         return $metrics;
@@ -148,10 +148,10 @@ class TikTokAnalytics
         }
 
         return [
-            ['label' => 'Views', 'value' => $totalViews],
-            ['label' => 'Recent Likes', 'value' => $totalLikes],
-            ['label' => 'Recent Comments', 'value' => $totalComments],
-            ['label' => 'Recent Shares', 'value' => $totalShares],
+            ['label' => __('analytics.metrics.views'), 'value' => $totalViews],
+            ['label' => __('analytics.metrics.recent_likes'), 'value' => $totalLikes],
+            ['label' => __('analytics.metrics.recent_comments'), 'value' => $totalComments],
+            ['label' => __('analytics.metrics.recent_shares'), 'value' => $totalShares],
         ];
     }
 

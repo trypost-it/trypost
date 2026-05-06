@@ -45,7 +45,6 @@ import date from '@/date';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { disconnect as disconnectAccount, toggle as toggleAccount } from '@/routes/app/accounts';
-import type { BreadcrumbItem } from '@/types';
 
 interface SocialAccount {
     id: string;
@@ -71,13 +70,12 @@ interface Props {
     accounts: ScrollAccounts;
     platforms: AvailablePlatform[];
     filters: { search: string };
+    openDialog: boolean;
 }
 
 const props = defineProps<Props>();
 
-const breadcrumbs = computed<BreadcrumbItem[]>(() => [{ title: trans('accounts.page_title') }]);
-
-const isAddDialogOpen = ref(false);
+const isAddDialogOpen = ref(props.openDialog);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const searchQuery = ref(props.filters.search);
 
@@ -128,8 +126,8 @@ const handleDisconnect = (accountId: string) => {
 <template>
     <Head :title="$t('accounts.page_title')" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4">
+    <AppLayout>
+        <div class="flex h-full flex-1 flex-col gap-6 px-6 py-8">
             <PageHeader :title="$t('accounts.page_title')" />
 
             <div class="flex items-center justify-between gap-3">
@@ -154,7 +152,7 @@ const handleDisconnect = (accountId: string) => {
                 :description="hasActiveSearch ? $t('accounts.try_different_search') : $t('accounts.no_accounts_description')"
             />
 
-            <div v-else class="rounded-md border">
+            <div v-else>
                 <InfiniteScroll data="accounts" items-element="#accounts-body" preserve-url>
                     <Table>
                         <TableHeader>
@@ -173,15 +171,21 @@ const handleDisconnect = (accountId: string) => {
                                 <TableCell>
                                     <div class="flex items-center gap-3">
                                         <div class="relative shrink-0">
-                                            <Avatar class="size-9">
+                                            <Avatar class="size-10 rounded-full border-2 border-foreground shadow-2xs">
                                                 <AvatarImage v-if="account.avatar_url" :src="account.avatar_url" />
-                                                <AvatarFallback>{{ account.display_name?.charAt(0) }}</AvatarFallback>
+                                                <AvatarFallback class="rounded-full bg-violet-100 font-bold text-foreground">
+                                                    {{ account.display_name?.charAt(0) }}
+                                                </AvatarFallback>
                                             </Avatar>
-                                            <img
-                                                :src="getPlatformLogo(account.platform)"
-                                                :alt="account.platform"
-                                                class="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-background object-contain ring-2 ring-card"
-                                            />
+                                            <span
+                                                class="absolute -bottom-1 -right-1 inline-flex size-5 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs"
+                                            >
+                                                <img
+                                                    :src="getPlatformLogo(account.platform)"
+                                                    :alt="account.platform"
+                                                    class="size-full object-cover"
+                                                />
+                                            </span>
                                         </div>
                                         <div class="min-w-0">
                                             <a
@@ -189,42 +193,41 @@ const handleDisconnect = (accountId: string) => {
                                                 :href="account.profile_url"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                class="inline-flex items-center gap-1 truncate text-sm font-medium hover:underline"
+                                                class="inline-flex items-center gap-1 truncate text-sm font-bold text-foreground hover:underline"
                                             >
                                                 {{ account.display_name }}
-                                                <IconExternalLink class="size-3.5" />
+                                                <IconExternalLink class="size-3.5 opacity-60" />
                                             </a>
-                                            <p v-else class="truncate text-sm font-medium">{{ account.display_name }}</p>
-                                            <p class="truncate text-xs text-muted-foreground">
+                                            <p v-else class="truncate text-sm font-bold text-foreground">
+                                                {{ account.display_name }}
+                                            </p>
+                                            <p class="truncate text-xs font-medium text-foreground/60">
                                                 @{{ account.username || account.display_name }}
                                             </p>
                                         </div>
                                     </div>
                                 </TableCell>
 
-                                <TableCell class="text-sm text-muted-foreground">
+                                <TableCell>
                                     {{ getPlatformLabel(account.platform) }}
                                 </TableCell>
 
                                 <TableCell>
-                                    <Badge
-                                        v-if="!isDisconnected(account)"
-                                        class="bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
-                                    >
+                                    <Badge v-if="!isDisconnected(account)" variant="success">
                                         {{ $t('accounts.status.connected') }}
                                     </Badge>
-                                    <Badge v-else variant="destructive" class="gap-1">
+                                    <Badge v-else variant="destructive">
                                         <IconAlertCircle class="size-3" />
                                         {{ $t('accounts.status.disconnected') }}
                                     </Badge>
                                 </TableCell>
 
-                                <TableCell class="text-sm text-muted-foreground">
+                                <TableCell>
                                     <span v-if="account.last_used_at">{{ date.diffForHumans(account.last_used_at) }}</span>
                                     <span v-else>{{ $t('accounts.never_used') }}</span>
                                 </TableCell>
 
-                                <TableCell class="text-sm text-muted-foreground">
+                                <TableCell>
                                     {{ date.diffForHumans(account.created_at) }}
                                 </TableCell>
 

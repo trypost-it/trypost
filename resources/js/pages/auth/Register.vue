@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, usePage } from '@inertiajs/vue3';
 import { IconEye, IconEyeOff } from '@tabler/icons-vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import SocialLogin from '@/components/auth/SocialLogin.vue';
 import InputError from '@/components/InputError.vue';
@@ -28,13 +28,15 @@ defineProps<{
 const showPassword = ref(false);
 
 const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+const page = usePage();
+const isSelfHosted = computed(() => Boolean(page.props.selfHosted));
 </script>
 
 <template>
     <AuthBase
         :title="$t('auth.register.title')"
         :description="$t('auth.register.description')"
-        :show-legal="true"
     >
         <Head :title="$t('auth.register.page_title')" />
 
@@ -135,6 +137,13 @@ const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
                     >
                 </div>
             </Form>
+
+            <!-- eslint-disable-next-line vue/no-v-html -->
+            <div
+                v-if="!isSelfHosted"
+                class="text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary"
+                v-html="$t('auth.legal')"
+            />
         </div>
     </AuthBase>
 </template>

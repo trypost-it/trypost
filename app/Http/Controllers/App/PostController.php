@@ -12,6 +12,7 @@ use App\Actions\Post\UpdatePost;
 use App\Enums\Post\Action as PostAction;
 use App\Enums\Post\Status as PostStatus;
 use App\Enums\SocialAccount\Platform;
+use App\Http\Requests\App\Post\StorePostRequest;
 use App\Http\Requests\App\Post\UpdatePostRequest;
 use App\Http\Resources\Api\PostResource;
 use App\Http\Resources\App\PlatformConfigResource;
@@ -136,7 +137,7 @@ class PostController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse|\Symfony\Component\HttpFoundation\Response
+    public function store(StorePostRequest $request): RedirectResponse|\Symfony\Component\HttpFoundation\Response
     {
         $workspace = $request->user()->currentWorkspace;
 

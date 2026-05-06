@@ -22,14 +22,14 @@ import UserMenuContent from './UserMenuContent.vue';
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const currentWorkspace = computed(() => page.props.auth.currentWorkspace);
-const { isMobile, state } = useSidebar();
+const { isMobile } = useSidebar();
 </script>
 
 <template>
     <SidebarMenu>
         <SidebarMenuItem>
             <div class="flex items-center gap-1">
-                <NotificationBell v-if="currentWorkspace && state === 'expanded'" />
+                <NotificationBell v-if="currentWorkspace" />
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                     <SidebarMenuButton
@@ -42,7 +42,7 @@ const { isMobile, state } = useSidebar();
                     </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                    class="w-(--reka-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                    class="w-(--reka-dropdown-menu-trigger-width) min-w-56"
                     :side="isMobile ? 'bottom' : 'right'"
                     align="end"
                     :side-offset="4"

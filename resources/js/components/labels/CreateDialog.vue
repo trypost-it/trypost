@@ -2,6 +2,7 @@
 import { useForm } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 
+import HexColorInput from '@/components/HexColorInput.vue';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -17,21 +18,11 @@ import { store as labelsStore } from '@/routes/app/labels';
 
 const open = defineModel<boolean>('open', { default: false });
 
-const colors = [
-    '#FDFD96',
-    '#FFD580',
-    '#FFB3BA',
-    '#FF69B4',
-    '#DDA0DD',
-    '#89CFF0',
-    '#90EE90',
-    '#D2B48C',
-    '#D3D3D3',
-];
+const DEFAULT_COLOR = '#7c3aed';
 
 const form = useForm({
     name: '',
-    color: colors[0],
+    color: DEFAULT_COLOR,
 });
 
 const submit = () => {
@@ -46,7 +37,7 @@ const submit = () => {
 const handleOpenChange = (value: boolean) => {
     if (value) {
         form.reset();
-        form.color = colors[0];
+        form.color = DEFAULT_COLOR;
         form.clearErrors();
     }
     open.value = value;
@@ -77,22 +68,8 @@ const handleOpenChange = (value: boolean) => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label>{{ $t('labels.create.color') }}</Label>
-                    <div class="flex flex-wrap gap-3">
-                        <button
-                            v-for="color in colors"
-                            :key="color"
-                            type="button"
-                            class="size-8 rounded-full transition-all"
-                            :class="[
-                                form.color === color
-                                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
-                                    : 'hover:scale-110'
-                            ]"
-                            :style="{ backgroundColor: color }"
-                            @click="form.color = color"
-                        />
-                    </div>
+                    <Label for="create-color">{{ $t('labels.create.color') }}</Label>
+                    <HexColorInput v-model="form.color" name="color" />
                     <p v-if="form.errors.color" class="text-sm text-destructive">
                         {{ form.errors.color }}
                     </p>

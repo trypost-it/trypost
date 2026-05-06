@@ -106,11 +106,11 @@ class FacebookAnalytics
             $total = collect($values)->sum('value');
 
             $label = match ($name) {
-                'page_total_media_view_unique' => 'Page Reach',
-                'post_total_media_view_unique' => 'Posts Reach',
-                'page_post_engagements' => 'Posts Engagement',
-                'page_daily_follows' => 'Page Followers',
-                'page_media_view' => 'Page Views',
+                'page_total_media_view_unique' => __('analytics.metrics.page_reach'),
+                'post_total_media_view_unique' => __('analytics.metrics.posts_reach'),
+                'page_post_engagements' => __('analytics.metrics.posts_engagement'),
+                'page_daily_follows' => __('analytics.metrics.page_followers'),
+                'page_media_view' => __('analytics.metrics.page_views'),
                 default => ucfirst(str_replace('_', ' ', $name)),
             };
 

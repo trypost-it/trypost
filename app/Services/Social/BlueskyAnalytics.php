@@ -44,10 +44,10 @@ class BlueskyAnalytics
         $post = data_get($response->json(), 'posts.0', []);
 
         return [
-            ['label' => 'Likes', 'value' => data_get($post, 'likeCount', 0)],
-            ['label' => 'Reposts', 'value' => data_get($post, 'repostCount', 0)],
-            ['label' => 'Quotes', 'value' => data_get($post, 'quoteCount', 0)],
-            ['label' => 'Replies', 'value' => data_get($post, 'replyCount', 0)],
+            ['label' => __('analytics.metrics.likes'), 'value' => data_get($post, 'likeCount', 0)],
+            ['label' => __('analytics.metrics.reposts'), 'value' => data_get($post, 'repostCount', 0)],
+            ['label' => __('analytics.metrics.quotes'), 'value' => data_get($post, 'quoteCount', 0)],
+            ['label' => __('analytics.metrics.replies'), 'value' => data_get($post, 'replyCount', 0)],
         ];
     }
 }

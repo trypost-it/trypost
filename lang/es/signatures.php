@@ -15,6 +15,11 @@ return [
         'created_at' => 'Creado',
     ],
 
+    'actions' => [
+        'edit' => 'Editar firma',
+        'delete' => 'Eliminar firma',
+    ],
+
     'create' => [
         'title' => 'Crear firma',
         'description' => 'Dale un nombre a tu firma y el contenido para añadir (hashtags, links, texto libre — lo que reutilizas).',

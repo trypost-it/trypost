@@ -10,6 +10,7 @@ return [
     'try_different_search' => 'Tente outra palavra-chave ou limpe a busca.',
     'start_creating' => 'Comece criando seu primeiro post.',
     'table' => [
+        'post' => 'Post',
         'status' => 'Status',
         'content' => 'Conteúdo',
         'platforms' => 'Plataformas',
@@ -199,6 +200,7 @@ return [
     'show' => [
         'title' => 'Detalhes do Post',
         'edit' => 'Editar',
+        'back' => 'Voltar',
         'no_content' => 'Sem legenda',
         'platforms' => 'Plataformas',
         'no_platforms' => 'Nenhuma plataforma selecionada.',
@@ -211,11 +213,6 @@ return [
         'metrics_loading' => 'Carregando métricas…',
         'metrics_unavailable' => 'Métricas ainda não disponíveis para esta plataforma.',
         'metrics_empty' => 'Nenhuma métrica retornada.',
-        'summary' => [
-            'platforms' => 'Plataformas',
-            'published' => 'Publicado',
-            'failed' => 'Falhou',
-        ],
     ],
 
     'edit' => [
@@ -226,7 +223,8 @@ return [
         'schedule' => 'Agendar',
         'delete' => 'Excluir',
         'schedule_for' => 'Agendar para',
-        'scheduled_for' => 'Agendado para',
+        'scheduled_for' => 'Agendado · :date',
+        'unschedule' => 'Desagendar',
         'saving' => 'Salvando...',
         'saved' => 'Salvo',
         'draft' => 'Rascunho',
@@ -305,6 +303,7 @@ return [
         ],
 
         'status' => [
+            'scheduled' => 'Agendado',
             'published' => 'Publicado',
             'publishing' => 'Publicando...',
             'failed' => 'Falhou',
@@ -535,6 +534,8 @@ return [
         'browser_title' => 'Escolha um template',
         'browser_description' => 'Comece com um template pronto e adapte ao seu jeito.',
         'all_platforms' => 'Todas as plataformas',
+        'platform_search_placeholder' => 'Buscar plataforma…',
+        'no_platform_match' => 'Nenhuma plataforma corresponde.',
         'use_this' => 'Usar este template',
         'no_templates' => 'Nenhum template disponível.',
         'applying' => 'Aplicando template…',

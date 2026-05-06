@@ -7,11 +7,14 @@ defineProps<{
 </script>
 
 <template>
-    <div>
-        <h2 class="text-xl font-semibold tracking-tight">
+    <header class="space-y-1">
+        <h1
+            class="text-4xl font-semibold leading-tight text-foreground"
+            style="font-family: var(--font-display)"
+        >
             {{ title }}
-            <span v-if="total != null && total > 0" class="text-muted-foreground">({{ total }})</span>
-        </h2>
-        <p v-if="description" class="text-sm text-muted-foreground">{{ description }}</p>
-    </div>
+            <span v-if="total != null && total > 0" class="text-foreground/40">({{ total }})</span>
+        </h1>
+        <p v-if="description" class="text-sm text-foreground/70">{{ description }}</p>
+    </header>
 </template>

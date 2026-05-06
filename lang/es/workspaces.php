@@ -49,8 +49,7 @@ return [
         'background_color' => 'Color de fondo',
         'text_color' => 'Color de texto',
         'submit' => 'Crear workspace',
-        'first_workspace_success' => 'Workspace creado. Conecta una cuenta social para empezar a publicar.',
-        'success' => 'Workspace creado.',
+        'success' => 'Workspace creado. Conecta una cuenta social para empezar a publicar.',
     ],
 
     'limit_reached' => 'Has alcanzado el límite de workspaces de tu plan.',

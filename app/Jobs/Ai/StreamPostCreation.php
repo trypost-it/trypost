@@ -34,6 +34,7 @@ class StreamPostCreation implements ShouldQueue
         public ?string $socialAccountId,
         public int $imageCount,
         public string $prompt,
+        public ?string $date = null,
     ) {
         $this->onQueue('ai');
     }
@@ -251,6 +252,7 @@ class StreamPostCreation implements ShouldQueue
             'social_account_id' => $this->socialAccountId,
             'content' => $caption,
             'slides' => $renderedSlides,
+            'date' => $this->date,
             'created_at' => now()->toIso8601String(),
         ], now()->addMinutes(30));
 
@@ -296,6 +298,7 @@ class StreamPostCreation implements ShouldQueue
             'image_body' => $imageBody,
             'image_keywords' => $keywords,
             'image_path' => $imagePath,
+            'date' => $this->date,
             'created_at' => now()->toIso8601String(),
         ], now()->addMinutes(30));
 

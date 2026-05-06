@@ -57,28 +57,30 @@ const activeContentType = computed((): string | undefined => {
 
 <template>
     <div class="flex h-full flex-col">
-        <div v-if="platforms.length > 1" class="border-b px-4 py-3">
+        <div v-if="platforms.length > 1" class="border-b-2 border-foreground/10 px-4 py-3">
             <div class="flex flex-wrap gap-3">
                 <TooltipProvider v-for="pp in platforms" :key="pp.id" :delay-duration="200">
                     <Tooltip>
                         <TooltipTrigger as-child>
                             <button
                                 type="button"
-                                class="relative transition-opacity"
+                                class="relative cursor-pointer transition-opacity"
                                 :class="activeId === pp.id ? 'opacity-100' : 'opacity-40 hover:opacity-70'"
                                 @click="activeId = pp.id"
                             >
                                 <Avatar
                                     :src="getPlatformAvatar(pp)"
                                     :name="getPlatformDisplayName(pp)"
-                                    class="h-9 w-9 shrink-0 rounded-full ring-2 ring-offset-2"
-                                    :class="activeId === pp.id ? 'ring-primary' : 'ring-transparent'"
+                                    class="size-9 shrink-0 rounded-full border-2"
+                                    :class="activeId === pp.id ? 'border-foreground shadow-2xs' : 'border-foreground/20'"
                                 />
-                                <img
-                                    :src="getPlatformLogo(pp.platform)"
-                                    :alt="pp.platform"
-                                    class="absolute -bottom-1.5 -right-1.5 h-4 w-4 rounded-full bg-background object-contain ring-1 ring-border"
-                                />
+                                <span class="absolute -bottom-1 -right-1 inline-flex size-4 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
+                                    <img
+                                        :src="getPlatformLogo(pp.platform)"
+                                        :alt="pp.platform"
+                                        class="size-full object-cover"
+                                    />
+                                </span>
                             </button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -92,7 +94,7 @@ const activeContentType = computed((): string | undefined => {
             </div>
         </div>
 
-        <div class="flex flex-1 items-start justify-center bg-muted/30 px-4 pb-8 pt-6">
+        <div class="flex flex-1 items-start justify-center bg-foreground/5 px-4 pb-8 pt-6">
             <PhoneMockup v-if="activePlatform">
                 <PlatformPreview
                     :platform="activePlatform.platform"
@@ -103,10 +105,17 @@ const activeContentType = computed((): string | undefined => {
                     :meta="platformMeta?.[activePlatform.id] ?? {}"
                 />
             </PhoneMockup>
-            <div v-else class="flex flex-col items-center gap-2 text-center text-muted-foreground">
-                <IconDeviceMobile class="size-10 opacity-40" />
-                <p class="text-sm font-medium">{{ $t('posts.edit.preview_empty.title') }}</p>
-                <p class="text-xs">{{ $t('posts.edit.preview_empty.description') }}</p>
+            <div v-else class="flex flex-col items-center gap-3 text-center">
+                <div class="inline-flex size-12 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
+                    <IconDeviceMobile class="size-6 text-foreground" stroke-width="2" />
+                </div>
+                <p
+                    class="text-base font-bold text-foreground"
+                    style="font-family: var(--font-display)"
+                >
+                    {{ $t('posts.edit.preview_empty.title') }}
+                </p>
+                <p class="text-xs font-medium text-foreground/60">{{ $t('posts.edit.preview_empty.description') }}</p>
             </div>
         </div>
     </div>

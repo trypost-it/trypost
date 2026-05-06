@@ -28,9 +28,13 @@ interface SocialAccount {
 
 interface Props {
     socialAccounts: SocialAccount[];
+    /** ISO date (YYYY-MM-DD) carried over from the calendar's per-day "+" button. */
+    date?: string | null;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+    date: null,
+});
 
 type WizardStep = 'configure' | 'preview';
 
@@ -67,7 +71,8 @@ const httpStart = useHttp<{
     social_account_id: string | null;
     image_count: number;
     prompt: string;
-}>({ format: null, social_account_id: null, image_count: 0, prompt: '' });
+    date: string | null;
+}>({ format: null, social_account_id: null, image_count: 0, prompt: '', date: null });
 
 const httpFinalize = useHttp<{ content: string; image_title: string; image_body: string }>({
     content: '',
@@ -253,6 +258,7 @@ const startGeneration = async () => {
     httpStart.social_account_id = selectedAccountId.value;
     httpStart.image_count = submittedImageCount.value;
     httpStart.prompt = promptText.value.trim();
+    httpStart.date = props.date;
 
     try {
         const data = await httpStart.post(startRoute.url()) as { creation_id: string; channel: string };
@@ -292,74 +298,80 @@ onUnmounted(() => unsubscribeEcho());
 
 <template>
     <div class="space-y-6">
-        <!-- Back button — consistent across both steps -->
-        <div class="flex items-center">
-            <Button variant="ghost" size="sm" class="-ml-2 text-muted-foreground" @click="goBack">
-                <IconArrowLeft class="mr-1 size-4" />
-                {{ $t('posts.create.steps.back') }}
-            </Button>
-        </div>
+        <!-- Back button — sticker arrow + ink label, mirrors the marketing site -->
+        <button
+            type="button"
+            class="group inline-flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-foreground/70 transition-colors hover:text-foreground"
+            @click="goBack"
+        >
+            <span class="inline-flex size-7 items-center justify-center rounded-md border-2 border-foreground bg-card shadow-2xs transition-transform group-hover:-translate-x-0.5">
+                <IconArrowLeft class="size-3.5 text-foreground" stroke-width="2.5" />
+            </span>
+            {{ $t('posts.create.steps.back') }}
+        </button>
 
         <!-- ====== Step 1: Configure (everything in one screen) ====== -->
         <template v-if="step === 'configure'">
             <!-- Format -->
             <div class="space-y-2">
-                <Label class="text-sm font-medium">{{ $t('posts.create.steps.format_title') }}</Label>
+                <Label class="text-sm font-bold">{{ $t('posts.create.steps.format_title') }}</Label>
                 <div class="grid gap-2 sm:grid-cols-2">
                     <button
                         v-for="format in availableFormats"
                         :key="format.value"
                         type="button"
-                        class="flex items-center gap-3 rounded-xl border bg-card p-3.5 text-left text-sm transition-all hover:border-primary/50 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:bg-card"
-                        :class="{ 'border-primary bg-primary/5 ring-1 ring-primary/30': selectedFormat === format.value }"
+                        class="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-foreground bg-card p-3.5 text-left text-sm shadow-2xs transition-all hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-card"
+                        :class="{ '!bg-violet-100 shadow-md': selectedFormat === format.value }"
                         :disabled="!isFormatConnected(format)"
                         :title="!isFormatConnected(format) ? $t('posts.create.steps.connect_first') : ''"
                         @click="selectFormat(format.value)"
                     >
-                        <img
-                            :src="getPlatformLogo(format.platforms[0])"
-                            :alt="format.platforms[0]"
-                            class="size-6 rounded-full ring-1 ring-background"
-                        />
-                        <span class="flex-1 font-medium">{{ $t(`posts.create.steps.format.${format.value}`) }}</span>
-                        <IconCheck v-if="selectedFormat === format.value" class="size-4 text-primary" />
+                        <span class="inline-flex size-7 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
+                            <img
+                                :src="getPlatformLogo(format.platforms[0])"
+                                :alt="format.platforms[0]"
+                                class="size-full object-cover"
+                            />
+                        </span>
+                        <span class="flex-1 font-semibold text-foreground">{{ $t(`posts.create.steps.format.${format.value}`) }}</span>
+                        <IconCheck v-if="selectedFormat === format.value" class="size-4 text-foreground" stroke-width="3" />
                     </button>
                 </div>
             </div>
 
             <!-- Account (only when there's a choice to make) -->
             <div v-if="selectedFormat && showsAccountPicker" class="space-y-2">
-                <Label class="text-sm font-medium">{{ $t('posts.create.steps.account_title') }}</Label>
+                <Label class="text-sm font-bold">{{ $t('posts.create.steps.account_title') }}</Label>
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     <button
                         v-for="account in accountsForFormat"
                         :key="account.id"
                         type="button"
-                        class="relative flex items-center gap-2 rounded-xl border bg-card p-2.5 text-left text-sm transition-all hover:border-primary/50 hover:bg-primary/5"
-                        :class="{ 'border-primary bg-primary/5 ring-1 ring-primary/30': selectedAccountId === account.id }"
+                        class="relative flex cursor-pointer items-center gap-2 rounded-xl border-2 border-foreground bg-card p-2.5 text-left text-sm shadow-2xs transition-all hover:bg-foreground/5"
+                        :class="{ '!bg-violet-100 shadow-md': selectedAccountId === account.id }"
                         @click="selectedAccountId = account.id"
                     >
-                        <img
-                            v-if="account.avatar_url"
-                            :src="account.avatar_url"
-                            :alt="account.display_name"
-                            class="size-8 shrink-0 rounded-full"
-                        />
-                        <div v-else class="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                            <img :src="getPlatformLogo(account.platform)" :alt="account.platform" class="size-4" />
-                        </div>
+                        <span class="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
+                            <img
+                                v-if="account.avatar_url"
+                                :src="account.avatar_url"
+                                :alt="account.display_name"
+                                class="size-full object-cover"
+                            />
+                            <img v-else :src="getPlatformLogo(account.platform)" :alt="account.platform" class="size-4" />
+                        </span>
                         <div class="min-w-0 flex-1">
-                            <p class="truncate text-xs font-medium leading-tight">{{ account.display_name }}</p>
-                            <p v-if="account.username" class="truncate text-xs text-muted-foreground">@{{ account.username }}</p>
+                            <p class="truncate text-xs font-bold leading-tight text-foreground">{{ account.display_name }}</p>
+                            <p v-if="account.username" class="truncate text-xs font-medium text-foreground/60">@{{ account.username }}</p>
                         </div>
-                        <IconCheck v-if="selectedAccountId === account.id" class="absolute right-2 top-2 size-3.5 text-primary" />
+                        <IconCheck v-if="selectedAccountId === account.id" class="absolute right-2 top-2 size-3.5 text-foreground" stroke-width="3" />
                     </button>
                 </div>
             </div>
 
             <!-- Media — inline, only when format actually has options -->
             <div v-if="selectedFormat && isCarousel" class="space-y-2">
-                <Label class="text-sm font-medium">{{ $t('posts.create.steps.media_carousel') }}</Label>
+                <Label class="text-sm font-bold">{{ $t('posts.create.steps.media_carousel') }}</Label>
                 <div class="flex flex-wrap gap-2">
                     <Button
                         v-for="n in [2, 3, 4, 5, 6, 7, 8, 9, 10]"
@@ -375,7 +387,7 @@ onUnmounted(() => unsubscribeEcho());
             </div>
 
             <div v-if="selectedFormat && supportsOptionalImages" class="space-y-2">
-                <Label class="text-sm font-medium">{{ $t('posts.create.steps.media_optional_label') }}</Label>
+                <Label class="text-sm font-bold">{{ $t('posts.create.steps.media_optional_label') }}</Label>
                 <div class="flex flex-wrap gap-2">
                     <Button
                         type="button"
@@ -399,7 +411,7 @@ onUnmounted(() => unsubscribeEcho());
 
             <!-- Prompt -->
             <div v-if="selectedFormat" class="space-y-2">
-                <Label for="ai-prompt" class="text-sm font-medium">{{ $t('posts.create.steps.prompt_label') }}</Label>
+                <Label for="ai-prompt" class="text-sm font-bold">{{ $t('posts.create.steps.prompt_label') }}</Label>
                 <Textarea
                     id="ai-prompt"
                     v-model="promptText"
@@ -418,19 +430,21 @@ onUnmounted(() => unsubscribeEcho());
 
         <!-- ====== Step 2: Preview ====== -->
         <template v-else-if="step === 'preview'">
-            <div v-if="previewStatus === 'loading'" class="flex flex-col items-center gap-4 rounded-xl border bg-muted/20 py-16 text-center">
-                <IconLoader2 class="size-10 animate-spin text-primary" />
-                <p class="text-sm text-muted-foreground">{{ $t('posts.create.steps.preview_loading') }}</p>
+            <div v-if="previewStatus === 'loading'" class="flex flex-col items-center gap-4 rounded-2xl border-2 border-foreground bg-card py-16 text-center shadow-2xs">
+                <div class="inline-flex size-12 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
+                    <IconLoader2 class="size-6 animate-spin text-foreground" stroke-width="2" />
+                </div>
+                <p class="text-sm font-semibold text-foreground/70">{{ $t('posts.create.steps.preview_loading') }}</p>
             </div>
 
             <div v-else-if="previewStatus === 'error'" class="space-y-4">
-                <div class="rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-                    <p class="text-sm text-destructive">{{ previewError || $t('posts.create.steps.preview_error') }}</p>
+                <div class="rounded-xl border-2 border-foreground bg-rose-50 p-4 shadow-2xs">
+                    <p class="text-sm font-semibold text-rose-700">{{ previewError || $t('posts.create.steps.preview_error') }}</p>
                 </div>
 
                 <div class="flex justify-end">
                     <Button variant="outline" @click="retryGeneration">
-                        <IconRefresh class="mr-1 size-4" />
+                        <IconRefresh class="size-4" />
                         {{ $t('posts.create.steps.retry') }}
                     </Button>
                 </div>
@@ -438,14 +452,14 @@ onUnmounted(() => unsubscribeEcho());
 
             <div v-else-if="previewStatus === 'done'" class="space-y-4">
                 <!-- Caption-less formats (Stories): edit title + body separately. -->
-                <div v-if="!supportsCaption" class="space-y-3 rounded-xl border bg-muted/20 p-5">
-                    <div class="space-y-1">
-                        <Label class="text-xs font-medium text-muted-foreground">{{ $t('posts.create.preview.image_title') }}</Label>
-                        <Input v-model="previewImageTitle" class="bg-background" />
+                <div v-if="!supportsCaption" class="space-y-3 rounded-2xl border-2 border-foreground bg-card p-5 shadow-2xs">
+                    <div class="space-y-1.5">
+                        <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.create.preview.image_title') }}</Label>
+                        <Input v-model="previewImageTitle" />
                     </div>
-                    <div class="space-y-1">
-                        <Label class="text-xs font-medium text-muted-foreground">{{ $t('posts.create.preview.image_body') }}</Label>
-                        <Textarea v-model="previewImageBody" class="min-h-[120px] resize-none bg-background" />
+                    <div class="space-y-1.5">
+                        <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.create.preview.image_body') }}</Label>
+                        <Textarea v-model="previewImageBody" class="min-h-[120px] resize-none" />
                     </div>
                 </div>
 
@@ -453,15 +467,16 @@ onUnmounted(() => unsubscribeEcho());
                 <Textarea
                     v-else
                     v-model="previewContent"
-                    class="min-h-[200px] resize-none rounded-xl border bg-muted/20 p-5 text-sm leading-relaxed"
+                    class="min-h-[200px] resize-none p-5 text-sm leading-relaxed"
                 />
 
                 <div class="flex justify-end gap-2">
                     <Button variant="outline" @click="retryGeneration">
+                        <IconRefresh class="size-4" />
                         {{ $t('posts.create.steps.retry') }}
                     </Button>
                     <Button :disabled="finalizing" @click="createPost">
-                        <IconLoader2 v-if="finalizing" class="mr-1 size-4 animate-spin" />
+                        <IconLoader2 v-if="finalizing" class="size-4 animate-spin" />
                         {{ $t('posts.create.steps.create') }}
                     </Button>
                 </div>

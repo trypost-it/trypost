@@ -7,6 +7,7 @@ return [
     'add_social' => 'Adicionar Rede Social',
     'add_social_title' => 'Conectar uma Conta Social',
     'add_social_description' => 'Conecte uma conta social ao TryPost para começar a publicar',
+    'connect_cta' => 'Conectar',
     'no_accounts' => 'Nenhuma conta conectada ainda',
     'no_accounts_description' => 'Conecte suas redes sociais para começar a agendar e publicar posts',
     'no_search_results' => 'Nenhuma conta corresponde à sua busca',

@@ -1,7 +1,6 @@
 import '../css/app.css';
 
 import { createInertiaApp, router } from '@inertiajs/vue3';
-import type { Page } from '@inertiajs/core';
 import { configureEcho } from '@laravel/echo-vue';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { i18nVue } from 'laravel-vue-i18n';
@@ -10,53 +9,14 @@ import { createApp, h } from 'vue';
 
 import { initializeDataLayer } from './datalayer';
 import dayjs from './dayjs';
-import posthog from './posthog';
+import { capturePageview, syncPostHogContext } from './posthog';
 import type { Auth } from './types';
-
-interface Usage {
-    workspaceCount: number;
-    socialAccountCount: number;
-    memberCount: number;
-    pendingInviteCount: number;
-    postCount: number;
-    creditsUsed: number;
-}
 
 configureEcho({
     broadcaster: 'reverb',
 });
 
 const appName = import.meta.env.VITE_APP_NAME || 'TryPost.it';
-
-// Re-applies the PostHog account/workspace group context with fresh metrics.
-// Called on every Inertia navigation so `usage` counts (workspaces, social
-// accounts, posts, members) stay reactive — the backend already ships these
-// counts on every Inertia request, so this leverages props that are already
-// loaded without firing extra queries.
-const syncPostHogContext = (page: Page): void => {
-    const auth = page.props.auth as Auth | undefined;
-    const usage = page.props.usage as Usage | null;
-
-    if (!auth?.user) return;
-
-    if (auth.account) {
-        posthog.group('account', auth.account.id, {
-            name: auth.account.name,
-            workspaces_count: usage?.workspaceCount,
-            social_accounts_count: usage?.socialAccountCount,
-            members_count: usage?.memberCount,
-            posts_count: usage?.postCount,
-            credits_used: usage?.creditsUsed,
-        });
-    }
-
-    if (auth.currentWorkspace) {
-        posthog.group('workspace', auth.currentWorkspace.id, {
-            name: auth.currentWorkspace.name,
-            account_id: auth.account?.id,
-        });
-    }
-};
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -84,26 +44,16 @@ createInertiaApp({
             props.initialPage.props.env as string,
         );
 
-        if (auth?.user) {
-            posthog.identify(auth.user.id, {
-                $email: auth.user.email,
-                $name: auth.user.name,
-            });
-        }
-
-        // Initial group context + initial pageview. The backend mirrors this
-        // hierarchy in app/Jobs/SyncUserToPostHog.php so events emitted from
-        // the server land on the same person + group identifiers.
+        // Initial PostHog identify + dual-group context + first pageview.
+        // The same hooks fire on every Inertia navigation below so the
+        // account group counts stay reactive and workspace switches
+        // re-attach the right workspace group.
         syncPostHogContext(props.initialPage);
-        posthog.capture('$pageview', { $current_url: window.location.href });
+        capturePageview();
 
         router.on('navigate', (event) => {
-            // Re-sync group context on every navigation: refreshes the count
-            // metrics on the `account` group AND covers workspace switches
-            // (which update auth.currentWorkspace via Inertia's prop refresh
-            // without triggering setup() again).
             syncPostHogContext(event.detail.page);
-            posthog.capture('$pageview', { $current_url: window.location.href });
+            capturePageview();
         });
 
         createApp({ render: () => h(App, props) })

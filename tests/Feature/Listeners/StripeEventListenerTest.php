@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use App\Events\SubscriptionCreated;
+use App\Jobs\PostHog\TrackBilling;
 use App\Listeners\StripeEventListener;
 use App\Models\Account;
 use App\Models\User;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Events\WebhookReceived;
@@ -126,7 +128,6 @@ test('logs error and does not throw on exception', function () {
         ->once()
         ->withArgs(fn ($msg) => str_contains($msg, 'Stripe webhook error'));
 
-    // Force an exception by making Event::dispatch throw
     Event::listen(SubscriptionCreated::class, fn () => throw new Exception('Simulated error'));
 
     $this->listener->handle(new WebhookReceived([
@@ -141,4 +142,62 @@ test('handles malformed payload gracefully', function () {
     ]));
 
     expect(true)->toBeTrue();
+});
+
+// ========================================
+// PostHog tracking — listener delegates to TrackBilling
+// ========================================
+
+test('subscription created dispatches TrackBilling with subscription.created event', function () {
+    Bus::fake([TrackBilling::class]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.created',
+        'data' => ['object' => ['customer' => 'cus_test123', 'id' => 'sub_123', 'status' => 'trialing']],
+    ]));
+
+    Bus::assertDispatched(
+        TrackBilling::class,
+        fn ($job) => $job->accountId === (string) $this->account->id
+            && $job->event === 'subscription.created',
+    );
+});
+
+test('subscription updated dispatches TrackBilling with subscription.updated event', function () {
+    Bus::fake([TrackBilling::class]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.updated',
+        'data' => ['object' => ['customer' => 'cus_test123', 'status' => 'active']],
+    ]));
+
+    Bus::assertDispatched(
+        TrackBilling::class,
+        fn ($job) => $job->event === 'subscription.updated',
+    );
+});
+
+test('subscription deleted dispatches TrackBilling with subscription.cancelled event', function () {
+    Bus::fake([TrackBilling::class]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.deleted',
+        'data' => ['object' => ['customer' => 'cus_test123', 'status' => 'canceled']],
+    ]));
+
+    Bus::assertDispatched(
+        TrackBilling::class,
+        fn ($job) => $job->event === 'subscription.cancelled',
+    );
+});
+
+test('unknown event types do not dispatch TrackBilling', function () {
+    Bus::fake([TrackBilling::class]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'invoice.payment_succeeded',
+        'data' => ['object' => ['customer' => 'cus_test123']],
+    ]));
+
+    Bus::assertNotDispatched(TrackBilling::class);
 });

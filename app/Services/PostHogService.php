@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Jobs\SendPostHogEvent;
+use App\Jobs\PostHog\SendEvent;
 use App\Models\Account;
 use Illuminate\Support\Facades\Log;
 
@@ -75,7 +75,7 @@ class PostHogService
     private function dispatch(string $method, array $payload): void
     {
         try {
-            SendPostHogEvent::dispatch([
+            SendEvent::dispatch([
                 ['method' => $method, 'payload' => $payload],
             ]);
         } catch (\Throwable $e) {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use App\Jobs\SendPostHogEvent;
+use App\Jobs\PostHog\SendEvent;
 
 test('job is queued on posthog queue', function () {
-    $job = new SendPostHogEvent([
+    $job = new SendEvent([
         ['method' => 'capture', 'payload' => ['distinctId' => 'user-1', 'event' => 'test']],
     ]);
 
@@ -15,7 +15,7 @@ test('job is queued on posthog queue', function () {
 test('job skips execution when api key is missing', function () {
     config(['services.posthog.api_key' => null]);
 
-    $job = new SendPostHogEvent([
+    $job = new SendEvent([
         ['method' => 'capture', 'payload' => ['distinctId' => 'user-1', 'event' => 'test']],
     ]);
 
@@ -26,7 +26,7 @@ test('job skips execution when api key is missing', function () {
 });
 
 test('job has correct retry and timeout settings', function () {
-    $job = new SendPostHogEvent([]);
+    $job = new SendEvent([]);
 
     expect($job->tries)->toBe(3);
     expect($job->timeout)->toBe(15);

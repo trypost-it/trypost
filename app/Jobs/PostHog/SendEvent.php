@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Jobs;
+namespace App\Jobs\PostHog;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -12,7 +12,17 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use PostHog\PostHog;
 
-class SendPostHogEvent implements ShouldQueue
+/**
+ * Low-level PostHog dispatch worker. Receives an array of pre-built API
+ * calls (`capture`, `identify`, `groupIdentify`) and forwards them to the
+ * PostHog SDK. Higher-level jobs in this namespace (`SyncUser`,
+ * `TrackBilling`) build the payloads and queue this job to do the network
+ * work.
+ *
+ * No-op when `POSTHOG_API_KEY` is unset so self-hosted installs are
+ * unaffected.
+ */
+class SendEvent implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -40,7 +50,7 @@ class SendPostHogEvent implements ShouldQueue
                 'capture' => PostHog::capture(data_get($call, 'payload')),
                 'identify' => PostHog::identify(data_get($call, 'payload')),
                 'groupIdentify' => PostHog::groupIdentify(data_get($call, 'payload')),
-                default => Log::warning('SendPostHogEvent: unknown method', ['method' => data_get($call, 'method')]),
+                default => Log::warning('PostHog\\SendEvent: unknown method', ['method' => data_get($call, 'method')]),
             };
         }
 

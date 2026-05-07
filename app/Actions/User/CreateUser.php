@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\User;
 
-use App\Jobs\SyncUserToPostHog;
+use App\Jobs\PostHog\SyncUser;
 use App\Models\Account;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +41,7 @@ class CreateUser
             return $user;
         });
 
-        SyncUserToPostHog::dispatch((string) $user->id);
+        SyncUser::dispatch((string) $user->id);
 
         return $user;
     }

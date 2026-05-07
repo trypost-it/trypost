@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Jobs;
+namespace App\Jobs\PostHog;
 
 use App\Models\User;
 use App\Services\PostHogService;
@@ -17,8 +17,8 @@ use Illuminate\Queue\SerializesModels;
  * frontend can't observe (signup, Stripe webhooks) so the person profile
  * and account/workspace groups carry up-to-date properties without blocking
  * the calling request. Inertia navigations refresh group counts on the
- * client (see `syncPostHogContext` in resources/js/app.ts), so this job is
- * not needed on every domain trigger.
+ * client (see `syncPostHogContext` in resources/js/posthog.ts), so this job
+ * is not needed on every domain trigger.
  *
  * Hierarchy mirrors the domain model:
  * - person  → User
@@ -28,7 +28,7 @@ use Illuminate\Queue\SerializesModels;
  * No-op when POSTHOG_API_KEY is unset (PostHogService short-circuits), so
  * self-hosted installs are unaffected.
  */
-class SyncUserToPostHog implements ShouldQueue
+class SyncUser implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 

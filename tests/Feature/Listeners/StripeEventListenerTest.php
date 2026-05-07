@@ -6,6 +6,7 @@ use App\Events\SubscriptionCreated;
 use App\Jobs\PostHog\TrackBilling;
 use App\Listeners\StripeEventListener;
 use App\Models\Account;
+use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Event;
@@ -200,4 +201,195 @@ test('unknown event types do not dispatch TrackBilling', function () {
     ]));
 
     Bus::assertNotDispatched(TrackBilling::class);
+});
+
+// ========================================
+// Plan sync — domain logic
+// ========================================
+//
+// Tests below override the seeded plans' Stripe price ids with deterministic
+// values so the assertions don't depend on `.env.testing` having
+// `STRIPE_*_MONTHLY/YEARLY` set.
+
+beforeEach(function () {
+    Plan::query()->where('slug', 'starter')->update([
+        'stripe_monthly_price_id' => 'price_starter_monthly',
+        'stripe_yearly_price_id' => 'price_starter_yearly',
+    ]);
+    Plan::query()->where('slug', 'pro')->update([
+        'stripe_monthly_price_id' => 'price_pro_monthly',
+        'stripe_yearly_price_id' => 'price_pro_yearly',
+    ]);
+});
+
+test('subscription updated swaps account plan_id when price matches a different plan', function () {
+    $starter = Plan::query()->where('slug', 'starter')->firstOrFail();
+    $pro = Plan::query()->where('slug', 'pro')->firstOrFail();
+
+    $this->account->update(['plan_id' => $starter->id]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.updated',
+        'data' => ['object' => [
+            'customer' => 'cus_test123',
+            'items' => ['data' => [
+                ['price' => ['id' => 'price_pro_monthly']],
+            ]],
+        ]],
+    ]));
+
+    expect($this->account->fresh()->plan_id)->toBe($pro->id);
+});
+
+test('subscription updated leaves plan_id alone when price already matches current plan', function () {
+    $starter = Plan::query()->where('slug', 'starter')->firstOrFail();
+    $this->account->update(['plan_id' => $starter->id]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.updated',
+        'data' => ['object' => [
+            'customer' => 'cus_test123',
+            'items' => ['data' => [
+                ['price' => ['id' => 'price_starter_monthly']],
+            ]],
+        ]],
+    ]));
+
+    expect($this->account->fresh()->plan_id)->toBe($starter->id);
+});
+
+test('subscription updated ignores unknown price ids without erroring', function () {
+    $starter = Plan::query()->where('slug', 'starter')->firstOrFail();
+    $this->account->update(['plan_id' => $starter->id]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.updated',
+        'data' => ['object' => [
+            'customer' => 'cus_test123',
+            'items' => ['data' => [
+                ['price' => ['id' => 'price_unknown_xyz']],
+            ]],
+        ]],
+    ]));
+
+    expect($this->account->fresh()->plan_id)->toBe($starter->id);
+});
+
+test('subscription updated matches yearly price ids too', function () {
+    $starter = Plan::query()->where('slug', 'starter')->firstOrFail();
+    $pro = Plan::query()->where('slug', 'pro')->firstOrFail();
+
+    $this->account->update(['plan_id' => $starter->id]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.updated',
+        'data' => ['object' => [
+            'customer' => 'cus_test123',
+            'items' => ['data' => [
+                ['price' => ['id' => 'price_pro_yearly']],
+            ]],
+        ]],
+    ]));
+
+    expect($this->account->fresh()->plan_id)->toBe($pro->id);
+});
+
+test('subscription created syncs plan from price ids on first activation', function () {
+    $pro = Plan::query()->where('slug', 'pro')->firstOrFail();
+    $this->account->update(['plan_id' => null]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.created',
+        'data' => ['object' => [
+            'customer' => 'cus_test123',
+            'items' => ['data' => [
+                ['price' => ['id' => 'price_pro_monthly']],
+            ]],
+        ]],
+    ]));
+
+    expect($this->account->fresh()->plan_id)->toBe($pro->id);
+});
+
+test('subscription deleted clears the account plan_id', function () {
+    $starter = Plan::query()->where('slug', 'starter')->firstOrFail();
+    $this->account->update(['plan_id' => $starter->id]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.deleted',
+        'data' => ['object' => ['customer' => 'cus_test123', 'status' => 'canceled']],
+    ]));
+
+    expect($this->account->fresh()->plan_id)->toBeNull();
+});
+
+test('subscription deleted is idempotent when plan_id is already null', function () {
+    $this->account->update(['plan_id' => null]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.deleted',
+        'data' => ['object' => ['customer' => 'cus_test123']],
+    ]));
+
+    expect($this->account->fresh()->plan_id)->toBeNull();
+});
+
+// ========================================
+// previousPlan propagation
+// ========================================
+
+test('subscription updated forwards the previous plan name to TrackBilling', function () {
+    $starter = Plan::query()->where('slug', 'starter')->firstOrFail();
+    $this->account->update(['plan_id' => $starter->id]);
+
+    Bus::fake([TrackBilling::class]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.updated',
+        'data' => ['object' => [
+            'customer' => 'cus_test123',
+            'items' => ['data' => [['price' => ['id' => 'price_pro_monthly']]]],
+        ]],
+    ]));
+
+    Bus::assertDispatched(
+        TrackBilling::class,
+        fn ($job) => $job->event === 'subscription.updated' && $job->previousPlan === $starter->name,
+    );
+});
+
+test('subscription deleted forwards the previous plan name to TrackBilling', function () {
+    $starter = Plan::query()->where('slug', 'starter')->firstOrFail();
+    $this->account->update(['plan_id' => $starter->id]);
+
+    Bus::fake([TrackBilling::class]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.deleted',
+        'data' => ['object' => ['customer' => 'cus_test123']],
+    ]));
+
+    Bus::assertDispatched(
+        TrackBilling::class,
+        fn ($job) => $job->event === 'subscription.cancelled' && $job->previousPlan === $starter->name,
+    );
+});
+
+test('subscription created forwards a null previous plan when account had none', function () {
+    $this->account->update(['plan_id' => null]);
+
+    Bus::fake([TrackBilling::class]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.created',
+        'data' => ['object' => [
+            'customer' => 'cus_test123',
+            'items' => ['data' => [['price' => ['id' => 'price_starter_monthly']]]],
+        ]],
+    ]));
+
+    Bus::assertDispatched(
+        TrackBilling::class,
+        fn ($job) => $job->event === 'subscription.created' && $job->previousPlan === null,
+    );
 });

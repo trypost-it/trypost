@@ -7,17 +7,12 @@ namespace App\Listeners;
 use App\Events\SubscriptionCreated;
 use App\Jobs\PostHog\TrackBilling;
 use App\Models\Account;
+use App\Models\Plan;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Events\WebhookReceived;
 
 class StripeEventListener
 {
-    private const POSTHOG_EVENT_BY_TYPE = [
-        'customer.subscription.created' => 'subscription.created',
-        'customer.subscription.updated' => 'subscription.updated',
-        'customer.subscription.deleted' => 'subscription.cancelled',
-    ];
-
     public function handle(WebhookReceived $event): void
     {
         try {
@@ -34,18 +29,120 @@ class StripeEventListener
                 return;
             }
 
-            if ($type === 'customer.subscription.created') {
-                SubscriptionCreated::dispatch($account);
-            }
-
-            if ($postHogEvent = self::POSTHOG_EVENT_BY_TYPE[$type] ?? null) {
-                TrackBilling::dispatch((string) $account->id, $postHogEvent, $event->payload);
-            }
+            match ($type) {
+                'customer.subscription.created' => $this->handleSubscriptionCreated($account, $event->payload),
+                'customer.subscription.updated' => $this->handleSubscriptionUpdated($account, $event->payload),
+                'customer.subscription.deleted' => $this->handleSubscriptionDeleted($account, $event->payload),
+                default => null,
+            };
         } catch (\Exception $e) {
             Log::error('Stripe webhook error: '.$e->getMessage(), [
                 'exception' => $e,
                 'payload' => $event->payload,
             ]);
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    protected function handleSubscriptionCreated(Account $account, array $payload): void
+    {
+        $previousPlan = $account->plan?->name;
+        $plan = $this->resolvePlanFromSubscriptionItems($payload, $account);
+
+        if ($plan && $account->plan_id !== $plan->id) {
+            $account->update(['plan_id' => $plan->id]);
+        }
+
+        SubscriptionCreated::dispatch($account);
+
+        $this->trackPlanChange($account, 'subscription.created', $previousPlan, $payload);
+    }
+
+    /**
+     * Plan changes coming from Stripe (billing portal, dashboard, or our own
+     * `BillingController@swap`) re-arrive here. Re-resolving the plan from
+     * the price ids guarantees the local state matches Stripe even when a
+     * change happens out-of-band. Pennant feature caches are forgotten
+     * automatically via Account::booted() when `plan_id` changes.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    protected function handleSubscriptionUpdated(Account $account, array $payload): void
+    {
+        $previousPlan = $account->plan?->name;
+        $plan = $this->resolvePlanFromSubscriptionItems($payload, $account);
+
+        if ($plan && $account->plan_id !== $plan->id) {
+            $account->update(['plan_id' => $plan->id]);
+        }
+
+        $this->trackPlanChange($account, 'subscription.updated', $previousPlan, $payload);
+    }
+
+    /**
+     * Subscription fully terminated (period ended after cancellation, or
+     * cancelled immediately). Clear the local plan so the UI and
+     * authorisation checks (`Account::hasActiveSubscription`) reflect
+     * "no plan" instead of keeping the previous one attached.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    protected function handleSubscriptionDeleted(Account $account, array $payload): void
+    {
+        $previousPlan = $account->plan?->name;
+
+        if ($account->plan_id !== null) {
+            $account->update(['plan_id' => null]);
+        }
+
+        $this->trackPlanChange($account, 'subscription.cancelled', $previousPlan, $payload);
+    }
+
+    /**
+     * Resolve the matching `Plan` for a Stripe subscription payload by
+     * looking up the items' price ids against the local plans table.
+     * Logs a warning when no match is found so price/plan drift between
+     * Stripe and the local DB is visible.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function resolvePlanFromSubscriptionItems(array $payload, Account $account): ?Plan
+    {
+        $priceIds = collect(data_get($payload, 'data.object.items.data', []))
+            ->pluck('price.id')
+            ->filter()
+            ->all();
+
+        if (empty($priceIds)) {
+            return null;
+        }
+
+        $plan = Plan::query()
+            ->where(function ($query) use ($priceIds): void {
+                $query->whereIn('stripe_monthly_price_id', $priceIds)
+                    ->orWhereIn('stripe_yearly_price_id', $priceIds);
+            })
+            ->first();
+
+        if (! $plan) {
+            Log::warning('Stripe webhook: no matching plan found in subscription items', [
+                'account_id' => $account->id,
+                'price_ids' => $priceIds,
+            ]);
+        }
+
+        return $plan;
+    }
+
+    /**
+     * Hand the lifecycle event off to the queue so the listener stays fast.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function trackPlanChange(Account $account, string $event, ?string $previousPlan, array $payload): void
+    {
+        TrackBilling::dispatch((string) $account->id, $event, $payload, $previousPlan);
     }
 }

@@ -46,7 +46,19 @@ test('handle captures event on the owner profile with account group attached', f
             && $call['payload']['event'] === 'subscription.updated'
             && $call['payload']['distinctId'] === (string) $this->user->id
             && $call['payload']['properties']['$groups']['account'] === (string) $this->account->id
-            && $call['payload']['properties']['stripe_status'] === 'active';
+            && $call['payload']['properties']['stripe_status'] === 'active'
+            && array_key_exists('previous_plan', $call['payload']['properties']);
+    });
+});
+
+test('handle forwards previousPlan as a property when supplied', function () {
+    Queue::fake();
+
+    (new TrackBilling((string) $this->account->id, 'subscription.updated', $this->payload, 'Starter'))
+        ->handle(app(PostHogService::class));
+
+    Queue::assertPushed(SendEvent::class, function ($job) {
+        return $job->calls[0]['payload']['properties']['previous_plan'] === 'Starter';
     });
 });
 

@@ -50,7 +50,7 @@ class SendEvent implements ShouldQueue
                 'capture' => PostHog::capture(data_get($call, 'payload')),
                 'identify' => PostHog::identify(data_get($call, 'payload')),
                 'groupIdentify' => PostHog::groupIdentify(data_get($call, 'payload')),
-                default => Log::warning('PostHog\\SendEvent: unknown method', ['method' => data_get($call, 'method')]),
+                default => Log::warning('PostHog SendEvent: unknown method', ['method' => data_get($call, 'method')]),
             };
         }
 

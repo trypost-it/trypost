@@ -13,14 +13,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-/**
- * Captures a Stripe billing lifecycle event on the account owner profile
- * with the `account` group attached, then re-queues `SyncUser` so the
- * group properties (plan, has_active_subscription, is_on_trial) reflect
- * the new Stripe state. Dispatched by `StripeEventListener`.
- *
- * No-op when PostHog is disabled (`POSTHOG_ENABLED=false` or no API key).
- */
 class TrackBilling implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;

@@ -36,6 +36,7 @@ test('usage returns correct counts across the account', function () {
         'socialAccountCount' => 3,
         'memberCount' => 3,
         'pendingInviteCount' => 2,
+        'postCount' => 0,
         'creditsUsed' => 0,
     ]);
 });

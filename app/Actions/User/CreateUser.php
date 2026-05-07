@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\User;
 
+use App\Jobs\SyncUserToPostHog;
 use App\Models\Account;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,7 @@ class CreateUser
      */
     public static function execute(array $data, array $utmParameters = []): User
     {
-        return DB::transaction(function () use ($data, $utmParameters): User {
+        $user = DB::transaction(function () use ($data, $utmParameters): User {
             $isInviteRegistration = data_get($data, 'is_invite', false);
 
             $account = Account::create([
@@ -39,5 +40,9 @@ class CreateUser
 
             return $user;
         });
+
+        SyncUserToPostHog::dispatch((string) $user->id);
+
+        return $user;
     }
 }

@@ -22,20 +22,22 @@ use Laravel\Pennant\Feature;
 trait HasUsage
 {
     /**
-     * @return array{workspaceCount: int, socialAccountCount: int, memberCount: int, pendingInviteCount: int, creditsUsed: int}
+     * @return array{workspaceCount: int, socialAccountCount: int, memberCount: int, pendingInviteCount: int, postCount: int, creditsUsed: int}
      */
     public function usage(): array
     {
+        $workspaces = $this->workspaces()
+            ->withCount(['socialAccounts', 'posts'])
+            ->get();
+
         return [
-            'workspaceCount' => $this->workspaces()->count(),
-            'socialAccountCount' => $this->workspaces()
-                ->withCount('socialAccounts')
-                ->get()
-                ->sum('social_accounts_count'),
+            'workspaceCount' => $workspaces->count(),
+            'socialAccountCount' => (int) $workspaces->sum('social_accounts_count'),
             'memberCount' => $this->users()->count(),
             'pendingInviteCount' => Invite::where('account_id', $this->id)
                 ->whereNull('accepted_at')
                 ->count(),
+            'postCount' => (int) $workspaces->sum('posts_count'),
             'creditsUsed' => AiUsageLog::monthlyCredits($this->id),
         ];
     }

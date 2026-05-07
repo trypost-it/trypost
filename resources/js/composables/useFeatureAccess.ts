@@ -12,6 +12,7 @@ interface Usage {
     socialAccountCount: number;
     memberCount: number;
     pendingInviteCount: number;
+    postCount: number;
     creditsUsed: number;
 }
 

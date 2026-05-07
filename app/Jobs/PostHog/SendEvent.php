@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\PostHog;
 
+use App\Services\PostHogService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -18,8 +19,9 @@ use PostHog\PostHog;
  * namespace (`SyncUser`, `TrackBilling`) build the payloads and queue this
  * job to do the network work.
  *
- * No-op when `POSTHOG_API_KEY` is unset so self-hosted installs are
- * unaffected.
+ * No-op when `POSTHOG_ENABLED` is false (or `POSTHOG_API_KEY` is unset),
+ * via `PostHogService::isEnabled()`, so self-hosted installs never reach
+ * the SDK.
  */
 class SendEvent implements ShouldQueue
 {
@@ -41,7 +43,7 @@ class SendEvent implements ShouldQueue
 
     public function handle(): void
     {
-        if (! config('services.posthog.api_key')) {
+        if (! PostHogService::isEnabled()) {
             return;
         }
 

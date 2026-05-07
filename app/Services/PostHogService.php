@@ -11,6 +11,18 @@ use Illuminate\Support\Facades\Log;
 class PostHogService
 {
     /**
+     * Whether PostHog tracking should run at all. Controlled by the explicit
+     * `POSTHOG_ENABLED` env var so self-hosted installs that inherited an
+     * example `POSTHOG_API_KEY` from a config snippet do not silently send
+     * events upstream. The SaaS deployment opts in via `POSTHOG_ENABLED=true`.
+     */
+    public static function isEnabled(): bool
+    {
+        return (bool) config('services.posthog.enabled')
+            && (bool) config('services.posthog.api_key');
+    }
+
+    /**
      * Capture an event for the given distinct id. When `$account` is supplied,
      * the workspace/plan group is auto-attached so the event is filterable in
      * PostHog by `$groups.account` and the `account_id` / `plan` properties.
@@ -19,7 +31,7 @@ class PostHogService
      */
     public function capture(string $distinctId, string $event, array $properties = [], ?Account $account = null): void
     {
-        if (! $this->shouldSend()) {
+        if (! self::isEnabled()) {
             return;
         }
 
@@ -43,7 +55,7 @@ class PostHogService
      */
     public function identify(string $distinctId, array $properties = []): void
     {
-        if (! $this->shouldSend()) {
+        if (! self::isEnabled()) {
             return;
         }
 
@@ -58,7 +70,7 @@ class PostHogService
      */
     public function groupIdentify(string $groupType, string $groupKey, array $properties = []): void
     {
-        if (! $this->shouldSend()) {
+        if (! self::isEnabled()) {
             return;
         }
 
@@ -67,11 +79,6 @@ class PostHogService
             'groupKey' => $groupKey,
             'properties' => $properties,
         ]);
-    }
-
-    private function shouldSend(): bool
-    {
-        return (bool) config('services.posthog.api_key');
     }
 
     /**

@@ -25,8 +25,8 @@ use Illuminate\Queue\SerializesModels;
  * - group `account`   → Account (billing/plan, parent of workspaces)
  * - group `workspace` → Workspace (collaboration unit, child of account)
  *
- * No-op when POSTHOG_API_KEY is unset (PostHogService short-circuits), so
- * self-hosted installs are unaffected.
+ * No-op when PostHog is disabled (`POSTHOG_ENABLED=false` or no API key)
+ * via `PostHogService::isEnabled()`, so self-hosted installs are unaffected.
  */
 class SyncUser implements ShouldQueue
 {
@@ -43,6 +43,10 @@ class SyncUser implements ShouldQueue
 
     public function handle(PostHogService $postHog): void
     {
+        if (! PostHogService::isEnabled()) {
+            return;
+        }
+
         $user = User::with([
             'account.plan',
             'currentWorkspace' => fn ($query) => $query->withCount('socialAccounts'),

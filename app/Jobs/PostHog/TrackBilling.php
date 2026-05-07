@@ -19,7 +19,7 @@ use Illuminate\Queue\SerializesModels;
  * group properties (plan, has_active_subscription, is_on_trial) reflect
  * the new Stripe state. Dispatched by `StripeEventListener`.
  *
- * No-op when `POSTHOG_API_KEY` is unset.
+ * No-op when PostHog is disabled (`POSTHOG_ENABLED=false` or no API key).
  */
 class TrackBilling implements ShouldQueue
 {
@@ -43,6 +43,10 @@ class TrackBilling implements ShouldQueue
 
     public function handle(PostHogService $postHog): void
     {
+        if (! PostHogService::isEnabled()) {
+            return;
+        }
+
         $account = Account::with('plan')->find($this->accountId);
 
         if (! $account || ! $account->owner_id) {

@@ -45,7 +45,8 @@ test('CreateUser invite-style still creates user without workspace (workspace as
     expect(Workspace::count())->toBe(0);
 });
 
-test('CreateUser dispatches SyncUser with the new user id', function () {
+test('CreateUser dispatches SyncUser with the new user id when PostHog is enabled', function () {
+    config(['services.posthog.enabled' => true, 'services.posthog.api_key' => 'phc_test_key']);
     Bus::fake([SyncUser::class]);
 
     $user = CreateUser::execute([
@@ -58,4 +59,17 @@ test('CreateUser dispatches SyncUser with the new user id', function () {
         SyncUser::class,
         fn ($job) => $job->userId === (string) $user->id,
     );
+});
+
+test('CreateUser does not dispatch SyncUser when PostHog is disabled', function () {
+    config(['services.posthog.enabled' => false]);
+    Bus::fake([SyncUser::class]);
+
+    CreateUser::execute([
+        'name' => 'Jane Doe',
+        'email' => 'jane.posthog.disabled@example.com',
+        'password' => 'secret123',
+    ]);
+
+    Bus::assertNotDispatched(SyncUser::class);
 });

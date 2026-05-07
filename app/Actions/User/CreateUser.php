@@ -7,6 +7,7 @@ namespace App\Actions\User;
 use App\Jobs\PostHog\SyncUser;
 use App\Models\Account;
 use App\Models\User;
+use App\Services\PostHogService;
 use Illuminate\Support\Facades\DB;
 
 class CreateUser
@@ -41,7 +42,9 @@ class CreateUser
             return $user;
         });
 
-        SyncUser::dispatch((string) $user->id);
+        if (PostHogService::isEnabled()) {
+            SyncUser::dispatch((string) $user->id);
+        }
 
         return $user;
     }

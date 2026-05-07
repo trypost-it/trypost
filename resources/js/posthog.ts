@@ -5,13 +5,16 @@ import type { Auth, Usage } from './types';
 
 const apiKey = import.meta.env.VITE_POSTHOG_API_KEY as string | undefined;
 const host = import.meta.env.VITE_POSTHOG_HOST as string | undefined;
+// Vite stringifies env vars, so explicit equality with 'true' avoids the
+// gotcha where 'false' would be truthy. Mirrors backend `POSTHOG_ENABLED`.
+const enabled = import.meta.env.VITE_POSTHOG_ENABLED === 'true' && !!apiKey;
 
 export const initializePostHog = (): void => {
-    if (!apiKey) {
+    if (!enabled) {
         return;
     }
 
-    posthog.init(apiKey, {
+    posthog.init(apiKey as string, {
         api_host: host || 'https://us.i.posthog.com',
         ui_host: 'https://us.posthog.com',
         capture_pageview: false,
@@ -40,6 +43,10 @@ export const initializePostHog = (): void => {
  * group `workspace` → collaboration child (carries `account_id`).
  */
 export const syncPostHogContext = (page: Page): void => {
+    if (!enabled) {
+        return;
+    }
+
     const auth = page.props.auth as Auth | undefined;
     const usage = page.props.usage as Usage | null | undefined;
 
@@ -77,6 +84,9 @@ export const syncPostHogContext = (page: Page): void => {
  * every navigation (and once at boot for the first page).
  */
 export const capturePageview = (): void => {
+    if (!enabled) {
+        return;
+    }
     posthog.capture('$pageview', { $current_url: window.location.href });
 };
 

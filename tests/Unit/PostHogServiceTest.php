@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 
 test('capture dispatches job when api key is configured', function () {
     Queue::fake();
-    config(['services.posthog.api_key' => 'phc_test_key']);
+    config(['services.posthog.enabled' => true, 'services.posthog.api_key' => 'phc_test_key']);
 
     $service = new PostHogService;
     $service->capture('user-123', 'test_event', ['foo' => 'bar']);
@@ -37,7 +37,7 @@ test('capture does not dispatch job when api key is missing', function () {
 
 test('identify dispatches job when api key is configured', function () {
     Queue::fake();
-    config(['services.posthog.api_key' => 'phc_test_key']);
+    config(['services.posthog.enabled' => true, 'services.posthog.api_key' => 'phc_test_key']);
 
     $service = new PostHogService;
     $service->identify('user-123', ['$email' => 'test@example.com']);
@@ -60,7 +60,7 @@ test('identify does not dispatch job when api key is missing', function () {
 
 test('group identify dispatches job when api key is configured', function () {
     Queue::fake();
-    config(['services.posthog.api_key' => 'phc_test_key']);
+    config(['services.posthog.enabled' => true, 'services.posthog.api_key' => 'phc_test_key']);
 
     $service = new PostHogService;
     $service->groupIdentify('workspace', 'ws-123', ['name' => 'Test Workspace']);
@@ -84,7 +84,7 @@ test('group identify does not dispatch job when api key is missing', function ()
 
 test('capture auto-attaches account groups when account is supplied', function () {
     Queue::fake();
-    config(['services.posthog.api_key' => 'phc_test_key']);
+    config(['services.posthog.enabled' => true, 'services.posthog.api_key' => 'phc_test_key']);
 
     $plan = Plan::query()->where('slug', 'starter')->first();
     $account = Account::factory()->create(['plan_id' => $plan?->id]);
@@ -105,7 +105,7 @@ test('capture auto-attaches account groups when account is supplied', function (
 
 test('capture without account does not attach group properties', function () {
     Queue::fake();
-    config(['services.posthog.api_key' => 'phc_test_key']);
+    config(['services.posthog.enabled' => true, 'services.posthog.api_key' => 'phc_test_key']);
 
     $service = new PostHogService;
     $service->capture('user-123', 'page.viewed', ['url' => '/dashboard']);

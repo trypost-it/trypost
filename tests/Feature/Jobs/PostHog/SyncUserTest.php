@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
-    config(['services.posthog.api_key' => 'phc_test_key']);
+    config(['services.posthog.enabled' => true, 'services.posthog.api_key' => 'phc_test_key']);
 
     $this->account = Account::factory()->create([
         'plan_id' => Plan::query()->where('slug', 'starter')->first()?->id,

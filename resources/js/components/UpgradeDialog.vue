@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useFeatureAccess } from '@/composables/useFeatureAccess';
 import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 import { checkout, swap } from '@/routes/app/billing';
+import type { AuthPlan } from '@/types';
 
 type PlanSlug = 'starter' | 'plus' | 'pro' | 'max';
 
@@ -34,21 +35,17 @@ const { usage } = useFeatureAccess();
 const page = usePage();
 
 const plans = computed<Plan[]>(() => (page.props.plans as Plan[]) ?? []);
-const currentPlan = computed<Plan | null>(() => (page.props.auth as { plan: Plan | null }).plan ?? null);
-const currentPriceId = computed<string | null>(() => (page.props.auth as { currentPriceId?: string | null }).currentPriceId ?? null);
+const currentPlan = computed<AuthPlan | null>(() => (page.props.auth as { plan: AuthPlan | null }).plan ?? null);
 const hasActiveSubscription = computed<boolean>(() => Boolean((page.props.auth as { hasActiveSubscription?: boolean }).hasActiveSubscription));
 
-const isOnYearly = computed(() => {
-    if (!currentPriceId.value || !currentPlan.value) return false;
-    return currentPriceId.value === currentPlan.value.stripe_yearly_price_id;
-});
+const isOnYearly = computed(() => currentPlan.value?.interval === 'yearly');
 
-const isYearly = ref(false);
+const isYearly = ref(true);
 const processing = ref<string | null>(null);
 
 watch(open, (isOpen) => {
     if (isOpen) {
-        isYearly.value = isOnYearly.value;
+        isYearly.value = true;
     }
 });
 
@@ -175,8 +172,8 @@ const onOpenChange = (value: boolean) => {
                     </DialogDescription>
                 </div>
 
-                <!-- Billing toggle pill (hidden when user is already on yearly) -->
-                <div v-if="!isOnYearly" class="flex justify-center pt-6 pb-2">
+                <!-- Billing toggle pill -->
+                <div class="flex justify-center pt-6 pb-2">
                     <div class="relative">
                         <div
                             class="inline-flex items-center gap-1 rounded-full border-2 border-foreground bg-card p-1 shadow-xs"

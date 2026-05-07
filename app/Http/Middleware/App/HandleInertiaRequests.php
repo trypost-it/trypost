@@ -8,7 +8,6 @@ use App\Http\Resources\App\HandleInertiaRequests\AuthAccountResource;
 use App\Http\Resources\App\HandleInertiaRequests\AuthPlanResource;
 use App\Http\Resources\App\HandleInertiaRequests\AuthUserResource;
 use App\Http\Resources\App\HandleInertiaRequests\AuthWorkspaceResource;
-use App\Models\Account;
 use App\Models\Plan;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -45,7 +44,6 @@ class HandleInertiaRequests extends Middleware
                 'account' => $account ? AuthAccountResource::make($account) : null,
                 'plan' => $account && $account->plan ? AuthPlanResource::make($account, $account->plan) : null,
                 'hasActiveSubscription' => $account ? $account->hasActiveSubscription() : false,
-                'currentPriceId' => $account?->subscription(Account::SUBSCRIPTION_NAME)?->stripe_price,
             ],
             'usage' => $account && ! $isSelfHosted ? $account->usage() : null,
             'features' => $account && ! $isSelfHosted ? $account->featureLimits() : null,

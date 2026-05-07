@@ -32,7 +32,6 @@ export interface Auth {
     account: AuthAccount | null;
     plan: AuthPlan | null;
     hasActiveSubscription: boolean;
-    currentPriceId: string | null;
 }
 
 export interface Usage {

@@ -53,10 +53,7 @@ class StripeEventListener
 
         if ($plan = $this->resolvePlanFromSubscriptionItems($payload, $account)) {
             $account->update(['plan_id' => $plan->id]);
-
-            if ($account->wasChanged('plan_id')) {
-                $account->forgetPlanFeatureCache();
-            }
+            $account->forgetPlanFeatureCache();
         }
 
         SubscriptionCreated::dispatch($account);
@@ -78,10 +75,7 @@ class StripeEventListener
 
         if ($plan = $this->resolvePlanFromSubscriptionItems($payload, $account)) {
             $account->update(['plan_id' => $plan->id]);
-
-            if ($account->wasChanged('plan_id')) {
-                $account->forgetPlanFeatureCache();
-            }
+            $account->forgetPlanFeatureCache();
         }
 
         $this->trackPlanChange($account, BillingEvent::Updated, $previousPlan, $payload);
@@ -100,10 +94,7 @@ class StripeEventListener
         $previousPlan = $account->plan?->name;
 
         $account->update(['plan_id' => null]);
-
-        if ($account->wasChanged('plan_id')) {
-            $account->forgetPlanFeatureCache();
-        }
+        $account->forgetPlanFeatureCache();
 
         $this->trackPlanChange($account, BillingEvent::Cancelled, $previousPlan, $payload);
     }

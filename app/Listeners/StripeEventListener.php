@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Listeners;
 
 use App\Enums\PostHog\BillingEvent;
-use App\Events\SubscriptionCreated;
 use App\Jobs\PostHog\TrackBilling;
 use App\Models\Account;
 use App\Models\Plan;
@@ -57,17 +56,10 @@ class StripeEventListener
             $account->forgetPlanFeatureCache();
         }
 
-        SubscriptionCreated::dispatch($account);
-
         $this->trackPlanChange($account, BillingEvent::Created, $previousPlan, $payload);
     }
 
     /**
-     * Plan changes coming from Stripe (billing portal, dashboard, or our own
-     * `BillingController@swap`) re-arrive here. Re-resolving the plan from
-     * the price ids guarantees the local state matches Stripe even when a
-     * change happens out-of-band.
-     *
      * @param  array<string, mixed>  $payload
      */
     protected function handleSubscriptionUpdated(Account $account, array $payload): void
@@ -83,19 +75,10 @@ class StripeEventListener
     }
 
     /**
-     * Subscription fully terminated (period ended after cancellation, or
-     * cancelled immediately). Clear the local plan so the UI and
-     * authorisation checks (`Account::hasActiveSubscription`) reflect
-     * "no plan" instead of keeping the previous one attached.
-     *
      * @param  array<string, mixed>  $payload
      */
     protected function handleSubscriptionDeleted(Account $account, array $payload): void
     {
-        // Stripe re-delivers webhooks on transient failures; if the plan is
-        // already cleared we skip the rest so the cancellation event isn't
-        // captured twice and the (idempotent but pointless) cache flush
-        // doesn't run again.
         if ($account->plan_id === null) {
             return;
         }
@@ -109,11 +92,6 @@ class StripeEventListener
     }
 
     /**
-     * Resolve the matching `Plan` for a Stripe subscription payload by
-     * looking up the items' price ids against the local plans table.
-     * Logs a warning when no match is found so price/plan drift between
-     * Stripe and the local DB is visible.
-     *
      * @param  array<string, mixed>  $payload
      */
     private function resolvePlanFromSubscriptionItems(array $payload, Account $account): ?Plan
@@ -145,10 +123,6 @@ class StripeEventListener
     }
 
     /**
-     * Hand the lifecycle event off to the queue so the listener stays fast.
-     * Skip dispatch when PostHog is disabled — `TrackBilling::handle` would
-     * no-op anyway, but enqueuing it still costs queue worker cycles.
-     *
      * @param  array<string, mixed>  $payload
      */
     private function trackPlanChange(Account $account, BillingEvent $event, ?string $previousPlan, array $payload): void

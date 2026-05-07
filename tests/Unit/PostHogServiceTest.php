@@ -118,3 +118,52 @@ test('capture without account does not attach group properties', function () {
             && ! array_key_exists('plan', $properties);
     });
 });
+
+// ========================================
+// Self-hosted contract: enabled=false dominates regardless of api key
+// ========================================
+//
+// These cover the exact scenario the open-source gate exists to defend
+// against: a self-hosted install that inherited POSTHOG_API_KEY from an
+// example env file but did NOT explicitly opt in via POSTHOG_ENABLED.
+
+test('capture is a no-op when enabled is false even with an api key set', function () {
+    Queue::fake();
+    config(['services.posthog.enabled' => false, 'services.posthog.api_key' => 'phc_inherited_key']);
+
+    $service = new PostHogService;
+    $service->capture('user-123', 'test_event');
+
+    Queue::assertNothingPushed();
+});
+
+test('identify is a no-op when enabled is false even with an api key set', function () {
+    Queue::fake();
+    config(['services.posthog.enabled' => false, 'services.posthog.api_key' => 'phc_inherited_key']);
+
+    $service = new PostHogService;
+    $service->identify('user-123', ['$email' => 'test@example.com']);
+
+    Queue::assertNothingPushed();
+});
+
+test('groupIdentify is a no-op when enabled is false even with an api key set', function () {
+    Queue::fake();
+    config(['services.posthog.enabled' => false, 'services.posthog.api_key' => 'phc_inherited_key']);
+
+    $service = new PostHogService;
+    $service->groupIdentify('account', 'acc-123', ['name' => 'Test']);
+
+    Queue::assertNothingPushed();
+});
+
+test('isEnabled requires both enabled and api key', function () {
+    config(['services.posthog.enabled' => true, 'services.posthog.api_key' => null]);
+    expect(PostHogService::isEnabled())->toBeFalse();
+
+    config(['services.posthog.enabled' => false, 'services.posthog.api_key' => 'phc_x']);
+    expect(PostHogService::isEnabled())->toBeFalse();
+
+    config(['services.posthog.enabled' => true, 'services.posthog.api_key' => 'phc_x']);
+    expect(PostHogService::isEnabled())->toBeTrue();
+});

@@ -4,7 +4,6 @@ import { IconAlertTriangle, IconCopy } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -124,16 +123,23 @@ defineExpose({
             <DialogHeader class="items-start text-left">
                 <div class="flex items-start gap-3">
                     <div
-                        class="inline-flex size-12 -rotate-3 shrink-0 items-center justify-center rounded-2xl border-2 border-foreground bg-rose-200 shadow-2xs"
+                        class="inline-flex size-12 shrink-0 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-rose-200 shadow-2xs"
                     >
-                        <IconAlertTriangle class="size-6 text-rose-700" stroke-width="2.25" />
+                        <IconAlertTriangle
+                            class="size-6 text-rose-700"
+                            stroke-width="2.25"
+                        />
                     </div>
                     <div class="flex-1 space-y-1">
                         <DialogTitle>{{ title }}</DialogTitle>
                         <DialogDescription class="space-y-1">
                             <span class="block">{{ description }}</span>
                             <span class="block font-semibold text-rose-700">
-                                {{ trans('common.confirm_modal.cannot_be_undone') }}
+                                {{
+                                    trans(
+                                        'common.confirm_modal.cannot_be_undone',
+                                    )
+                                }}
                             </span>
                         </DialogDescription>
                     </div>
@@ -141,7 +147,9 @@ defineExpose({
             </DialogHeader>
 
             <div v-if="requiresConfirmation" class="space-y-2">
-                <p class="flex flex-wrap items-center gap-1 text-sm text-foreground/80">
+                <p
+                    class="flex flex-wrap items-center gap-1 text-sm text-foreground/80"
+                >
                     <span>{{ trans('common.confirm_modal.type') }}</span>
                     <code
                         class="inline-flex items-center gap-1.5 rounded-md border-2 border-foreground bg-amber-100 px-1.5 py-0.5 font-mono text-xs font-bold break-all text-foreground shadow-2xs"
@@ -157,7 +165,9 @@ defineExpose({
                                         @click="
                                             copyToClipboard(
                                                 confirmText,
-                                                trans('common.confirm_modal.copy_to_clipboard'),
+                                                trans(
+                                                    'common.confirm_modal.copy_to_clipboard',
+                                                ),
                                             )
                                         "
                                     >
@@ -165,18 +175,20 @@ defineExpose({
                                     </button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>{{ trans('common.confirm_modal.copy_to_clipboard') }}</p>
+                                    <p>
+                                        {{
+                                            trans(
+                                                'common.confirm_modal.copy_to_clipboard',
+                                            )
+                                        }}
+                                    </p>
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
                     </code>
                     <span>{{ trans('common.confirm_modal.to_confirm') }}</span>
                 </p>
-                <Input
-                    v-model="confirmInput"
-                    autocomplete="off"
-                    autofocus
-                />
+                <Input v-model="confirmInput" autocomplete="off" autofocus />
             </div>
 
             <DialogFooter class="sm:justify-start sm:gap-2">
@@ -187,10 +199,7 @@ defineExpose({
                 >
                     {{ action }}
                 </Button>
-                <Button
-                    variant="outline"
-                    @click="close"
-                >
+                <Button variant="outline" @click="close">
                     {{ cancel }}
                 </Button>
             </DialogFooter>

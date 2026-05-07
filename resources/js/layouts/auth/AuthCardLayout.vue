@@ -17,12 +17,25 @@ defineProps<{
 </script>
 
 <template>
-    <div class="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
+    <div
+        class="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10"
+    >
         <div class="flex w-full max-w-md flex-col gap-6">
-            <Link :href="home()" class="flex items-center gap-2 self-center font-medium">
+            <Link
+                :href="home()"
+                class="flex items-center gap-2 self-center font-medium"
+            >
                 <div class="flex h-9 w-9 items-center justify-center">
-                    <img src="/images/trypost/logo-light.png" alt="TryPost" class="dark:hidden h-8 w-auto" />
-                    <img src="/images/trypost/logo-dark.png" alt="TryPost" class="hidden dark:block h-8 w-auto" />
+                    <img
+                        src="/images/postpro/logo-light.png"
+                        alt="postpro"
+                        class="h-8 w-auto dark:hidden"
+                    />
+                    <img
+                        src="/images/postpro/logo-dark.png"
+                        alt="postpro"
+                        class="hidden h-8 w-auto dark:block"
+                    />
                 </div>
             </Link>
 

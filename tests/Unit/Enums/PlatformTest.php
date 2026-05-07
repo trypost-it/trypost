@@ -89,7 +89,7 @@ test('platform is enabled by default', function () {
 });
 
 test('platform can be disabled via config', function () {
-    config(['trypost.platforms.linkedin.enabled' => false]);
+    config(['postpro.platforms.linkedin.enabled' => false]);
 
     expect(Platform::LinkedIn->isEnabled())->toBeFalse();
 });
@@ -102,9 +102,10 @@ test('can get all enabled platforms', function () {
 });
 
 test('disabled platforms are excluded from enabled list', function () {
-    config(['trypost.platforms.linkedin.enabled' => false]);
+    config(['postpro.platforms.linkedin.enabled' => false]);
 
     $enabled = Platform::enabled();
 
     expect($enabled)->not->toContain(Platform::LinkedIn);
 });
+

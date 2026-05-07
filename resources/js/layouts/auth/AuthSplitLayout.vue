@@ -8,14 +8,21 @@ import {
     IconVideo,
 } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 defineProps<{
     title?: string;
     description?: string;
 }>();
 
-const slideKeys = ['calendar', 'scheduling', 'media', 'video', 'team', 'signatures'] as const;
+const slideKeys = [
+    'calendar',
+    'scheduling',
+    'media',
+    'video',
+    'team',
+    'signatures',
+] as const;
 
 const slideIcons = {
     calendar: IconCalendar,
@@ -89,8 +96,8 @@ const platforms = [
         <div class="flex flex-col gap-4 p-6 md:p-10">
             <div class="flex items-start">
                 <img
-                    src="/images/trypost/logo-light.png"
-                    alt="TryPost"
+                    src="/images/postpro/logo-light.png"
+                    alt="postpro"
                     class="h-7"
                 />
             </div>
@@ -98,9 +105,16 @@ const platforms = [
             <div class="flex flex-1 items-center justify-center">
                 <div class="w-full max-w-md">
                     <div class="flex flex-col gap-6">
-                        <div class="flex flex-col items-center gap-2 text-center">
-                            <h1 v-if="title" class="text-2xl font-bold">{{ title }}</h1>
-                            <p v-if="description" class="text-sm text-balance text-muted-foreground">
+                        <div
+                            class="flex flex-col items-center gap-2 text-center"
+                        >
+                            <h1 v-if="title" class="text-2xl font-bold">
+                                {{ title }}
+                            </h1>
+                            <p
+                                v-if="description"
+                                class="text-sm text-balance text-muted-foreground"
+                            >
                                 {{ description }}
                             </p>
                         </div>
@@ -117,16 +131,29 @@ const platforms = [
             @mouseleave="isPaused = false"
         >
             <!-- Soft violet glow blobs for ambient depth (off-canvas). -->
-            <div class="pointer-events-none absolute -top-24 -right-24 size-[440px] rounded-full bg-violet-200/50 blur-3xl" />
-            <div class="pointer-events-none absolute -bottom-32 -left-32 size-[440px] rounded-full bg-fuchsia-200/40 blur-3xl" />
+            <div
+                class="pointer-events-none absolute -top-24 -right-24 size-[440px] rounded-full bg-violet-200/50 blur-3xl"
+            />
+            <div
+                class="pointer-events-none absolute -bottom-32 -left-32 size-[440px] rounded-full bg-fuchsia-200/40 blur-3xl"
+            />
 
             <!-- Dot pattern overlay (subtle). -->
             <div
                 class="pointer-events-none absolute inset-0 opacity-[0.06]"
-                style="background-image: radial-gradient(circle, #0a0a0a 1px, transparent 1px); background-size: 28px 28px;"
+                style="
+                    background-image: radial-gradient(
+                        circle,
+                        #0a0a0a 1px,
+                        transparent 1px
+                    );
+                    background-size: 28px 28px;
+                "
             />
 
-            <div class="relative flex h-full flex-col items-center justify-center px-12 xl:px-16">
+            <div
+                class="relative flex h-full flex-col items-center justify-center px-12 xl:px-16"
+            >
                 <!-- Mockup card carousel -->
                 <div class="relative h-[280px] w-full max-w-md">
                     <template v-for="(slide, index) in slides" :key="index">
@@ -142,35 +169,64 @@ const platforms = [
                                 v-if="activeIndex === index"
                                 class="absolute inset-0 flex items-center justify-center"
                             >
-                                <div class="w-full overflow-hidden rounded-xl border-2 border-foreground bg-card shadow-xl -rotate-1">
+                                <div
+                                    class="w-full -rotate-1 overflow-hidden rounded-xl border-2 border-foreground bg-card shadow-xl"
+                                >
                                     <!-- Title bar with traffic lights + live badge -->
-                                    <div class="flex items-center gap-3 border-b-2 border-foreground bg-muted px-4 py-2.5">
+                                    <div
+                                        class="flex items-center gap-3 border-b-2 border-foreground bg-muted px-4 py-2.5"
+                                    >
                                         <div class="flex gap-1.5">
-                                            <span class="size-3 rounded-full border border-foreground bg-rose-300" />
-                                            <span class="size-3 rounded-full border border-foreground bg-amber-300" />
-                                            <span class="size-3 rounded-full border border-foreground bg-emerald-300" />
+                                            <span
+                                                class="size-3 rounded-full border border-foreground bg-rose-300"
+                                            />
+                                            <span
+                                                class="size-3 rounded-full border border-foreground bg-amber-300"
+                                            />
+                                            <span
+                                                class="size-3 rounded-full border border-foreground bg-emerald-300"
+                                            />
                                         </div>
-                                        <div class="ml-2 truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                                            trypost.it
+                                        <div
+                                            class="ml-2 truncate text-[10px] font-bold tracking-widest text-muted-foreground uppercase"
+                                        >
+                                            postpro.it
                                         </div>
-                                        <span class="ml-auto inline-flex items-center gap-1.5 rounded-md border-2 border-foreground bg-foreground px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-background shadow-2xs">
-                                            <span class="relative flex size-1.5">
-                                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/80" />
-                                                <span class="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
+                                        <span
+                                            class="ml-auto inline-flex items-center gap-1.5 rounded-md border-2 border-foreground bg-foreground px-2 py-0.5 text-[10px] font-black tracking-widest text-background uppercase shadow-2xs"
+                                        >
+                                            <span
+                                                class="relative flex size-1.5"
+                                            >
+                                                <span
+                                                    class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/80"
+                                                />
+                                                <span
+                                                    class="relative inline-flex size-1.5 rounded-full bg-emerald-400"
+                                                />
                                             </span>
                                             Live
                                         </span>
                                     </div>
 
                                     <!-- Body: feature icon -->
-                                    <div class="flex items-center justify-center bg-card py-8">
-                                        <div class="flex size-20 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-sm -rotate-2">
-                                            <component :is="slide.icon" class="size-10 text-foreground" />
+                                    <div
+                                        class="flex items-center justify-center bg-card py-8"
+                                    >
+                                        <div
+                                            class="flex size-20 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-sm"
+                                        >
+                                            <component
+                                                :is="slide.icon"
+                                                class="size-10 text-foreground"
+                                            />
                                         </div>
                                     </div>
 
                                     <!-- Platform strip -->
-                                    <div class="flex flex-wrap justify-center gap-1.5 border-t-2 border-foreground/15 bg-card px-4 py-3">
+                                    <div
+                                        class="flex flex-wrap justify-center gap-1.5 border-t-2 border-foreground/15 bg-card px-4 py-3"
+                                    >
                                         <img
                                             v-for="platform in platforms"
                                             :key="platform.name"
@@ -196,11 +252,16 @@ const platforms = [
                             leave-from-class="opacity-100"
                             leave-to-class="opacity-0"
                         >
-                            <div :key="activeIndex" class="absolute inset-x-0 top-0">
+                            <div
+                                :key="activeIndex"
+                                class="absolute inset-x-0 top-0"
+                            >
                                 <h3 class="h3 text-foreground">
                                     {{ activeSlide.title }}
                                 </h3>
-                                <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-foreground/70">
+                                <p
+                                    class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-foreground/70"
+                                >
                                     {{ activeSlide.description }}
                                 </p>
                             </div>
@@ -217,9 +278,10 @@ const platforms = [
                         >
                             <span
                                 class="block h-1.5 rounded-full border border-foreground transition-all duration-300"
-                                :class="activeIndex === index
-                                    ? 'w-6 bg-foreground'
-                                    : 'w-1.5 bg-card group-hover:bg-foreground/30'
+                                :class="
+                                    activeIndex === index
+                                        ? 'w-6 bg-foreground'
+                                        : 'w-1.5 bg-card group-hover:bg-foreground/30'
                                 "
                             />
                         </button>

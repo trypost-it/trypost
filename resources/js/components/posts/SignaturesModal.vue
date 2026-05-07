@@ -53,12 +53,17 @@ defineExpose({
                 {{ $t('posts.edit.signatures_modal.no_results') }}
             </CommandEmpty>
             <CommandGroup>
-                <CommandItem v-for="signature in signatures" :key="signature.id" :value="signature.name"
-                    class="flex flex-col items-start gap-1 py-3" @select="handleSelect(signature)">
-                    <div class="font-medium text-sm">
+                <CommandItem
+                    v-for="signature in signatures"
+                    :key="signature.id"
+                    :value="signature.name"
+                    class="flex flex-col items-start gap-1 py-3"
+                    @select="handleSelect(signature)"
+                >
+                    <div class="text-sm font-medium">
                         {{ signature.name }}
                     </div>
-                    <p class="text-xs  line-clamp-2 w-full">
+                    <p class="line-clamp-2 w-full text-xs">
                         {{ signature.content }}
                     </p>
                 </CommandItem>

@@ -23,7 +23,10 @@ import {
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { destroy as signaturesDestroy, index as signaturesIndex } from '@/routes/app/signatures';
+import {
+    destroy as signaturesDestroy,
+    index as signaturesIndex,
+} from '@/routes/app/signatures';
 
 interface Workspace {
     id: string;
@@ -79,7 +82,8 @@ const handleDelete = (signature: Signature) => {
     });
 };
 
-const formatDate = (date: string): string => dayjs.utc(date).local().format('D MMM YYYY');
+const formatDate = (date: string): string =>
+    dayjs.utc(date).local().format('D MMM YYYY');
 
 const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 </script>
@@ -93,7 +97,9 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 
             <div class="flex items-center justify-between gap-3">
                 <div class="relative">
-                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <IconSearch
+                        class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                    />
                     <Input
                         v-model="searchQuery"
                         :placeholder="trans('signatures.search')"
@@ -101,24 +107,44 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                     />
                 </div>
 
-                <Button @click="isCreateDialogOpen = true">{{ $t('signatures.new') }}</Button>
+                <Button @click="isCreateDialogOpen = true">{{
+                    $t('signatures.new')
+                }}</Button>
             </div>
 
             <EmptyState
                 v-if="signatures.data.length === 0"
                 :icon="IconHash"
-                :title="hasActiveSearch ? $t('signatures.no_search_results') : $t('signatures.empty_title')"
-                :description="hasActiveSearch ? $t('signatures.try_different_search') : $t('signatures.empty_description')"
+                :title="
+                    hasActiveSearch
+                        ? $t('signatures.no_search_results')
+                        : $t('signatures.empty_title')
+                "
+                :description="
+                    hasActiveSearch
+                        ? $t('signatures.try_different_search')
+                        : $t('signatures.empty_description')
+                "
             />
 
             <div v-else>
-                <InfiniteScroll data="signatures" items-element="#signatures-body" preserve-url>
+                <InfiniteScroll
+                    data="signatures"
+                    items-element="#signatures-body"
+                    preserve-url
+                >
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>{{ $t('signatures.table.name') }}</TableHead>
-                                <TableHead>{{ $t('signatures.table.content') }}</TableHead>
-                                <TableHead>{{ $t('signatures.table.created_at') }}</TableHead>
+                                <TableHead>{{
+                                    $t('signatures.table.name')
+                                }}</TableHead>
+                                <TableHead>{{
+                                    $t('signatures.table.content')
+                                }}</TableHead>
+                                <TableHead>{{
+                                    $t('signatures.table.created_at')
+                                }}</TableHead>
                                 <TableHead class="text-right" />
                             </TableRow>
                         </TableHeader>
@@ -131,16 +157,22 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                             >
                                 <TableCell>{{ signature.name }}</TableCell>
                                 <TableCell class="max-w-md">
-                                    <p class="truncate">{{ signature.content }}</p>
+                                    <p class="truncate">
+                                        {{ signature.content }}
+                                    </p>
                                 </TableCell>
-                                <TableCell>{{ formatDate(signature.created_at) }}</TableCell>
+                                <TableCell>{{
+                                    formatDate(signature.created_at)
+                                }}</TableCell>
                                 <TableCell class="text-right" @click.stop>
                                     <div class="flex justify-end gap-2">
                                         <Button
                                             variant="outline"
                                             size="icon"
                                             class="size-8"
-                                            :aria-label="$t('signatures.actions.edit')"
+                                            :aria-label="
+                                                $t('signatures.actions.edit')
+                                            "
                                             @click="openEditDialog(signature)"
                                         >
                                             <IconPencil class="size-4" />
@@ -149,10 +181,14 @@ const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
                                             variant="outline"
                                             size="icon"
                                             class="size-8 bg-rose-100 hover:bg-rose-200"
-                                            :aria-label="$t('signatures.actions.delete')"
+                                            :aria-label="
+                                                $t('signatures.actions.delete')
+                                            "
                                             @click="handleDelete(signature)"
                                         >
-                                            <IconTrash class="size-4 text-rose-700" />
+                                            <IconTrash
+                                                class="size-4 text-rose-700"
+                                            />
                                         </Button>
                                     </div>
                                 </TableCell>

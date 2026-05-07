@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { useHttp } from '@inertiajs/vue3';
 import { IconAt } from '@tabler/icons-vue';
-import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue';
+import {
+    nextTick,
+    onBeforeUnmount,
+    onMounted,
+    ref,
+    useTemplateRef,
+    watch,
+} from 'vue';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
@@ -40,7 +47,8 @@ const emit = defineEmits<{
     mention: [member: { id: string; name: string }];
 }>();
 
-const textareaWrapper = useTemplateRef<InstanceType<typeof Textarea>>('textareaWrapper');
+const textareaWrapper =
+    useTemplateRef<InstanceType<typeof Textarea>>('textareaWrapper');
 
 const MARKER_RE = /@\[([0-9a-fA-F-]{36})\]/g;
 
@@ -131,7 +139,8 @@ const recomputeFlip = () => {
     const ta = getRawTextarea();
     if (!ta) return;
     const rect = ta.getBoundingClientRect();
-    const viewportH = window.innerHeight || document.documentElement.clientHeight;
+    const viewportH =
+        window.innerHeight || document.documentElement.clientHeight;
     flipUp.value = rect.bottom + 280 > viewportH;
 };
 
@@ -140,7 +149,9 @@ const httpMembers = useHttp<Record<string, never>, Member[]>({});
 const fetchMembers = async (term: string) => {
     loading.value = true;
     try {
-        const result = await httpMembers.get(searchMembers.url({ query: { q: term } }));
+        const result = await httpMembers.get(
+            searchMembers.url({ query: { q: term } }),
+        );
         members.value = Array.isArray(result) ? result : [];
         activeIndex.value = 0;
     } catch {
@@ -198,7 +209,9 @@ const insertMention = async (member: Member) => {
 
     nameToId.value[member.name] = member.id;
     displayText.value =
-        displayText.value.slice(0, start) + visible + displayText.value.slice(pos);
+        displayText.value.slice(0, start) +
+        visible +
+        displayText.value.slice(pos);
     closePopover();
 
     emit('mention', { id: member.id, name: member.name });
@@ -220,7 +233,9 @@ const onKeydown = (event: KeyboardEvent) => {
         }
         if (event.key === 'ArrowUp') {
             event.preventDefault();
-            activeIndex.value = (activeIndex.value - 1 + members.value.length) % members.value.length;
+            activeIndex.value =
+                (activeIndex.value - 1 + members.value.length) %
+                members.value.length;
             return;
         }
         if (event.key === 'Enter' || event.key === 'Tab') {
@@ -273,12 +288,18 @@ onBeforeUnmount(() => closePopover());
             class="absolute z-50 w-full max-w-xs rounded-md border bg-popover text-popover-foreground shadow-md"
             :class="flipUp ? 'bottom-full mb-1' : 'top-full mt-1'"
         >
-            <div v-if="loading" class="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+            <div
+                v-if="loading"
+                class="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground"
+            >
                 <IconAt class="h-3.5 w-3.5" />
                 Searching members…
             </div>
 
-            <div v-else-if="members.length === 0" class="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground">
+            <div
+                v-else-if="members.length === 0"
+                class="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground"
+            >
                 <IconAt class="h-3.5 w-3.5" />
                 No member matches "{{ query }}"
             </div>
@@ -288,17 +309,29 @@ onBeforeUnmount(() => closePopover());
                     v-for="(member, index) in members"
                     :key="member.id"
                     class="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm transition-colors"
-                    :class="index === activeIndex ? 'bg-muted' : 'hover:bg-muted/60'"
+                    :class="
+                        index === activeIndex ? 'bg-muted' : 'hover:bg-muted/60'
+                    "
                     @mousedown.prevent="insertMention(member)"
                     @mouseenter="activeIndex = index"
                 >
                     <Avatar class="h-6 w-6 shrink-0">
-                        <AvatarImage v-if="member.avatar_url" :src="member.avatar_url" :alt="member.name" />
-                        <AvatarFallback class="text-[10px]">{{ member.name.charAt(0).toUpperCase() }}</AvatarFallback>
+                        <AvatarImage
+                            v-if="member.avatar_url"
+                            :src="member.avatar_url"
+                            :alt="member.name"
+                        />
+                        <AvatarFallback class="text-[10px]">{{
+                            member.name.charAt(0).toUpperCase()
+                        }}</AvatarFallback>
                     </Avatar>
                     <div class="min-w-0 flex-1">
-                        <p class="truncate text-sm font-medium">{{ member.name }}</p>
-                        <p class="truncate text-xs text-muted-foreground">{{ member.email }}</p>
+                        <p class="truncate text-sm font-medium">
+                            {{ member.name }}
+                        </p>
+                        <p class="truncate text-xs text-muted-foreground">
+                            {{ member.email }}
+                        </p>
                     </div>
                 </li>
             </ul>

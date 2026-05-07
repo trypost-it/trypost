@@ -10,7 +10,10 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch } from 'vue';
 
-import { finalize as finalizeRoute, start as startRoute } from '@/actions/App/Http/Controllers/App/PostAiCreateController';
+import {
+    finalize as finalizeRoute,
+    start as startRoute,
+} from '@/actions/App/Http/Controllers/App/PostAiCreateController';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,18 +75,37 @@ const httpStart = useHttp<{
     image_count: number;
     prompt: string;
     date: string | null;
-}>({ format: null, social_account_id: null, image_count: 0, prompt: '', date: null });
+}>({
+    format: null,
+    social_account_id: null,
+    image_count: 0,
+    prompt: '',
+    date: null,
+});
 
-const httpFinalize = useHttp<{ content: string; image_title: string; image_body: string }>({
+const httpFinalize = useHttp<{
+    content: string;
+    image_title: string;
+    image_body: string;
+}>({
     content: '',
     image_title: '',
     image_body: '',
 });
 
 const AI_FORMATS: Array<{ value: ContentTypeValue; platforms: string[] }> = [
-    { value: ContentType.InstagramFeed, platforms: ['instagram', 'instagram-facebook'] },
-    { value: ContentType.InstagramCarousel, platforms: ['instagram', 'instagram-facebook'] },
-    { value: ContentType.InstagramStory, platforms: ['instagram', 'instagram-facebook'] },
+    {
+        value: ContentType.InstagramFeed,
+        platforms: ['instagram', 'instagram-facebook'],
+    },
+    {
+        value: ContentType.InstagramCarousel,
+        platforms: ['instagram', 'instagram-facebook'],
+    },
+    {
+        value: ContentType.InstagramStory,
+        platforms: ['instagram', 'instagram-facebook'],
+    },
     { value: ContentType.LinkedInPost, platforms: ['linkedin'] },
     { value: ContentType.LinkedInPagePost, platforms: ['linkedin-page'] },
     { value: ContentType.XPost, platforms: ['x'] },
@@ -107,54 +129,63 @@ const connectedPlatforms = computed(() => {
 // for that platform. Filtering them out hides the catalog from the user.
 const availableFormats = computed(() => AI_FORMATS);
 
-const isFormatConnected = (format: typeof AI_FORMATS[number]): boolean =>
+const isFormatConnected = (format: (typeof AI_FORMATS)[number]): boolean =>
     format.platforms.some((p) => connectedPlatforms.value.includes(p));
 
 const accountsForFormat = computed(() => {
     if (!selectedFormat.value) return [];
     const format = AI_FORMATS.find((f) => f.value === selectedFormat.value);
     if (!format) return [];
-    return props.socialAccounts.filter((a) => format.platforms.includes(a.platform));
+    return props.socialAccounts.filter((a) =>
+        format.platforms.includes(a.platform),
+    );
 });
 
-const isCarousel = computed(() => selectedFormat.value === ContentType.InstagramCarousel);
-const requiresImage = computed(() =>
-    selectedFormat.value === ContentType.FacebookPost ||
-    selectedFormat.value === ContentType.PinterestPin ||
-    selectedFormat.value === ContentType.InstagramStory ||
-    selectedFormat.value === ContentType.FacebookStory,
+const isCarousel = computed(
+    () => selectedFormat.value === ContentType.InstagramCarousel,
 );
-const supportsOptionalImages = computed(() =>
-    selectedFormat.value === ContentType.InstagramFeed ||
-    selectedFormat.value === ContentType.LinkedInPost ||
-    selectedFormat.value === ContentType.LinkedInPagePost ||
-    selectedFormat.value === ContentType.XPost ||
-    selectedFormat.value === ContentType.BlueskyPost ||
-    selectedFormat.value === ContentType.ThreadsPost ||
-    selectedFormat.value === ContentType.MastodonPost,
+const requiresImage = computed(
+    () =>
+        selectedFormat.value === ContentType.FacebookPost ||
+        selectedFormat.value === ContentType.PinterestPin ||
+        selectedFormat.value === ContentType.InstagramStory ||
+        selectedFormat.value === ContentType.FacebookStory,
+);
+const supportsOptionalImages = computed(
+    () =>
+        selectedFormat.value === ContentType.InstagramFeed ||
+        selectedFormat.value === ContentType.LinkedInPost ||
+        selectedFormat.value === ContentType.LinkedInPagePost ||
+        selectedFormat.value === ContentType.XPost ||
+        selectedFormat.value === ContentType.BlueskyPost ||
+        selectedFormat.value === ContentType.ThreadsPost ||
+        selectedFormat.value === ContentType.MastodonPost,
 );
 // Instagram Feed accepts only 1 image (single-image post). Others accept up to 4.
 const maxOptionalImages = computed(() =>
     selectedFormat.value === ContentType.InstagramFeed ? 1 : 4,
 );
 // Mirrors ContentType::supportsCaption() in PHP.
-const supportsCaption = computed(() =>
-    selectedFormat.value !== ContentType.InstagramStory &&
-    selectedFormat.value !== ContentType.FacebookStory,
+const supportsCaption = computed(
+    () =>
+        selectedFormat.value !== ContentType.InstagramStory &&
+        selectedFormat.value !== ContentType.FacebookStory,
 );
 const showsAccountPicker = computed(() => accountsForFormat.value.length > 1);
 
 const submittedImageCount = computed(() => {
     if (isCarousel.value) return imageCount.value;
     if (requiresImage.value) return 1;
-    if (supportsOptionalImages.value && includeImages.value) return imageCount.value;
+    if (supportsOptionalImages.value && includeImages.value)
+        return imageCount.value;
     return 0;
 });
 
-const canSubmit = computed(() =>
-    selectedFormat.value !== null &&
-    selectedAccountId.value !== null &&
-    promptText.value.trim().length >= 3,
+const canSubmit = computed(
+    () =>
+        selectedFormat.value !== null &&
+        selectedAccountId.value !== null &&
+        promptText.value.trim().length >= 3,
 );
 
 // Auto-pick the only account when format has exactly one match.
@@ -163,7 +194,10 @@ watch(accountsForFormat, (accounts) => {
         selectedAccountId.value = accounts[0].id;
     } else if (accounts.length === 0) {
         selectedAccountId.value = null;
-    } else if (accounts.length > 1 && !accounts.some((a) => a.id === selectedAccountId.value)) {
+    } else if (
+        accounts.length > 1 &&
+        !accounts.some((a) => a.id === selectedAccountId.value)
+    ) {
         selectedAccountId.value = null;
     }
 });
@@ -229,18 +263,20 @@ const subscribeToCreation = (userId: string, creationId: string) => {
     const channelName = `users.${userId}.ai-creation.${creationId}`;
     subscribedChannelName = channelName;
 
-    echoChannel = echo().private(channelName).listen('.PostCreationReady', (e: any) => {
-        if (e.error) {
-            previewStatus.value = 'error';
-            previewError.value = e.error;
-        } else {
-            previewContent.value = e.content ?? '';
-            previewImageTitle.value = e.image_title ?? '';
-            previewImageBody.value = e.image_body ?? '';
-            previewStatus.value = 'done';
-        }
-        unsubscribeEcho();
-    });
+    echoChannel = echo()
+        .private(channelName)
+        .listen('.PostCreationReady', (e: any) => {
+            if (e.error) {
+                previewStatus.value = 'error';
+                previewError.value = e.error;
+            } else {
+                previewContent.value = e.content ?? '';
+                previewImageTitle.value = e.image_title ?? '';
+                previewImageBody.value = e.image_body ?? '';
+                previewStatus.value = 'done';
+            }
+            unsubscribeEcho();
+        });
 };
 
 const startGeneration = async () => {
@@ -261,12 +297,17 @@ const startGeneration = async () => {
     httpStart.date = props.date;
 
     try {
-        const data = await httpStart.post(startRoute.url()) as { creation_id: string; channel: string };
+        const data = (await httpStart.post(startRoute.url())) as {
+            creation_id: string;
+            channel: string;
+        };
         const userId = data.channel.split('.')[1] ?? '';
         subscribeToCreation(userId, data.creation_id);
     } catch (err: any) {
         previewStatus.value = 'error';
-        previewError.value = err?.response?.data?.message ?? trans('posts.create.steps.preview_error');
+        previewError.value =
+            err?.response?.data?.message ??
+            trans('posts.create.steps.preview_error');
     } finally {
         submitting.value = false;
     }
@@ -283,7 +324,9 @@ const createPost = async () => {
     httpFinalize.image_body = previewImageBody.value;
 
     try {
-        const data = await httpFinalize.post(finalizeRoute.url(previewCreationId.value)) as { redirect_url: string };
+        const data = (await httpFinalize.post(
+            finalizeRoute.url(previewCreationId.value),
+        )) as { redirect_url: string };
         router.visit(data.redirect_url);
     } catch {
         previewStatus.value = 'error';
@@ -304,8 +347,13 @@ onUnmounted(() => unsubscribeEcho());
             class="group inline-flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-foreground/70 transition-colors hover:text-foreground"
             @click="goBack"
         >
-            <span class="inline-flex size-7 items-center justify-center rounded-md border-2 border-foreground bg-card shadow-2xs transition-transform group-hover:-translate-x-0.5">
-                <IconArrowLeft class="size-3.5 text-foreground" stroke-width="2.5" />
+            <span
+                class="inline-flex size-7 items-center justify-center rounded-md border-2 border-foreground bg-card shadow-2xs transition-transform group-hover:-translate-x-0.5"
+            >
+                <IconArrowLeft
+                    class="size-3.5 text-foreground"
+                    stroke-width="2.5"
+                />
             </span>
             {{ $t('posts.create.steps.back') }}
         </button>
@@ -314,64 +362,108 @@ onUnmounted(() => unsubscribeEcho());
         <template v-if="step === 'configure'">
             <!-- Format -->
             <div class="space-y-2">
-                <Label class="text-sm font-bold">{{ $t('posts.create.steps.format_title') }}</Label>
+                <Label class="text-sm font-bold">{{
+                    $t('posts.create.steps.format_title')
+                }}</Label>
                 <div class="grid gap-2 sm:grid-cols-2">
                     <button
                         v-for="format in availableFormats"
                         :key="format.value"
                         type="button"
                         class="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-foreground bg-card p-3.5 text-left text-sm shadow-2xs transition-all hover:bg-foreground/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-card"
-                        :class="{ '!bg-violet-100 shadow-md': selectedFormat === format.value }"
+                        :class="{
+                            '!bg-violet-100 shadow-md':
+                                selectedFormat === format.value,
+                        }"
                         :disabled="!isFormatConnected(format)"
-                        :title="!isFormatConnected(format) ? $t('posts.create.steps.connect_first') : ''"
+                        :title="
+                            !isFormatConnected(format)
+                                ? $t('posts.create.steps.connect_first')
+                                : ''
+                        "
                         @click="selectFormat(format.value)"
                     >
-                        <span class="inline-flex size-7 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
+                        <span
+                            class="inline-flex size-7 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs"
+                        >
                             <img
                                 :src="getPlatformLogo(format.platforms[0])"
                                 :alt="format.platforms[0]"
                                 class="size-full object-cover"
                             />
                         </span>
-                        <span class="flex-1 font-semibold text-foreground">{{ $t(`posts.create.steps.format.${format.value}`) }}</span>
-                        <IconCheck v-if="selectedFormat === format.value" class="size-4 text-foreground" stroke-width="3" />
+                        <span class="flex-1 font-semibold text-foreground">{{
+                            $t(`posts.create.steps.format.${format.value}`)
+                        }}</span>
+                        <IconCheck
+                            v-if="selectedFormat === format.value"
+                            class="size-4 text-foreground"
+                            stroke-width="3"
+                        />
                     </button>
                 </div>
             </div>
 
             <!-- Account (only when there's a choice to make) -->
             <div v-if="selectedFormat && showsAccountPicker" class="space-y-2">
-                <Label class="text-sm font-bold">{{ $t('posts.create.steps.account_title') }}</Label>
+                <Label class="text-sm font-bold">{{
+                    $t('posts.create.steps.account_title')
+                }}</Label>
                 <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     <button
                         v-for="account in accountsForFormat"
                         :key="account.id"
                         type="button"
                         class="relative flex cursor-pointer items-center gap-2 rounded-xl border-2 border-foreground bg-card p-2.5 text-left text-sm shadow-2xs transition-all hover:bg-foreground/5"
-                        :class="{ '!bg-violet-100 shadow-md': selectedAccountId === account.id }"
+                        :class="{
+                            '!bg-violet-100 shadow-md':
+                                selectedAccountId === account.id,
+                        }"
                         @click="selectedAccountId = account.id"
                     >
-                        <span class="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
+                        <span
+                            class="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs"
+                        >
                             <img
                                 v-if="account.avatar_url"
                                 :src="account.avatar_url"
                                 :alt="account.display_name"
                                 class="size-full object-cover"
                             />
-                            <img v-else :src="getPlatformLogo(account.platform)" :alt="account.platform" class="size-4" />
+                            <img
+                                v-else
+                                :src="getPlatformLogo(account.platform)"
+                                :alt="account.platform"
+                                class="size-4"
+                            />
                         </span>
                         <div class="min-w-0 flex-1">
-                            <p class="truncate text-xs font-bold leading-tight text-foreground">{{ account.display_name }}</p>
-                            <p v-if="account.username" class="truncate text-xs font-medium text-foreground/60">@{{ account.username }}</p>
+                            <p
+                                class="truncate text-xs leading-tight font-bold text-foreground"
+                            >
+                                {{ account.display_name }}
+                            </p>
+                            <p
+                                v-if="account.username"
+                                class="truncate text-xs font-medium text-foreground/60"
+                            >
+                                @{{ account.username }}
+                            </p>
                         </div>
-                        <IconCheck v-if="selectedAccountId === account.id" class="absolute right-2 top-2 size-3.5 text-foreground" stroke-width="3" />
+                        <IconCheck
+                            v-if="selectedAccountId === account.id"
+                            class="absolute top-2 right-2 size-3.5 text-foreground"
+                            stroke-width="3"
+                        />
                     </button>
                 </div>
             </div>
 
             <!-- Media — inline, only when format actually has options -->
             <div v-if="selectedFormat && isCarousel" class="space-y-2">
-                <Label class="text-sm font-bold">{{ $t('posts.create.steps.media_carousel') }}</Label>
+                <Label class="text-sm font-bold">{{
+                    $t('posts.create.steps.media_carousel')
+                }}</Label>
                 <div class="flex flex-wrap gap-2">
                     <Button
                         v-for="n in [2, 3, 4, 5, 6, 7, 8, 9, 10]"
@@ -386,8 +478,13 @@ onUnmounted(() => unsubscribeEcho());
                 </div>
             </div>
 
-            <div v-if="selectedFormat && supportsOptionalImages" class="space-y-2">
-                <Label class="text-sm font-bold">{{ $t('posts.create.steps.media_optional_label') }}</Label>
+            <div
+                v-if="selectedFormat && supportsOptionalImages"
+                class="space-y-2"
+            >
+                <Label class="text-sm font-bold">{{
+                    $t('posts.create.steps.media_optional_label')
+                }}</Label>
                 <div class="flex flex-wrap gap-2">
                     <Button
                         type="button"
@@ -401,8 +498,15 @@ onUnmounted(() => unsubscribeEcho());
                         :key="n"
                         type="button"
                         size="icon"
-                        :variant="includeImages && imageCount === n ? 'default' : 'outline'"
-                        @click="includeImages = true; imageCount = n"
+                        :variant="
+                            includeImages && imageCount === n
+                                ? 'default'
+                                : 'outline'
+                        "
+                        @click="
+                            includeImages = true;
+                            imageCount = n;
+                        "
                     >
                         {{ n }}
                     </Button>
@@ -411,7 +515,9 @@ onUnmounted(() => unsubscribeEcho());
 
             <!-- Prompt -->
             <div v-if="selectedFormat" class="space-y-2">
-                <Label for="ai-prompt" class="text-sm font-bold">{{ $t('posts.create.steps.prompt_label') }}</Label>
+                <Label for="ai-prompt" class="text-sm font-bold">{{
+                    $t('posts.create.steps.prompt_label')
+                }}</Label>
                 <Textarea
                     id="ai-prompt"
                     v-model="promptText"
@@ -430,16 +536,33 @@ onUnmounted(() => unsubscribeEcho());
 
         <!-- ====== Step 2: Preview ====== -->
         <template v-else-if="step === 'preview'">
-            <div v-if="previewStatus === 'loading'" class="flex flex-col items-center gap-4 rounded-2xl border-2 border-foreground bg-card py-16 text-center shadow-2xs">
-                <div class="inline-flex size-12 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
-                    <IconLoader2 class="size-6 animate-spin text-foreground" stroke-width="2" />
+            <div
+                v-if="previewStatus === 'loading'"
+                class="flex flex-col items-center gap-4 rounded-2xl border-2 border-foreground bg-card py-16 text-center shadow-2xs"
+            >
+                <div
+                    class="inline-flex size-12 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs"
+                >
+                    <IconLoader2
+                        class="size-6 animate-spin text-foreground"
+                        stroke-width="2"
+                    />
                 </div>
-                <p class="text-sm font-semibold text-foreground/70">{{ $t('posts.create.steps.preview_loading') }}</p>
+                <p class="text-sm font-semibold text-foreground/70">
+                    {{ $t('posts.create.steps.preview_loading') }}
+                </p>
             </div>
 
             <div v-else-if="previewStatus === 'error'" class="space-y-4">
-                <div class="rounded-xl border-2 border-foreground bg-rose-50 p-4 shadow-2xs">
-                    <p class="text-sm font-semibold text-rose-700">{{ previewError || $t('posts.create.steps.preview_error') }}</p>
+                <div
+                    class="rounded-xl border-2 border-foreground bg-rose-50 p-4 shadow-2xs"
+                >
+                    <p class="text-sm font-semibold text-rose-700">
+                        {{
+                            previewError ||
+                            $t('posts.create.steps.preview_error')
+                        }}
+                    </p>
                 </div>
 
                 <div class="flex justify-end">
@@ -452,14 +575,26 @@ onUnmounted(() => unsubscribeEcho());
 
             <div v-else-if="previewStatus === 'done'" class="space-y-4">
                 <!-- Caption-less formats (Stories): edit title + body separately. -->
-                <div v-if="!supportsCaption" class="space-y-3 rounded-2xl border-2 border-foreground bg-card p-5 shadow-2xs">
+                <div
+                    v-if="!supportsCaption"
+                    class="space-y-3 rounded-2xl border-2 border-foreground bg-card p-5 shadow-2xs"
+                >
                     <div class="space-y-1.5">
-                        <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.create.preview.image_title') }}</Label>
+                        <Label
+                            class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
+                            >{{ $t('posts.create.preview.image_title') }}</Label
+                        >
                         <Input v-model="previewImageTitle" />
                     </div>
                     <div class="space-y-1.5">
-                        <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.create.preview.image_body') }}</Label>
-                        <Textarea v-model="previewImageBody" class="min-h-[120px] resize-none" />
+                        <Label
+                            class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
+                            >{{ $t('posts.create.preview.image_body') }}</Label
+                        >
+                        <Textarea
+                            v-model="previewImageBody"
+                            class="min-h-[120px] resize-none"
+                        />
                     </div>
                 </div>
 
@@ -476,7 +611,10 @@ onUnmounted(() => unsubscribeEcho());
                         {{ $t('posts.create.steps.retry') }}
                     </Button>
                     <Button :disabled="finalizing" @click="createPost">
-                        <IconLoader2 v-if="finalizing" class="size-4 animate-spin" />
+                        <IconLoader2
+                            v-if="finalizing"
+                            class="size-4 animate-spin"
+                        />
                         {{ $t('posts.create.steps.create') }}
                     </Button>
                 </div>

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\UserWorkspace\Role;
-use App\Mcp\Servers\TryPostServer;
+use App\Mcp\Servers\postproServer;
 use App\Mcp\Tools\Platform\ListContentTypesTool;
 use App\Models\User;
 use App\Models\Workspace;
@@ -17,7 +17,7 @@ beforeEach(function () {
 });
 
 test('list content types returns all platforms with constraints', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListContentTypesTool::class, []);
 
     $response->assertOk()
@@ -39,9 +39,10 @@ test('list content types returns all platforms with constraints', function () {
 });
 
 test('list content types includes content types per platform', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListContentTypesTool::class, []);
 
     $response->assertOk()
         ->assertSee(['linkedin', 'linkedin_post', 'x_post', 'instagram_feed', 'mastodon_post']);
 });
+

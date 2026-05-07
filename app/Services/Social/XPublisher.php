@@ -26,7 +26,7 @@ class XPublisher
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.x.api');
+        $this->baseUrl = config('postpro.platforms.x.api');
     }
 
     public function publish(PostPlatform $postPlatform): array
@@ -357,3 +357,4 @@ class XPublisher
         throw XPublishException::fromApiResponse($response);
     }
 }
+

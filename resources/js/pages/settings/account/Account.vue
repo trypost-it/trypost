@@ -11,8 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { settings as settingsHub } from '@/routes/app';
-import { edit as accountEdit, update as accountUpdate } from '@/routes/app/account';
+import {
+    edit as accountEdit,
+    update as accountUpdate,
+} from '@/routes/app/account';
 import { index as billingIndex } from '@/routes/app/billing';
 import { index as usageIndex } from '@/routes/app/usage';
 
@@ -28,9 +30,21 @@ defineProps<{
 }>();
 
 const tabs = computed(() => [
-    { name: 'account', label: trans('settings.account.tabs.account'), href: accountEdit().url },
-    { name: 'usage', label: trans('settings.account.tabs.usage'), href: usageIndex().url },
-    { name: 'billing', label: trans('settings.account.tabs.billing'), href: billingIndex().url },
+    {
+        name: 'account',
+        label: trans('settings.account.tabs.account'),
+        href: accountEdit().url,
+    },
+    {
+        name: 'usage',
+        label: trans('settings.account.tabs.usage'),
+        href: usageIndex().url,
+    },
+    {
+        name: 'billing',
+        label: trans('settings.account.tabs.billing'),
+        href: billingIndex().url,
+    },
 ]);
 </script>
 
@@ -60,24 +74,34 @@ const tabs = computed(() => [
                         class="space-y-6"
                     >
                         <div class="grid gap-2">
-                            <Label for="account-name">{{ $t('settings.account.name') }}</Label>
+                            <Label for="account-name">{{
+                                $t('settings.account.name')
+                            }}</Label>
                             <Input
                                 id="account-name"
                                 name="name"
                                 :default-value="account.name"
-                                :placeholder="trans('settings.account.name_placeholder')"
+                                :placeholder="
+                                    trans('settings.account.name_placeholder')
+                                "
                             />
                             <InputError :message="errors.name" />
                         </div>
 
                         <div v-if="!selfHosted" class="grid gap-2">
-                            <Label for="billing-email">{{ $t('settings.account.billing_email') }}</Label>
+                            <Label for="billing-email">{{
+                                $t('settings.account.billing_email')
+                            }}</Label>
                             <Input
                                 id="billing-email"
                                 name="billing_email"
                                 type="email"
                                 :default-value="account.billing_email"
-                                :placeholder="trans('settings.account.billing_email_placeholder')"
+                                :placeholder="
+                                    trans(
+                                        'settings.account.billing_email_placeholder',
+                                    )
+                                "
                             />
                             <p class="text-sm text-muted-foreground">
                                 {{ $t('settings.account.billing_email_hint') }}

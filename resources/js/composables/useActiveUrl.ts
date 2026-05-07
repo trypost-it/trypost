@@ -33,11 +33,16 @@ export function useActiveUrl() {
             return current.startsWith(pathname);
         }
 
-        const isMatch = current === pathname ||
+        const isMatch =
+            current === pathname ||
             (pathname !== '/' && current.startsWith(pathname + '/'));
 
         if (isMatch && options?.exclude) {
-            return !options.exclude.some((ex) => current === toPathname(ex) || current.startsWith(toPathname(ex) + '/'));
+            return !options.exclude.some(
+                (ex) =>
+                    current === toPathname(ex) ||
+                    current.startsWith(toPathname(ex) + '/'),
+            );
         }
 
         return isMatch;

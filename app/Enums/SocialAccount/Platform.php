@@ -213,14 +213,14 @@ enum Platform: string
     public function instagramGraphBaseUrl(): string
     {
         return match ($this) {
-            self::InstagramFacebook => (string) config('trypost.platforms.instagram-facebook.graph_api'),
-            default => (string) config('trypost.platforms.instagram.graph_api'),
+            self::InstagramFacebook => (string) config('postpro.platforms.instagram-facebook.graph_api'),
+            default => (string) config('postpro.platforms.instagram.graph_api'),
         };
     }
 
     public function isEnabled(): bool
     {
-        return config("trypost.platforms.{$this->value}.enabled", true);
+        return config("postpro.platforms.{$this->value}.enabled", true);
     }
 
     /**
@@ -256,3 +256,4 @@ enum Platform: string
         return array_filter(self::cases(), fn (self $platform) => $platform->isEnabled());
     }
 }
+

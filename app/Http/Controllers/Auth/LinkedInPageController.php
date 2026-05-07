@@ -240,7 +240,7 @@ class LinkedInPageController extends SocialController
     private function fetchOrganizations(string $accessToken): array
     {
         $response = Http::withToken($accessToken)
-            ->get(config('trypost.platforms.linkedin-page.api').'/v2/organizationAcls', [
+            ->get(config('postpro.platforms.linkedin-page.api').'/v2/organizationAcls', [
                 'q' => 'roleAssignee',
                 'role' => 'ADMINISTRATOR',
                 'projection' => '(elements*(organization~(id,localizedName,vanityName,logoV2(original~:playableStreams))))',
@@ -275,3 +275,4 @@ class LinkedInPageController extends SocialController
         return $organizations;
     }
 }
+

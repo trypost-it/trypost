@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Mail;
 
 beforeEach(function () {
     Mail::fake();
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $this->account = Account::factory()->create();
     $this->user = User::factory()->create([
@@ -282,3 +282,4 @@ test('store invite validates role must be valid', function () {
 
     $response->assertSessionHasErrors('role');
 });
+

@@ -30,7 +30,11 @@ const PLATFORM_LABELS: Record<string, string> = {
 
 const PLATFORM_CONTENT_TYPES: Record<string, string[]> = {
     instagram: ['instagram_feed', 'instagram_reel', 'instagram_story'],
-    'instagram-facebook': ['instagram_feed', 'instagram_reel', 'instagram_story'],
+    'instagram-facebook': [
+        'instagram_feed',
+        'instagram_reel',
+        'instagram_story',
+    ],
     linkedin: ['linkedin_post', 'linkedin_carousel'],
     'linkedin-page': ['linkedin_page_post', 'linkedin_page_carousel'],
     facebook: ['facebook_post', 'facebook_reel', 'facebook_story'],

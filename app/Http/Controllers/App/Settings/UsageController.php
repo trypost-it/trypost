@@ -21,7 +21,7 @@ class UsageController extends Controller
 {
     public function index(Request $request): Response|RedirectResponse
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return redirect()->route('app.calendar');
         }
 
@@ -51,3 +51,4 @@ class UsageController extends Controller
         ]);
     }
 }
+

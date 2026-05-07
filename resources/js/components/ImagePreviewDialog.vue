@@ -24,13 +24,15 @@ const emit = defineEmits<{
 
 // Multi-image takes precedence; falls back to single src when no list provided.
 const allImages = computed<string[]>(() =>
-    props.images.length > 0 ? props.images : (props.src ? [props.src] : []),
+    props.images.length > 0 ? props.images : props.src ? [props.src] : [],
 );
 
 // In multi-image mode the dialog is open when index is a number. In single src
 // mode (legacy) it's open whenever src is set.
 const isOpen = computed({
-    get: () => allImages.value.length > 0 && (props.images.length === 0 || index.value !== null),
+    get: () =>
+        allImages.value.length > 0 &&
+        (props.images.length === 0 || index.value !== null),
     set: (val) => {
         if (!val) emit('close');
     },
@@ -97,7 +99,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                     v-if="showNav && hasPrev"
                     type="button"
                     aria-label="Previous image"
-                    class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white transition hover:bg-black/70"
+                    class="absolute top-1/2 left-2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white transition hover:bg-black/70"
                     @click.stop="goPrev"
                 >
                     <IconChevronLeft class="size-6" />
@@ -107,7 +109,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                     v-if="showNav && hasNext"
                     type="button"
                     aria-label="Next image"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white transition hover:bg-black/70"
+                    class="absolute top-1/2 right-2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white transition hover:bg-black/70"
                     @click.stop="goNext"
                 >
                     <IconChevronRight class="size-6" />

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\UserWorkspace\Role;
-use App\Mcp\Servers\TryPostServer;
+use App\Mcp\Servers\postproServer;
 use App\Mcp\Tools\Post\AttachMediaFromUrlTool;
 use App\Models\Media;
 use App\Models\Post;
@@ -35,7 +35,7 @@ test('attaches an image from url and creates a media row', function () {
         ),
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $this->post->id,
             'urls' => ['https://example.com/photo.jpg'],
@@ -52,7 +52,7 @@ test('rejects url that returns non-image content type', function () {
         'example.org/payload' => Http::response('not an image', 200, ['Content-Type' => 'text/html']),
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $this->post->id,
             'urls' => ['https://example.org/payload'],
@@ -74,7 +74,7 @@ test('reports failures and successes separately', function () {
         'example.com/missing.png' => Http::response(null, 404),
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $this->post->id,
             'urls' => [
@@ -94,7 +94,7 @@ test('post 404 from another workspace', function () {
     $other = Workspace::factory()->create();
     $post = Post::factory()->create(['workspace_id' => $other->id, 'user_id' => $this->user->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $post->id,
             'urls' => ['https://example.com/photo.jpg'],
@@ -104,7 +104,7 @@ test('post 404 from another workspace', function () {
 });
 
 test('rejects urls with non-http(s) schemes', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $this->post->id,
             'urls' => ['ftp://example.com/photo.jpg'],
@@ -116,7 +116,7 @@ test('rejects urls with non-http(s) schemes', function () {
 });
 
 test('rejects malformed url strings', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $this->post->id,
             'urls' => ['not-a-url-at-all'],
@@ -128,7 +128,7 @@ test('rejects malformed url strings', function () {
 test('rejects more than 10 urls per call', function () {
     $urls = collect(range(1, 11))->map(fn ($i) => "https://example.com/photo-{$i}.jpg")->all();
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(AttachMediaFromUrlTool::class, [
             'post_id' => $this->post->id,
             'urls' => $urls,
@@ -136,3 +136,4 @@ test('rejects more than 10 urls per call', function () {
 
     $response->assertHasErrors();
 });
+

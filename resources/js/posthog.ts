@@ -96,7 +96,10 @@ export const capturePageview = (): void => {
  * directly so self-hosted (or otherwise disabled) installs never queue
  * events into the SDK buffer.
  */
-export const captureEvent = (event: string, properties?: Record<string, unknown>): void => {
+export const captureEvent = (
+    event: string,
+    properties?: Record<string, unknown>,
+): void => {
     if (!enabled) {
         return;
     }

@@ -17,13 +17,21 @@ import PostEditorComposer from '@/components/posts/editor/PostEditorComposer.vue
 import PostEditorSidebar from '@/components/posts/editor/PostEditorSidebar.vue';
 import PickTimePopover from '@/components/posts/PickTimePopover.vue';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { getMediaItemIssue } from '@/composables/useMedia';
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { destroy as destroyPost, index as postsIndex, update as updatePost } from '@/routes/app/posts';
+import {
+    destroy as destroyPost,
+    update as updatePost,
+} from '@/routes/app/posts';
 
 interface MediaItem {
     id: string;
@@ -101,9 +109,15 @@ const props = defineProps<{
 }>();
 
 const post = computed(() => props.post);
-const isReadOnly = computed(() => ['publishing', 'published', 'partially_published'].includes(post.value.status));
+const isReadOnly = computed(() =>
+    ['publishing', 'published', 'partially_published'].includes(
+        post.value.status,
+    ),
+);
 const isPublishing = computed(() => post.value.status === 'publishing');
-const isPublished = computed(() => ['published', 'partially_published'].includes(post.value.status));
+const isPublished = computed(() =>
+    ['published', 'partially_published'].includes(post.value.status),
+);
 const isScheduled = computed(() => post.value.status === 'scheduled');
 
 // Content
@@ -117,7 +131,9 @@ const selectedPlatformIds = ref<string[]>(
 
 // Per-platform meta (TikTok settings, Pinterest board, etc.)
 const platformMeta = ref<Record<string, Record<string, any>>>(
-    Object.fromEntries(post.value.post_platforms.map((pp) => [pp.id, { ...(pp.meta ?? {}) }])),
+    Object.fromEntries(
+        post.value.post_platforms.map((pp) => [pp.id, { ...(pp.meta ?? {}) }]),
+    ),
 );
 
 const updatePlatformMeta = (platformId: string, meta: Record<string, any>) => {
@@ -126,21 +142,28 @@ const updatePlatformMeta = (platformId: string, meta: Record<string, any>) => {
 
 // Per-platform content_type (Instagram Feed/Reel/Story, Facebook Post/Reel/Story, etc.)
 const platformContentTypes = ref<Record<string, string>>(
-    Object.fromEntries(post.value.post_platforms.map((pp) => [pp.id, pp.content_type ?? ''])),
+    Object.fromEntries(
+        post.value.post_platforms.map((pp) => [pp.id, pp.content_type ?? '']),
+    ),
 );
 
 const updatePlatformContentType = (platformId: string, contentType: string) => {
-    platformContentTypes.value = { ...platformContentTypes.value, [platformId]: contentType };
+    platformContentTypes.value = {
+        ...platformContentTypes.value,
+        [platformId]: contentType,
+    };
 };
 
 const platformLimits = computed(() => {
     const seen = new Set<string>();
     const result: { platform: string; maxLength: number }[] = [];
     for (const pp of post.value.post_platforms) {
-        if (! selectedPlatformIds.value.includes(pp.id)) continue;
+        if (!selectedPlatformIds.value.includes(pp.id)) continue;
         if (seen.has(pp.platform)) continue;
         const accountId = pp.social_account_id;
-        const max = accountId ? props.platformConfigs[accountId]?.maxContentLength : null;
+        const max = accountId
+            ? props.platformConfigs[accountId]?.maxContentLength
+            : null;
         if (typeof max === 'number' && max > 0) {
             seen.add(pp.platform);
             result.push({ platform: pp.platform, maxLength: max });
@@ -155,9 +178,10 @@ const mediaIssues = computed(() => {
         const issues: { platform: string; reason: string }[] = [];
         const seen = new Set<string>();
         for (const pp of post.value.post_platforms) {
-            if (! selectedPlatformIds.value.includes(pp.id)) continue;
+            if (!selectedPlatformIds.value.includes(pp.id)) continue;
             if (seen.has(pp.platform)) continue;
-            const contentType = platformContentTypes.value[pp.id] ?? pp.content_type ?? '';
+            const contentType =
+                platformContentTypes.value[pp.id] ?? pp.content_type ?? '';
             const reason = getMediaItemIssue(item, contentType);
             if (reason) {
                 seen.add(pp.platform);
@@ -169,22 +193,39 @@ const mediaIssues = computed(() => {
     return result;
 });
 
-const getMediaIncompatibilityReason = (contentType: string, mediaItems: MediaItem[]): string | null => {
+const getMediaIncompatibilityReason = (
+    contentType: string,
+    mediaItems: MediaItem[],
+): string | null => {
     const rules = getMediaRulesForContentType(contentType);
-    const videos = mediaItems.filter((m) => m.type === 'video' || m.mime_type?.startsWith('video/'));
-    const images = mediaItems.filter((m) => m.type === 'image' || m.mime_type?.startsWith('image/'));
+    const videos = mediaItems.filter(
+        (m) => m.type === 'video' || m.mime_type?.startsWith('video/'),
+    );
+    const images = mediaItems.filter(
+        (m) => m.type === 'image' || m.mime_type?.startsWith('image/'),
+    );
     const gifs = mediaItems.filter((m) => m.mime_type === 'image/gif');
     const total = mediaItems.length;
 
     // Order matters: type-mismatch errors (image vs video vs gif) are more
     // fundamental than count errors. Telling the user "YouTube doesn't accept
     // images" is more actionable than "too many files" when they're mixing types.
-    if (rules.requiresMedia && total === 0) return trans('posts.edit.compliance.requires_media');
-    if (!rules.acceptVideos && videos.length > 0) return trans('posts.edit.compliance.no_videos');
-    if (!rules.acceptImages && images.length > 0) return trans('posts.edit.compliance.no_images');
-    if (!rules.acceptsGif && gifs.length > 0) return trans('posts.edit.compliance.no_gifs');
-    if (total > rules.maxFiles) return trans('posts.edit.compliance.too_many_files', { max: String(rules.maxFiles) });
-    if (rules.minFiles && total < rules.minFiles) return trans('posts.edit.compliance.too_few_files', { min: String(rules.minFiles) });
+    if (rules.requiresMedia && total === 0)
+        return trans('posts.edit.compliance.requires_media');
+    if (!rules.acceptVideos && videos.length > 0)
+        return trans('posts.edit.compliance.no_videos');
+    if (!rules.acceptImages && images.length > 0)
+        return trans('posts.edit.compliance.no_images');
+    if (!rules.acceptsGif && gifs.length > 0)
+        return trans('posts.edit.compliance.no_gifs');
+    if (total > rules.maxFiles)
+        return trans('posts.edit.compliance.too_many_files', {
+            max: String(rules.maxFiles),
+        });
+    if (rules.minFiles && total < rules.minFiles)
+        return trans('posts.edit.compliance.too_few_files', {
+            min: String(rules.minFiles),
+        });
 
     for (const m of mediaItems) {
         const isVideo = m.type === 'video' || m.mime_type?.startsWith('video/');
@@ -194,18 +235,35 @@ const getMediaIncompatibilityReason = (contentType: string, mediaItems: MediaIte
         const height = m.meta?.height ?? 0;
 
         if (isVideo) {
-            if (rules.maxVideoBytes && size > 0 && size > rules.maxVideoBytes) return trans('posts.edit.compliance.video_too_large');
-            if (rules.maxVideoDurationSec && duration > 0 && duration > rules.maxVideoDurationSec) {
-                return trans('posts.edit.compliance.video_too_long', { seconds: String(rules.maxVideoDurationSec) });
+            if (rules.maxVideoBytes && size > 0 && size > rules.maxVideoBytes)
+                return trans('posts.edit.compliance.video_too_large');
+            if (
+                rules.maxVideoDurationSec &&
+                duration > 0 &&
+                duration > rules.maxVideoDurationSec
+            ) {
+                return trans('posts.edit.compliance.video_too_long', {
+                    seconds: String(rules.maxVideoDurationSec),
+                });
             }
-        } else if (rules.maxImageBytes && size > 0 && size > rules.maxImageBytes) {
+        } else if (
+            rules.maxImageBytes &&
+            size > 0 &&
+            size > rules.maxImageBytes
+        ) {
             return trans('posts.edit.compliance.image_too_large');
         }
 
-        if (width > 0 && height > 0 && (rules.aspectRatioMin || rules.aspectRatioMax)) {
+        if (
+            width > 0 &&
+            height > 0 &&
+            (rules.aspectRatioMin || rules.aspectRatioMax)
+        ) {
             const ratio = width / height;
-            if (rules.aspectRatioMin && ratio < rules.aspectRatioMin) return trans('posts.edit.compliance.aspect_ratio_invalid');
-            if (rules.aspectRatioMax && ratio > rules.aspectRatioMax) return trans('posts.edit.compliance.aspect_ratio_invalid');
+            if (rules.aspectRatioMin && ratio < rules.aspectRatioMin)
+                return trans('posts.edit.compliance.aspect_ratio_invalid');
+            if (rules.aspectRatioMax && ratio > rules.aspectRatioMax)
+                return trans('posts.edit.compliance.aspect_ratio_invalid');
         }
     }
 
@@ -229,8 +287,8 @@ const platformIssues = computed<Record<string, string>>(() => {
     return issues;
 });
 
-const mediaCompliancePerPlatformValid = computed(
-    () => selectedPlatformIds.value.every((id) => !platformIssues.value[id]),
+const mediaCompliancePerPlatformValid = computed(() =>
+    selectedPlatformIds.value.every((id) => !platformIssues.value[id]),
 );
 
 // TikTok compliance per docs:
@@ -238,12 +296,19 @@ const mediaCompliancePerPlatformValid = computed(
 // - if disclosure toggle is ON, at least one sub-toggle must be selected
 const tiktokComplianceValid = computed(() => {
     const tiktokPlatforms = post.value.post_platforms.filter(
-        (pp) => pp.platform === 'tiktok' && selectedPlatformIds.value.includes(pp.id),
+        (pp) =>
+            pp.platform === 'tiktok' &&
+            selectedPlatformIds.value.includes(pp.id),
     );
     return tiktokPlatforms.every((pp) => {
         const meta = platformMeta.value[pp.id] ?? {};
         if (!meta.privacy_level) return false;
-        if (meta.disclose && !meta.brand_organic_toggle && !meta.brand_content_toggle) return false;
+        if (
+            meta.disclose &&
+            !meta.brand_organic_toggle &&
+            !meta.brand_content_toggle
+        )
+            return false;
         return true;
     });
 });
@@ -256,8 +321,15 @@ const postActionTooltip = computed(() => {
     if (canSchedule.value) return '';
 
     const reasons = post.value.post_platforms
-        .filter((pp) => selectedPlatformIds.value.includes(pp.id) && platformIssues.value[pp.id])
-        .map((pp) => `${pp.platform_name ?? pp.platform}: ${platformIssues.value[pp.id]}`);
+        .filter(
+            (pp) =>
+                selectedPlatformIds.value.includes(pp.id) &&
+                platformIssues.value[pp.id],
+        )
+        .map(
+            (pp) =>
+                `${pp.platform_name ?? pp.platform}: ${platformIssues.value[pp.id]}`,
+        );
 
     if (reasons.length === 0) return trans('posts.edit.compliance_incomplete');
 
@@ -267,20 +339,27 @@ const postActionTooltip = computed(() => {
 // Schedule
 const getLocalSchedule = () => {
     if (!post.value.scheduled_at) return '';
-    return dayjs.utc(post.value.scheduled_at).local().format('YYYY-MM-DDTHH:mm:00');
+    return dayjs
+        .utc(post.value.scheduled_at)
+        .local()
+        .format('YYYY-MM-DDTHH:mm:00');
 };
 const scheduledDateTime = ref(getLocalSchedule());
-const hasPickedTime = ref(post.value.status === 'scheduled' && !! post.value.scheduled_at);
+const hasPickedTime = ref(
+    post.value.status === 'scheduled' && !!post.value.scheduled_at,
+);
 
 const pickTimeLabel = computed(() => {
-    if (! hasPickedTime.value || ! scheduledDateTime.value) {
+    if (!hasPickedTime.value || !scheduledDateTime.value) {
         return trans('posts.edit.pick_time');
     }
     return dayjs(scheduledDateTime.value).format('MMM D, HH:mm');
 });
 
 // Labels
-const selectedLabelIds = ref<string[]>(post.value.labels?.map((l) => l.id) || []);
+const selectedLabelIds = ref<string[]>(
+    post.value.labels?.map((l) => l.id) || [],
+);
 
 // UI state
 const isSubmitting = ref(false);
@@ -298,17 +377,27 @@ const onAiReviewApply = (original: string, suggestion: string) => {
 };
 
 const isPostActionDisabled = computed(
-    () => isSubmitting.value || selectedPlatformIds.value.length === 0 || !canSchedule.value,
+    () =>
+        isSubmitting.value ||
+        selectedPlatformIds.value.length === 0 ||
+        !canSchedule.value,
 );
-const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+const queryParams =
+    typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search)
+        : null;
 const initialTabFromQuery = (() => {
     const tab = queryParams?.get('tab');
-    return ['preview', 'schedule', 'comments'].includes(tab ?? '') ? (tab as string) : 'schedule';
+    return ['preview', 'schedule', 'comments'].includes(tab ?? '')
+        ? (tab as string)
+        : 'schedule';
 })();
 const initialHighlightCommentId = queryParams?.get('comment') ?? null;
 const activeTab = ref(initialTabFromQuery);
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
-const editorSidebarRef = ref<InstanceType<typeof PostEditorSidebar> | null>(null);
+const editorSidebarRef = ref<InstanceType<typeof PostEditorSidebar> | null>(
+    null,
+);
 
 const togglePlatform = (platformId: string) => {
     if (isReadOnly.value) return;
@@ -349,17 +438,23 @@ const save = () => {
     isSaving.value = true;
     showSaved.value = false;
 
-    router.put(updatePost.url(post.value.id), {
-        status: post.value.status,
-        ...data,
-    }, {
-        preserveScroll: true,
-        onFinish: () => {
-            isSaving.value = false;
-            showSaved.value = true;
-            setTimeout(() => { showSaved.value = false; }, 2000);
+    router.put(
+        updatePost.url(post.value.id),
+        {
+            status: post.value.status,
+            ...data,
         },
-    });
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isSaving.value = false;
+                showSaved.value = true;
+                setTimeout(() => {
+                    showSaved.value = false;
+                }, 2000);
+            },
+        },
+    );
 };
 
 const debouncedSave = debounce(() => {
@@ -375,7 +470,19 @@ const triggerAutosave = () => {
     }
 };
 
-watch([content, media, selectedPlatformIds, scheduledDateTime, selectedLabelIds, platformMeta, platformContentTypes], triggerAutosave, { deep: true });
+watch(
+    [
+        content,
+        media,
+        selectedPlatformIds,
+        scheduledDateTime,
+        selectedLabelIds,
+        platformMeta,
+        platformContentTypes,
+    ],
+    triggerAutosave,
+    { deep: true },
+);
 
 onUnmounted(() => {
     debouncedSave.cancel();
@@ -388,12 +495,18 @@ const submit = (status: string = 'scheduled') => {
     const data = getSubmitData();
     isSubmitting.value = true;
 
-    router.put(updatePost.url(post.value.id), {
-        status,
-        ...data,
-    }, {
-        onFinish: () => { isSubmitting.value = false; },
-    });
+    router.put(
+        updatePost.url(post.value.id),
+        {
+            status,
+            ...data,
+        },
+        {
+            onFinish: () => {
+                isSubmitting.value = false;
+            },
+        },
+    );
 };
 
 const toggleLabel = (labelId: string) => {
@@ -426,7 +539,6 @@ useEcho(`post.${post.value.id}`, '.PostPlatformStatusUpdated', () => {
     router.reload({ only: ['post'] });
 });
 
-
 // Echo: listen for real-time comments
 useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
     if (e.mentioned_users) {
@@ -440,22 +552,36 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
     <Head :title="$t('posts.edit.title')" />
 
     <AppLayout :full-width="true">
-        <div class="flex flex-col flex-1 min-h-0">
-            <header class="flex shrink-0 items-center justify-between gap-3 border-b-2 border-foreground bg-card px-4 py-3 md:px-6">
+        <div class="flex min-h-0 flex-1 flex-col">
+            <header
+                class="flex shrink-0 items-center justify-between gap-3 border-b-2 border-foreground bg-card px-4 py-3 md:px-6"
+            >
                 <div class="flex items-center gap-3 pl-12 md:pl-0">
-                    <span v-if="isSaving" class="flex items-center gap-1.5 text-xs font-semibold text-foreground/70">
+                    <span
+                        v-if="isSaving"
+                        class="flex items-center gap-1.5 text-xs font-semibold text-foreground/70"
+                    >
                         <IconLoader2 class="size-3.5 animate-spin" />
                         {{ $t('posts.edit.saving') }}
                     </span>
-                    <span v-else-if="showSaved" class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                    <span
+                        v-else-if="showSaved"
+                        class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700"
+                    >
                         <IconCircleCheck class="size-3.5" stroke-width="2.5" />
                         {{ $t('posts.edit.saved') }}
                     </span>
-                    <span v-else-if="isPublished" class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                    <span
+                        v-else-if="isPublished"
+                        class="flex items-center gap-1.5 text-xs font-semibold text-emerald-700"
+                    >
                         <IconCircleCheck class="size-3.5" stroke-width="2.5" />
                         {{ $t('posts.edit.status.published') }}
                     </span>
-                    <span v-else-if="!isScheduled" class="flex items-center gap-1.5 text-xs font-semibold text-foreground/60">
+                    <span
+                        v-else-if="!isScheduled"
+                        class="flex items-center gap-1.5 text-xs font-semibold text-foreground/60"
+                    >
                         <span class="size-2 rounded-full bg-foreground/40" />
                         {{ $t('posts.edit.draft') }}
                     </span>
@@ -476,7 +602,9 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                                     <IconTrash class="size-4 text-rose-700" />
                                 </Button>
                             </TooltipTrigger>
-                            <TooltipContent>{{ $t('posts.edit.delete') }}</TooltipContent>
+                            <TooltipContent>{{
+                                $t('posts.edit.delete')
+                            }}</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
 
@@ -496,7 +624,11 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                             >
                                 <IconCalendar class="size-4 text-violet-700" />
                                 <span class="font-bold text-violet-900">
-                                    {{ $t('posts.edit.scheduled_for', { date: pickTimeLabel }) }}
+                                    {{
+                                        $t('posts.edit.scheduled_for', {
+                                            date: pickTimeLabel,
+                                        })
+                                    }}
                                 </span>
                             </Button>
                         </PickTimePopover>
@@ -522,9 +654,17 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                             type="button"
                             :disabled="isPostActionDisabled"
                             :title="postActionTooltip"
-                            @click="submit(hasPickedTime ? 'scheduled' : 'publishing')"
+                            @click="
+                                submit(
+                                    hasPickedTime ? 'scheduled' : 'publishing',
+                                )
+                            "
                         >
-                            {{ hasPickedTime ? $t('posts.edit.schedule') : $t('posts.edit.post_now') }}
+                            {{
+                                hasPickedTime
+                                    ? $t('posts.edit.schedule')
+                                    : $t('posts.edit.post_now')
+                            }}
                         </Button>
                     </template>
                 </div>
@@ -535,21 +675,30 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                     v-if="isPublishing"
                     class="absolute inset-0 z-40 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm"
                 >
-                    <div class="inline-flex size-14 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
-                        <IconLoader2 class="size-7 animate-spin text-foreground" stroke-width="2" />
+                    <div
+                        class="inline-flex size-14 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs"
+                    >
+                        <IconLoader2
+                            class="size-7 animate-spin text-foreground"
+                            stroke-width="2"
+                        />
                     </div>
                     <div class="text-center">
                         <p
-                            class="text-2xl font-semibold leading-tight text-foreground"
+                            class="text-2xl leading-tight font-semibold text-foreground"
                             style="font-family: var(--font-display)"
                         >
                             {{ $t('posts.edit.publishing_overlay_title') }}
                         </p>
-                        <p class="mt-1 text-sm text-foreground/70">{{ $t('posts.edit.publishing_overlay_subtitle') }}</p>
+                        <p class="mt-1 text-sm text-foreground/70">
+                            {{ $t('posts.edit.publishing_overlay_subtitle') }}
+                        </p>
                     </div>
                 </div>
                 <div class="flex h-full">
-                    <div class="w-full overflow-y-auto lg:w-2/3 lg:border-r-2 lg:border-foreground">
+                    <div
+                        class="w-full overflow-y-auto lg:w-2/3 lg:border-r-2 lg:border-foreground"
+                    >
                         <PostEditorComposer
                             v-model:content="content"
                             v-model:media="media"
@@ -561,7 +710,7 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                         />
                     </div>
 
-                    <div class="hidden lg:block lg:w-1/3 overflow-hidden">
+                    <div class="hidden overflow-hidden lg:block lg:w-1/3">
                         <PostEditorSidebar
                             ref="editorSidebarRef"
                             v-model:active-tab="activeTab"
@@ -579,11 +728,15 @@ useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
                             :tiktok-creator-infos="tiktokCreatorInfos"
                             :is-read-only="isReadOnly"
                             :auth-user-id="authUserId"
-                            :initial-highlight-comment-id="initialHighlightCommentId"
+                            :initial-highlight-comment-id="
+                                initialHighlightCommentId
+                            "
                             @toggle-platform="togglePlatform"
                             @toggle-label="toggleLabel"
                             @update:platform-meta="updatePlatformMeta"
-                            @update:platform-content-type="updatePlatformContentType"
+                            @update:platform-content-type="
+                                updatePlatformContentType
+                            "
                         />
                     </div>
                 </div>

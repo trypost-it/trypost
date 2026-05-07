@@ -4,7 +4,13 @@ import { computed, ref } from 'vue';
 
 import GalleryBrowser from '@/components/assets/GalleryBrowser.vue';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 interface PickedMedia {
     id: string;
@@ -49,9 +55,13 @@ defineExpose({ open, close });
 
 <template>
     <Dialog v-model:open="isOpen">
-        <DialogContent class="flex h-[85vh] max-w-5xl flex-col gap-0 p-0 sm:max-w-5xl">
+        <DialogContent
+            class="flex h-[85vh] max-w-5xl flex-col gap-0 p-0 sm:max-w-5xl"
+        >
             <DialogHeader class="border-b px-6 py-4">
-                <DialogTitle>{{ trans('posts.edit.media_picker.title') }}</DialogTitle>
+                <DialogTitle>{{
+                    trans('posts.edit.media_picker.title')
+                }}</DialogTitle>
             </DialogHeader>
 
             <div class="flex-1 overflow-y-auto px-6 py-4">
@@ -59,9 +69,17 @@ defineExpose({ open, close });
             </div>
 
             <DialogFooter class="border-t px-6 py-3">
-                <Button type="button" :disabled="selectedCount === 0" @click="confirmSelection">
+                <Button
+                    type="button"
+                    :disabled="selectedCount === 0"
+                    @click="confirmSelection"
+                >
                     <template v-if="selectedCount > 0">
-                        {{ trans('posts.edit.media_picker.add_count', { count: String(selectedCount) }) }}
+                        {{
+                            trans('posts.edit.media_picker.add_count', {
+                                count: String(selectedCount),
+                            })
+                        }}
                     </template>
                     <template v-else>
                         {{ trans('posts.edit.media_picker.add') }}

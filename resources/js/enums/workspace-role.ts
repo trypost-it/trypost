@@ -5,4 +5,5 @@ export const WorkspaceRole = {
     Viewer: 'viewer',
 } as const;
 
-export type WorkspaceRoleValue = (typeof WorkspaceRole)[keyof typeof WorkspaceRole];
+export type WorkspaceRoleValue =
+    (typeof WorkspaceRole)[keyof typeof WorkspaceRole];

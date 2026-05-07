@@ -11,7 +11,11 @@ import {
     CommandItem,
     CommandList,
 } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -87,7 +91,10 @@ const select = (font: string) => {
             </Button>
         </PopoverTrigger>
 
-        <PopoverContent class="w-[--reka-popover-trigger-width] p-0" align="start">
+        <PopoverContent
+            class="w-[--reka-popover-trigger-width] p-0"
+            align="start"
+        >
             <Command>
                 <CommandInput placeholder="Search font…" />
                 <CommandList>
@@ -99,9 +106,19 @@ const select = (font: string) => {
                             :value="font"
                             @select="select(font)"
                         >
-                            <span :style="{ fontFamily: `'${font}', sans-serif` }">{{ font }}</span>
+                            <span
+                                :style="{ fontFamily: `'${font}', sans-serif` }"
+                                >{{ font }}</span
+                            >
                             <IconCheck
-                                :class="cn('ml-auto size-4', value === font ? 'opacity-100' : 'opacity-0')"
+                                :class="
+                                    cn(
+                                        'ml-auto size-4',
+                                        value === font
+                                            ? 'opacity-100'
+                                            : 'opacity-0',
+                                    )
+                                "
                             />
                         </CommandItem>
                     </CommandGroup>

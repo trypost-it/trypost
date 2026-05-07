@@ -75,7 +75,9 @@ const languageLabel = computed(() => {
             <input type="hidden" name="name" :value="workspace.name" />
 
             <div class="grid gap-2">
-                <Label for="brand_website">{{ $t('settings.brand.website') }}</Label>
+                <Label for="brand_website">{{
+                    $t('settings.brand.website')
+                }}</Label>
                 <Input
                     id="brand_website"
                     name="brand_website"
@@ -87,12 +89,16 @@ const languageLabel = computed(() => {
             </div>
 
             <div class="grid gap-2">
-                <Label for="brand_description">{{ $t('settings.brand.brand_description') }}</Label>
+                <Label for="brand_description">{{
+                    $t('settings.brand.brand_description')
+                }}</Label>
                 <Textarea
                     id="brand_description"
                     name="brand_description"
                     :default-value="workspace.brand_description ?? ''"
-                    :placeholder="$t('settings.brand.brand_description_placeholder')"
+                    :placeholder="
+                        $t('settings.brand.brand_description_placeholder')
+                    "
                     rows="3"
                 />
                 <InputError :message="errors.brand_description" />
@@ -100,21 +106,39 @@ const languageLabel = computed(() => {
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <div class="grid gap-2">
-                    <Label for="brand_tone">{{ $t('settings.brand.tone') }}</Label>
+                    <Label for="brand_tone">{{
+                        $t('settings.brand.tone')
+                    }}</Label>
                     <Select v-model="brandTone" name="brand_tone">
                         <SelectTrigger id="brand_tone" class="w-full">
-                            <SelectValue :placeholder="$t('settings.brand.tone')">
+                            <SelectValue
+                                :placeholder="$t('settings.brand.tone')"
+                            >
                                 {{ toneLabel }}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="professional">{{ $t('settings.brand.tone_professional') }}</SelectItem>
-                            <SelectItem value="casual">{{ $t('settings.brand.tone_casual') }}</SelectItem>
-                            <SelectItem value="friendly">{{ $t('settings.brand.tone_friendly') }}</SelectItem>
-                            <SelectItem value="bold">{{ $t('settings.brand.tone_bold') }}</SelectItem>
-                            <SelectItem value="inspirational">{{ $t('settings.brand.tone_inspirational') }}</SelectItem>
-                            <SelectItem value="humorous">{{ $t('settings.brand.tone_humorous') }}</SelectItem>
-                            <SelectItem value="educational">{{ $t('settings.brand.tone_educational') }}</SelectItem>
+                            <SelectItem value="professional">{{
+                                $t('settings.brand.tone_professional')
+                            }}</SelectItem>
+                            <SelectItem value="casual">{{
+                                $t('settings.brand.tone_casual')
+                            }}</SelectItem>
+                            <SelectItem value="friendly">{{
+                                $t('settings.brand.tone_friendly')
+                            }}</SelectItem>
+                            <SelectItem value="bold">{{
+                                $t('settings.brand.tone_bold')
+                            }}</SelectItem>
+                            <SelectItem value="inspirational">{{
+                                $t('settings.brand.tone_inspirational')
+                            }}</SelectItem>
+                            <SelectItem value="humorous">{{
+                                $t('settings.brand.tone_humorous')
+                            }}</SelectItem>
+                            <SelectItem value="educational">{{
+                                $t('settings.brand.tone_educational')
+                            }}</SelectItem>
                         </SelectContent>
                     </Select>
                     <input type="hidden" name="brand_tone" :value="brandTone" />
@@ -122,20 +146,32 @@ const languageLabel = computed(() => {
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="content_language">{{ $t('settings.brand.content_language') }}</Label>
+                    <Label for="content_language">{{
+                        $t('settings.brand.content_language')
+                    }}</Label>
                     <Select v-model="contentLanguage" name="content_language">
                         <SelectTrigger id="content_language" class="w-full">
-                            <SelectValue :placeholder="$t('settings.brand.content_language')">
+                            <SelectValue
+                                :placeholder="
+                                    $t('settings.brand.content_language')
+                                "
+                            >
                                 {{ languageLabel }}
                             </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="en">English</SelectItem>
-                            <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
+                            <SelectItem value="pt-BR"
+                                >Português (Brasil)</SelectItem
+                            >
                             <SelectItem value="es">Español</SelectItem>
                         </SelectContent>
                     </Select>
-                    <input type="hidden" name="content_language" :value="contentLanguage" />
+                    <input
+                        type="hidden"
+                        name="content_language"
+                        :value="contentLanguage"
+                    />
                     <InputError :message="errors.content_language" />
                 </div>
             </div>
@@ -146,17 +182,26 @@ const languageLabel = computed(() => {
 
             <div class="grid gap-4 sm:grid-cols-3">
                 <div class="grid gap-2">
-                    <Label for="brand_color">{{ $t('settings.brand.brand_color') }}</Label>
+                    <Label for="brand_color">{{
+                        $t('settings.brand.brand_color')
+                    }}</Label>
                     <HexColorInput v-model="brandColor" name="brand_color" />
                     <InputError :message="errors.brand_color" />
                 </div>
                 <div class="grid gap-2">
-                    <Label for="background_color">{{ $t('settings.brand.background_color') }}</Label>
-                    <HexColorInput v-model="backgroundColor" name="background_color" />
+                    <Label for="background_color">{{
+                        $t('settings.brand.background_color')
+                    }}</Label>
+                    <HexColorInput
+                        v-model="backgroundColor"
+                        name="background_color"
+                    />
                     <InputError :message="errors.background_color" />
                 </div>
                 <div class="grid gap-2">
-                    <Label for="text_color">{{ $t('settings.brand.text_color') }}</Label>
+                    <Label for="text_color">{{
+                        $t('settings.brand.text_color')
+                    }}</Label>
                     <HexColorInput v-model="textColor" name="text_color" />
                     <InputError :message="errors.text_color" />
                 </div>
@@ -164,12 +209,18 @@ const languageLabel = computed(() => {
 
             <div class="grid gap-2">
                 <Label for="brand_font">{{ $t('settings.brand.font') }}</Label>
-                <FontPicker v-model="brandFont" name="brand_font" :fonts="availableFonts" />
+                <FontPicker
+                    v-model="brandFont"
+                    name="brand_font"
+                    :fonts="availableFonts"
+                />
                 <InputError :message="errors.brand_font" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="brand_voice_notes">{{ $t('settings.brand.voice_notes') }}</Label>
+                <Label for="brand_voice_notes">{{
+                    $t('settings.brand.voice_notes')
+                }}</Label>
                 <Textarea
                     id="brand_voice_notes"
                     name="brand_voice_notes"
@@ -180,7 +231,9 @@ const languageLabel = computed(() => {
                 <InputError :message="errors.brand_voice_notes" />
             </div>
 
-            <Button :disabled="processing">{{ $t('settings.workspace.save') }}</Button>
+            <Button :disabled="processing">{{
+                $t('settings.workspace.save')
+            }}</Button>
         </Form>
     </div>
 </template>

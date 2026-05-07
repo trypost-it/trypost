@@ -27,12 +27,14 @@ const fetchMetrics = async () => {
     metrics.value = [];
 
     try {
-        const response = await http.get(showAnalytics.url(props.accountId, {
-            query: {
-                since: dayjs(props.dateRange.start).format('YYYY-MM-DD'),
-                until: dayjs(props.dateRange.end).format('YYYY-MM-DD'),
-            },
-        }));
+        const response = await http.get(
+            showAnalytics.url(props.accountId, {
+                query: {
+                    since: dayjs(props.dateRange.start).format('YYYY-MM-DD'),
+                    until: dayjs(props.dateRange.end).format('YYYY-MM-DD'),
+                },
+            }),
+        );
         metrics.value = response?.metrics || [];
     } catch {
         metrics.value = [];
@@ -41,13 +43,20 @@ const fetchMetrics = async () => {
     }
 };
 
-watch(() => props.accountId, () => {
-    fetchMetrics();
-});
+watch(
+    () => props.accountId,
+    () => {
+        fetchMetrics();
+    },
+);
 
-watch(() => props.dateRange, () => {
-    fetchMetrics();
-}, { deep: true });
+watch(
+    () => props.dateRange,
+    () => {
+        fetchMetrics();
+    },
+    { deep: true },
+);
 
 onMounted(() => {
     fetchMetrics();
@@ -57,5 +66,9 @@ defineExpose({ supportsDateRange: true });
 </script>
 
 <template>
-    <MetricsGrid :metrics="metrics" :loading="isLoading" :empty-label="trans('analytics.no_data')" />
+    <MetricsGrid
+        :metrics="metrics"
+        :loading="isLoading"
+        :empty-label="trans('analytics.no_data')"
+    />
 </template>

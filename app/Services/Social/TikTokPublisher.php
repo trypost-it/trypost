@@ -25,7 +25,7 @@ class TikTokPublisher
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.tiktok.api');
+        $this->baseUrl = config('postpro.platforms.tiktok.api');
     }
 
     public function publish(PostPlatform $postPlatform): array
@@ -297,7 +297,7 @@ class TikTokPublisher
             throw new TokenExpiredException('No refresh token available for TikTok account');
         }
 
-        $response = Http::asForm()->post(config('trypost.platforms.tiktok.api').'/oauth/token/', [
+        $response = Http::asForm()->post(config('postpro.platforms.tiktok.api').'/oauth/token/', [
             'client_key' => config('services.tiktok.client_id'),
             'client_secret' => config('services.tiktok.client_secret'),
             'grant_type' => 'refresh_token',
@@ -324,3 +324,4 @@ class TikTokPublisher
         throw TikTokPublishException::fromApiResponse($response);
     }
 }
+

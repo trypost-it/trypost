@@ -40,8 +40,12 @@ type Props = {
 defineProps<Props>();
 
 const page = usePage();
-const languages = computed<Language[]>(() => page.props.languages as Language[]);
-const currentLanguage = computed(() => languages.value?.find((l: Language) => l.code === page.props.locale));
+const languages = computed<Language[]>(
+    () => page.props.languages as Language[],
+);
+const currentLanguage = computed(() =>
+    languages.value?.find((l: Language) => l.code === page.props.locale),
+);
 
 const switchLanguage = (code: string) => {
     const previousCode = currentLanguage.value?.code || 'en';
@@ -49,14 +53,18 @@ const switchLanguage = (code: string) => {
     loadLanguageAsync(code);
     dayjs.locale(code.toLowerCase());
 
-    router.put(updateLanguage.url(), { locale: code }, {
-        preserveScroll: true,
-        preserveState: false,
-        onError: () => {
-            loadLanguageAsync(previousCode);
-            dayjs.locale(previousCode.toLowerCase());
+    router.put(
+        updateLanguage.url(),
+        { locale: code },
+        {
+            preserveScroll: true,
+            preserveState: false,
+            onError: () => {
+                loadLanguageAsync(previousCode);
+                dayjs.locale(previousCode.toLowerCase());
+            },
         },
-    });
+    );
 };
 
 const handleLogout = () => {
@@ -66,7 +74,9 @@ const handleLogout = () => {
 </script>
 
 <template>
-    <DropdownMenuLabel class="p-0 text-sm font-normal normal-case tracking-normal text-foreground">
+    <DropdownMenuLabel
+        class="p-0 text-sm font-normal tracking-normal text-foreground normal-case"
+    >
         <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
             <UserInfo
                 :user="user"
@@ -89,14 +99,22 @@ const handleLogout = () => {
         <DropdownMenuSub v-if="languages && languages.length > 1">
             <DropdownMenuSubTrigger>
                 <IconLanguage />
-                {{ $t('sidebar.language', { name: currentLanguage?.name ?? 'English' }) }}
+                {{
+                    $t('sidebar.language', {
+                        name: currentLanguage?.name ?? 'English',
+                    })
+                }}
             </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
                 <DropdownMenuSubContent>
                     <DropdownMenuItem
                         v-for="language in languages"
                         :key="language.code"
-                        :class="language.code === currentLanguage?.code ? 'bg-accent' : ''"
+                        :class="
+                            language.code === currentLanguage?.code
+                                ? 'bg-accent'
+                                : ''
+                        "
                         @click="switchLanguage(language.code)"
                     >
                         {{ language.name }}
@@ -110,7 +128,7 @@ const handleLogout = () => {
         <DropdownMenuItem :as-child="true">
             <a
                 class="block w-full cursor-pointer"
-                href="https://github.com/trypost-it/trypost/discussions"
+                href="https://github.com/postpro-it/postpro/discussions"
                 target="_blank"
                 rel="noopener noreferrer"
             >
@@ -121,7 +139,7 @@ const handleLogout = () => {
         <DropdownMenuItem :as-child="true">
             <a
                 class="block w-full cursor-pointer"
-                href="https://trypost.it/docs"
+                href="https://postpro.it/docs"
                 target="_blank"
                 rel="noopener noreferrer"
             >

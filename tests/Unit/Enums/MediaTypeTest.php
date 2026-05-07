@@ -20,15 +20,15 @@ test('media type has allowed mime types', function () {
 });
 
 test('media type max size in mb is read from config', function () {
-    config(['trypost.media.max_size_mb.image' => 10]);
-    config(['trypost.media.max_size_mb.video' => 1024]);
+    config(['postpro.media.max_size_mb.image' => 10]);
+    config(['postpro.media.max_size_mb.video' => 1024]);
 
     expect(Type::Image->maxSizeInMb())->toBe(10);
     expect(Type::Video->maxSizeInMb())->toBe(1024);
 });
 
 test('media type exposes derived size units', function () {
-    config(['trypost.media.max_size_mb.video' => 1024]);
+    config(['postpro.media.max_size_mb.video' => 1024]);
 
     expect(Type::Video->maxSizeInKb())->toBe(1024 * 1024);
     expect(Type::Video->maxSizeInBytes())->toBe(1024 * 1024 * 1024);
@@ -40,3 +40,4 @@ test('media type resolves from mime', function () {
     expect(Type::fromMime('application/pdf'))->toBeNull();
     expect(Type::fromMime('not-a-mime'))->toBeNull();
 });
+

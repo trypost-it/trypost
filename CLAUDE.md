@@ -272,8 +272,8 @@ Vue components must have a single root element.
 
 ## Dusk (Browser Tests)
 
-- In Dusk tests, ALWAYS use named routes via `route()` helper. NEVER hardcode URLs like `'https://trypost.test/login'`.
-    - Example: `$browser->visit(route('login'))` instead of `$browser->visit('https://trypost.test/login')`.
+- In Dusk tests, ALWAYS use named routes via `route()` helper. NEVER hardcode URLs like `'https://postpro.test/login'`.
+    - Example: `$browser->visit(route('login'))` instead of `$browser->visit('https://postpro.test/login')`.
 - ALWAYS use `dusk` selectors (`@selector-name`) for interacting with and asserting elements. NEVER use CSS classes (`.text-red-600`), tag names, or text strings.
     - Add `dusk="my-element"` attributes to Vue components and use `$browser->click('@my-element')`, `$browser->waitFor('@my-element')`, etc.
     - Example: `$browser->waitFor('@input-error')` instead of `$browser->waitFor('.text-red-600')`.
@@ -295,12 +295,13 @@ Vue components must have a single root element.
 - When returning JSON responses with explicit status codes, always use `Symfony\Component\HttpFoundation\Response` constants instead of magic numbers.
     - Example: `Response::HTTP_CREATED` instead of `201`, `Response::HTTP_NO_CONTENT` instead of `204`.
 
-## TryPost.it Documentation
+## postpro.it Documentation
 
-- All our documentation to final user it's under https://docs.trypost.it
+- All our documentation to final user it's under https://docs.postpro.it
 
 ## Git
 
 - NEVER add `Co-Authored-By` lines to commit messages.
 - NEVER commit, push, or open PRs unless explicitly asked by the user.
 - Always create a new branch for feature work before making changes.
+

@@ -113,8 +113,9 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'no-reply@mail.trypost.it'),
-        'name' => env('MAIL_FROM_NAME', 'TryPost'),
+        'address' => env('MAIL_FROM_ADDRESS', 'no-reply@mail.postpro.it'),
+        'name' => env('MAIL_FROM_NAME', 'postpro'),
     ],
 
 ];
+

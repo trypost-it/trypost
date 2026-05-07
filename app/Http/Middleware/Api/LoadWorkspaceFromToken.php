@@ -31,7 +31,7 @@ class LoadWorkspaceFromToken
             return response()->json(['message' => 'No workspace selected.'], Response::HTTP_UNAUTHORIZED);
         }
 
-        if (! config('trypost.self_hosted') && ! $workspace->account?->hasActiveSubscription()) {
+        if (! config('postpro.self_hosted') && ! $workspace->account?->hasActiveSubscription()) {
             return response()->json(['message' => 'Active subscription required.'], Response::HTTP_PAYMENT_REQUIRED);
         }
 
@@ -43,3 +43,4 @@ class LoadWorkspaceFromToken
         return $next($request);
     }
 }
+

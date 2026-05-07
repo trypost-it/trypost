@@ -99,7 +99,7 @@ test('swapPlan denies when members + pending invites exceed target plan limit', 
 });
 
 test('useAi allows when account has credits remaining', function () {
-    config()->set('trypost.self_hosted', false);
+    config()->set('postpro.self_hosted', false);
 
     $plan = Plan::where('slug', 'starter')->first();
     $this->account->update(['plan_id' => $plan->id]);
@@ -110,7 +110,7 @@ test('useAi allows when account has credits remaining', function () {
 });
 
 test('useAi denies when monthly credits are exhausted', function () {
-    config()->set('trypost.self_hosted', false);
+    config()->set('postpro.self_hosted', false);
 
     $plan = Plan::where('slug', 'starter')->first();
     $this->account->update(['plan_id' => $plan->id]);
@@ -133,7 +133,7 @@ test('useAi denies when monthly credits are exhausted', function () {
 });
 
 test('useAi always allows when self-hosted', function () {
-    config()->set('trypost.self_hosted', true);
+    config()->set('postpro.self_hosted', true);
 
     $response = $this->policy->useAi($this->owner, $this->account);
 
@@ -153,3 +153,4 @@ test('swapPlan allows when usage equals target plan limit (boundary)', function 
 
     expect($response->allowed())->toBeTrue();
 });
+

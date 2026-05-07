@@ -24,7 +24,7 @@ class EnsureAccountReady
 
         $account = $user->account;
 
-        if (! config('trypost.self_hosted') && (! $account || ! $account->subscribed(Account::SUBSCRIPTION_NAME))) {
+        if (! config('postpro.self_hosted') && (! $account || ! $account->subscribed(Account::SUBSCRIPTION_NAME))) {
             return redirect()->route('app.subscribe');
         }
 
@@ -35,3 +35,4 @@ class EnsureAccountReady
         return $next($request);
     }
 }
+

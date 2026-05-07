@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { router, usePage } from '@inertiajs/vue3';
 import { useEcho } from '@laravel/echo-vue';
-import { IconArchive, IconBell, IconCheck, IconChecks, IconInbox, IconX } from '@tabler/icons-vue';
+import {
+    IconArchive,
+    IconBell,
+    IconCheck,
+    IconChecks,
+    IconInbox,
+    IconX,
+} from '@tabler/icons-vue';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +19,7 @@ import {
 } from '@/components/ui/tooltip';
 import dayjs from '@/dayjs';
 import { accounts } from '@/routes/app';
-import { index, read, readAll, archiveAll } from '@/routes/app/notifications';
+import { archiveAll, index, read, readAll } from '@/routes/app/notifications';
 import { edit as editPost } from '@/routes/app/posts';
 import type { SharedData } from '@/types';
 
@@ -35,7 +42,9 @@ const panel = ref<HTMLElement | null>(null);
 
 const page = usePage<SharedData>();
 const currentUserId = computed(() => page.props.auth?.user?.id ?? null);
-const currentWorkspaceId = computed(() => page.props.auth?.currentWorkspace?.id ?? null);
+const currentWorkspaceId = computed(
+    () => page.props.auth?.currentWorkspace?.id ?? null,
+);
 
 const channelName = computed(() =>
     currentUserId.value && currentWorkspaceId.value
@@ -44,29 +53,39 @@ const channelName = computed(() =>
 );
 
 if (channelName.value) {
-    useEcho(channelName.value, '.NotificationCreated', (e: { notification: Notification }) => {
-        const exists = notifications.value.some((n) => n.id === e.notification.id);
-        if (exists) return;
+    useEcho(
+        channelName.value,
+        '.NotificationCreated',
+        (e: { notification: Notification }) => {
+            const exists = notifications.value.some(
+                (n) => n.id === e.notification.id,
+            );
+            if (exists) return;
 
-        notifications.value = [e.notification, ...notifications.value];
-        if (! e.notification.read_at) {
-            unreadCount.value += 1;
-        }
-    });
+            notifications.value = [e.notification, ...notifications.value];
+            if (!e.notification.read_at) {
+                unreadCount.value += 1;
+            }
+        },
+    );
 }
 
 const csrfToken = () =>
-    document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+    document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+        ?.content ?? '';
 
 const fetchNotifications = async () => {
     loading.value = true;
     try {
         const response = await fetch(index.url(), {
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
             credentials: 'same-origin',
         });
 
-        if (! response.ok) return;
+        if (!response.ok) return;
 
         const data = await response.json();
         notifications.value = data.notifications;
@@ -79,7 +98,11 @@ const fetchNotifications = async () => {
 const handleMarkAsRead = async (notification: Notification) => {
     await fetch(read.url(notification.id), {
         method: 'PUT',
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken() },
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken(),
+        },
         credentials: 'same-origin',
     });
 
@@ -90,7 +113,11 @@ const handleMarkAsRead = async (notification: Notification) => {
 const handleMarkAllAsRead = async () => {
     await fetch(readAll.url(), {
         method: 'POST',
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken() },
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken(),
+        },
         credentials: 'same-origin',
     });
 
@@ -104,7 +131,11 @@ const handleMarkAllAsRead = async () => {
 const handleArchiveAll = async () => {
     await fetch(archiveAll.url(), {
         method: 'POST',
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken() },
+        headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken(),
+        },
         credentials: 'same-origin',
     });
 
@@ -119,8 +150,14 @@ const handleNotificationClick = (notification: Notification) => {
 
     close();
 
-    if (notification.type === 'mentioned_in_comment' && notification.data?.post_id) {
-        const url = new URL(editPost.url(notification.data.post_id), window.location.origin);
+    if (
+        notification.type === 'mentioned_in_comment' &&
+        notification.data?.post_id
+    ) {
+        const url = new URL(
+            editPost.url(notification.data.post_id),
+            window.location.origin,
+        );
         url.searchParams.set('tab', 'comments');
         if (notification.data?.comment_id) {
             url.searchParams.set('comment', notification.data.comment_id);
@@ -131,7 +168,10 @@ const handleNotificationClick = (notification: Notification) => {
 
     if (notification.data?.post_id) {
         router.visit(editPost.url(notification.data.post_id));
-    } else if (notification.data?.social_account_id || notification.data?.workspace_id) {
+    } else if (
+        notification.data?.social_account_id ||
+        notification.data?.workspace_id
+    ) {
         router.visit(accounts.url());
     }
 };
@@ -192,11 +232,16 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <Button variant="ghost" size="icon" class="relative size-8 shrink-0" @click.stop="toggle">
+    <Button
+        variant="ghost"
+        size="icon"
+        class="relative size-8 shrink-0"
+        @click.stop="toggle"
+    >
         <IconBell class="size-4" />
         <span
             v-if="unreadCount > 0"
-            class="absolute -right-1 -top-1 inline-flex size-4 items-center justify-center rounded-full border-2 border-foreground bg-rose-100 text-[9px] font-bold text-rose-700 shadow-2xs"
+            class="absolute -top-1 -right-1 inline-flex size-4 items-center justify-center rounded-full border-2 border-foreground bg-rose-100 text-[9px] font-bold text-rose-700 shadow-2xs"
         >
             {{ unreadCount > 9 ? '9+' : unreadCount }}
         </span>
@@ -217,8 +262,12 @@ onBeforeUnmount(() => {
                 class="fixed bottom-2 left-[17rem] z-50 flex h-[32rem] w-[22rem] flex-col overflow-hidden rounded-xl border-2 border-foreground bg-card shadow-md"
             >
                 <!-- Header -->
-                <div class="flex items-center justify-between gap-2 border-b-2 border-foreground/10 px-4 py-3">
-                    <h3 class="text-[11px] font-black uppercase tracking-widest text-foreground/60">
+                <div
+                    class="flex items-center justify-between gap-2 border-b-2 border-foreground/10 px-4 py-3"
+                >
+                    <h3
+                        class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
+                    >
                         {{ $t('sidebar.notifications') }}
                     </h3>
                     <div class="flex items-center gap-1.5">
@@ -229,10 +278,15 @@ onBeforeUnmount(() => {
                                     class="inline-flex size-7 cursor-pointer items-center justify-center rounded-md border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:bg-violet-100"
                                     @click="handleMarkAllAsRead"
                                 >
-                                    <IconChecks class="size-3.5" stroke-width="2.5" />
+                                    <IconChecks
+                                        class="size-3.5"
+                                        stroke-width="2.5"
+                                    />
                                 </button>
                             </TooltipTrigger>
-                            <TooltipContent>{{ $t('sidebar.mark_all_read') }}</TooltipContent>
+                            <TooltipContent>{{
+                                $t('sidebar.mark_all_read')
+                            }}</TooltipContent>
                         </Tooltip>
                         <Tooltip v-if="notifications.length > 0">
                             <TooltipTrigger as-child>
@@ -241,10 +295,15 @@ onBeforeUnmount(() => {
                                     class="inline-flex size-7 cursor-pointer items-center justify-center rounded-md border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:bg-violet-100"
                                     @click="handleArchiveAll"
                                 >
-                                    <IconArchive class="size-3.5" stroke-width="2.5" />
+                                    <IconArchive
+                                        class="size-3.5"
+                                        stroke-width="2.5"
+                                    />
                                 </button>
                             </TooltipTrigger>
-                            <TooltipContent>{{ $t('sidebar.archive_all') }}</TooltipContent>
+                            <TooltipContent>{{
+                                $t('sidebar.archive_all')
+                            }}</TooltipContent>
                         </Tooltip>
                         <button
                             type="button"
@@ -258,23 +317,42 @@ onBeforeUnmount(() => {
 
                 <!-- Notification list -->
                 <div class="flex-1 overflow-y-auto">
-                    <div v-if="notifications.length > 0" class="divide-y-2 divide-dashed divide-foreground/15">
+                    <div
+                        v-if="notifications.length > 0"
+                        class="divide-y-2 divide-dashed divide-foreground/15"
+                    >
                         <button
                             v-for="notification in notifications"
                             :key="notification.id"
                             type="button"
                             class="flex w-full cursor-pointer items-start gap-2.5 px-3 py-3 text-left transition-colors hover:bg-foreground/5"
-                            :class="!notification.read_at ? 'bg-violet-100/40' : ''"
+                            :class="
+                                !notification.read_at ? 'bg-violet-100/40' : ''
+                            "
                             @click="handleNotificationClick(notification)"
                         >
                             <span
                                 class="mt-1.5 inline-block size-2 shrink-0 rounded-full"
-                                :class="!notification.read_at ? 'bg-violet-500 ring-2 ring-violet-200' : 'bg-transparent'"
+                                :class="
+                                    !notification.read_at
+                                        ? 'bg-violet-500 ring-2 ring-violet-200'
+                                        : 'bg-transparent'
+                                "
                             />
                             <div class="min-w-0 flex-1">
-                                <p class="truncate text-sm font-bold text-foreground">{{ notification.title }}</p>
-                                <p class="truncate text-xs text-foreground/70">{{ notification.body }}</p>
-                                <p class="mt-0.5 text-[11px] font-medium text-foreground/50">{{ formatTime(notification.created_at) }}</p>
+                                <p
+                                    class="truncate text-sm font-bold text-foreground"
+                                >
+                                    {{ notification.title }}
+                                </p>
+                                <p class="truncate text-xs text-foreground/70">
+                                    {{ notification.body }}
+                                </p>
+                                <p
+                                    class="mt-0.5 text-[11px] font-medium text-foreground/50"
+                                >
+                                    {{ formatTime(notification.created_at) }}
+                                </p>
                             </div>
                             <div class="shrink-0" @click.stop>
                                 <Tooltip v-if="!notification.read_at">
@@ -282,23 +360,41 @@ onBeforeUnmount(() => {
                                         <button
                                             type="button"
                                             class="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-foreground/60 transition-colors hover:bg-foreground/10 hover:text-foreground"
-                                            @click="handleMarkAsRead(notification)"
+                                            @click="
+                                                handleMarkAsRead(notification)
+                                            "
                                         >
-                                            <IconCheck class="size-3.5" stroke-width="2.5" />
+                                            <IconCheck
+                                                class="size-3.5"
+                                                stroke-width="2.5"
+                                            />
                                         </button>
                                     </TooltipTrigger>
-                                    <TooltipContent>{{ $t('sidebar.mark_as_read') }}</TooltipContent>
+                                    <TooltipContent>{{
+                                        $t('sidebar.mark_as_read')
+                                    }}</TooltipContent>
                                 </Tooltip>
                             </div>
                         </button>
                     </div>
 
                     <!-- Empty state -->
-                    <div v-else-if="!loading" class="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center">
-                        <div class="inline-flex size-12 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
-                            <IconInbox class="size-6 text-foreground" stroke-width="2" />
+                    <div
+                        v-else-if="!loading"
+                        class="flex flex-col items-center justify-center gap-3 px-6 py-12 text-center"
+                    >
+                        <div
+                            class="inline-flex size-12 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs"
+                        >
+                            <IconInbox
+                                class="size-6 text-foreground"
+                                stroke-width="2"
+                            />
                         </div>
-                        <p class="text-base font-bold text-foreground" style="font-family: var(--font-display)">
+                        <p
+                            class="text-base font-bold text-foreground"
+                            style="font-family: var(--font-display)"
+                        >
                             {{ $t('sidebar.no_notifications') }}
                         </p>
                     </div>

@@ -12,25 +12,35 @@ const currentYear = dayjs().year();
     <div class="min-h-svh bg-background">
         <!-- Header -->
         <header class="border-b">
-            <div class="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
+            <div
+                class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4"
+            >
                 <div class="flex items-center gap-2">
-                    <img src="/images/trypost/logo-light.png" alt="TryPost" class="dark:hidden h-7 w-auto" />
-                    <img src="/images/trypost/logo-dark.png" alt="TryPost" class="hidden dark:block h-7 w-auto" />
+                    <img
+                        src="/images/postpro/logo-light.png"
+                        alt="postpro"
+                        class="h-7 w-auto dark:hidden"
+                    />
+                    <img
+                        src="/images/postpro/logo-dark.png"
+                        alt="postpro"
+                        class="hidden h-7 w-auto dark:block"
+                    />
                 </div>
             </div>
         </header>
 
         <!-- Main Content -->
         <main class="mx-auto max-w-5xl px-6 py-12">
-            <h1 v-if="title" class="text-3xl font-bold mb-8">{{ title }}</h1>
+            <h1 v-if="title" class="mb-8 text-3xl font-bold">{{ title }}</h1>
             <slot />
         </main>
 
         <!-- Footer -->
-        <footer class="border-t mt-auto">
+        <footer class="mt-auto border-t">
             <div class="mx-auto max-w-5xl px-6 py-8">
-                <p class="text-sm text-muted-foreground text-center">
-                    &copy; {{ currentYear }} TryPost. All rights reserved.
+                <p class="text-center text-sm text-muted-foreground">
+                    &copy; {{ currentYear }} postpro. All rights reserved.
                 </p>
             </div>
         </footer>

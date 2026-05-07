@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 test('login page loads when google auth is disabled', function () {
-    config(['trypost.google_auth_enabled' => false]);
+    config(['postpro.google_auth_enabled' => false]);
 
     $response = $this->get(route('login'));
 
@@ -11,7 +11,7 @@ test('login page loads when google auth is disabled', function () {
 });
 
 test('login page loads when google auth is enabled', function () {
-    config(['trypost.google_auth_enabled' => true]);
+    config(['postpro.google_auth_enabled' => true]);
 
     $response = $this->get(route('login'));
 
@@ -19,7 +19,7 @@ test('login page loads when google auth is enabled', function () {
 });
 
 test('register page loads when google auth is disabled', function () {
-    config(['trypost.google_auth_enabled' => false]);
+    config(['postpro.google_auth_enabled' => false]);
 
     $response = $this->get(route('register'));
 
@@ -27,7 +27,7 @@ test('register page loads when google auth is disabled', function () {
 });
 
 test('register page loads when google auth is enabled', function () {
-    config(['trypost.google_auth_enabled' => true]);
+    config(['postpro.google_auth_enabled' => true]);
 
     $response = $this->get(route('register'));
 
@@ -35,7 +35,7 @@ test('register page loads when google auth is enabled', function () {
 });
 
 test('login page shares google auth enabled prop as false when disabled', function () {
-    config(['trypost.google_auth_enabled' => false]);
+    config(['postpro.google_auth_enabled' => false]);
 
     $response = $this->get(route('login'));
 
@@ -46,7 +46,7 @@ test('login page shares google auth enabled prop as false when disabled', functi
 });
 
 test('login page shares google auth enabled prop as true when enabled', function () {
-    config(['trypost.google_auth_enabled' => true]);
+    config(['postpro.google_auth_enabled' => true]);
 
     $response = $this->get(route('login'));
 
@@ -69,3 +69,4 @@ test('google auth callback route exists', function () {
     // Should redirect to login on failure (no OAuth code), not 404
     $response->assertRedirect(route('login'));
 });
+

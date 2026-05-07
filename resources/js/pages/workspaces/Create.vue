@@ -19,7 +19,10 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import { autofill as autofillBrand, store as storeWorkspace } from '@/routes/app/workspaces';
+import {
+    autofill as autofillBrand,
+    store as storeWorkspace,
+} from '@/routes/app/workspaces';
 
 const form = useForm({
     name: '',
@@ -71,7 +74,7 @@ const submit = () => {
 const runAutofill = async () => {
     const url = form.brand_website.trim();
 
-    if (! url) {
+    if (!url) {
         toast.error(trans('workspaces.create.autofill_missing_url'));
         return;
     }
@@ -84,12 +87,16 @@ const runAutofill = async () => {
         const data = await autofillHttp.post(autofillBrand.url());
 
         if (data?.name) form.name = data.name;
-        if (data?.brand_description) form.brand_description = data.brand_description;
-        if (data?.content_language) form.content_language = data.content_language;
+        if (data?.brand_description)
+            form.brand_description = data.brand_description;
+        if (data?.content_language)
+            form.content_language = data.content_language;
         if (data?.brand_tone) form.brand_tone = data.brand_tone;
-        if (data?.brand_voice_notes) form.brand_voice_notes = data.brand_voice_notes;
+        if (data?.brand_voice_notes)
+            form.brand_voice_notes = data.brand_voice_notes;
         if (data?.brand_color) form.brand_color = data.brand_color;
-        if (data?.background_color) form.background_color = data.background_color;
+        if (data?.background_color)
+            form.background_color = data.background_color;
         if (data?.text_color) form.text_color = data.text_color;
 
         if (data?.logo_url) {
@@ -99,7 +106,9 @@ const runAutofill = async () => {
 
         toast.success(trans('workspaces.create.autofill_success'));
     } catch (error) {
-        const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        const message = (
+            error as { response?: { data?: { message?: string } } }
+        )?.response?.data?.message;
         toast.error(message ?? trans('workspaces.create.autofill_error'));
     } finally {
         isAutofilling.value = false;
@@ -115,127 +124,181 @@ const runAutofill = async () => {
         :description="$t('workspaces.create.description')"
     >
         <form class="flex flex-col gap-5" @submit.prevent="submit">
-                <div class="grid gap-2">
-                    <Label for="brand_website">{{ $t('workspaces.create.website') }}</Label>
-                    <div class="flex gap-2">
-                        <Input
-                            id="brand_website"
-                            v-model="form.brand_website"
-                            type="url"
-                            :placeholder="$t('workspaces.create.website_placeholder')"
-                            class="flex-1"
-                        />
-                        <Button
-                            type="button"
-                            variant="default"
-                            :disabled="isAutofilling || !form.brand_website"
-                            @click="runAutofill"
-                        >
-                            <IconLoader2 v-if="isAutofilling" class="h-4 w-4 animate-spin" />
-                            <IconSparkles v-else class="h-4 w-4" />
-                            {{ $t('workspaces.create.autofill') }}
-                        </Button>
-                    </div>
-                    <p v-if="logoPreview" class="flex items-center gap-2 text-xs text-muted-foreground">
-                        <img :src="logoPreview" alt="" class="h-6 w-6 rounded object-cover" />
-                        {{ $t('workspaces.create.logo_captured') }}
-                    </p>
-                    <InputError :message="form.errors.brand_website" />
-                </div>
-
-                <div class="grid gap-2">
-                    <Label for="name">{{ $t('workspaces.create.name') }}</Label>
+            <div class="grid gap-2">
+                <Label for="brand_website">{{
+                    $t('workspaces.create.website')
+                }}</Label>
+                <div class="flex gap-2">
                     <Input
-                        id="name"
-                        v-model="form.name"
-                        :placeholder="$t('workspaces.create.name_placeholder')"
+                        id="brand_website"
+                        v-model="form.brand_website"
+                        type="url"
+                        :placeholder="
+                            $t('workspaces.create.website_placeholder')
+                        "
+                        class="flex-1"
                     />
-                    <InputError :message="form.errors.name" />
+                    <Button
+                        type="button"
+                        variant="default"
+                        :disabled="isAutofilling || !form.brand_website"
+                        @click="runAutofill"
+                    >
+                        <IconLoader2
+                            v-if="isAutofilling"
+                            class="h-4 w-4 animate-spin"
+                        />
+                        <IconSparkles v-else class="h-4 w-4" />
+                        {{ $t('workspaces.create.autofill') }}
+                    </Button>
                 </div>
-
-                <div class="grid gap-2">
-                    <Label for="brand_description">{{ $t('workspaces.create.brand_description') }}</Label>
-                    <Textarea
-                        id="brand_description"
-                        v-model="form.brand_description"
-                        :placeholder="$t('workspaces.create.brand_description_placeholder')"
-                        rows="3"
+                <p
+                    v-if="logoPreview"
+                    class="flex items-center gap-2 text-xs text-muted-foreground"
+                >
+                    <img
+                        :src="logoPreview"
+                        alt=""
+                        class="h-6 w-6 rounded object-cover"
                     />
-                    <InputError :message="form.errors.brand_description" />
-                </div>
-
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="grid gap-2">
-                        <Label for="brand_tone">{{ $t('workspaces.create.tone') }}</Label>
-                        <Select v-model="form.brand_tone">
-                            <SelectTrigger id="brand_tone" class="w-full">
-                                <SelectValue :placeholder="$t('workspaces.create.tone')">
-                                    {{ toneLabel }}
-                                </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="professional">{{ $t('workspaces.create.tone_professional') }}</SelectItem>
-                                <SelectItem value="casual">{{ $t('workspaces.create.tone_casual') }}</SelectItem>
-                                <SelectItem value="friendly">{{ $t('workspaces.create.tone_friendly') }}</SelectItem>
-                                <SelectItem value="bold">{{ $t('workspaces.create.tone_bold') }}</SelectItem>
-                                <SelectItem value="inspirational">{{ $t('workspaces.create.tone_inspirational') }}</SelectItem>
-                                <SelectItem value="humorous">{{ $t('workspaces.create.tone_humorous') }}</SelectItem>
-                                <SelectItem value="educational">{{ $t('workspaces.create.tone_educational') }}</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <InputError :message="form.errors.brand_tone" />
-                    </div>
-
-                    <div class="grid gap-2">
-                        <Label for="content_language">{{ $t('workspaces.create.content_language') }}</Label>
-                        <Select v-model="form.content_language">
-                            <SelectTrigger id="content_language" class="w-full">
-                                <SelectValue :placeholder="$t('workspaces.create.content_language')">
-                                    {{ languageLabel }}
-                                </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="en">English</SelectItem>
-                                <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                                <SelectItem value="es">Español</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <InputError :message="form.errors.content_language" />
-                    </div>
-                </div>
-
-                <p class="-mt-2 text-xs text-muted-foreground">
-                    {{ $t('workspaces.create.content_language_description') }}
+                    {{ $t('workspaces.create.logo_captured') }}
                 </p>
+                <InputError :message="form.errors.brand_website" />
+            </div>
 
-                <div class="grid gap-4 sm:grid-cols-3">
-                    <div class="grid gap-2">
-                        <Label for="brand_color">{{ $t('workspaces.create.brand_color') }}</Label>
-                        <HexColorInput v-model="form.brand_color" />
-                        <InputError :message="form.errors.brand_color" />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="background_color">{{ $t('workspaces.create.background_color') }}</Label>
-                        <HexColorInput v-model="form.background_color" />
-                        <InputError :message="form.errors.background_color" />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="text_color">{{ $t('workspaces.create.text_color') }}</Label>
-                        <HexColorInput v-model="form.text_color" />
-                        <InputError :message="form.errors.text_color" />
-                    </div>
+            <div class="grid gap-2">
+                <Label for="name">{{ $t('workspaces.create.name') }}</Label>
+                <Input
+                    id="name"
+                    v-model="form.name"
+                    :placeholder="$t('workspaces.create.name_placeholder')"
+                />
+                <InputError :message="form.errors.name" />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="brand_description">{{
+                    $t('workspaces.create.brand_description')
+                }}</Label>
+                <Textarea
+                    id="brand_description"
+                    v-model="form.brand_description"
+                    :placeholder="
+                        $t('workspaces.create.brand_description_placeholder')
+                    "
+                    rows="3"
+                />
+                <InputError :message="form.errors.brand_description" />
+            </div>
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="grid gap-2">
+                    <Label for="brand_tone">{{
+                        $t('workspaces.create.tone')
+                    }}</Label>
+                    <Select v-model="form.brand_tone">
+                        <SelectTrigger id="brand_tone" class="w-full">
+                            <SelectValue
+                                :placeholder="$t('workspaces.create.tone')"
+                            >
+                                {{ toneLabel }}
+                            </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="professional">{{
+                                $t('workspaces.create.tone_professional')
+                            }}</SelectItem>
+                            <SelectItem value="casual">{{
+                                $t('workspaces.create.tone_casual')
+                            }}</SelectItem>
+                            <SelectItem value="friendly">{{
+                                $t('workspaces.create.tone_friendly')
+                            }}</SelectItem>
+                            <SelectItem value="bold">{{
+                                $t('workspaces.create.tone_bold')
+                            }}</SelectItem>
+                            <SelectItem value="inspirational">{{
+                                $t('workspaces.create.tone_inspirational')
+                            }}</SelectItem>
+                            <SelectItem value="humorous">{{
+                                $t('workspaces.create.tone_humorous')
+                            }}</SelectItem>
+                            <SelectItem value="educational">{{
+                                $t('workspaces.create.tone_educational')
+                            }}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <InputError :message="form.errors.brand_tone" />
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="brand_voice_notes">{{ $t('workspaces.create.voice_notes') }}</Label>
-                    <Textarea
-                        id="brand_voice_notes"
-                        v-model="form.brand_voice_notes"
-                        :placeholder="$t('workspaces.create.voice_notes_placeholder')"
-                        rows="3"
-                    />
-                    <InputError :message="form.errors.brand_voice_notes" />
+                    <Label for="content_language">{{
+                        $t('workspaces.create.content_language')
+                    }}</Label>
+                    <Select v-model="form.content_language">
+                        <SelectTrigger id="content_language" class="w-full">
+                            <SelectValue
+                                :placeholder="
+                                    $t('workspaces.create.content_language')
+                                "
+                            >
+                                {{ languageLabel }}
+                            </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="en">English</SelectItem>
+                            <SelectItem value="pt-BR"
+                                >Português (Brasil)</SelectItem
+                            >
+                            <SelectItem value="es">Español</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <InputError :message="form.errors.content_language" />
                 </div>
+            </div>
+
+            <p class="-mt-2 text-xs text-muted-foreground">
+                {{ $t('workspaces.create.content_language_description') }}
+            </p>
+
+            <div class="grid gap-4 sm:grid-cols-3">
+                <div class="grid gap-2">
+                    <Label for="brand_color">{{
+                        $t('workspaces.create.brand_color')
+                    }}</Label>
+                    <HexColorInput v-model="form.brand_color" />
+                    <InputError :message="form.errors.brand_color" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="background_color">{{
+                        $t('workspaces.create.background_color')
+                    }}</Label>
+                    <HexColorInput v-model="form.background_color" />
+                    <InputError :message="form.errors.background_color" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="text_color">{{
+                        $t('workspaces.create.text_color')
+                    }}</Label>
+                    <HexColorInput v-model="form.text_color" />
+                    <InputError :message="form.errors.text_color" />
+                </div>
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="brand_voice_notes">{{
+                    $t('workspaces.create.voice_notes')
+                }}</Label>
+                <Textarea
+                    id="brand_voice_notes"
+                    v-model="form.brand_voice_notes"
+                    :placeholder="
+                        $t('workspaces.create.voice_notes_placeholder')
+                    "
+                    rows="3"
+                />
+                <InputError :message="form.errors.brand_voice_notes" />
+            </div>
 
             <Button type="submit" class="w-full" :disabled="form.processing">
                 {{ $t('workspaces.create.submit') }}

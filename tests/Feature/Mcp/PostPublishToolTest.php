@@ -7,7 +7,7 @@ use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
 use App\Jobs\PublishPost;
-use App\Mcp\Servers\TryPostServer;
+use App\Mcp\Servers\postproServer;
 use App\Mcp\Tools\Post\PublishPostTool;
 use App\Mcp\Tools\Post\UpdatePostTool;
 use App\Models\Post;
@@ -40,7 +40,7 @@ test('update post can change content', function () {
         'content' => 'old',
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdatePostTool::class, [
             'post_id' => $post->id,
             'content' => 'new content',
@@ -66,7 +66,7 @@ test('update post enables platforms', function () {
         'enabled' => false,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdatePostTool::class, [
             'post_id' => $post->id,
             'platforms' => [
@@ -86,7 +86,7 @@ test('update post can attach labels', function () {
     ]);
     $label = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdatePostTool::class, [
             'post_id' => $post->id,
             'label_ids' => [$label->id],
@@ -100,7 +100,7 @@ test('update post 404 from another workspace', function () {
     $other = Workspace::factory()->create();
     $post = Post::factory()->create(['workspace_id' => $other->id, 'user_id' => $this->user->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdatePostTool::class, ['post_id' => $post->id, 'content' => 'x']);
 
     $response->assertHasErrors(['Post not found.']);
@@ -113,7 +113,7 @@ test('update post rejects already-published post', function () {
         'status' => PostStatus::Published,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdatePostTool::class, ['post_id' => $post->id, 'content' => 'x']);
 
     $response->assertHasErrors(['Cannot edit a published post.']);
@@ -136,7 +136,7 @@ test('update post rejects a platforms[].id that belongs to another post', functi
         'social_account_id' => $this->socialAccount->id,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdatePostTool::class, [
             'post_id' => $myPost->id,
             'platforms' => [
@@ -159,7 +159,7 @@ test('update post rejects a content_type that does not match the post_platform',
         'enabled' => true,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdatePostTool::class, [
             'post_id' => $post->id,
             'platforms' => [
@@ -187,7 +187,7 @@ test('publish post immediate dispatches PublishPost job', function () {
         'enabled' => true,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(PublishPostTool::class, ['post_id' => $post->id]);
 
     $response->assertOk();
@@ -216,7 +216,7 @@ test('publish post scheduled does not dispatch immediately', function () {
         'enabled' => true,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(PublishPostTool::class, [
             'post_id' => $post->id,
             'scheduled_at' => '2099-12-31T15:30:00Z',
@@ -241,7 +241,7 @@ test('publish post fails when no platforms enabled', function () {
         'enabled' => false,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(PublishPostTool::class, ['post_id' => $post->id]);
 
     $response->assertHasErrors(['Post has no enabled platforms. Use update-post-tool to enable at least one platform first.']);
@@ -251,8 +251,9 @@ test('publish post 404 from another workspace', function () {
     $other = Workspace::factory()->create();
     $post = Post::factory()->create(['workspace_id' => $other->id, 'user_id' => $this->user->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(PublishPostTool::class, ['post_id' => $post->id]);
 
     $response->assertHasErrors(['Post not found.']);
 });
+

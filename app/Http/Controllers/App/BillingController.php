@@ -17,7 +17,7 @@ class BillingController extends Controller
 {
     public function subscribe(Request $request): Response|RedirectResponse
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return redirect()->route('app.calendar');
         }
 
@@ -35,7 +35,7 @@ class BillingController extends Controller
 
     public function checkout(Request $request, Plan $plan): SymfonyResponse|RedirectResponse
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return redirect()->route('app.calendar');
         }
 
@@ -75,7 +75,7 @@ class BillingController extends Controller
 
     public function processing(Request $request): Response|RedirectResponse
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return redirect()->route('app.calendar');
         }
 
@@ -88,7 +88,7 @@ class BillingController extends Controller
 
     public function index(Request $request): Response|RedirectResponse
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return redirect()->route('app.calendar');
         }
 
@@ -121,7 +121,7 @@ class BillingController extends Controller
 
     public function swap(Request $request, Plan $plan): RedirectResponse
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return redirect()->route('app.calendar');
         }
 
@@ -159,7 +159,7 @@ class BillingController extends Controller
 
     public function portal(Request $request): RedirectResponse
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return redirect()->route('app.calendar');
         }
 
@@ -172,3 +172,4 @@ class BillingController extends Controller
         );
     }
 }
+

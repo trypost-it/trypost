@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { IconChevronLeft, IconChevronRight, IconPhoto } from '@tabler/icons-vue';
+import {
+    IconChevronLeft,
+    IconChevronRight,
+    IconPhoto,
+} from '@tabler/icons-vue';
 import { computed, ref, watch, type Component } from 'vue';
 
 import { isVideoMedia, type MediaItem } from '@/composables/useMedia';
@@ -74,7 +78,7 @@ const goToSlide = (index: number) => {
             <button
                 v-if="currentIndex > 0"
                 type="button"
-                class="absolute left-1.5 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-sm transition-colors hover:bg-white"
+                class="absolute top-1/2 left-1.5 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-sm transition-colors hover:bg-white"
                 @click="goToPrevious"
             >
                 <IconChevronLeft class="h-4 w-4 text-foreground" />
@@ -82,7 +86,7 @@ const goToSlide = (index: number) => {
             <button
                 v-if="currentIndex < media.length - 1"
                 type="button"
-                class="absolute right-1.5 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-sm transition-colors hover:bg-white"
+                class="absolute top-1/2 right-1.5 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-sm transition-colors hover:bg-white"
                 @click="goToNext"
             >
                 <IconChevronRight class="h-4 w-4 text-foreground" />
@@ -105,6 +109,9 @@ const goToSlide = (index: number) => {
     </template>
 
     <div v-else :class="placeholderClass">
-        <component :is="placeholderIcon" class="h-12 w-12 text-muted-foreground/40" />
+        <component
+            :is="placeholderIcon"
+            class="h-12 w-12 text-muted-foreground/40"
+        />
     </div>
 </template>

@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Models\Workspace;
 
 beforeEach(function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $this->plan = Plan::first();
     $this->plan->update([
@@ -48,7 +48,7 @@ test('cannot invite member beyond limit', function () {
 });
 
 test('self hosted mode bypasses workspace limit', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     Workspace::factory()->count(10)->create([
         'account_id' => $this->account->id,
@@ -59,7 +59,7 @@ test('self hosted mode bypasses workspace limit', function () {
 });
 
 test('self hosted mode bypasses member limit', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $members = User::factory()->count(10)->create([
         'account_id' => $this->account->id,
@@ -71,3 +71,4 @@ test('self hosted mode bypasses member limit', function () {
 
     expect($this->user->can('inviteMember', $this->workspace))->toBeTrue();
 });
+

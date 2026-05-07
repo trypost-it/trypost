@@ -41,7 +41,8 @@ export const useAiStream = () => {
         status.value = 'streaming';
         subscribedName = channelName;
 
-        echo().private(channelName)
+        echo()
+            .private(channelName)
             .listen('.TextDelta', (e: TextDeltaEvent) => {
                 text.value += e.delta ?? '';
             })

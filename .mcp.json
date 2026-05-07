@@ -13,7 +13,7 @@
                 "/Applications/Herd.app/Contents/Resources/herd-mcp.phar"
             ],
             "env": {
-                "SITE_PATH": "/Users/paulocastellano/Code/trypost"
+                "SITE_PATH": "/Users/paulocastellano/Code/postpro"
             }
         },
         "nightwatch": {

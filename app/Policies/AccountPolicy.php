@@ -31,7 +31,7 @@ class AccountPolicy
      */
     public function useAi(User $user, Account $account): Response
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return Response::allow();
         }
 
@@ -89,3 +89,4 @@ class AccountPolicy
         return Response::allow();
     }
 }
+

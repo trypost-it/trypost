@@ -24,7 +24,7 @@ class YouTubeAnalytics
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.youtube.analytics_api');
+        $this->baseUrl = config('postpro.platforms.youtube.analytics_api');
     }
 
     public function getMetrics(SocialAccount $account, ?CarbonInterface $since = null, ?CarbonInterface $until = null): array
@@ -190,3 +190,4 @@ class YouTubeAnalytics
         ]);
     }
 }
+

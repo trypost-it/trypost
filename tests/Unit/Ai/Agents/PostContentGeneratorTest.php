@@ -8,7 +8,7 @@ use Illuminate\JsonSchema\JsonSchemaTypeFactory;
 
 test('instructions render brand context', function () {
     $workspace = Workspace::factory()->make([
-        'name' => 'TryPost',
+        'name' => 'postpro',
         'brand_description' => 'Social media scheduling tool',
         'brand_tone' => 'friendly',
         'brand_voice_notes' => 'Use everyday language, no jargon.',
@@ -18,7 +18,7 @@ test('instructions render brand context', function () {
     $agent = new PostContentGenerator(workspace: $workspace);
     $instructions = $agent->instructions();
 
-    expect($instructions)->toContain('TryPost');
+    expect($instructions)->toContain('postpro');
     expect($instructions)->toContain('friendly');
     expect($instructions)->toContain('everyday language');
     expect($instructions)->toContain('en');
@@ -111,3 +111,4 @@ test('instructions do not include examples section when platform context is null
 
     expect($agent->instructions())->not->toContain('curated library');
 });
+

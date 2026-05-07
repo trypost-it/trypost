@@ -23,7 +23,7 @@ class XAnalytics
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.x.api');
+        $this->baseUrl = config('postpro.platforms.x.api');
     }
 
     public function getMetrics(SocialAccount $account, ?CarbonInterface $since = null, ?CarbonInterface $until = null): array
@@ -209,7 +209,7 @@ class XAnalytics
         $response = $this->socialHttp()
             ->withBasicAuth(config('services.x.client_id'), config('services.x.client_secret'))
             ->asForm()
-            ->post(config('trypost.platforms.x.api').'/oauth2/token', [
+            ->post(config('postpro.platforms.x.api').'/oauth2/token', [
                 'grant_type' => 'refresh_token',
                 'refresh_token' => $account->refresh_token,
             ]);
@@ -228,3 +228,4 @@ class XAnalytics
         ]);
     }
 }
+

@@ -72,7 +72,7 @@ class WorkspacePolicy
             return false;
         }
 
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return true;
         }
 
@@ -128,3 +128,4 @@ class WorkspacePolicy
         return in_array(Role::tryFrom($member->pivot->role), $roles);
     }
 }
+

@@ -19,11 +19,22 @@ import ImagePreviewDialog from '@/components/ImagePreviewDialog.vue';
 import EmojiPicker from '@/components/posts/EmojiPicker.vue';
 import MediaPickerDialog from '@/components/posts/MediaPickerDialog.vue';
 import SignaturesModal from '@/components/posts/SignaturesModal.vue';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+    Popover,
+    PopoverAnchor,
+    PopoverContent,
+} from '@/components/ui/popover';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatBytes, readFileMetadata } from '@/composables/useMedia';
-import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
+import {
+    getPlatformLabel,
+    getPlatformLogo,
+} from '@/composables/usePlatformLogo';
 import { store as storeAsset } from '@/routes/app/assets';
 
 interface MediaItem {
@@ -70,7 +81,9 @@ const emit = defineEmits<{
 const isDragging = ref(false);
 const uploading = ref(false);
 const emojiOpen = ref(false);
-const mediaPickerDialog = ref<InstanceType<typeof MediaPickerDialog> | null>(null);
+const mediaPickerDialog = ref<InstanceType<typeof MediaPickerDialog> | null>(
+    null,
+);
 const signaturesModal = ref<InstanceType<typeof SignaturesModal> | null>(null);
 
 const dragMediaIndex = ref<number | null>(null);
@@ -90,7 +103,9 @@ const openPreview = (item: MediaItem) => {
     previewIndex.value = idx >= 0 ? idx : 0;
 };
 
-const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+const csrfToken =
+    document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+        ?.content ?? '';
 
 const isVideo = (item: MediaItem): boolean =>
     item.type === 'video' || Boolean(item.mime_type?.startsWith('video/'));
@@ -113,7 +128,8 @@ const limitsWithUsage = computed(() =>
 
 const limitClass = (state: string): string => {
     if (state === 'over') return 'border-foreground bg-rose-100 text-rose-700';
-    if (state === 'warn') return 'border-foreground bg-amber-100 text-amber-800';
+    if (state === 'warn')
+        return 'border-foreground bg-amber-100 text-amber-800';
     return 'border-foreground bg-card text-foreground';
 };
 
@@ -148,9 +164,12 @@ const uploadFiles = async (files: File[]) => {
 
         const formData = new FormData();
         formData.append('media', file);
-        if (clientMeta.width) formData.append('meta[width]', String(clientMeta.width));
-        if (clientMeta.height) formData.append('meta[height]', String(clientMeta.height));
-        if (clientMeta.duration) formData.append('meta[duration]', String(clientMeta.duration));
+        if (clientMeta.width)
+            formData.append('meta[width]', String(clientMeta.width));
+        if (clientMeta.height)
+            formData.append('meta[height]', String(clientMeta.height));
+        if (clientMeta.duration)
+            formData.append('meta[duration]', String(clientMeta.duration));
 
         try {
             const response = await fetch(storeAsset.url(), {
@@ -251,7 +270,7 @@ const GRID_COLS = 4;
 
 const onMediaKeydown = async (event: KeyboardEvent, index: number) => {
     if (media.value.length < 2) return;
-    if (! event.altKey) return;
+    if (!event.altKey) return;
 
     const deltas: Record<string, number> = {
         ArrowLeft: -1,
@@ -271,7 +290,8 @@ const onMediaKeydown = async (event: KeyboardEvent, index: number) => {
     mediaThumbRefs.value[target]?.focus();
 };
 
-const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reason}`);
+const issueLabel = (reason: string): string =>
+    trans(`posts.form.warnings.${reason}`);
 </script>
 
 <template>
@@ -288,11 +308,18 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                     <div
                         v-for="(item, index) in media"
                         :key="item.id"
-                        :ref="(el) => { if (el) mediaThumbRefs[index] = el as HTMLElement; }"
-                        class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl border-2 border-foreground bg-muted shadow-2xs transition-all focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2"
+                        :ref="
+                            (el) => {
+                                if (el)
+                                    mediaThumbRefs[index] = el as HTMLElement;
+                            }
+                        "
+                        class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl border-2 border-foreground bg-muted shadow-2xs transition-all focus:ring-2 focus:ring-foreground focus:ring-offset-2 focus:outline-none"
                         :class="[
                             dragMediaIndex === index ? 'opacity-40' : '',
-                            dragOverIndex === index && dragMediaIndex !== index ? 'ring-2 ring-foreground ring-offset-2' : '',
+                            dragOverIndex === index && dragMediaIndex !== index
+                                ? 'ring-2 ring-foreground ring-offset-2'
+                                : '',
                             mediaIssues[item.id] ? '!border-rose-500' : '',
                         ]"
                         tabindex="0"
@@ -318,9 +345,13 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                             loading="lazy"
                         />
 
-                        <div class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                        <div
+                            class="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+                        />
 
-                        <div class="absolute bottom-1.5 left-1.5 flex flex-col items-start gap-1 text-[10px] font-medium text-white">
+                        <div
+                            class="absolute bottom-1.5 left-1.5 flex flex-col items-start gap-1 text-[10px] font-medium text-white"
+                        >
                             <span
                                 v-if="isVideo(item) && item.meta?.duration"
                                 class="inline-flex items-center gap-0.5 rounded-md bg-black/65 px-1.5 py-0.5 backdrop-blur-sm"
@@ -336,20 +367,45 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                             </span>
                         </div>
 
-                        <TooltipProvider v-if="mediaIssues[item.id]" :delay-duration="100">
+                        <TooltipProvider
+                            v-if="mediaIssues[item.id]"
+                            :delay-duration="100"
+                        >
                             <Tooltip>
                                 <TooltipTrigger as-child>
-                                    <span class="absolute bottom-1.5 right-1.5 inline-flex h-5 items-center gap-0.5 rounded-full border-2 border-foreground bg-rose-100 px-1.5 text-[10px] font-bold text-rose-700 shadow-2xs">
+                                    <span
+                                        class="absolute right-1.5 bottom-1.5 inline-flex h-5 items-center gap-0.5 rounded-full border-2 border-foreground bg-rose-100 px-1.5 text-[10px] font-bold text-rose-700 shadow-2xs"
+                                    >
                                         <IconAlertTriangle class="size-2.5" />
                                         {{ mediaIssues[item.id].length }}
                                     </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <ul class="space-y-1 text-xs">
-                                        <li v-for="iss in mediaIssues[item.id]" :key="iss.platform" class="flex items-center gap-1.5">
-                                            <img :src="getPlatformLogo(iss.platform)" :alt="iss.platform" class="size-3 object-contain" />
-                                            <span class="font-medium">{{ getPlatformLabel(iss.platform) }}:</span>
-                                            <span class="opacity-80">{{ issueLabel(iss.reason) }}</span>
+                                        <li
+                                            v-for="iss in mediaIssues[item.id]"
+                                            :key="iss.platform"
+                                            class="flex items-center gap-1.5"
+                                        >
+                                            <img
+                                                :src="
+                                                    getPlatformLogo(
+                                                        iss.platform,
+                                                    )
+                                                "
+                                                :alt="iss.platform"
+                                                class="size-3 object-contain"
+                                            />
+                                            <span class="font-medium"
+                                                >{{
+                                                    getPlatformLabel(
+                                                        iss.platform,
+                                                    )
+                                                }}:</span
+                                            >
+                                            <span class="opacity-80">{{
+                                                issueLabel(iss.reason)
+                                            }}</span>
                                         </li>
                                     </ul>
                                 </TooltipContent>
@@ -358,14 +414,14 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
 
                         <span
                             v-if="media.length > 1"
-                            class="absolute left-1.5 top-1.5 inline-flex size-6 cursor-grab items-center justify-center rounded-md border-2 border-foreground bg-card text-foreground opacity-0 shadow-2xs transition-opacity group-hover:opacity-100 group-focus:opacity-100"
+                            class="absolute top-1.5 left-1.5 inline-flex size-6 cursor-grab items-center justify-center rounded-md border-2 border-foreground bg-card text-foreground opacity-0 shadow-2xs transition-opacity group-hover:opacity-100 group-focus:opacity-100"
                         >
                             <IconGripVertical class="size-3.5" />
                         </span>
 
                         <button
                             type="button"
-                            class="absolute right-1.5 top-1.5 inline-flex size-6 cursor-pointer items-center justify-center rounded-md border-2 border-foreground bg-card text-foreground opacity-0 shadow-2xs transition-all hover:bg-rose-100 hover:text-rose-700 group-hover:opacity-100 group-focus:opacity-100"
+                            class="absolute top-1.5 right-1.5 inline-flex size-6 cursor-pointer items-center justify-center rounded-md border-2 border-foreground bg-card text-foreground opacity-0 shadow-2xs transition-all group-hover:opacity-100 group-focus:opacity-100 hover:bg-rose-100 hover:text-rose-700"
                             @click.stop="removeMedia(item.id)"
                         >
                             <IconTrash class="size-3.5" />
@@ -378,7 +434,10 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                         @click="mediaPickerDialog?.open()"
                     >
                         <IconLibraryPhoto class="size-5" />
-                        <span class="text-[10px] font-bold uppercase tracking-widest">{{ $t('posts.edit.add') }}</span>
+                        <span
+                            class="text-[10px] font-bold tracking-widest uppercase"
+                            >{{ $t('posts.edit.add') }}</span
+                        >
                     </button>
                 </div>
             </div>
@@ -398,7 +457,9 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                                         <IconMoodSmile class="size-4" />
                                     </button>
                                 </TooltipTrigger>
-                                <TooltipContent>{{ $t('posts.edit.emoji_picker.search') }}</TooltipContent>
+                                <TooltipContent>{{
+                                    $t('posts.edit.emoji_picker.search')
+                                }}</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
                     </PopoverAnchor>
@@ -418,7 +479,9 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                                 <IconHash class="size-4" />
                             </button>
                         </TooltipTrigger>
-                        <TooltipContent>{{ $t('posts.edit.signatures') }}</TooltipContent>
+                        <TooltipContent>{{
+                            $t('posts.edit.signatures')
+                        }}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
 
@@ -433,7 +496,9 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                                 <IconSparkles class="size-4" />
                             </button>
                         </TooltipTrigger>
-                        <TooltipContent>{{ $t('posts.ai.generate.button_tooltip') }}</TooltipContent>
+                        <TooltipContent>{{
+                            $t('posts.ai.generate.button_tooltip')
+                        }}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
 
@@ -448,11 +513,16 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                                 <IconWriting class="size-4" />
                             </button>
                         </TooltipTrigger>
-                        <TooltipContent>{{ $t('posts.ai.review.button_tooltip') }}</TooltipContent>
+                        <TooltipContent>{{
+                            $t('posts.ai.review.button_tooltip')
+                        }}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
 
-                <span v-if="uploading" class="flex items-center gap-1.5 text-xs font-medium text-foreground/60">
+                <span
+                    v-if="uploading"
+                    class="flex items-center gap-1.5 text-xs font-medium text-foreground/60"
+                >
                     <IconLoader2 class="size-3.5 animate-spin" />
                 </span>
             </div>
@@ -462,20 +532,37 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                 v-if="limitsWithUsage.length > 0"
                 class="mb-4 flex flex-wrap items-center gap-2"
             >
-                <TooltipProvider v-for="limit in limitsWithUsage" :key="limit.platform" :delay-duration="200">
+                <TooltipProvider
+                    v-for="limit in limitsWithUsage"
+                    :key="limit.platform"
+                    :delay-duration="200"
+                >
                     <Tooltip>
                         <TooltipTrigger as-child>
                             <span
-                                class="inline-flex items-center gap-1.5 rounded-full border-2 px-2 py-1 text-[11px] font-bold leading-none tabular-nums shadow-2xs transition-colors"
+                                class="inline-flex items-center gap-1.5 rounded-full border-2 px-2 py-1 text-[11px] leading-none font-bold tabular-nums shadow-2xs transition-colors"
                                 :class="limitClass(limit.state)"
                             >
-                                <span class="inline-flex size-3.5 shrink-0 items-center justify-center overflow-hidden rounded-full">
-                                    <img :src="getPlatformLogo(limit.platform)" :alt="limit.platform" class="size-full object-cover" />
+                                <span
+                                    class="inline-flex size-3.5 shrink-0 items-center justify-center overflow-hidden rounded-full"
+                                >
+                                    <img
+                                        :src="getPlatformLogo(limit.platform)"
+                                        :alt="limit.platform"
+                                        class="size-full object-cover"
+                                    />
                                 </span>
-                                <span>{{ limit.used }}<span class="opacity-60">/{{ limit.maxLength }}</span></span>
+                                <span
+                                    >{{ limit.used
+                                    }}<span class="opacity-60"
+                                        >/{{ limit.maxLength }}</span
+                                    ></span
+                                >
                             </span>
                         </TooltipTrigger>
-                        <TooltipContent>{{ getPlatformLabel(limit.platform) }}</TooltipContent>
+                        <TooltipContent>{{
+                            getPlatformLabel(limit.platform)
+                        }}</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
             </div>
@@ -487,15 +574,18 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                 <div
                     v-if="overflowParts.overflow"
                     aria-hidden="true"
-                    class="pointer-events-none absolute inset-0 whitespace-pre-wrap break-words p-0 font-sans text-base leading-[1.7] text-transparent"
+                    class="pointer-events-none absolute inset-0 p-0 font-sans text-base leading-[1.7] break-words whitespace-pre-wrap text-transparent"
                 >
-                    <span>{{ overflowParts.fits }}</span><span class="rounded-sm bg-rose-100 text-rose-700">{{ overflowParts.overflow }}</span>
+                    <span>{{ overflowParts.fits }}</span
+                    ><span class="rounded-sm bg-rose-100 text-rose-700">{{
+                        overflowParts.overflow
+                    }}</span>
                 </div>
                 <textarea
                     v-model="content"
                     :placeholder="$t('posts.edit.caption_placeholder')"
                     class="relative block w-full resize-none border-0 bg-transparent p-0 font-sans text-base leading-[1.7] shadow-none outline-none placeholder:text-foreground/40"
-                    style="min-height: 280px; field-sizing: content;"
+                    style="min-height: 280px; field-sizing: content"
                 />
             </div>
 
@@ -504,8 +594,13 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                 v-if="isDragging"
                 class="pointer-events-none absolute -inset-6 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-foreground bg-violet-100/80 backdrop-blur-sm"
             >
-                <div class="inline-flex size-12 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
-                    <IconCloudUpload class="size-6 text-foreground" stroke-width="2" />
+                <div
+                    class="inline-flex size-12 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs"
+                >
+                    <IconCloudUpload
+                        class="size-6 text-foreground"
+                        stroke-width="2"
+                    />
                 </div>
                 <p
                     class="text-xl font-semibold text-foreground"
@@ -516,8 +611,15 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
             </div>
         </div>
 
-        <SignaturesModal ref="signaturesModal" :signatures="signatures" @select="appendSignature" />
-        <MediaPickerDialog ref="mediaPickerDialog" @select="addMediaFromGallery" />
+        <SignaturesModal
+            ref="signaturesModal"
+            :signatures="signatures"
+            @select="appendSignature"
+        />
+        <MediaPickerDialog
+            ref="mediaPickerDialog"
+            @select="addMediaFromGallery"
+        />
         <ImagePreviewDialog
             :images="previewImages"
             :index="previewIndex"

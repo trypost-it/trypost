@@ -26,37 +26,75 @@ const submit = () => {
     formRef.value?.submit();
 };
 
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+const csrfToken =
+    document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute('content') ?? '';
 </script>
 
 <template>
     <PopupLayout :title="$t('accounts.bluesky.title')">
-        <div class="max-w-md mx-auto">
-            <div class="flex items-center gap-3 mb-6">
-                <img src="/images/accounts/bluesky.png" alt="Bluesky" class="h-12 w-12" />
+        <div class="mx-auto max-w-md">
+            <div class="mb-6 flex items-center gap-3">
+                <img
+                    src="/images/accounts/bluesky.png"
+                    alt="Bluesky"
+                    class="h-12 w-12"
+                />
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">{{ $t('accounts.bluesky.title') }}</h1>
-                    <p class="text-sm text-muted-foreground">{{ $t('accounts.bluesky.description') }}</p>
+                    <h1 class="text-xl font-bold tracking-tight">
+                        {{ $t('accounts.bluesky.title') }}
+                    </h1>
+                    <p class="text-sm text-muted-foreground">
+                        {{ $t('accounts.bluesky.description') }}
+                    </p>
                 </div>
             </div>
 
-            <form ref="formRef" :action="storeBluesky.url()" method="POST" @submit.prevent="submit" class="space-y-4">
+            <form
+                ref="formRef"
+                :action="storeBluesky.url()"
+                method="POST"
+                @submit.prevent="submit"
+                class="space-y-4"
+            >
                 <input type="hidden" name="_token" :value="csrfToken" />
 
                 <div class="space-y-2">
-                    <Label for="identifier">{{ $t('accounts.bluesky.email') }}</Label>
-                    <Input id="identifier" name="identifier" v-model="identifier" type="text"
-                        :placeholder="trans('accounts.bluesky.email_placeholder')" :class="{ 'border-destructive': errors?.identifier }"
+                    <Label for="identifier">{{
+                        $t('accounts.bluesky.email')
+                    }}</Label>
+                    <Input
+                        id="identifier"
+                        name="identifier"
+                        v-model="identifier"
+                        type="text"
+                        :placeholder="
+                            trans('accounts.bluesky.email_placeholder')
+                        "
+                        :class="{ 'border-destructive': errors?.identifier }"
                     />
-                    <p v-if="errors?.identifier" class="text-sm text-destructive">
+                    <p
+                        v-if="errors?.identifier"
+                        class="text-sm text-destructive"
+                    >
                         {{ errors.identifier }}
                     </p>
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="password">{{ $t('accounts.bluesky.app_password') }}</Label>
-                    <Input id="password" name="password" v-model="password" type="password"
-                        :placeholder="trans('accounts.bluesky.app_password_placeholder')" :class="{ 'border-destructive': errors?.password }"
+                    <Label for="password">{{
+                        $t('accounts.bluesky.app_password')
+                    }}</Label>
+                    <Input
+                        id="password"
+                        name="password"
+                        v-model="password"
+                        type="password"
+                        :placeholder="
+                            trans('accounts.bluesky.app_password_placeholder')
+                        "
+                        :class="{ 'border-destructive': errors?.password }"
                     />
                     <p v-if="errors?.password" class="text-sm text-destructive">
                         {{ errors.password }}
@@ -66,12 +104,18 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                 <Alert>
                     <IconInfoCircle class="h-4 w-4" />
                     <AlertDescription class="inline">
-                        <span v-html="$t('accounts.bluesky.app_password_hint')" />
+                        <span
+                            v-html="$t('accounts.bluesky.app_password_hint')"
+                        />
                     </AlertDescription>
                 </Alert>
 
                 <Button type="submit" :disabled="isSubmitting" class="w-full">
-                    {{ isSubmitting ? $t('accounts.bluesky.submitting') : $t('accounts.bluesky.submit') }}
+                    {{
+                        isSubmitting
+                            ? $t('accounts.bluesky.submitting')
+                            : $t('accounts.bluesky.submit')
+                    }}
                 </Button>
             </form>
         </div>

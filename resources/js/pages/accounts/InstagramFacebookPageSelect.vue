@@ -38,22 +38,38 @@ const handleSelectPage = (page: Page) => {
     setTimeout(() => formRef.value?.submit(), 0);
 };
 
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+const csrfToken =
+    document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute('content') ?? '';
 </script>
 
 <template>
     <PopupLayout :title="$t('accounts.instagram_facebook.title')">
-        <form ref="formRef" :action="selectPage.url()" method="POST" class="hidden">
+        <form
+            ref="formRef"
+            :action="selectPage.url()"
+            method="POST"
+            class="hidden"
+        >
             <input type="hidden" name="_token" :value="csrfToken" />
             <input type="hidden" name="page_id" :value="selectedPageId" />
         </form>
 
         <div class="flex flex-col gap-6">
             <div class="flex items-center gap-3">
-                <img src="/images/accounts/instagram.png" alt="Instagram" class="h-10 w-10" />
+                <img
+                    src="/images/accounts/instagram.png"
+                    alt="Instagram"
+                    class="h-10 w-10"
+                />
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">{{ $t('accounts.instagram_facebook.title') }}</h1>
-                    <p class="text-sm text-muted-foreground">{{ $t('accounts.instagram_facebook.description') }}</p>
+                    <h1 class="text-xl font-bold tracking-tight">
+                        {{ $t('accounts.instagram_facebook.title') }}
+                    </h1>
+                    <p class="text-sm text-muted-foreground">
+                        {{ $t('accounts.instagram_facebook.description') }}
+                    </p>
                 </div>
             </div>
 
@@ -61,11 +77,15 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                 <AlertDescription>{{ error }}</AlertDescription>
             </Alert>
 
-            <div v-if="pages.length === 0 && !error" class="text-center py-12">
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+            <div v-if="pages.length === 0 && !error" class="py-12 text-center">
+                <div
+                    class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted"
+                >
                     <IconBrandInstagram class="h-7 w-7 text-muted-foreground" />
                 </div>
-                <h3 class="mt-4 text-lg font-semibold">{{ $t('accounts.instagram_facebook.no_pages') }}</h3>
+                <h3 class="mt-4 text-lg font-semibold">
+                    {{ $t('accounts.instagram_facebook.no_pages') }}
+                </h3>
                 <p class="mt-1 text-sm text-muted-foreground">
                     {{ $t('accounts.instagram_facebook.no_pages_description') }}
                 </p>
@@ -76,25 +96,39 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
                     v-for="page in pages"
                     :key="page.ig_id"
                     @click="handleSelectPage(page)"
-                    class="group relative overflow-hidden rounded-lg border bg-card p-4 text-left transition-all hover:border-primary hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    class="group relative overflow-hidden rounded-lg border bg-card p-4 text-left transition-all hover:border-primary hover:shadow-md focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none"
                 >
                     <div class="flex items-center gap-4">
                         <Avatar class="h-12 w-12 rounded-lg">
-                            <AvatarImage v-if="page.ig_picture" :src="page.ig_picture" class="object-cover" />
-                            <AvatarFallback class="rounded-lg bg-pink-100 dark:bg-pink-900">
-                                <IconBrandInstagram class="h-6 w-6 text-pink-600 dark:text-pink-400" />
+                            <AvatarImage
+                                v-if="page.ig_picture"
+                                :src="page.ig_picture"
+                                class="object-cover"
+                            />
+                            <AvatarFallback
+                                class="rounded-lg bg-pink-100 dark:bg-pink-900"
+                            >
+                                <IconBrandInstagram
+                                    class="h-6 w-6 text-pink-600 dark:text-pink-400"
+                                />
                             </AvatarFallback>
                         </Avatar>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-semibold truncate group-hover:text-primary transition-colors">
+                        <div class="min-w-0 flex-1">
+                            <h3
+                                class="truncate font-semibold transition-colors group-hover:text-primary"
+                            >
                                 @{{ page.ig_username }}
                             </h3>
-                            <p class="text-sm text-muted-foreground truncate">
+                            <p class="truncate text-sm text-muted-foreground">
                                 {{ page.page_name }}
                             </p>
                         </div>
-                        <div class="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <div
+                            class="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                        >
+                            <div
+                                class="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                            >
                                 <IconCheck class="h-4 w-4" />
                             </div>
                         </div>

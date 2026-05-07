@@ -17,7 +17,8 @@ interface Segment {
 }
 
 const segments = computed<Segment[]>(() => {
-    const re = /@\[([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\]/g;
+    const re =
+        /@\[([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\]/g;
     const result: Segment[] = [];
     const text = props.body ?? '';
     let lastIndex = 0;
@@ -25,7 +26,10 @@ const segments = computed<Segment[]>(() => {
 
     while ((match = re.exec(text)) !== null) {
         if (match.index > lastIndex) {
-            result.push({ type: 'text', value: text.slice(lastIndex, match.index) });
+            result.push({
+                type: 'text',
+                value: text.slice(lastIndex, match.index),
+            });
         }
         const userId = match[1];
         const name = props.members?.[userId] ?? 'someone';
@@ -42,12 +46,13 @@ const segments = computed<Segment[]>(() => {
 </script>
 
 <template>
-    <p class="mt-0.5 whitespace-pre-wrap text-sm">
+    <p class="mt-0.5 text-sm whitespace-pre-wrap">
         <template v-for="(seg, i) in segments" :key="i">
             <span
                 v-if="seg.type === 'mention'"
-                class="inline-block rounded-md bg-primary/10 px-1.5 text-primary font-medium"
-            >{{ seg.value }}</span>
+                class="inline-block rounded-md bg-primary/10 px-1.5 font-medium text-primary"
+                >{{ seg.value }}</span
+            >
             <template v-else>{{ seg.value }}</template>
         </template>
     </p>

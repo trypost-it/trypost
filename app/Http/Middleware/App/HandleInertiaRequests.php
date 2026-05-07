@@ -30,7 +30,7 @@ class HandleInertiaRequests extends Middleware
 
         $currentWorkspace = $user?->currentWorkspace?->load('media');
         $account = $user?->account;
-        $isSelfHosted = (bool) config('trypost.self_hosted');
+        $isSelfHosted = (bool) config('postpro.self_hosted');
 
         return [
             ...parent::share($request),
@@ -59,9 +59,10 @@ class HandleInertiaRequests extends Middleware
             ])->values()->all(),
             'aiEnabled' => ! empty(config('services.gemini.api_key')) || ! empty(config('services.openai.api_key')),
             'selfHosted' => $isSelfHosted,
-            'googleAuthEnabled' => config('trypost.google_auth_enabled'),
-            'githubAuthEnabled' => config('trypost.github_auth_enabled'),
+            'googleAuthEnabled' => config('postpro.google_auth_enabled'),
+            'githubAuthEnabled' => config('postpro.github_auth_enabled'),
             'trialDays' => config('cashier.trial_days'),
         ];
     }
 }
+

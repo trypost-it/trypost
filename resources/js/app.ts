@@ -9,14 +9,18 @@ import { createApp, h } from 'vue';
 
 import { initializeDataLayer } from './datalayer';
 import dayjs from './dayjs';
-import { capturePageview, initializePostHog, syncPostHogContext } from './posthog';
+import {
+    capturePageview,
+    initializePostHog,
+    syncPostHogContext,
+} from './posthog';
 import type { Auth } from './types';
 
 configureEcho({
     broadcaster: 'reverb',
 });
 
-const appName = import.meta.env.VITE_APP_NAME || 'TryPost.it';
+const appName = import.meta.env.VITE_APP_NAME || 'PostPro';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -27,7 +31,8 @@ createInertiaApp({
         ),
     setup({ el, App, props, plugin }) {
         // Get locale from shared Inertia props
-        const locale = (props.initialPage.props as { locale?: string })?.locale || 'en';
+        const locale =
+            (props.initialPage.props as { locale?: string })?.locale || 'en';
 
         // Set dayjs locale based on user's language
         dayjs.locale(locale.toLowerCase());

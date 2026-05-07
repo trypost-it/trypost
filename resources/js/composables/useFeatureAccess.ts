@@ -20,14 +20,24 @@ export const useFeatureAccess = () => {
     const page = usePage();
 
     const isSelfHosted = computed(() => page.props.selfHosted as boolean);
-    const plan = computed<Plan | null>(() => (page.props.auth as { plan: Plan | null }).plan ?? null);
-    const usage = computed<Usage | null>(() => (page.props.usage as Usage | null) ?? null);
-    const features = computed<Features | null>(() => (page.props.features as Features | null) ?? null);
+    const plan = computed<Plan | null>(
+        () => (page.props.auth as { plan: Plan | null }).plan ?? null,
+    );
+    const usage = computed<Usage | null>(
+        () => (page.props.usage as Usage | null) ?? null,
+    );
+    const features = computed<Features | null>(
+        () => (page.props.features as Features | null) ?? null,
+    );
 
     const workspaceLimit = computed(() => features.value?.workspaceLimit ?? 1);
-    const socialAccountLimit = computed(() => features.value?.socialAccountLimit ?? 1);
+    const socialAccountLimit = computed(
+        () => features.value?.socialAccountLimit ?? 1,
+    );
     const memberLimit = computed(() => features.value?.memberLimit ?? 1);
-    const monthlyCreditsLimit = computed(() => features.value?.monthlyCreditsLimit ?? 0);
+    const monthlyCreditsLimit = computed(
+        () => features.value?.monthlyCreditsLimit ?? 0,
+    );
 
     const canCreateWorkspace = computed(() => {
         if (isSelfHosted.value) return true;
@@ -44,7 +54,10 @@ export const useFeatureAccess = () => {
     const canInviteMember = computed(() => {
         if (isSelfHosted.value) return true;
         if (!usage.value) return true;
-        return usage.value.memberCount + usage.value.pendingInviteCount < memberLimit.value;
+        return (
+            usage.value.memberCount + usage.value.pendingInviteCount <
+            memberLimit.value
+        );
     });
 
     const hasCreditsLeft = computed(() => {

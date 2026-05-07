@@ -4,7 +4,14 @@ import { computed } from 'vue';
 
 import { formatNumber } from '@/lib/utils';
 
-type Tone = 'violet' | 'amber' | 'emerald' | 'sky' | 'rose' | 'fuchsia' | 'cyan';
+type Tone =
+    | 'violet'
+    | 'amber'
+    | 'emerald'
+    | 'sky'
+    | 'rose'
+    | 'fuchsia'
+    | 'cyan';
 type Rotate = '-rotate-2' | '-rotate-1' | 'rotate-1' | 'rotate-2';
 
 interface Props {
@@ -34,7 +41,7 @@ const TONE_BG: Record<Tone, string> = {
 const hasLimit = computed(() => props.limit !== undefined);
 
 const percentage = computed(() => {
-    if (! hasLimit.value || props.limit === 0) {
+    if (!hasLimit.value || props.limit === 0) {
         return 0;
     }
     return Math.min(100, (props.current / (props.limit as number)) * 100);
@@ -46,9 +53,13 @@ const isOverLimit = computed(
 </script>
 
 <template>
-    <div class="space-y-4 rounded-xl border-2 border-foreground bg-card p-5 shadow-2xs">
+    <div
+        class="space-y-4 rounded-xl border-2 border-foreground bg-card p-5 shadow-2xs"
+    >
         <div class="flex items-start justify-between gap-3">
-            <p class="text-[11px] font-black uppercase tracking-widest text-foreground/60">
+            <p
+                class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
+            >
                 {{ label }}
             </p>
             <span
@@ -58,7 +69,11 @@ const isOverLimit = computed(
                     rotate,
                 ]"
             >
-                <component :is="icon" class="size-5 text-foreground" stroke-width="2" />
+                <component
+                    :is="icon"
+                    class="size-5 text-foreground"
+                    stroke-width="2"
+                />
             </span>
         </div>
 
@@ -67,8 +82,12 @@ const isOverLimit = computed(
                 <span
                     class="text-3xl font-bold tracking-tight"
                     :class="isOverLimit ? 'text-rose-600' : 'text-foreground'"
-                >{{ formatNumber(current) }}</span>
-                <span v-if="hasLimit" class="text-base font-bold text-foreground/40">
+                    >{{ formatNumber(current) }}</span
+                >
+                <span
+                    v-if="hasLimit"
+                    class="text-base font-bold text-foreground/40"
+                >
                     / {{ formatNumber(limit as number) }}
                 </span>
             </p>

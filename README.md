@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/images/trypost/logo-dark.png" alt="TryPost" width="200">
+  <img src="public/images/postpro/logo-dark.png" alt="PostPro" width="200">
 </p>
 
 <p align="center">
@@ -12,24 +12,24 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/trypost-it/trypost/stargazers"><img src="https://img.shields.io/github/stars/trypost-it/trypost?style=flat-square&color=4f46e5" alt="Stars"></a>
-  <a href="https://github.com/trypost-it/trypost/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-AGPL--3.0-4f46e5?style=flat-square" alt="License"></a>
-  <a href="https://github.com/trypost-it/trypost/releases"><img src="https://img.shields.io/github/v/release/trypost-it/trypost?style=flat-square&color=4f46e5" alt="Release"></a>
-  <a href="https://github.com/trypost-it/trypost/discussions"><img src="https://img.shields.io/github/discussions/trypost-it/trypost?style=flat-square&color=4f46e5" alt="Discussions"></a>
+  <a href="https://github.com/postpro-it/postpro/stargazers"><img src="https://img.shields.io/github/stars/postpro-it/postpro?style=flat-square&color=4f46e5" alt="Stars"></a>
+  <a href="https://github.com/postpro-it/postpro/blob/main/LICENSE.md"><img src="https://img.shields.io/badge/license-AGPL--3.0-4f46e5?style=flat-square" alt="License"></a>
+  <a href="https://github.com/postpro-it/postpro/releases"><img src="https://img.shields.io/github/v/release/postpro-it/postpro?style=flat-square&color=4f46e5" alt="Release"></a>
+  <a href="https://github.com/postpro-it/postpro/discussions"><img src="https://img.shields.io/github/discussions/postpro-it/postpro?style=flat-square&color=4f46e5" alt="Discussions"></a>
 </p>
 
 <p align="center">
-  <a href="https://trypost.it">Cloud</a> &bull;
-  <a href="https://trypost.it/docs">Documentation</a> &bull;
-  <a href="https://github.com/orgs/trypost-it/projects/1">Roadmap</a> &bull;
-  <a href="https://github.com/trypost-it/trypost/discussions">Community</a>
+  <a href="https://postpro.it">Cloud</a> &bull;
+  <a href="https://postpro.it/docs">Documentation</a> &bull;
+  <a href="https://github.com/orgs/postpro-it/projects/1">Roadmap</a> &bull;
+  <a href="https://github.com/postpro-it/postpro/discussions">Community</a>
 </p>
 
 ---
 
-## TryPost 1.0 is here
+## PostPro 1.0 is here
 
-A massive release that turns TryPost into a complete open-source social media platform.
+A massive release that turns PostPro into a complete open-source social media platform.
 
 - **MCP Server** — connect Claude, Cursor, ChatGPT, and any MCP client. Schedule, publish, and pull metrics with natural language.
 - **REST API** — Personal Access Tokens, every workflow you can do in the dashboard, available over HTTP.
@@ -38,11 +38,11 @@ A massive release that turns TryPost into a complete open-source social media pl
 - **Brand Profile** — set tone, voice, language, and colors once. Every AI generation respects them automatically.
 - **Analytics** — per-account engagement metrics from every platform that exposes them, in a single dashboard.
 
-Read the [release notes &rarr;](https://github.com/trypost-it/trypost/releases/latest)
+Read the [release notes &rarr;](https://github.com/postpro-it/postpro/releases/latest)
 
 ---
 
-## Why TryPost
+## Why PostPro
 
 Tired of paying $30–$200/month per user for a scheduler? Tired of your content sitting on someone else's database?
 
@@ -95,15 +95,15 @@ Tired of paying $30–$200/month per user for a scheduler? Tired of your content
 
 | | |
 | --- | --- |
-| **Try it on Cloud** | The fastest way. [Sign up at trypost.it](https://trypost.it) |
-| **Self-host** | Free forever. [Installation guide &rarr;](https://trypost.it/docs/getting-started/installation) |
-| **Run with AI assistants** | [Connect Claude / Cursor / ChatGPT via MCP &rarr;](https://trypost.it/docs/mcp) |
+| **Try it on Cloud** | The fastest way. [Sign up at postpro.it](https://postpro.it) |
+| **Self-host** | Free forever. [Installation guide &rarr;](https://postpro.it/docs/getting-started/installation) |
+| **Run with AI assistants** | [Connect Claude / Cursor / ChatGPT via MCP &rarr;](https://postpro.it/docs/mcp) |
 
 ## Contributing
 
-We love contributions, no matter how small. Pick an [issue](https://github.com/trypost-it/trypost/issues), say hi in [Discussions](https://github.com/trypost-it/trypost/discussions), or just open a PR with what you'd like to see.
+We love contributions, no matter how small. Pick an [issue](https://github.com/postpro-it/postpro/issues), say hi in [Discussions](https://github.com/postpro-it/postpro/discussions), or just open a PR with what you'd like to see.
 
-If TryPost is useful to you, **a star helps more people find it.** That's the most valuable contribution if you're short on time.
+If PostPro is useful to you, **a star helps more people find it.** That's the most valuable contribution if you're short on time.
 
 ## License
 
@@ -112,5 +112,6 @@ If TryPost is useful to you, **a star helps more people find it.** That's the mo
 ---
 
 <p align="center">
-  Built openly by the community. <a href="https://github.com/trypost-it/trypost/stargazers">Star us on GitHub</a> and tell a friend.
+  Built openly by the community. <a href="https://github.com/postpro-it/postpro/stargazers">Star us on GitHub</a> and tell a friend.
 </p>
+

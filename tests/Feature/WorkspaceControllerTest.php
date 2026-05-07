@@ -61,7 +61,7 @@ test('create workspace shows form for user with no workspaces', function () {
 });
 
 test('create workspace shows form when user already has workspace in self-hosted mode', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $response = $this->actingAs($this->user)->get(route('app.workspaces.create'));
 
@@ -96,7 +96,7 @@ test('store workspace creates first workspace', function () {
 });
 
 test('store workspace creates second workspace in self-hosted mode', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $response = $this->actingAs($this->user)->post(route('app.workspaces.store'), [
         'name' => 'Second Workspace',
@@ -484,3 +484,4 @@ test('store attaches logo when logo_url is provided', function () {
         'logo_url' => 'https://example.com/logo.png',
     ])->assertRedirect();
 });
+

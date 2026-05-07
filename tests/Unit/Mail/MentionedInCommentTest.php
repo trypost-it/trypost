@@ -30,7 +30,7 @@ beforeEach(function () {
 test('subject is localized with author name', function () {
     $mail = new MentionedInComment($this->comment, $this->author, 'short excerpt');
 
-    expect($mail->envelope()->subject)->toBe('Alice Author mentioned you on TryPost');
+    expect($mail->envelope()->subject)->toBe('Alice Author mentioned you on postpro');
 });
 
 test('content view + payload + url include the comment context', function () {
@@ -65,3 +65,4 @@ test('blade view renders without error', function () {
     expect($rendered)->toContain('Alice Author');
     expect($rendered)->toContain('short excerpt');
 });
+

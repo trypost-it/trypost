@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
-use App\Mcp\Servers\TryPostServer;
+use App\Mcp\Servers\postproServer;
 use App\Mcp\Tools\Post\CreatePostTool;
 use App\Mcp\Tools\Post\DeletePostTool;
 use App\Mcp\Tools\Post\GetPostTool;
@@ -34,7 +34,7 @@ test('list posts returns wrapped posts array with PostResource shape', function 
         'user_id' => $this->user->id,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListPostsTool::class, []);
 
     $response->assertOk()
@@ -53,7 +53,7 @@ test('list posts only returns own workspace posts', function () {
     $otherWorkspace = Workspace::factory()->create();
     Post::factory()->create(['workspace_id' => $otherWorkspace->id, 'user_id' => $this->user->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListPostsTool::class, []);
 
     $response->assertOk()
@@ -69,7 +69,7 @@ test('get post returns PostResource shape', function () {
         'content' => 'Hello world',
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(GetPostTool::class, ['post_id' => $post->id]);
 
     $response->assertOk()
@@ -86,14 +86,14 @@ test('get post 404 from another workspace', function () {
     $otherWorkspace = Workspace::factory()->create();
     $post = Post::factory()->create(['workspace_id' => $otherWorkspace->id, 'user_id' => $this->user->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(GetPostTool::class, ['post_id' => $post->id]);
 
     $response->assertHasErrors(['Post not found.']);
 });
 
 test('create post with content and date', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreatePostTool::class, [
             'content' => 'My new post',
             'scheduled_at' => '2099-12-31T15:30:00Z',
@@ -111,7 +111,7 @@ test('create post with content and date', function () {
 });
 
 test('create post with platforms enables only those', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreatePostTool::class, [
             'content' => 'with platforms',
             'platforms' => [
@@ -129,7 +129,7 @@ test('create post with platforms enables only those', function () {
 });
 
 test('create post without args creates empty draft for today', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreatePostTool::class, []);
 
     $response->assertOk()
@@ -143,7 +143,7 @@ test('create post without args creates empty draft for today', function () {
 });
 
 test('create post rejects scheduled_at in the past', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreatePostTool::class, ['scheduled_at' => '2020-01-01T00:00:00Z']);
 
     $response->assertHasErrors();
@@ -156,7 +156,7 @@ test('create post rejects an inactive social account', function () {
         'is_active' => false,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreatePostTool::class, [
             'platforms' => [
                 ['social_account_id' => $inactive->id, 'content_type' => 'linkedin_post'],
@@ -167,7 +167,7 @@ test('create post rejects an inactive social account', function () {
 });
 
 test('create post rejects a content_type not in the enum', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreatePostTool::class, [
             'platforms' => [
                 ['social_account_id' => $this->socialAccount->id, 'content_type' => 'made_up_type'],
@@ -179,7 +179,7 @@ test('create post rejects a content_type not in the enum', function () {
 
 test('create post rejects a content_type that does not match the social account platform', function () {
     // x_post on a LinkedIn account — ContentTypeMatchesPlatform should reject.
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreatePostTool::class, [
             'platforms' => [
                 ['social_account_id' => $this->socialAccount->id, 'content_type' => 'x_post'],
@@ -193,7 +193,7 @@ test('create post rejects a label_id from another workspace', function () {
     $otherWorkspace = Workspace::factory()->create();
     $foreignLabel = WorkspaceLabel::factory()->create(['workspace_id' => $otherWorkspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreatePostTool::class, [
             'platforms' => [
                 ['social_account_id' => $this->socialAccount->id, 'content_type' => 'linkedin_post'],
@@ -210,7 +210,7 @@ test('delete post removes from db', function () {
         'user_id' => $this->user->id,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeletePostTool::class, ['post_id' => $post->id]);
 
     $response->assertOk()
@@ -223,22 +223,23 @@ test('delete post 404 from another workspace', function () {
     $otherWorkspace = Workspace::factory()->create();
     $post = Post::factory()->create(['workspace_id' => $otherWorkspace->id, 'user_id' => $this->user->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeletePostTool::class, ['post_id' => $post->id]);
 
     $response->assertHasErrors(['Post not found.']);
 });
 
 test('get post validates post_id required', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(GetPostTool::class, []);
 
     $response->assertHasErrors();
 });
 
 test('delete post validates post_id required', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeletePostTool::class, []);
 
     $response->assertHasErrors();
 });
+

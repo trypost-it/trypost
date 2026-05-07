@@ -10,9 +10,9 @@ import LinkedInPageAnalytics from '@/components/analytics/LinkedInPageAnalytics.
 import PinterestAnalytics from '@/components/analytics/PinterestAnalytics.vue';
 import ThreadsAnalytics from '@/components/analytics/ThreadsAnalytics.vue';
 import TikTokAnalytics from '@/components/analytics/TikTokAnalytics.vue';
+import type { AnalyticsAccount } from '@/components/analytics/types';
 import XAnalytics from '@/components/analytics/XAnalytics.vue';
 import YouTubeAnalytics from '@/components/analytics/YouTubeAnalytics.vue';
-import type { AnalyticsAccount } from '@/components/analytics/types';
 import PageHeader from '@/components/PageHeader.vue';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import dayjs from '@/dayjs';
@@ -35,7 +35,16 @@ const selectedAccount = computed(() =>
 
 const platformSupportsDateRange = computed(() => {
     if (!selectedAccount.value) return false;
-    return ['instagram', 'instagram-facebook', 'facebook', 'youtube', 'pinterest', 'threads', 'x', 'linkedin-page'].includes(selectedAccount.value.platform);
+    return [
+        'instagram',
+        'instagram-facebook',
+        'facebook',
+        'youtube',
+        'pinterest',
+        'threads',
+        'x',
+        'linkedin-page',
+    ].includes(selectedAccount.value.platform);
 });
 </script>
 
@@ -43,7 +52,9 @@ const platformSupportsDateRange = computed(() => {
     <AppLayout>
         <Head :title="trans('sidebar.analytics')" />
 
-        <div class="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 px-6 py-8">
+        <div
+            class="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 px-6 py-8"
+        >
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <PageHeader :title="$t('sidebar.analytics')" />
                 <div class="flex flex-wrap items-center gap-3">
@@ -60,11 +71,17 @@ const platformSupportsDateRange = computed(() => {
                 </div>
             </div>
 
-            <div v-if="accounts.length === 0" class="flex flex-1 items-center justify-center text-sm font-medium text-foreground/60">
+            <div
+                v-if="accounts.length === 0"
+                class="flex flex-1 items-center justify-center text-sm font-medium text-foreground/60"
+            >
                 {{ $t('analytics.no_accounts') }}
             </div>
 
-            <div v-else-if="!selectedAccountId" class="flex flex-1 items-center justify-center text-sm font-medium text-foreground/60">
+            <div
+                v-else-if="!selectedAccountId"
+                class="flex flex-1 items-center justify-center text-sm font-medium text-foreground/60"
+            >
                 {{ $t('analytics.select_account') }}
             </div>
 
@@ -74,7 +91,10 @@ const platformSupportsDateRange = computed(() => {
             />
 
             <InstagramAnalytics
-                v-else-if="selectedAccount?.platform === 'instagram' || selectedAccount?.platform === 'instagram-facebook'"
+                v-else-if="
+                    selectedAccount?.platform === 'instagram' ||
+                    selectedAccount?.platform === 'instagram-facebook'
+                "
                 :account-id="selectedAccountId"
                 :date-range="dateRange"
             />
@@ -115,7 +135,10 @@ const platformSupportsDateRange = computed(() => {
                 :date-range="dateRange"
             />
 
-            <div v-else class="flex flex-1 items-center justify-center text-sm font-medium text-foreground/60">
+            <div
+                v-else
+                class="flex flex-1 items-center justify-center text-sm font-medium text-foreground/60"
+            >
                 {{ $t('analytics.no_data') }}
             </div>
         </div>

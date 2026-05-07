@@ -30,7 +30,7 @@ test('subscribe requires authentication', function () {
 });
 
 test('subscribe shows subscription page', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $response = $this->actingAs($this->user)->get(route('app.subscribe'));
 
@@ -43,7 +43,7 @@ test('subscribe shows subscription page', function () {
 });
 
 test('subscribe redirects to billing index when account has active subscription', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $this->account->subscriptions()->create([
         'type' => Account::SUBSCRIPTION_NAME,
@@ -58,7 +58,7 @@ test('subscribe redirects to billing index when account has active subscription'
 });
 
 test('subscribe redirects to calendar in self hosted mode', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $response = $this->actingAs($this->user)->get(route('app.subscribe'));
 
@@ -73,7 +73,7 @@ test('billing index requires authentication', function () {
 });
 
 test('billing index shows billing dashboard', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $this->account->subscriptions()->create([
         'type' => Account::SUBSCRIPTION_NAME,
@@ -94,7 +94,7 @@ test('billing index shows billing dashboard', function () {
 });
 
 test('billing index redirects to calendar in self hosted mode', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $response = $this->actingAs($this->user)->get(route('app.billing.index'));
 
@@ -109,7 +109,7 @@ test('billing processing requires authentication', function () {
 });
 
 test('billing processing shows processing page', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $response = $this->actingAs($this->user)->get(route('app.billing.processing'));
 
@@ -121,7 +121,7 @@ test('billing processing shows processing page', function () {
 });
 
 test('shared auth.plan exposes name slug and interval via AuthPlanResource', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $plan = Plan::where('slug', 'pro')->firstOrFail();
     $this->account->update(['plan_id' => $plan->id]);
@@ -137,7 +137,7 @@ test('shared auth.plan exposes name slug and interval via AuthPlanResource', fun
 });
 
 test('billing processing redirects to calendar in self hosted mode', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $response = $this->actingAs($this->user)->get(route('app.billing.processing'));
 
@@ -161,7 +161,7 @@ test('portal requires authentication', function () {
 
 // Authorization tests
 test('non-owner admin cannot access billing index', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $admin = User::factory()->create([
         'account_id' => $this->account->id,
@@ -180,7 +180,7 @@ test('non-owner admin cannot access billing index', function () {
 });
 
 test('member cannot access billing index', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $member = User::factory()->create([
         'account_id' => $this->account->id,
@@ -200,7 +200,7 @@ test('member cannot access billing index', function () {
 
 // Swap tests
 test('swap blocks downgrade when usage exceeds target plan limits', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $currentPlan = Plan::where('slug', 'plus')->first();
     $currentPlan->update([
@@ -245,7 +245,7 @@ test('swap blocks downgrade when usage exceeds target plan limits', function () 
 });
 
 test('swap rejects invalid price_id for plan', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $plan = Plan::where('slug', 'pro')->first();
     $plan->update([
@@ -276,3 +276,4 @@ test('swap requires authentication', function () {
 
     $response->assertRedirect(route('login'));
 });
+

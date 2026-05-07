@@ -11,7 +11,7 @@ interface FlashData {
  * memory; nothing reads it). Self-hosted instances without GTM_ID set
  * incur zero error noise.
  *
- * Billing is account-scoped (not workspace-scoped) in trypost, so the
+ * Billing is account-scoped (not workspace-scoped) in postpro, so the
  * plan/subscription fields are emitted under `account_*` keys.
  */
 export const initializeDataLayer = (

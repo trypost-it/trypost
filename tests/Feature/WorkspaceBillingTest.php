@@ -10,7 +10,7 @@ use App\Models\User;
 use App\Models\Workspace;
 
 beforeEach(function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $this->account = Account::factory()->create();
     $this->user = User::factory()->create([
@@ -26,13 +26,13 @@ beforeEach(function () {
 });
 
 test('account has active subscription in self hosted mode', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     expect($this->account->hasActiveSubscription())->toBeTrue();
 });
 
 test('account without subscription is not active in saas mode', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     expect($this->account->hasActiveSubscription())->toBeFalse();
 });
@@ -45,7 +45,7 @@ test('account belongs to plan', function () {
 });
 
 test('ensure subscribed middleware passes in self hosted mode', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $response = $this->actingAs($this->user)->get(route('app.calendar'));
 
@@ -53,7 +53,7 @@ test('ensure subscribed middleware passes in self hosted mode', function () {
 });
 
 test('ensure subscribed middleware redirects without subscription in saas mode', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $response = $this->actingAs($this->user)->get(route('app.calendar'));
 
@@ -61,7 +61,7 @@ test('ensure subscribed middleware redirects without subscription in saas mode',
 });
 
 test('billing page is accessible by account owner', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $this->account->subscriptions()->create([
         'type' => Account::SUBSCRIPTION_NAME,
@@ -76,7 +76,7 @@ test('billing page is accessible by account owner', function () {
 });
 
 test('billing page is not accessible by non-owner member', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $member = User::factory()->create([
         'account_id' => $this->account->id,
@@ -97,7 +97,7 @@ test('billing page is not accessible by non-owner member', function () {
 });
 
 test('subscribe page shows plans', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $activePlanCount = Plan::active()->count();
 
@@ -120,7 +120,7 @@ test('stripe name returns account name', function () {
 });
 
 test('create workspace is blocked when account hits plan limit in saas mode', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $starter = Plan::where('slug', PlanSlug::Starter)->first();
     $this->account->update(['plan_id' => $starter->id]);
@@ -141,7 +141,7 @@ test('create workspace is blocked when account hits plan limit in saas mode', fu
 });
 
 test('create workspace is allowed when below plan limit in saas mode', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $pro = Plan::where('slug', PlanSlug::Pro)->first();
     $this->account->update(['plan_id' => $pro->id]);
@@ -159,7 +159,7 @@ test('create workspace is allowed when below plan limit in saas mode', function 
 });
 
 test('store workspace is blocked when account hits plan limit in saas mode', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $starter = Plan::where('slug', PlanSlug::Starter)->first();
     $this->account->update(['plan_id' => $starter->id]);
@@ -179,7 +179,7 @@ test('store workspace is blocked when account hits plan limit in saas mode', fun
 });
 
 test('workspace limit is bypassed in self-hosted mode', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $starter = Plan::where('slug', PlanSlug::Starter)->first();
     $this->account->update(['plan_id' => $starter->id]);
@@ -189,3 +189,4 @@ test('workspace limit is bypassed in self-hosted mode', function () {
 
     $response->assertOk();
 });
+

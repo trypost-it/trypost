@@ -15,7 +15,11 @@ defineProps<{
         <div
             class="inline-flex size-16 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs"
         >
-            <component :is="icon" class="size-8 text-foreground" stroke-width="1.75" />
+            <component
+                :is="icon"
+                class="size-8 text-foreground"
+                stroke-width="1.75"
+            />
         </div>
         <div class="space-y-1">
             <h3

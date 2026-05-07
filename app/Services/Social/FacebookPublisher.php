@@ -19,7 +19,7 @@ class FacebookPublisher
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.facebook.graph_api');
+        $this->baseUrl = config('postpro.platforms.facebook.graph_api');
     }
 
     public function publish(PostPlatform $postPlatform): array
@@ -359,3 +359,4 @@ class FacebookPublisher
         throw FacebookPublishException::fromApiResponse($response);
     }
 }
+

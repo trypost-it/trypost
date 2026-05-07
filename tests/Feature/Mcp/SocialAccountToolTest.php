@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
-use App\Mcp\Servers\TryPostServer;
+use App\Mcp\Servers\postproServer;
 use App\Mcp\Tools\SocialAccount\ListSocialAccountsTool;
 use App\Mcp\Tools\SocialAccount\ToggleSocialAccountTool;
 use App\Models\SocialAccount;
@@ -29,7 +29,7 @@ test('list returns wrapped social_accounts array with SocialAccountResource shap
         'platform' => Platform::X,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListSocialAccountsTool::class, []);
 
     $response->assertOk()
@@ -55,7 +55,7 @@ test('list only returns own workspace accounts', function () {
         'platform' => Platform::X,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListSocialAccountsTool::class, []);
 
     $response->assertOk()
@@ -71,7 +71,7 @@ test('list never exposes access_token or refresh_token', function () {
         'access_token' => 'secret-token-123',
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListSocialAccountsTool::class, []);
 
     $response->assertOk();
@@ -85,7 +85,7 @@ test('toggle returns updated SocialAccountResource', function () {
         'is_active' => true,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ToggleSocialAccountTool::class, ['account_id' => $account->id]);
 
     $response->assertOk()
@@ -106,7 +106,7 @@ test('toggle inactive account becomes active', function () {
         'is_active' => false,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ToggleSocialAccountTool::class, ['account_id' => $account->id]);
 
     $response->assertOk();
@@ -120,22 +120,23 @@ test('cannot toggle account from another workspace', function () {
         'platform' => Platform::LinkedIn,
     ]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ToggleSocialAccountTool::class, ['account_id' => $account->id]);
 
     $response->assertHasErrors(['Social account not found.']);
 });
 
 test('toggle validates account_id required', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ToggleSocialAccountTool::class, []);
 
     $response->assertHasErrors();
 });
 
 test('toggle validates account_id is uuid', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ToggleSocialAccountTool::class, ['account_id' => 'not-a-uuid']);
 
     $response->assertHasErrors();
 });
+

@@ -24,7 +24,7 @@ class PinterestPublisher
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.pinterest.api');
+        $this->baseUrl = config('postpro.platforms.pinterest.api');
     }
 
     public function publish(PostPlatform $postPlatform): array
@@ -454,3 +454,4 @@ class PinterestPublisher
         throw PinterestPublishException::fromApiResponse($response);
     }
 }
+

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 test('login page shares github auth enabled prop as false when disabled', function () {
-    config(['trypost.github_auth_enabled' => false]);
+    config(['postpro.github_auth_enabled' => false]);
 
     $response = $this->get(route('login'));
 
@@ -14,7 +14,7 @@ test('login page shares github auth enabled prop as false when disabled', functi
 });
 
 test('login page shares github auth enabled prop as true when enabled', function () {
-    config(['trypost.github_auth_enabled' => true]);
+    config(['postpro.github_auth_enabled' => true]);
 
     $response = $this->get(route('login'));
 
@@ -25,7 +25,7 @@ test('login page shares github auth enabled prop as true when enabled', function
 });
 
 test('register page shares github auth enabled prop', function () {
-    config(['trypost.github_auth_enabled' => true]);
+    config(['postpro.github_auth_enabled' => true]);
 
     $response = $this->get(route('register'));
 
@@ -38,7 +38,7 @@ test('register page shares github auth enabled prop', function () {
 test('github auth redirect route exists', function () {
     config(['services.github.client_id' => 'test-id']);
     config(['services.github.client_secret' => 'test-secret']);
-    config(['services.github.redirect' => 'https://app.trypost.test/auth/github/callback']);
+    config(['services.github.redirect' => 'https://app.postpro.test/auth/github/callback']);
 
     $response = $this->get(route('auth.github.redirect'));
 
@@ -52,3 +52,4 @@ test('github auth callback route exists', function () {
     // Should redirect to login on failure (no OAuth code), not 404
     $response->assertRedirect(route('login'));
 });
+

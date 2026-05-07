@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\UserWorkspace\Role;
-use App\Mcp\Servers\TryPostServer;
+use App\Mcp\Servers\postproServer;
 use App\Mcp\Tools\Label\CreateLabelTool;
 use App\Mcp\Tools\Label\DeleteLabelTool;
 use App\Mcp\Tools\Label\ListLabelsTool;
@@ -23,7 +23,7 @@ beforeEach(function () {
 test('list labels returns wrapped labels array with LabelResource shape', function () {
     WorkspaceLabel::factory()->count(2)->create(['workspace_id' => $this->workspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListLabelsTool::class, []);
 
     $response->assertOk()
@@ -40,7 +40,7 @@ test('list labels only returns own workspace labels', function () {
     $otherWorkspace = Workspace::factory()->create();
     WorkspaceLabel::factory()->create(['workspace_id' => $otherWorkspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListLabelsTool::class, []);
 
     $response->assertOk()
@@ -50,7 +50,7 @@ test('list labels only returns own workspace labels', function () {
 });
 
 test('create label returns LabelResource shape', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreateLabelTool::class, [
             'name' => 'Important',
             'color' => '#FF0000',
@@ -68,14 +68,14 @@ test('create label returns LabelResource shape', function () {
 });
 
 test('create label validates required fields', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreateLabelTool::class, []);
 
     $response->assertHasErrors();
 });
 
 test('create label validates color format', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreateLabelTool::class, [
             'name' => 'Test',
             'color' => 'not-a-color',
@@ -87,7 +87,7 @@ test('create label validates color format', function () {
 test('update label returns updated LabelResource', function () {
     $label = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdateLabelTool::class, [
             'label_id' => $label->id,
             'name' => 'Updated',
@@ -106,7 +106,7 @@ test('cannot update label from another workspace', function () {
     $otherWorkspace = Workspace::factory()->create();
     $label = WorkspaceLabel::factory()->create(['workspace_id' => $otherWorkspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdateLabelTool::class, [
             'label_id' => $label->id,
             'name' => 'Hacked',
@@ -119,7 +119,7 @@ test('cannot update label from another workspace', function () {
 test('delete label removes from db', function () {
     $label = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeleteLabelTool::class, ['label_id' => $label->id]);
 
     $response->assertOk()
@@ -132,22 +132,23 @@ test('cannot delete label from another workspace', function () {
     $otherWorkspace = Workspace::factory()->create();
     $label = WorkspaceLabel::factory()->create(['workspace_id' => $otherWorkspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeleteLabelTool::class, ['label_id' => $label->id]);
 
     $response->assertHasErrors(['Label not found.']);
 });
 
 test('update label validates required fields', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdateLabelTool::class, []);
 
     $response->assertHasErrors();
 });
 
 test('delete label validates label_id required', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeleteLabelTool::class, []);
 
     $response->assertHasErrors();
 });
+

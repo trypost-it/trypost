@@ -30,26 +30,26 @@ const { isMobile } = useSidebar();
         <SidebarMenuItem>
             <div class="flex items-center gap-1">
                 <NotificationBell v-if="currentWorkspace" />
-            <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                    <SidebarMenuButton
-                        size="lg"
-                        class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                        data-test="sidebar-menu-button"
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <SidebarMenuButton
+                            size="lg"
+                            class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                            data-test="sidebar-menu-button"
+                        >
+                            <UserInfo :user="user" />
+                            <IconChevronRight class="ml-auto size-4" />
+                        </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                        class="w-(--reka-dropdown-menu-trigger-width) min-w-56"
+                        :side="isMobile ? 'bottom' : 'right'"
+                        align="end"
+                        :side-offset="4"
                     >
-                        <UserInfo :user="user" />
-                        <IconChevronRight class="ml-auto size-4" />
-                    </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                    class="w-(--reka-dropdown-menu-trigger-width) min-w-56"
-                    :side="isMobile ? 'bottom' : 'right'"
-                    align="end"
-                    :side-offset="4"
-                >
-                    <UserMenuContent :user="user" />
-                </DropdownMenuContent>
-            </DropdownMenu>
+                        <UserMenuContent :user="user" />
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </SidebarMenuItem>
     </SidebarMenu>

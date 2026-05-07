@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\UserWorkspace\Role;
-use App\Mcp\Servers\TryPostServer;
+use App\Mcp\Servers\postproServer;
 use App\Mcp\Tools\ApiKey\CreateApiKeyTool;
 use App\Mcp\Tools\ApiKey\DeleteApiKeyTool;
 use App\Mcp\Tools\ApiKey\ListApiKeysTool;
@@ -36,7 +36,7 @@ test('list api keys returns wrapped api_keys array with ApiKeyResource shape', f
     attachToken($this->user, $this->workspace);
     attachToken($this->user, $this->workspace);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListApiKeysTool::class, []);
 
     $response->assertOk()
@@ -61,7 +61,7 @@ test('list api keys excludes OAuth tokens (workspace_id null)', function () {
         ->forceFill(['workspace_id' => null])
         ->saveQuietly();
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListApiKeysTool::class, []);
 
     $response->assertOk()
@@ -71,7 +71,7 @@ test('list api keys excludes OAuth tokens (workspace_id null)', function () {
 });
 
 test('create api key returns plain token only at creation', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreateApiKeyTool::class, ['name' => 'My Key']);
 
     $response->assertOk()
@@ -88,14 +88,14 @@ test('create api key returns plain token only at creation', function () {
 });
 
 test('create api key validates name required', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreateApiKeyTool::class, []);
 
     $response->assertHasErrors();
 });
 
 test('create api key rejects expires_at in the past', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreateApiKeyTool::class, [
             'name' => 'Past Key',
             'expires_at' => '2020-01-01',
@@ -107,7 +107,7 @@ test('create api key rejects expires_at in the past', function () {
 test('delete api key marks revoked', function () {
     $token = attachToken($this->user, $this->workspace);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeleteApiKeyTool::class, ['api_key_id' => $token->id]);
 
     $response->assertOk()
@@ -124,7 +124,7 @@ test('cannot delete api key from another user', function () {
     ]);
     $token = attachToken($otherUser, $otherWorkspace);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeleteApiKeyTool::class, ['api_key_id' => $token->id]);
 
     $response->assertHasErrors(['API key not found.']);
@@ -136,7 +136,7 @@ test('cannot delete OAuth-flow token through this tool', function () {
     $oauthToken = AccessToken::find($oauthResult->token->id);
     $oauthToken->forceFill(['workspace_id' => null])->saveQuietly();
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeleteApiKeyTool::class, ['api_key_id' => $oauthToken->id]);
 
     $response->assertHasErrors(['API key not found.']);
@@ -144,8 +144,9 @@ test('cannot delete OAuth-flow token through this tool', function () {
 });
 
 test('delete api key validates api_key_id required', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeleteApiKeyTool::class, []);
 
     $response->assertHasErrors();
 });
+

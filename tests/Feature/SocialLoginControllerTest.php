@@ -10,7 +10,7 @@ beforeEach(function () {
     config([
         'services.google-auth.client_id' => 'test-client-id',
         'services.google-auth.client_secret' => 'test-client-secret',
-        'services.google-auth.redirect' => 'https://app.trypost.test/auth/google/callback',
+        'services.google-auth.redirect' => 'https://app.postpro.test/auth/google/callback',
     ]);
 });
 
@@ -93,3 +93,4 @@ test('google callback marks unverified existing user as verified', function () {
 
     expect($user->fresh()->email_verified_at)->not->toBeNull();
 });
+

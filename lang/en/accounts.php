@@ -6,7 +6,7 @@ return [
     'description' => 'Overview of all your connected social accounts',
     'add_social' => 'Add Social',
     'add_social_title' => 'Connect a Social Account',
-    'add_social_description' => 'Connect a social account to TryPost to start posting',
+    'add_social_description' => 'Connect a social account to postpro to start posting',
     'connect_cta' => 'Connect',
     'no_accounts' => 'No accounts connected yet',
     'no_accounts_description' => 'Connect your social networks to start scheduling and publishing posts',
@@ -139,3 +139,4 @@ return [
         'not_linkedin_admin' => 'You are not an administrator of any LinkedIn page.',
     ],
 ];
+

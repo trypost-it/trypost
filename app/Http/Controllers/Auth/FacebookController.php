@@ -78,7 +78,7 @@ class FacebookController extends SocialController
 
             // Trigger public_profile and pages_show_list API calls
             // These calls are needed for Meta app review permission verification
-            Http::get(config('trypost.platforms.facebook.graph_api').'/me', [
+            Http::get(config('postpro.platforms.facebook.graph_api').'/me', [
                 'fields' => 'id,name',
                 'access_token' => $socialUser->token,
             ]);
@@ -269,7 +269,7 @@ class FacebookController extends SocialController
     private function fetchPages(string $userToken): array
     {
         try {
-            $response = Http::get(config('trypost.platforms.facebook.graph_api').'/me/accounts', [
+            $response = Http::get(config('postpro.platforms.facebook.graph_api').'/me/accounts', [
                 'access_token' => $userToken,
                 'fields' => 'id,name,username,picture{url},access_token',
             ]);
@@ -303,6 +303,7 @@ class FacebookController extends SocialController
 
     private function graphVersion(): string
     {
-        return basename((string) parse_url((string) config('trypost.platforms.facebook.graph_api'), PHP_URL_PATH));
+        return basename((string) parse_url((string) config('postpro.platforms.facebook.graph_api'), PHP_URL_PATH));
     }
 }
+

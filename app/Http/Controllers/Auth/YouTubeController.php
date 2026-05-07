@@ -279,7 +279,7 @@ class YouTubeController extends SocialController
     {
         try {
             $response = Http::withToken($accessToken)
-                ->get(config('trypost.platforms.youtube.data_api').'/channels', [
+                ->get(config('postpro.platforms.youtube.data_api').'/channels', [
                     'part' => 'snippet,contentDetails,statistics',
                     'mine' => 'true',
                 ]);
@@ -312,3 +312,4 @@ class YouTubeController extends SocialController
         }
     }
 }
+

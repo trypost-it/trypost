@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { IconAlertTriangle, IconChevronDown, IconChevronUp } from '@tabler/icons-vue';
+import {
+    IconAlertTriangle,
+    IconChevronDown,
+    IconChevronUp,
+} from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
 import { Avatar } from '@/components/ui/avatar';
-import { getMediaValidationWarning, type MediaItem } from '@/composables/useMedia';
+import {
+    getMediaValidationWarning,
+    type MediaItem,
+} from '@/composables/useMedia';
 import { getPlatformLogo } from '@/composables/usePlatformLogo';
 
 interface SocialAccount {
@@ -42,7 +49,9 @@ const pickVariant = (value: string) => {
     emit('update:contentType', value);
 };
 
-const warning = computed(() => getMediaValidationWarning(props.contentType, props.media));
+const warning = computed(() =>
+    getMediaValidationWarning(props.contentType, props.media),
+);
 </script>
 
 <template>
@@ -53,43 +62,83 @@ const warning = computed(() => getMediaValidationWarning(props.contentType, prop
             @click="open = !open"
         >
             <span class="flex min-w-0 items-center gap-2">
-                <span class="inline-flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
-                    <img :src="getPlatformLogo('facebook')" alt="Facebook" class="size-full object-cover" />
+                <span
+                    class="inline-flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs"
+                >
+                    <img
+                        :src="getPlatformLogo('facebook')"
+                        alt="Facebook"
+                        class="size-full object-cover"
+                    />
                 </span>
-                <span class="truncate font-bold text-foreground">{{ $t('posts.form.facebook.settings') }}</span>
-                <span v-if="socialAccount?.username" class="truncate font-medium text-foreground/60">·&nbsp;@{{ socialAccount.username }}</span>
+                <span class="truncate font-bold text-foreground">{{
+                    $t('posts.form.facebook.settings')
+                }}</span>
+                <span
+                    v-if="socialAccount?.username"
+                    class="truncate font-medium text-foreground/60"
+                    >·&nbsp;@{{ socialAccount.username }}</span
+                >
             </span>
-            <IconChevronUp v-if="open" class="size-4 shrink-0 text-foreground/60" />
-            <IconChevronDown v-else class="size-4 shrink-0 text-foreground/60" />
+            <IconChevronUp
+                v-if="open"
+                class="size-4 shrink-0 text-foreground/60"
+            />
+            <IconChevronDown
+                v-else
+                class="size-4 shrink-0 text-foreground/60"
+            />
         </button>
 
-        <div v-if="open" class="space-y-5 border-t-2 border-foreground/10 px-4 pb-4 pt-4">
-            <div v-if="socialAccount" class="flex items-center gap-3 rounded-lg bg-foreground/5 p-3">
+        <div
+            v-if="open"
+            class="space-y-5 border-t-2 border-foreground/10 px-4 pt-4 pb-4"
+        >
+            <div
+                v-if="socialAccount"
+                class="flex items-center gap-3 rounded-lg bg-foreground/5 p-3"
+            >
                 <Avatar
                     :src="socialAccount.avatar_url"
                     :name="socialAccount.display_name"
                     class="size-9 shrink-0 rounded-full border-2 border-foreground shadow-2xs"
                 />
                 <div class="min-w-0 flex-1">
-                    <p class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.form.facebook.posting_to') }}</p>
+                    <p
+                        class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
+                    >
+                        {{ $t('posts.form.facebook.posting_to') }}
+                    </p>
                     <p class="truncate text-sm">
-                        <span class="font-bold text-foreground">{{ socialAccount.display_name }}</span>
-                        <span v-if="socialAccount?.username" class="font-medium text-foreground/60">&nbsp;@{{ socialAccount.username }}</span>
+                        <span class="font-bold text-foreground">{{
+                            socialAccount.display_name
+                        }}</span>
+                        <span
+                            v-if="socialAccount?.username"
+                            class="font-medium text-foreground/60"
+                            >&nbsp;@{{ socialAccount.username }}</span
+                        >
                     </p>
                 </div>
             </div>
 
             <div class="space-y-2">
-                <p class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.form.facebook.variant_label') }}</p>
+                <p
+                    class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
+                >
+                    {{ $t('posts.form.facebook.variant_label') }}
+                </p>
                 <div class="flex flex-wrap gap-2">
                     <button
                         v-for="variant in variants"
                         :key="variant.value"
                         type="button"
-                        class="cursor-pointer rounded-full border-2 px-3 py-1 text-xs font-bold uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-                        :class="contentType === variant.value
-                            ? 'border-foreground bg-violet-100 text-foreground shadow-2xs'
-                            : 'border-foreground/30 text-foreground/70 hover:border-foreground hover:text-foreground'"
+                        class="cursor-pointer rounded-full border-2 px-3 py-1 text-xs font-bold tracking-widest uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                        :class="
+                            contentType === variant.value
+                                ? 'border-foreground bg-violet-100 text-foreground shadow-2xs'
+                                : 'border-foreground/30 text-foreground/70 hover:border-foreground hover:text-foreground'
+                        "
                         :disabled="disabled"
                         @click="pickVariant(variant.value)"
                     >

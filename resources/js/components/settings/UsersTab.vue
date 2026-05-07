@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { IconClock, IconDots, IconShield, IconTrash, IconUser } from '@tabler/icons-vue';
+import {
+    IconClock,
+    IconDots,
+    IconShield,
+    IconTrash,
+    IconUser,
+} from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { ref } from 'vue';
 
@@ -48,8 +54,12 @@ defineProps<{
 }>();
 
 const inviteDialogOpen = ref(false);
-const removeMemberModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
-const cancelInvitationModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
+const removeMemberModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(
+    null,
+);
+const cancelInvitationModal = ref<InstanceType<
+    typeof ConfirmDeleteModal
+> | null>(null);
 
 const { canInviteMember } = useFeatureAccess();
 const { openUpgrade } = useUpgradeDialog();
@@ -84,8 +94,12 @@ const changeRole = (member: Member, role: string) => {
             <TableHeader>
                 <TableRow>
                     <TableHead>{{ $t('settings.workspace.name') }}</TableHead>
-                    <TableHead>{{ $t('settings.members.invite.email') }}</TableHead>
-                    <TableHead>{{ $t('settings.members.invite.role') }}</TableHead>
+                    <TableHead>{{
+                        $t('settings.members.invite.email')
+                    }}</TableHead>
+                    <TableHead>{{
+                        $t('settings.members.invite.role')
+                    }}</TableHead>
                     <TableHead class="w-10" />
                 </TableRow>
             </TableHeader>
@@ -94,35 +108,55 @@ const changeRole = (member: Member, role: string) => {
                     <TableCell>{{ member.name }}</TableCell>
                     <TableCell>{{ member.email }}</TableCell>
                     <TableCell>
-                        <Badge :variant="member.role === WorkspaceRole.Admin ? 'default' : 'secondary'">
+                        <Badge
+                            :variant="
+                                member.role === WorkspaceRole.Admin
+                                    ? 'default'
+                                    : 'secondary'
+                            "
+                        >
                             {{ member.role }}
                         </Badge>
                     </TableCell>
                     <TableCell>
                         <DropdownMenu>
                             <DropdownMenuTrigger as-child>
-                                <Button variant="outline" size="icon" class="size-8">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    class="size-8"
+                                >
                                     <IconDots class="size-4" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem
                                     v-if="member.role === WorkspaceRole.Member"
-                                    @click="changeRole(member, WorkspaceRole.Admin)"
+                                    @click="
+                                        changeRole(member, WorkspaceRole.Admin)
+                                    "
                                 >
                                     <IconShield class="size-4" />
                                     {{ $t('settings.members.make_admin') }}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     v-if="member.role === WorkspaceRole.Admin"
-                                    @click="changeRole(member, WorkspaceRole.Member)"
+                                    @click="
+                                        changeRole(member, WorkspaceRole.Member)
+                                    "
                                 >
                                     <IconUser class="size-4" />
                                     {{ $t('settings.members.make_member') }}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     variant="destructive"
-                                    @click="removeMemberModal?.open({ url: removeMemberRoute.url(member.id) })"
+                                    @click="
+                                        removeMemberModal?.open({
+                                            url: removeMemberRoute.url(
+                                                member.id,
+                                            ),
+                                        })
+                                    "
                                 >
                                     <IconTrash class="size-4" />
                                     {{ $t('settings.members.remove') }}
@@ -131,11 +165,16 @@ const changeRole = (member: Member, role: string) => {
                         </DropdownMenu>
                     </TableCell>
                 </TableRow>
-                <TableRow v-for="invitation in invitations" :key="`inv-${invitation.id}`">
+                <TableRow
+                    v-for="invitation in invitations"
+                    :key="`inv-${invitation.id}`"
+                >
                     <TableCell class="text-foreground/60">
                         <div class="flex items-center gap-2">
                             <IconClock class="size-4" />
-                            <span class="italic">{{ $t('settings.members.pending.title') }}</span>
+                            <span class="italic">{{
+                                $t('settings.members.pending.title')
+                            }}</span>
                         </div>
                     </TableCell>
                     <TableCell class="text-foreground/60">
@@ -151,8 +190,16 @@ const changeRole = (member: Member, role: string) => {
                             variant="outline"
                             size="icon"
                             class="size-8 bg-rose-100 hover:bg-rose-200"
-                            :aria-label="$t('settings.members.cancel_invite_modal.action')"
-                            @click="cancelInvitationModal?.open({ url: destroyInvite.url(invitation.id) })"
+                            :aria-label="
+                                $t(
+                                    'settings.members.cancel_invite_modal.action',
+                                )
+                            "
+                            @click="
+                                cancelInvitationModal?.open({
+                                    url: destroyInvite.url(invitation.id),
+                                })
+                            "
                         >
                             <IconTrash class="size-4 text-rose-700" />
                         </Button>
@@ -173,7 +220,9 @@ const changeRole = (member: Member, role: string) => {
         <ConfirmDeleteModal
             ref="cancelInvitationModal"
             :title="$t('settings.members.cancel_invite_modal.title')"
-            :description="$t('settings.members.cancel_invite_modal.description')"
+            :description="
+                $t('settings.members.cancel_invite_modal.description')
+            "
             :action="$t('settings.members.cancel_invite_modal.action')"
         />
     </div>

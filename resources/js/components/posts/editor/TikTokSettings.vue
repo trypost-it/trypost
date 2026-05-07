@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import { IconAlertTriangle, IconChevronDown, IconChevronUp } from '@tabler/icons-vue';
+import {
+    IconAlertTriangle,
+    IconChevronDown,
+    IconChevronUp,
+} from '@tabler/icons-vue';
 import { computed, ref, watch } from 'vue';
 
 import { Avatar } from '@/components/ui/avatar';
@@ -66,7 +70,7 @@ const privacyLevel = computed({
 });
 
 const autoAddMusic = computed({
-    get: () => (props.meta?.auto_add_music ?? false) ? 'yes' : 'no',
+    get: () => ((props.meta?.auto_add_music ?? false) ? 'yes' : 'no'),
     set: (value: string) => updateMeta({ auto_add_music: value === 'yes' }),
 });
 
@@ -98,7 +102,11 @@ const discloseOpen = computed({
             return;
         }
         // turning disclosure off clears its sub-toggles
-        updateMeta({ disclose: false, brand_organic_toggle: false, brand_content_toggle: false });
+        updateMeta({
+            disclose: false,
+            brand_organic_toggle: false,
+            brand_content_toggle: false,
+        });
     },
 });
 
@@ -115,7 +123,9 @@ const brandContentToggle = computed({
 // Prefer the creator_info API response; fall back to the static list from the Platform enum.
 const allPrivacyOptions = computed(() => {
     const fromApi = props.creatorInfo?.privacy_level_options ?? [];
-    return fromApi.length > 0 ? fromApi : props.publishConfig?.privacyLevelOptions ?? [];
+    return fromApi.length > 0
+        ? fromApi
+        : (props.publishConfig?.privacyLevelOptions ?? []);
 });
 
 // Branded content cannot be private (TikTok compliance).
@@ -125,14 +135,21 @@ const privacyOptions = computed(() =>
         : allPrivacyOptions.value,
 );
 
-const commentDisabled = computed(() => Boolean(props.creatorInfo?.comment_disabled));
+const commentDisabled = computed(() =>
+    Boolean(props.creatorInfo?.comment_disabled),
+);
 const duetDisabled = computed(() => Boolean(props.creatorInfo?.duet_disabled));
-const stitchDisabled = computed(() => Boolean(props.creatorInfo?.stitch_disabled));
+const stitchDisabled = computed(() =>
+    Boolean(props.creatorInfo?.stitch_disabled),
+);
 
 // Max video duration check (when creator_info is available and we have duration).
-const maxDurationSec = computed(() => props.creatorInfo?.max_video_post_duration_sec ?? null);
+const maxDurationSec = computed(
+    () => props.creatorInfo?.max_video_post_duration_sec ?? null,
+);
 const exceedsMaxDuration = computed(() => {
-    if (maxDurationSec.value === null || props.videoDurationSec === null) return false;
+    if (maxDurationSec.value === null || props.videoDurationSec === null)
+        return false;
     return props.videoDurationSec > maxDurationSec.value;
 });
 
@@ -143,12 +160,16 @@ const privacyLabelKey: Record<string, string> = {
     SELF_ONLY: 'posts.form.tiktok.privacy.private',
 };
 
-const hasAnyBrandToggle = computed(() => brandOrganicToggle.value || brandContentToggle.value);
+const hasAnyBrandToggle = computed(
+    () => brandOrganicToggle.value || brandContentToggle.value,
+);
 
 // Label required by TikTok: "Paid partnership" when branded content (with or without organic),
 // otherwise "Promotional content".
 const promotionalTitleKey = computed(() =>
-    brandContentToggle.value ? 'posts.form.tiktok.promotional_paid_title' : 'posts.form.tiktok.promotional_organic_title',
+    brandContentToggle.value
+        ? 'posts.form.tiktok.promotional_paid_title'
+        : 'posts.form.tiktok.promotional_organic_title',
 );
 
 // If user flips branded content ON while privacy is SELF_ONLY, clear it so they must re-pick.
@@ -161,7 +182,12 @@ watch(brandContentToggle, (value) => {
 // When creator_info reveals that an interaction is disabled for this account, force the meta
 // flag off so we never submit a disallowed value.
 watch(
-    () => [commentDisabled.value, duetDisabled.value, stitchDisabled.value] as const,
+    () =>
+        [
+            commentDisabled.value,
+            duetDisabled.value,
+            stitchDisabled.value,
+        ] as const,
     ([comment, duet, stitch]) => {
         const patch: Record<string, any> = {};
         if (comment && allowComments.value) patch.allow_comments = false;
@@ -180,89 +206,200 @@ watch(
             @click="open = !open"
         >
             <span class="flex min-w-0 items-center gap-2">
-                <span class="inline-flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs">
-                    <img :src="getPlatformLogo('tiktok')" alt="TikTok" class="size-full object-cover" />
+                <span
+                    class="inline-flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-foreground bg-card shadow-2xs"
+                >
+                    <img
+                        :src="getPlatformLogo('tiktok')"
+                        alt="TikTok"
+                        class="size-full object-cover"
+                    />
                 </span>
-                <span class="truncate font-bold text-foreground">{{ $t('posts.form.tiktok.settings') }}</span>
-                <span v-if="socialAccount?.username" class="truncate font-medium text-foreground/60">·&nbsp;@{{ socialAccount.username }}</span>
+                <span class="truncate font-bold text-foreground">{{
+                    $t('posts.form.tiktok.settings')
+                }}</span>
+                <span
+                    v-if="socialAccount?.username"
+                    class="truncate font-medium text-foreground/60"
+                    >·&nbsp;@{{ socialAccount.username }}</span
+                >
             </span>
-            <IconChevronUp v-if="open" class="size-4 shrink-0 text-foreground/60" />
-            <IconChevronDown v-else class="size-4 shrink-0 text-foreground/60" />
+            <IconChevronUp
+                v-if="open"
+                class="size-4 shrink-0 text-foreground/60"
+            />
+            <IconChevronDown
+                v-else
+                class="size-4 shrink-0 text-foreground/60"
+            />
         </button>
 
-        <div v-if="open" class="space-y-5 border-t-2 border-foreground/10 px-4 pb-4 pt-4">
-            <p v-if="creatorInfoLoading" class="flex items-center gap-2 text-xs font-medium text-foreground/60">
-                <span class="inline-block size-3 animate-pulse rounded-full bg-foreground/30" />
+        <div
+            v-if="open"
+            class="space-y-5 border-t-2 border-foreground/10 px-4 pt-4 pb-4"
+        >
+            <p
+                v-if="creatorInfoLoading"
+                class="flex items-center gap-2 text-xs font-medium text-foreground/60"
+            >
+                <span
+                    class="inline-block size-3 animate-pulse rounded-full bg-foreground/30"
+                />
                 {{ $t('posts.form.tiktok.creator_info_loading') }}
             </p>
 
             <!-- Creator identity -->
-            <div v-if="socialAccount" class="flex items-center gap-3 rounded-lg bg-foreground/5 p-3">
+            <div
+                v-if="socialAccount"
+                class="flex items-center gap-3 rounded-lg bg-foreground/5 p-3"
+            >
                 <Avatar
                     :src="socialAccount.avatar_url"
                     :name="socialAccount.display_name"
                     class="size-9 shrink-0 rounded-full border-2 border-foreground shadow-2xs"
                 />
                 <div class="min-w-0 flex-1">
-                    <p class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.form.tiktok.posting_to') }}</p>
+                    <p
+                        class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
+                    >
+                        {{ $t('posts.form.tiktok.posting_to') }}
+                    </p>
                     <p class="truncate text-sm">
-                        <span class="font-bold text-foreground">{{ socialAccount.display_name }}</span>
-                        <span v-if="socialAccount?.username" class="font-medium text-foreground/60">&nbsp;@{{ socialAccount.username }}</span>
+                        <span class="font-bold text-foreground">{{
+                            socialAccount.display_name
+                        }}</span>
+                        <span
+                            v-if="socialAccount?.username"
+                            class="font-medium text-foreground/60"
+                            >&nbsp;@{{ socialAccount.username }}</span
+                        >
                     </p>
                 </div>
             </div>
 
             <!-- Privacy Level -->
             <div class="space-y-2">
-                <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t("posts.form.tiktok.privacy_level") }}</Label>
+                <Label
+                    class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
+                    >{{ $t('posts.form.tiktok.privacy_level') }}</Label
+                >
                 <Select v-model="privacyLevel" :disabled="props.disabled">
                     <SelectTrigger class="w-full">
-                        <SelectValue :placeholder="$t('posts.form.tiktok.privacy_placeholder')" />
+                        <SelectValue
+                            :placeholder="
+                                $t('posts.form.tiktok.privacy_placeholder')
+                            "
+                        />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem v-for="option in privacyOptions" :key="option" :value="option">
+                        <SelectItem
+                            v-for="option in privacyOptions"
+                            :key="option"
+                            :value="option"
+                        >
                             {{ $t(privacyLabelKey[option] ?? option) }}
                         </SelectItem>
                     </SelectContent>
                 </Select>
-                <p class="text-xs font-medium text-foreground/60">{{ $t("posts.form.tiktok.privacy_hint") }}</p>
+                <p class="text-xs font-medium text-foreground/60">
+                    {{ $t('posts.form.tiktok.privacy_hint') }}
+                </p>
             </div>
 
             <!-- Max duration warning -->
-            <p v-if="exceedsMaxDuration" class="flex items-start gap-2 rounded-lg border-2 border-foreground bg-rose-50 p-2 text-xs font-semibold text-rose-700">
+            <p
+                v-if="exceedsMaxDuration"
+                class="flex items-start gap-2 rounded-lg border-2 border-foreground bg-rose-50 p-2 text-xs font-semibold text-rose-700"
+            >
                 <IconAlertTriangle class="mt-0.5 size-3.5 shrink-0" />
-                {{ $t('posts.form.tiktok.max_duration_exceeded', { duration: String(videoDurationSec ?? 0), max: String(maxDurationSec ?? 0) }) }}
+                {{
+                    $t('posts.form.tiktok.max_duration_exceeded', {
+                        duration: String(videoDurationSec ?? 0),
+                        max: String(maxDurationSec ?? 0),
+                    })
+                }}
             </p>
 
             <!-- Auto Add Music (photos only) -->
             <div class="space-y-2">
-                <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t("posts.form.tiktok.auto_add_music") }}</Label>
+                <Label
+                    class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
+                    >{{ $t('posts.form.tiktok.auto_add_music') }}</Label
+                >
                 <Select v-model="autoAddMusic" :disabled="props.disabled">
                     <SelectTrigger class="w-full">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="yes">{{ $t('posts.form.tiktok.yes') }}</SelectItem>
-                        <SelectItem value="no">{{ $t('posts.form.tiktok.no') }}</SelectItem>
+                        <SelectItem value="yes">{{
+                            $t('posts.form.tiktok.yes')
+                        }}</SelectItem>
+                        <SelectItem value="no">{{
+                            $t('posts.form.tiktok.no')
+                        }}</SelectItem>
                     </SelectContent>
                 </Select>
-                <p class="text-xs font-medium text-foreground/60">{{ $t("posts.form.tiktok.auto_add_music_hint") }}</p>
+                <p class="text-xs font-medium text-foreground/60">
+                    {{ $t('posts.form.tiktok.auto_add_music_hint') }}
+                </p>
             </div>
 
             <!-- Allow User To -->
             <div class="space-y-2">
-                <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t("posts.form.tiktok.allow_users") }}</Label>
+                <Label
+                    class="text-[11px] font-black tracking-widest text-foreground/60 uppercase"
+                    >{{ $t('posts.form.tiktok.allow_users') }}</Label
+                >
                 <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-                    <label class="flex items-center gap-2 text-sm" :class="{ 'opacity-50': commentDisabled }" :title="commentDisabled ? $t('posts.form.tiktok.interaction_disabled_by_creator') : ''">
-                        <Checkbox v-model="allowComments" :disabled="props.disabled || commentDisabled" />
+                    <label
+                        class="flex items-center gap-2 text-sm"
+                        :class="{ 'opacity-50': commentDisabled }"
+                        :title="
+                            commentDisabled
+                                ? $t(
+                                      'posts.form.tiktok.interaction_disabled_by_creator',
+                                  )
+                                : ''
+                        "
+                    >
+                        <Checkbox
+                            v-model="allowComments"
+                            :disabled="props.disabled || commentDisabled"
+                        />
                         {{ $t('posts.form.tiktok.comments') }}
                     </label>
-                    <label class="flex items-center gap-2 text-sm" :class="{ 'opacity-50': duetDisabled }" :title="duetDisabled ? $t('posts.form.tiktok.interaction_disabled_by_creator') : ''">
-                        <Checkbox v-model="allowDuet" :disabled="props.disabled || duetDisabled" />
+                    <label
+                        class="flex items-center gap-2 text-sm"
+                        :class="{ 'opacity-50': duetDisabled }"
+                        :title="
+                            duetDisabled
+                                ? $t(
+                                      'posts.form.tiktok.interaction_disabled_by_creator',
+                                  )
+                                : ''
+                        "
+                    >
+                        <Checkbox
+                            v-model="allowDuet"
+                            :disabled="props.disabled || duetDisabled"
+                        />
                         {{ $t('posts.form.tiktok.duet') }}
                     </label>
-                    <label class="flex items-center gap-2 text-sm" :class="{ 'opacity-50': stitchDisabled }" :title="stitchDisabled ? $t('posts.form.tiktok.interaction_disabled_by_creator') : ''">
-                        <Checkbox v-model="allowStitch" :disabled="props.disabled || stitchDisabled" />
+                    <label
+                        class="flex items-center gap-2 text-sm"
+                        :class="{ 'opacity-50': stitchDisabled }"
+                        :title="
+                            stitchDisabled
+                                ? $t(
+                                      'posts.form.tiktok.interaction_disabled_by_creator',
+                                  )
+                                : ''
+                        "
+                    >
+                        <Checkbox
+                            v-model="allowStitch"
+                            :disabled="props.disabled || stitchDisabled"
+                        />
                         {{ $t('posts.form.tiktok.stitch') }}
                     </label>
                 </div>
@@ -279,22 +416,39 @@ watch(
             <!-- Disclose video content (parent toggle) -->
             <div class="space-y-3">
                 <label class="flex items-center gap-2 text-sm font-medium">
-                    <Checkbox v-model="discloseOpen" :disabled="props.disabled" />
+                    <Checkbox
+                        v-model="discloseOpen"
+                        :disabled="props.disabled"
+                    />
                     {{ $t('posts.form.tiktok.disclose') }}
                 </label>
-                <p class="ml-6 text-xs font-medium text-foreground/60">{{ $t("posts.form.tiktok.disclose_hint") }}</p>
+                <p class="ml-6 text-xs font-medium text-foreground/60">
+                    {{ $t('posts.form.tiktok.disclose_hint') }}
+                </p>
 
                 <!-- Promotional Content warning (shown once a sub-toggle is picked) -->
-                <div v-if="hasAnyBrandToggle" class="ml-6 flex items-start gap-3 rounded-lg border-2 border-foreground bg-amber-100 p-3 shadow-2xs">
-                    <IconAlertTriangle class="mt-0.5 size-4 shrink-0 text-amber-700" />
+                <div
+                    v-if="hasAnyBrandToggle"
+                    class="ml-6 flex items-start gap-3 rounded-lg border-2 border-foreground bg-amber-100 p-3 shadow-2xs"
+                >
+                    <IconAlertTriangle
+                        class="mt-0.5 size-4 shrink-0 text-amber-700"
+                    />
                     <div class="text-xs text-amber-800">
                         <p class="font-bold">{{ $t(promotionalTitleKey) }}</p>
-                        <p class="font-medium">{{ $t('posts.form.tiktok.promotional_description') }}</p>
+                        <p class="font-medium">
+                            {{
+                                $t('posts.form.tiktok.promotional_description')
+                            }}
+                        </p>
                     </div>
                 </div>
 
                 <!-- Compliance incomplete hint (disclose ON but no sub-toggle) -->
-                <p v-else-if="discloseOpen" class="ml-6 text-xs font-semibold text-amber-700">
+                <p
+                    v-else-if="discloseOpen"
+                    class="ml-6 text-xs font-semibold text-amber-700"
+                >
                     {{ $t('posts.form.tiktok.compliance_incomplete') }}
                 </p>
 
@@ -302,17 +456,27 @@ watch(
                 <div v-if="discloseOpen" class="ml-6 space-y-3">
                     <div class="space-y-1">
                         <label class="flex items-center gap-2 text-sm">
-                            <Checkbox v-model="brandOrganicToggle" :disabled="props.disabled" />
+                            <Checkbox
+                                v-model="brandOrganicToggle"
+                                :disabled="props.disabled"
+                            />
                             {{ $t('posts.form.tiktok.brand_organic') }}
                         </label>
-                        <p class="ml-6 text-xs font-medium text-foreground/60">{{ $t("posts.form.tiktok.brand_organic_hint") }}</p>
+                        <p class="ml-6 text-xs font-medium text-foreground/60">
+                            {{ $t('posts.form.tiktok.brand_organic_hint') }}
+                        </p>
                     </div>
                     <div class="space-y-1">
                         <label class="flex items-center gap-2 text-sm">
-                            <Checkbox v-model="brandContentToggle" :disabled="props.disabled" />
+                            <Checkbox
+                                v-model="brandContentToggle"
+                                :disabled="props.disabled"
+                            />
                             {{ $t('posts.form.tiktok.brand_content') }}
                         </label>
-                        <p class="ml-6 text-xs font-medium text-foreground/60">{{ $t("posts.form.tiktok.brand_content_hint") }}</p>
+                        <p class="ml-6 text-xs font-medium text-foreground/60">
+                            {{ $t('posts.form.tiktok.brand_content_hint') }}
+                        </p>
                     </div>
                 </div>
             </div>

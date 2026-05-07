@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\UserWorkspace\Role;
-use App\Mcp\Servers\TryPostServer;
+use App\Mcp\Servers\postproServer;
 use App\Mcp\Tools\Signature\CreateSignatureTool;
 use App\Mcp\Tools\Signature\DeleteSignatureTool;
 use App\Mcp\Tools\Signature\ListSignaturesTool;
@@ -23,7 +23,7 @@ beforeEach(function () {
 test('list signatures returns wrapped signatures array with SignatureResource shape', function () {
     WorkspaceSignature::factory()->count(2)->create(['workspace_id' => $this->workspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListSignaturesTool::class, []);
 
     $response->assertOk()
@@ -40,7 +40,7 @@ test('list signatures only returns own workspace signatures', function () {
     $otherWorkspace = Workspace::factory()->create();
     WorkspaceSignature::factory()->create(['workspace_id' => $otherWorkspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(ListSignaturesTool::class, []);
 
     $response->assertOk()
@@ -50,7 +50,7 @@ test('list signatures only returns own workspace signatures', function () {
 });
 
 test('create signature returns SignatureResource shape', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreateSignatureTool::class, [
             'name' => 'Marketing',
             'content' => '#marketing #social',
@@ -68,7 +68,7 @@ test('create signature returns SignatureResource shape', function () {
 });
 
 test('create signature validates required fields', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(CreateSignatureTool::class, []);
 
     $response->assertHasErrors();
@@ -77,7 +77,7 @@ test('create signature validates required fields', function () {
 test('update signature returns updated SignatureResource', function () {
     $signature = WorkspaceSignature::factory()->create(['workspace_id' => $this->workspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdateSignatureTool::class, [
             'signature_id' => $signature->id,
             'name' => 'Updated',
@@ -96,7 +96,7 @@ test('cannot update signature from another workspace', function () {
     $otherWorkspace = Workspace::factory()->create();
     $signature = WorkspaceSignature::factory()->create(['workspace_id' => $otherWorkspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdateSignatureTool::class, [
             'signature_id' => $signature->id,
             'name' => 'Hacked',
@@ -109,7 +109,7 @@ test('cannot update signature from another workspace', function () {
 test('delete signature removes from db', function () {
     $signature = WorkspaceSignature::factory()->create(['workspace_id' => $this->workspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeleteSignatureTool::class, ['signature_id' => $signature->id]);
 
     $response->assertOk()
@@ -122,22 +122,23 @@ test('cannot delete signature from another workspace', function () {
     $otherWorkspace = Workspace::factory()->create();
     $signature = WorkspaceSignature::factory()->create(['workspace_id' => $otherWorkspace->id]);
 
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeleteSignatureTool::class, ['signature_id' => $signature->id]);
 
     $response->assertHasErrors(['Signature not found.']);
 });
 
 test('update signature validates required fields', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(UpdateSignatureTool::class, []);
 
     $response->assertHasErrors();
 });
 
 test('delete signature validates signature_id required', function () {
-    $response = TryPostServer::actingAs($this->user)
+    $response = postproServer::actingAs($this->user)
         ->tool(DeleteSignatureTool::class, []);
 
     $response->assertHasErrors();
 });
+

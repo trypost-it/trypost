@@ -25,7 +25,7 @@ class AccountController extends Controller
                 'name' => $account->name,
                 'billing_email' => $account->billing_email,
             ],
-            'selfHosted' => config('trypost.self_hosted'),
+            'selfHosted' => config('postpro.self_hosted'),
         ]);
     }
 
@@ -33,7 +33,7 @@ class AccountController extends Controller
     {
         abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
 
-        $isSelfHosted = config('trypost.self_hosted');
+        $isSelfHosted = config('postpro.self_hosted');
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -63,3 +63,4 @@ class AccountController extends Controller
         return back();
     }
 }
+

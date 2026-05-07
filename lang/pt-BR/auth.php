@@ -18,11 +18,11 @@ return [
     'throttle' => 'Muitas tentativas de login. Por favor, tente novamente em :seconds segundos.',
 
     'flash' => [
-        'welcome' => 'Bem-vindo ao TryPost!',
-        'welcome_trial' => 'Bem-vindo ao TryPost! Seu período de teste começou.',
+        'welcome' => 'Bem-vindo ao postpro!',
+        'welcome_trial' => 'Bem-vindo ao postpro! Seu período de teste começou.',
     ],
 
-    'legal' => 'Ao continuar, você concorda com nossos <a href="https://trypost.it/terms" target="_blank">Termos de Serviço</a> e <a href="https://trypost.it/privacy" target="_blank">Política de Privacidade</a>.',
+    'legal' => 'Ao continuar, você concorda com nossos <a href="https://postpro.it/terms" target="_blank">Termos de Serviço</a> e <a href="https://postpro.it/privacy" target="_blank">Política de Privacidade</a>.',
 
     'slides' => [
         'calendar' => [
@@ -137,3 +137,4 @@ return [
     ],
 
 ];
+

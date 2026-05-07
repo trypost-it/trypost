@@ -14,7 +14,6 @@ import PageHeader from '@/components/PageHeader.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import UsageMetricCard from '@/components/settings/UsageMetricCard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { settings as settingsHub } from '@/routes/app';
 import { edit as accountEdit } from '@/routes/app/account';
 import { index as billingIndex } from '@/routes/app/billing';
 import { index as usageIndex } from '@/routes/app/usage';
@@ -41,9 +40,21 @@ defineProps<{
 }>();
 
 const tabs = computed(() => [
-    { name: 'account', label: trans('settings.account.tabs.account'), href: accountEdit().url },
-    { name: 'usage', label: trans('settings.account.tabs.usage'), href: usageIndex().url },
-    { name: 'billing', label: trans('settings.account.tabs.billing'), href: billingIndex().url },
+    {
+        name: 'account',
+        label: trans('settings.account.tabs.account'),
+        href: accountEdit().url,
+    },
+    {
+        name: 'usage',
+        label: trans('settings.account.tabs.usage'),
+        href: usageIndex().url,
+    },
+    {
+        name: 'billing',
+        label: trans('settings.account.tabs.billing'),
+        href: billingIndex().url,
+    },
 ]);
 </script>
 
@@ -63,10 +74,16 @@ const tabs = computed(() => [
                 <div class="space-y-6">
                     <HeadingSmall
                         :title="$t('usage.section_account')"
-                        :description="$t('usage.section_account_description', { plan: plan?.name ?? 'Free' })"
+                        :description="
+                            $t('usage.section_account_description', {
+                                plan: plan?.name ?? 'Free',
+                            })
+                        "
                     />
 
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div
+                        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                    >
                         <UsageMetricCard
                             :label="$t('usage.workspaces')"
                             :icon="IconBuildingCommunity"
@@ -102,7 +119,9 @@ const tabs = computed(() => [
                         :description="$t('usage.section_ai_description')"
                     />
 
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div
+                        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                    >
                         <UsageMetricCard
                             :label="$t('usage.credits')"
                             :icon="IconSparkles"

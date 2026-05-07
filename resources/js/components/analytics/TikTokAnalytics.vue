@@ -34,9 +34,12 @@ const fetchMetrics = async () => {
     }
 };
 
-watch(() => props.accountId, () => {
-    fetchMetrics();
-});
+watch(
+    () => props.accountId,
+    () => {
+        fetchMetrics();
+    },
+);
 
 onMounted(() => {
     fetchMetrics();
@@ -46,5 +49,9 @@ defineExpose({ supportsDateRange: false });
 </script>
 
 <template>
-    <MetricsGrid :metrics="metrics" :loading="isLoading" :empty-label="trans('analytics.no_data')" />
+    <MetricsGrid
+        :metrics="metrics"
+        :loading="isLoading"
+        :empty-label="trans('analytics.no_data')"
+    />
 </template>

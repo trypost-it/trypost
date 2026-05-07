@@ -127,7 +127,7 @@ return [
     |
     */
 
-    'cookie' => env('SESSION_COOKIE', 'trypost-session'),
+    'cookie' => env('SESSION_COOKIE', 'postpro-session'),
 
     /*
     |--------------------------------------------------------------------------
@@ -228,3 +228,4 @@ return [
     'serialization' => 'json',
 
 ];
+

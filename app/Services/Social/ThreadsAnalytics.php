@@ -24,7 +24,7 @@ class ThreadsAnalytics
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.threads.graph_api');
+        $this->baseUrl = config('postpro.platforms.threads.graph_api');
     }
 
     public function getMetrics(SocialAccount $account, ?CarbonInterface $since = null, ?CarbonInterface $until = null): array
@@ -141,7 +141,7 @@ class ThreadsAnalytics
 
     private function refreshToken(SocialAccount $account): void
     {
-        $response = Http::get(config('trypost.platforms.threads.auth_api').'/refresh_access_token', [
+        $response = Http::get(config('postpro.platforms.threads.auth_api').'/refresh_access_token', [
             'grant_type' => 'th_refresh_token',
             'access_token' => $account->access_token,
         ]);
@@ -159,3 +159,4 @@ class ThreadsAnalytics
         ]);
     }
 }
+

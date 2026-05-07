@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "trypost-it/trypost",
+    "name": "postpro-it/postpro",
     "type": "project",
     "description": "Open-source social media scheduling for creators and teams",
     "keywords": [
@@ -21,10 +21,10 @@
         "pinterest"
     ],
     "license": "AGPL-3.0-only",
-    "homepage": "https://trypost.it",
+    "homepage": "https://postpro.it",
     "support": {
-        "issues": "https://github.com/trypost-it/trypost/issues",
-        "source": "https://github.com/trypost-it/trypost"
+        "issues": "https://github.com/postpro-it/postpro/issues",
+        "source": "https://github.com/postpro-it/postpro"
     },
     "authors": [
         {
@@ -159,3 +159,4 @@
     "minimum-stability": "stable",
     "prefer-stable": true
 }
+

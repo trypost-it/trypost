@@ -22,7 +22,9 @@ interface ChunkedUploadResult {
 
 const DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
 
-export const uploadChunked = async (options: ChunkedUploadOptions): Promise<ChunkedUploadResult> => {
+export const uploadChunked = async (
+    options: ChunkedUploadOptions,
+): Promise<ChunkedUploadResult> => {
     const {
         file,
         url,
@@ -35,7 +37,9 @@ export const uploadChunked = async (options: ChunkedUploadOptions): Promise<Chun
         onError,
     } = options;
 
-    const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+    const csrfToken =
+        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+            ?.content ?? '';
     const totalSize = file.size;
     const totalChunks = Math.ceil(totalSize / chunkSize);
     let uploadedBytes = 0;
@@ -65,7 +69,8 @@ export const uploadChunked = async (options: ChunkedUploadOptions): Promise<Chun
                 body: chunk,
             });
 
-            if (!response.ok) throw new Error(`Upload chunk failed: ${response.statusText}`);
+            if (!response.ok)
+                throw new Error(`Upload chunk failed: ${response.statusText}`);
 
             const data = await response.json();
 

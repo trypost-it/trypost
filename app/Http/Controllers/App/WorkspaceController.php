@@ -239,7 +239,7 @@ class WorkspaceController extends Controller
      */
     private function hasReachedWorkspaceLimit(?Account $account): bool
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return false;
         }
 
@@ -252,3 +252,4 @@ class WorkspaceController extends Controller
         return $account->workspaces()->count() >= $limit;
     }
 }
+

@@ -39,13 +39,16 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const resolvedSocialAccount = computed((): SocialAccount => props.socialAccount ?? {
-    id: '',
-    platform: props.platform,
-    display_name: '',
-    username: '',
-    avatar_url: null,
-});
+const resolvedSocialAccount = computed(
+    (): SocialAccount =>
+        props.socialAccount ?? {
+            id: '',
+            platform: props.platform,
+            display_name: '',
+            username: '',
+            avatar_url: null,
+        },
+);
 
 const previewComponent = computed(() => {
     switch (props.platform) {

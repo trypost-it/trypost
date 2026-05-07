@@ -197,7 +197,7 @@ test('youtube analytics throws exception on token refresh failure', function () 
 })->throws(TokenExpiredException::class);
 
 test('youtube is in supported analytics platforms', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $response = $this->actingAs($this->user)
         ->get(route('app.analytics'));
@@ -212,7 +212,7 @@ test('youtube is in supported analytics platforms', function () {
 });
 
 test('youtube analytics show endpoint returns metrics', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     Http::fake([
         'https://youtubeanalytics.googleapis.com/v2/reports*' => Http::response([
@@ -235,7 +235,7 @@ test('youtube analytics show endpoint returns metrics', function () {
 });
 
 test('youtube analytics show endpoint rejects other workspace accounts', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $otherUser = User::factory()->create([]);
     $otherWorkspace = Workspace::factory()->create(['user_id' => $otherUser->id]);
@@ -247,3 +247,4 @@ test('youtube analytics show endpoint rejects other workspace accounts', functio
 
     $response->assertForbidden();
 });
+

@@ -52,11 +52,15 @@ const handleOpenChange = (value: boolean) => {
             </DialogHeader>
             <form @submit.prevent="submit" class="space-y-4">
                 <div class="grid gap-2">
-                    <Label for="create-name">{{ $t('signatures.create.name') }}</Label>
+                    <Label for="create-name">{{
+                        $t('signatures.create.name')
+                    }}</Label>
                     <Input
                         id="create-name"
                         v-model="form.name"
-                        :placeholder="trans('signatures.create.name_placeholder')"
+                        :placeholder="
+                            trans('signatures.create.name_placeholder')
+                        "
                         :class="{ 'border-destructive': form.errors.name }"
                     />
                     <p v-if="form.errors.name" class="text-sm text-destructive">
@@ -65,27 +69,42 @@ const handleOpenChange = (value: boolean) => {
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="create-content">{{ $t('signatures.create.content') }}</Label>
+                    <Label for="create-content">{{
+                        $t('signatures.create.content')
+                    }}</Label>
                     <Textarea
                         id="create-content"
                         v-model="form.content"
-                        :placeholder="trans('signatures.create.content_placeholder')"
+                        :placeholder="
+                            trans('signatures.create.content_placeholder')
+                        "
                         rows="4"
                         :class="{ 'border-destructive': form.errors.content }"
                     />
                     <p class="text-sm text-muted-foreground">
                         {{ $t('signatures.create.content_hint') }}
                     </p>
-                    <p v-if="form.errors.content" class="text-sm text-destructive">
+                    <p
+                        v-if="form.errors.content"
+                        class="text-sm text-destructive"
+                    >
                         {{ form.errors.content }}
                     </p>
                 </div>
 
                 <DialogFooter>
                     <Button type="submit" :disabled="form.processing">
-                        {{ form.processing ? $t('signatures.create.submitting') : $t('signatures.create.submit') }}
+                        {{
+                            form.processing
+                                ? $t('signatures.create.submitting')
+                                : $t('signatures.create.submit')
+                        }}
                     </Button>
-                    <Button type="button" variant="outline" @click="open = false">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        @click="open = false"
+                    >
                         {{ $t('common.cancel') }}
                     </Button>
                 </DialogFooter>

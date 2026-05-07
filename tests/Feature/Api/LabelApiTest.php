@@ -21,7 +21,7 @@ test('list labels', function () {
         'Authorization' => 'Bearer '.$result['plain_token'],
     ])->getJson(
         route('api.labels.index'),
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertOk();
@@ -39,7 +39,7 @@ test('create label', function () {
             'name' => 'Marketing',
             'color' => '#FF0000',
         ],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertCreated();
@@ -57,7 +57,7 @@ test('create label validation errors', function () {
     ])->postJson(
         route('api.labels.store'),
         [],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertUnprocessable();
@@ -75,7 +75,7 @@ test('create label validates color format', function () {
             'name' => 'Bad Color',
             'color' => 'not-a-color',
         ],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertUnprocessable();
@@ -99,7 +99,7 @@ test('update label', function () {
             'name' => 'Updated Name',
             'color' => '#FFFFFF',
         ],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertOk();
@@ -119,7 +119,7 @@ test('delete label', function () {
     ])->deleteJson(
         route('api.labels.destroy', $label),
         [],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertNoContent();
@@ -143,7 +143,7 @@ test('cannot access labels from another workspace', function () {
             'name' => 'Hacked Name',
             'color' => '#FF0000',
         ],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertNotFound();
@@ -204,3 +204,4 @@ test('cannot delete label from another workspace', function () {
         ->deleteJson(route('api.labels.destroy', $label))
         ->assertNotFound();
 });
+

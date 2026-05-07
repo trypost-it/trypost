@@ -15,7 +15,7 @@ use RuntimeException;
  */
 final class SafeHttpFetcher
 {
-    private const string USER_AGENT = 'TryPostBot/1.0 (+https://trypost.it)';
+    private const string USER_AGENT = 'postproBot/1.0 (+https://postpro.it)';
 
     private const int TIMEOUT_SECONDS = 10;
 
@@ -97,3 +97,4 @@ final class SafeHttpFetcher
         }
     }
 }
+

@@ -55,7 +55,9 @@ const handleOpenChange = (value: boolean) => {
             </DialogHeader>
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="space-y-2">
-                    <Label for="create-name">{{ $t('labels.create.name') }}</Label>
+                    <Label for="create-name">{{
+                        $t('labels.create.name')
+                    }}</Label>
                     <Input
                         id="create-name"
                         v-model="form.name"
@@ -68,18 +70,31 @@ const handleOpenChange = (value: boolean) => {
                 </div>
 
                 <div class="space-y-2">
-                    <Label for="create-color">{{ $t('labels.create.color') }}</Label>
+                    <Label for="create-color">{{
+                        $t('labels.create.color')
+                    }}</Label>
                     <HexColorInput v-model="form.color" name="color" />
-                    <p v-if="form.errors.color" class="text-sm text-destructive">
+                    <p
+                        v-if="form.errors.color"
+                        class="text-sm text-destructive"
+                    >
                         {{ form.errors.color }}
                     </p>
                 </div>
 
                 <DialogFooter>
                     <Button type="submit" :disabled="form.processing">
-                        {{ form.processing ? $t('labels.create.submitting') : $t('labels.create.submit') }}
+                        {{
+                            form.processing
+                                ? $t('labels.create.submitting')
+                                : $t('labels.create.submit')
+                        }}
                     </Button>
-                    <Button type="button" variant="secondary" @click="open = false">
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        @click="open = false"
+                    >
                         {{ $t('common.cancel') }}
                     </Button>
                 </DialogFooter>

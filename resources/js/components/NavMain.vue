@@ -28,7 +28,12 @@ const { urlIsActive } = useActiveUrl();
             <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton
                     as-child
-                    :is-active="urlIsActive(item.activePattern ?? item.href, { exact: item.exact, exclude: item.excludeActive })"
+                    :is-active="
+                        urlIsActive(item.activePattern ?? item.href, {
+                            exact: item.exact,
+                            exclude: item.excludeActive,
+                        })
+                    "
                     :tooltip="item.title"
                 >
                     <Link :href="item.href">

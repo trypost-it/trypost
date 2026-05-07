@@ -110,7 +110,7 @@ class LinkedInController extends SocialController
         try {
             $response = Http::withToken($accessToken)
                 ->withHeaders(['X-RestLi-Protocol-Version' => '2.0.0'])
-                ->get(config('trypost.platforms.linkedin.api').'/v2/me', [
+                ->get(config('postpro.platforms.linkedin.api').'/v2/me', [
                     'projection' => '(id,vanityName,localizedFirstName,localizedLastName)',
                 ]);
 
@@ -131,3 +131,4 @@ class LinkedInController extends SocialController
         return null;
     }
 }
+

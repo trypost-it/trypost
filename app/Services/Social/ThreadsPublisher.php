@@ -20,7 +20,7 @@ class ThreadsPublisher
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.threads.graph_api');
+        $this->baseUrl = config('postpro.platforms.threads.graph_api');
     }
 
     public function publish(PostPlatform $postPlatform): array
@@ -305,7 +305,7 @@ class ThreadsPublisher
     private function refreshToken(SocialAccount $account): void
     {
         // Threads uses long-lived tokens that can be refreshed
-        $response = Http::get(config('trypost.platforms.threads.auth_api').'/refresh_access_token', [
+        $response = Http::get(config('postpro.platforms.threads.auth_api').'/refresh_access_token', [
             'grant_type' => 'th_refresh_token',
             'access_token' => $account->access_token,
         ]);
@@ -331,3 +331,4 @@ class ThreadsPublisher
         throw ThreadsPublishException::fromApiResponse($response);
     }
 }
+

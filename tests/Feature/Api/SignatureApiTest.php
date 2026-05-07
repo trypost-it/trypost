@@ -21,7 +21,7 @@ test('list signatures', function () {
         'Authorization' => 'Bearer '.$result['plain_token'],
     ])->getJson(
         route('api.signatures.index'),
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertOk();
@@ -39,7 +39,7 @@ test('create signature', function () {
             'name' => 'Marketing Tags',
             'content' => '#marketing #growth #saas',
         ],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertCreated();
@@ -56,7 +56,7 @@ test('create signature validation errors', function () {
     ])->postJson(
         route('api.signatures.store'),
         [],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertUnprocessable();
@@ -79,7 +79,7 @@ test('update signature', function () {
             'name' => 'Updated Name',
             'content' => '#updated #tags',
         ],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertOk();
@@ -98,7 +98,7 @@ test('delete signature', function () {
     ])->deleteJson(
         route('api.signatures.destroy', $signature),
         [],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertNoContent();
@@ -122,7 +122,7 @@ test('cannot access signatures from another workspace', function () {
             'name' => 'Hacked Name',
             'content' => '#hacked',
         ],
-        ['HTTP_HOST' => 'api.trypost.test']
+        ['HTTP_HOST' => 'api.postpro.test']
     );
 
     $response->assertNotFound();
@@ -171,3 +171,4 @@ test('cannot delete signature from another workspace', function () {
         ->deleteJson(route('api.signatures.destroy', $signature))
         ->assertNotFound();
 });
+

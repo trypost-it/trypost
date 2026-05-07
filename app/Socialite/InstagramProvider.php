@@ -37,7 +37,7 @@ class InstagramProvider extends AbstractProvider implements ProviderInterface
 
     protected function getUserByToken($token): array
     {
-        $response = $this->getHttpClient()->get(config('trypost.platforms.instagram.graph_api').'/me', [
+        $response = $this->getHttpClient()->get(config('postpro.platforms.instagram.graph_api').'/me', [
             RequestOptions::QUERY => [
                 'access_token' => $token,
                 'fields' => 'id,username,account_type,name,profile_picture_url',
@@ -78,7 +78,7 @@ class InstagramProvider extends AbstractProvider implements ProviderInterface
     {
         // Although Meta's docs don't list `client_id` as a required parameter,
         // the API in practice rejects the request without it.
-        $response = $this->getHttpClient()->get(config('trypost.platforms.instagram.auth_api').'/access_token', [
+        $response = $this->getHttpClient()->get(config('postpro.platforms.instagram.auth_api').'/access_token', [
             RequestOptions::QUERY => [
                 'grant_type' => 'ig_exchange_token',
                 'client_id' => $this->clientId,
@@ -106,3 +106,4 @@ class InstagramProvider extends AbstractProvider implements ProviderInterface
         ];
     }
 }
+

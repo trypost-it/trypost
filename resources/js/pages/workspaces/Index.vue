@@ -6,7 +6,10 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import { create as createWorkspace, switchMethod } from '@/routes/app/workspaces';
+import {
+    create as createWorkspace,
+    switchMethod,
+} from '@/routes/app/workspaces';
 
 interface Workspace {
     id: string;
@@ -24,9 +27,13 @@ interface Props {
 defineProps<Props>();
 
 const switchToWorkspace = (workspace: Workspace) => {
-    router.post(switchMethod.url(workspace.id), {}, {
-        preserveState: false,
-    });
+    router.post(
+        switchMethod.url(workspace.id),
+        {},
+        {
+            preserveState: false,
+        },
+    );
 };
 </script>
 
@@ -42,7 +49,11 @@ const switchToWorkspace = (workspace: Workspace) => {
                 v-for="workspace in workspaces"
                 :key="workspace.id"
                 class="flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-accent/50"
-                :class="workspace.id === currentWorkspaceId ? 'border-primary/50 bg-accent/30' : ''"
+                :class="
+                    workspace.id === currentWorkspaceId
+                        ? 'border-primary/50 bg-accent/30'
+                        : ''
+                "
                 @click="switchToWorkspace(workspace)"
             >
                 <Avatar
@@ -54,10 +65,24 @@ const switchToWorkspace = (workspace: Workspace) => {
                 <div class="min-w-0 flex-1">
                     <p class="truncate font-medium">{{ workspace.name }}</p>
                     <p class="text-xs text-muted-foreground">
-                        {{ trans('workspaces.connections', { count: String(workspace.social_accounts_count) }) }} · {{ trans('workspaces.posts', { count: String(workspace.posts_count) }) }}
+                        {{
+                            trans('workspaces.connections', {
+                                count: String(workspace.social_accounts_count),
+                            })
+                        }}
+                        ·
+                        {{
+                            trans('workspaces.posts', {
+                                count: String(workspace.posts_count),
+                            })
+                        }}
                     </p>
                 </div>
-                <Badge v-if="workspace.id === currentWorkspaceId" variant="secondary" class="shrink-0">
+                <Badge
+                    v-if="workspace.id === currentWorkspaceId"
+                    variant="secondary"
+                    class="shrink-0"
+                >
                     {{ $t('workspaces.current') }}
                 </Badge>
             </div>

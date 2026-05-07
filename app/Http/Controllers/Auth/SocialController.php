@@ -36,7 +36,7 @@ class SocialController extends Controller
 
     protected function ensureSocialAccountLimit(Workspace $workspace): void
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return;
         }
 
@@ -235,3 +235,4 @@ class SocialController extends Controller
         ]);
     }
 }
+

@@ -6,7 +6,7 @@ return [
     'description' => 'Visão geral de todas as suas contas sociais conectadas',
     'add_social' => 'Adicionar Rede Social',
     'add_social_title' => 'Conectar uma Conta Social',
-    'add_social_description' => 'Conecte uma conta social ao TryPost para começar a publicar',
+    'add_social_description' => 'Conecte uma conta social ao postpro para começar a publicar',
     'connect_cta' => 'Conectar',
     'no_accounts' => 'Nenhuma conta conectada ainda',
     'no_accounts_description' => 'Conecte suas redes sociais para começar a agendar e publicar posts',
@@ -139,3 +139,4 @@ return [
         'not_linkedin_admin' => 'Você não é administrador de nenhuma página do LinkedIn.',
     ],
 ];
+

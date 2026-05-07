@@ -86,7 +86,7 @@ class InstagramFacebookController extends SocialController
                 ->user();
 
             // Trigger public_profile API call for Meta app review verification
-            Http::get(config('trypost.platforms.instagram-facebook.graph_api').'/me', [
+            Http::get(config('postpro.platforms.instagram-facebook.graph_api').'/me', [
                 'fields' => 'id,name',
                 'access_token' => $socialUser->token,
             ]);
@@ -238,7 +238,7 @@ class InstagramFacebookController extends SocialController
     private function fetchPagesWithInstagram(string $userToken): array
     {
         try {
-            $graphApi = (string) config('trypost.platforms.instagram-facebook.graph_api');
+            $graphApi = (string) config('postpro.platforms.instagram-facebook.graph_api');
 
             $response = Http::get($graphApi.'/me/accounts', [
                 'access_token' => $userToken,
@@ -294,6 +294,7 @@ class InstagramFacebookController extends SocialController
 
     private function graphVersion(): string
     {
-        return basename((string) parse_url((string) config('trypost.platforms.instagram-facebook.graph_api'), PHP_URL_PATH));
+        return basename((string) parse_url((string) config('postpro.platforms.instagram-facebook.graph_api'), PHP_URL_PATH));
     }
 }
+

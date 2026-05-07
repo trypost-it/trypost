@@ -5,7 +5,11 @@ import { onBeforeUnmount, onMounted } from 'vue';
 import AppHeader from '@/components/AppHeader.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import Toast from '@/components/Toast.vue';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import {
+    SidebarInset,
+    SidebarProvider,
+    SidebarTrigger,
+} from '@/components/ui/sidebar';
 import UpgradeDialog from '@/components/UpgradeDialog.vue';
 import { heartbeat as heartbeatRoute } from '@/routes/app/presence';
 
@@ -53,7 +57,7 @@ onBeforeUnmount(() => {
             </AppHeader>
             <SidebarTrigger
                 v-else
-                class="absolute left-2 top-2 z-30 size-9 rounded-md border-2 border-foreground bg-card text-foreground shadow-2xs md:hidden"
+                class="absolute top-2 left-2 z-30 size-9 rounded-md border-2 border-foreground bg-card text-foreground shadow-2xs md:hidden"
             />
             <div
                 :class="

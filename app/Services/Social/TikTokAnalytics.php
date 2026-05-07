@@ -22,7 +22,7 @@ class TikTokAnalytics
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.tiktok.api');
+        $this->baseUrl = config('postpro.platforms.tiktok.api');
     }
 
     public function getMetrics(SocialAccount $account): array
@@ -166,7 +166,7 @@ class TikTokAnalytics
             throw new TokenExpiredException('No refresh token available for TikTok account');
         }
 
-        $response = Http::asForm()->post(config('trypost.platforms.tiktok.api').'/oauth/token/', [
+        $response = Http::asForm()->post(config('postpro.platforms.tiktok.api').'/oauth/token/', [
             'client_key' => config('services.tiktok.client_id'),
             'client_secret' => config('services.tiktok.client_secret'),
             'grant_type' => 'refresh_token',
@@ -187,3 +187,4 @@ class TikTokAnalytics
         ]);
     }
 }
+

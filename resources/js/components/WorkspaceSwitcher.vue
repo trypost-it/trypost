@@ -12,7 +12,10 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { create as createWorkspaceRoute, switchMethod } from '@/routes/app/workspaces';
+import {
+    create as createWorkspaceRoute,
+    switchMethod,
+} from '@/routes/app/workspaces';
 
 interface Workspace {
     id: string;
@@ -20,13 +23,21 @@ interface Workspace {
 }
 
 const page = usePage();
-const currentWorkspace = computed<Workspace | null>(() => page.props.auth.currentWorkspace as Workspace | null);
-const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Workspace[]);
+const currentWorkspace = computed<Workspace | null>(
+    () => page.props.auth.currentWorkspace as Workspace | null,
+);
+const workspaces = computed<Workspace[]>(
+    () => page.props.auth.workspaces as Workspace[],
+);
 
 const switchWorkspace = (workspace: Workspace) => {
-    router.post(switchMethod.url(workspace.id), {}, {
-        preserveScroll: true,
-    });
+    router.post(
+        switchMethod.url(workspace.id),
+        {},
+        {
+            preserveScroll: true,
+        },
+    );
 };
 
 const createWorkspace = () => {
@@ -37,8 +48,14 @@ const createWorkspace = () => {
 <template>
     <DropdownMenu>
         <DropdownMenuTrigger :as-child="true">
-            <Button variant="outline" class="w-full justify-between gap-2 px-3" :class="{ 'text-muted-foreground': !currentWorkspace }">
-                <span class="truncate">{{ currentWorkspace?.name || 'Select workspace' }}</span>
+            <Button
+                variant="outline"
+                class="w-full justify-between gap-2 px-3"
+                :class="{ 'text-muted-foreground': !currentWorkspace }"
+            >
+                <span class="truncate">{{
+                    currentWorkspace?.name || 'Select workspace'
+                }}</span>
                 <IconSelector class="h-4 w-4 shrink-0 opacity-50" />
             </Button>
         </DropdownMenuTrigger>
@@ -53,7 +70,10 @@ const createWorkspace = () => {
             >
                 <div class="flex w-full items-center justify-between">
                     <span class="truncate">{{ workspace.name }}</span>
-                    <IconCheck v-if="currentWorkspace?.id === workspace.id" class="h-4 w-4 shrink-0" />
+                    <IconCheck
+                        v-if="currentWorkspace?.id === workspace.id"
+                        class="h-4 w-4 shrink-0"
+                    />
                 </div>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

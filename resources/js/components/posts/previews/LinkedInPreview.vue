@@ -20,36 +20,61 @@ defineProps<Props>();
 
 <template>
     <div
-        class="w-full h-full bg-white dark:bg-[#1b1f23] text-[#000000e6] dark:text-[#ffffffe6] overflow-hidden flex flex-col">
+        class="flex h-full w-full flex-col overflow-hidden bg-white text-[#000000e6] dark:bg-[#1b1f23] dark:text-[#ffffffe6]"
+    >
         <!-- Post Content -->
-        <div class="flex-1 overflow-y-auto mt-4">
+        <div class="mt-4 flex-1 overflow-y-auto">
             <!-- Post Header -->
             <div class="px-4 pb-3">
                 <div class="flex items-start gap-3">
                     <div class="relative flex-shrink-0">
-                        <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url"
-                            :alt="socialAccount.display_name" class="h-12 w-12 rounded-full object-cover" />
-                        <div v-else
-                            class="h-12 w-12 rounded-full bg-[#0a66c2] flex items-center justify-center text-white font-semibold text-lg">
-                            {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
+                        <img
+                            v-if="socialAccount.avatar_url"
+                            :src="socialAccount.avatar_url"
+                            :alt="socialAccount.display_name"
+                            class="h-12 w-12 rounded-full object-cover"
+                        />
+                        <div
+                            v-else
+                            class="flex h-12 w-12 items-center justify-center rounded-full bg-[#0a66c2] text-lg font-semibold text-white"
+                        >
+                            {{
+                                socialAccount.display_name
+                                    ?.charAt(0)
+                                    .toUpperCase()
+                            }}
                         </div>
                     </div>
-                    <div class="flex-1 min-w-0">
+                    <div class="min-w-0 flex-1">
                         <div class="flex items-center gap-1">
-                            <p class="font-semibold text-[15px] text-[#000000e6] dark:text-[#ffffffe6]">
+                            <p
+                                class="text-[15px] font-semibold text-[#000000e6] dark:text-[#ffffffe6]"
+                            >
                                 {{ socialAccount.display_name }}
                             </p>
-                            <span class="text-[14px] text-[#00000099] dark:text-[#ffffff99]">• 1st</span>
+                            <span
+                                class="text-[14px] text-[#00000099] dark:text-[#ffffff99]"
+                                >• 1st</span
+                            >
                         </div>
-                        <p class="text-[13px] text-[#00000099] dark:text-[#ffffff99] leading-[18px] line-clamp-1">
+                        <p
+                            class="line-clamp-1 text-[13px] leading-[18px] text-[#00000099] dark:text-[#ffffff99]"
+                        >
                             CEO
                         </p>
-                        <div class="flex items-center gap-1 text-[13px] text-[#00000099] dark:text-[#ffffff99]">
+                        <div
+                            class="flex items-center gap-1 text-[13px] text-[#00000099] dark:text-[#ffffff99]"
+                        >
                             <span>1h</span>
                             <span>•</span>
-                            <svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="currentColor">
+                            <svg
+                                class="h-3.5 w-3.5"
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                            >
                                 <path
-                                    d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm-.5 14.5v-2h1v2a6.5 6.5 0 0 1-1 0zm4.7-1.2a6.5 6.5 0 0 1-3.2.7v-1h2a1 1 0 0 0 1-1V9.5h1.5a6.5 6.5 0 0 1-1.3 3.8zM14.5 8a6.5 6.5 0 0 1-.5 2.5H12V9a1 1 0 0 0-1-1h-1V6a1 1 0 0 0-1-1H6.5V3.5h2a1 1 0 0 0 1-1V1.7a6.5 6.5 0 0 1 5 6.3zM1.5 8a6.5 6.5 0 0 1 3-5.5V4a1 1 0 0 0 1 1h1v2a1 1 0 0 0 1 1h2v3H6a1 1 0 0 0-1 1v2.5A6.5 6.5 0 0 1 1.5 8z" />
+                                    d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm-.5 14.5v-2h1v2a6.5 6.5 0 0 1-1 0zm4.7-1.2a6.5 6.5 0 0 1-3.2.7v-1h2a1 1 0 0 0 1-1V9.5h1.5a6.5 6.5 0 0 1-1.3 3.8zM14.5 8a6.5 6.5 0 0 1-.5 2.5H12V9a1 1 0 0 0-1-1h-1V6a1 1 0 0 0-1-1H6.5V3.5h2a1 1 0 0 0 1-1V1.7a6.5 6.5 0 0 1 5 6.3zM1.5 8a6.5 6.5 0 0 1 3-5.5V4a1 1 0 0 0 1 1h1v2a1 1 0 0 0 1 1h2v3H6a1 1 0 0 0-1 1v2.5A6.5 6.5 0 0 1 1.5 8z"
+                                />
                             </svg>
                         </div>
                     </div>
@@ -58,30 +83,53 @@ defineProps<Props>();
 
             <!-- Content -->
             <div v-if="content" class="px-4 pb-3">
-                <div class="text-[15px] text-[#000000e6] dark:text-[#ffffffe6] whitespace-pre-wrap leading-[22px]">
+                <div
+                    class="text-[15px] leading-[22px] whitespace-pre-wrap text-[#000000e6] dark:text-[#ffffffe6]"
+                >
                     {{ content }}
                 </div>
             </div>
 
             <!-- Media -->
             <div v-if="media.length > 0">
-                <div class="grid" :class="{
-                    'grid-cols-1': media.length === 1,
-                    'grid-cols-2': media.length >= 2,
-                }">
-                    <div v-for="(item, index) in media.slice(0, 4)" :key="item.id"
-                        class="relative overflow-hidden" :class="{
+                <div
+                    class="grid"
+                    :class="{
+                        'grid-cols-1': media.length === 1,
+                        'grid-cols-2': media.length >= 2,
+                    }"
+                >
+                    <div
+                        v-for="(item, index) in media.slice(0, 4)"
+                        :key="item.id"
+                        class="relative overflow-hidden"
+                        :class="{
                             'col-span-2': media.length === 1,
                             'row-span-2': media.length === 3 && index === 0,
                             'aspect-square': media.length > 1,
-                        }">
-                        <img v-if="!isVideoMedia(item)" :src="item.url" :alt="item.original_filename"
-                            class="w-full h-full object-cover" />
-                        <video v-else :src="item.url" class="w-full h-full object-cover bg-black" muted loop
-                            playsinline />
-                        <div v-if="media.length > 4 && index === 3"
-                            class="absolute inset-0 bg-black/70 flex items-center justify-center">
-                            <span class="text-white text-3xl font-semibold">+{{ media.length - 4 }}</span>
+                        }"
+                    >
+                        <img
+                            v-if="!isVideoMedia(item)"
+                            :src="item.url"
+                            :alt="item.original_filename"
+                            class="h-full w-full object-cover"
+                        />
+                        <video
+                            v-else
+                            :src="item.url"
+                            class="h-full w-full bg-black object-cover"
+                            muted
+                            loop
+                            playsinline
+                        />
+                        <div
+                            v-if="media.length > 4 && index === 3"
+                            class="absolute inset-0 flex items-center justify-center bg-black/70"
+                        >
+                            <span class="text-3xl font-semibold text-white"
+                                >+{{ media.length - 4 }}</span
+                            >
                         </div>
                     </div>
                 </div>
@@ -89,21 +137,36 @@ defineProps<Props>();
 
             <!-- Engagement Stats -->
             <div
-                class="px-4 py-2.5 flex items-center justify-between text-[13px] text-[#00000099] dark:text-[#ffffff99]">
+                class="flex items-center justify-between px-4 py-2.5 text-[13px] text-[#00000099] dark:text-[#ffffff99]"
+            >
                 <div class="flex items-center gap-1.5">
                     <div class="flex -space-x-0.5">
                         <!-- Like (blue) -->
-                        <div class="h-[18px] w-[18px] rounded-full bg-[#0a66c2] flex items-center justify-center">
-                            <svg class="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <div
+                            class="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#0a66c2]"
+                        >
+                            <svg
+                                class="h-2.5 w-2.5 text-white"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                            >
                                 <path
-                                    d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                                    d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"
+                                />
                             </svg>
                         </div>
                         <!-- Love (red) -->
-                        <div class="h-[18px] w-[18px] rounded-full bg-[#df704d] flex items-center justify-center">
-                            <svg class="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                        <div
+                            class="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#df704d]"
+                        >
+                            <svg
+                                class="h-2.5 w-2.5 text-white"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                            >
                                 <path
-                                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                                />
                             </svg>
                         </div>
                     </div>
@@ -116,21 +179,39 @@ defineProps<Props>();
             <div class="border-t border-[#e0dfdc] dark:border-[#38434f]" />
 
             <!-- Comment Input -->
-            <div class="px-2 py-4 flex items-center gap-2">
-                <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url" :alt="socialAccount.display_name"
-                    class="h-8 w-8 rounded-full object-cover shrink-0" />
-                <div v-else
-                    class="h-8 w-8 rounded-full bg-[#0a66c2] flex items-center justify-center text-white font-semibold text-sm shrink-0">
+            <div class="flex items-center gap-2 px-2 py-4">
+                <img
+                    v-if="socialAccount.avatar_url"
+                    :src="socialAccount.avatar_url"
+                    :alt="socialAccount.display_name"
+                    class="h-8 w-8 shrink-0 rounded-full object-cover"
+                />
+                <div
+                    v-else
+                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0a66c2] text-sm font-semibold text-white"
+                >
                     {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
                 </div>
-                <div class="flex-1 bg-[#f4f2ee] dark:bg-[#38434f] rounded-full px-4 py-2">
-                    <span class="text-[14px] text-[#00000099] dark:text-[#ffffff99]">Leave your thoughts...</span>
+                <div
+                    class="flex-1 rounded-full bg-[#f4f2ee] px-4 py-2 dark:bg-[#38434f]"
+                >
+                    <span
+                        class="text-[14px] text-[#00000099] dark:text-[#ffffff99]"
+                        >Leave your thoughts...</span
+                    >
                 </div>
                 <button class="p-1">
-                    <svg class="w-6 h-6 text-[#00000099] dark:text-[#ffffff99]" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
+                    <svg
+                        class="h-6 w-6 text-[#00000099] dark:text-[#ffffff99]"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
                         <circle cx="12" cy="12" r="4" />
-                        <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" />
+                        <path
+                            d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"
+                        />
                     </svg>
                 </button>
             </div>

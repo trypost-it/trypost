@@ -1,8 +1,11 @@
 import { ref, type Ref } from 'vue';
 
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
-import { store as storeAsset, storeChunked as storeAssetChunked } from '@/routes/app/assets';
-import { uploadChunked, shouldUseChunkedUpload } from '@/utils/chunkedUpload';
+import {
+    store as storeAsset,
+    storeChunked as storeAssetChunked,
+} from '@/routes/app/assets';
+import { shouldUseChunkedUpload, uploadChunked } from '@/utils/chunkedUpload';
 
 export interface MediaItem {
     id: string;
@@ -28,10 +31,13 @@ interface UseMediaManagerOptions {
 }
 
 export const useMediaManager = (options: UseMediaManagerOptions) => {
-    const { synced, selectedPlatformIds, platformContentTypes, postPlatforms } = options;
+    const { synced, selectedPlatformIds, platformContentTypes, postPlatforms } =
+        options;
 
     const platformMedia = ref<Record<string, MediaItem[]>>(
-        Object.fromEntries(postPlatforms.value.map((pp) => [pp.id, pp.media || []])),
+        Object.fromEntries(
+            postPlatforms.value.map((pp) => [pp.id, pp.media || []]),
+        ),
     );
     const isUploading = ref<Record<string, boolean>>({});
 
@@ -39,14 +45,17 @@ export const useMediaManager = (options: UseMediaManagerOptions) => {
         const platform = postPlatforms.value.find((pp) => pp.id === platformId);
         if (!platform) return false;
 
-        const contentType = platformContentTypes.value[platformId] || platform.content_type;
+        const contentType =
+            platformContentTypes.value[platformId] || platform.content_type;
         if (!contentType) return false;
 
         const rules = getMediaRulesForContentType(contentType);
         return rules.maxFiles === 1;
     };
 
-    const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+    const csrfToken =
+        document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+            ?.content ?? '';
 
     const uploadToAssets = async (file: File): Promise<MediaItem | null> => {
         try {
@@ -100,11 +109,18 @@ export const useMediaManager = (options: UseMediaManagerOptions) => {
     const upload = async (files: File[], postPlatformId: string) => {
         if (!files || files.length === 0) return;
 
-        const platform = postPlatforms.value.find((pp) => pp.id === postPlatformId);
-        const contentType = platformContentTypes.value[postPlatformId] || platform?.content_type || '';
+        const platform = postPlatforms.value.find(
+            (pp) => pp.id === postPlatformId,
+        );
+        const contentType =
+            platformContentTypes.value[postPlatformId] ||
+            platform?.content_type ||
+            '';
         const rules = getMediaRulesForContentType(contentType);
 
-        const targetPlatformIds = synced.value ? selectedPlatformIds.value : [postPlatformId];
+        const targetPlatformIds = synced.value
+            ? selectedPlatformIds.value
+            : [postPlatformId];
 
         for (const id of targetPlatformIds) {
             isUploading.value[id] = true;
@@ -133,7 +149,10 @@ export const useMediaManager = (options: UseMediaManagerOptions) => {
                 if (isSingleMediaContentType(targetId)) {
                     platformMedia.value[targetId] = [mediaItem];
                 } else {
-                    platformMedia.value[targetId] = [...(platformMedia.value[targetId] || []), mediaItem];
+                    platformMedia.value[targetId] = [
+                        ...(platformMedia.value[targetId] || []),
+                        mediaItem,
+                    ];
                 }
             }
         }
@@ -144,10 +163,14 @@ export const useMediaManager = (options: UseMediaManagerOptions) => {
     };
 
     const remove = (postPlatformId: string, mediaId: string) => {
-        const targetPlatformIds = synced.value ? selectedPlatformIds.value : [postPlatformId];
+        const targetPlatformIds = synced.value
+            ? selectedPlatformIds.value
+            : [postPlatformId];
 
         for (const targetId of targetPlatformIds) {
-            platformMedia.value[targetId] = (platformMedia.value[targetId] || []).filter((m) => m.id !== mediaId);
+            platformMedia.value[targetId] = (
+                platformMedia.value[targetId] || []
+            ).filter((m) => m.id !== mediaId);
         }
     };
 
@@ -157,16 +180,23 @@ export const useMediaManager = (options: UseMediaManagerOptions) => {
             .map((id) => currentMedia.find((m) => m.id === id))
             .filter(Boolean) as MediaItem[];
 
-        const targetPlatformIds = synced.value ? selectedPlatformIds.value : [postPlatformId];
+        const targetPlatformIds = synced.value
+            ? selectedPlatformIds.value
+            : [postPlatformId];
 
         for (const targetId of targetPlatformIds) {
             if (isSingleMediaContentType(targetId)) {
-                platformMedia.value[targetId] = reorderedMedia.length > 0 ? [reorderedMedia[0]] : [];
+                platformMedia.value[targetId] =
+                    reorderedMedia.length > 0 ? [reorderedMedia[0]] : [];
             } else {
                 const targetMedia = platformMedia.value[targetId] || [];
                 const reorderedIds = reorderedMedia.map((m) => m.id);
                 platformMedia.value[targetId] = reorderedIds
-                    .map((id) => targetMedia.find((m) => m.id === id) || reorderedMedia.find((m) => m.id === id))
+                    .map(
+                        (id) =>
+                            targetMedia.find((m) => m.id === id) ||
+                            reorderedMedia.find((m) => m.id === id),
+                    )
                     .filter(Boolean) as MediaItem[];
             }
         }

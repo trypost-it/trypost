@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { IconCloudUpload, IconPhoto, IconVideo, IconX, IconLoader2, IconPlus } from '@tabler/icons-vue';
+import {
+    IconCloudUpload,
+    IconLoader2,
+    IconPhoto,
+    IconPlus,
+    IconVideo,
+    IconX,
+} from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
 interface MediaItem {
@@ -156,35 +163,53 @@ const handleRemove = (mediaId: string) => {
         <!-- Empty state: dropzone -->
         <div
             v-if="media.length === 0"
-            class="flex flex-col items-center justify-center cursor-pointer transition-all duration-200"
+            class="flex cursor-pointer flex-col items-center justify-center transition-all duration-200"
             :class="[
                 aspectRatio,
                 isDragging
-                    ? 'bg-primary/5 border-primary border-2 border-dashed'
-                    : 'bg-muted/50 hover:bg-muted/70 border-2 border-dashed border-muted-foreground/20 hover:border-muted-foreground/40',
+                    ? 'border-2 border-dashed border-primary bg-primary/5'
+                    : 'border-2 border-dashed border-muted-foreground/20 bg-muted/50 hover:border-muted-foreground/40 hover:bg-muted/70',
                 variant === 'vertical' ? 'rounded-2xl' : 'rounded-lg',
-                disabled ? 'opacity-50 cursor-not-allowed' : '',
+                disabled ? 'cursor-not-allowed opacity-50' : '',
             ]"
             @click="openFilePicker"
         >
             <div v-if="isUploading" class="flex flex-col items-center gap-3">
-                <div class="p-4 rounded-full bg-muted">
-                    <IconLoader2 class="h-8 w-8 text-muted-foreground animate-spin" />
+                <div class="rounded-full bg-muted p-4">
+                    <IconLoader2
+                        class="h-8 w-8 animate-spin text-muted-foreground"
+                    />
                 </div>
                 <p class="text-sm text-muted-foreground">Uploading...</p>
             </div>
             <div v-else class="flex flex-col items-center gap-3">
-                <div class="p-4 rounded-full bg-muted">
-                    <IconCloudUpload v-if="isDragging" class="h-8 w-8 text-primary" />
-                    <IconVideo v-else-if="acceptVideos && !acceptImages" class="h-8 w-8 text-muted-foreground" />
+                <div class="rounded-full bg-muted p-4">
+                    <IconCloudUpload
+                        v-if="isDragging"
+                        class="h-8 w-8 text-primary"
+                    />
+                    <IconVideo
+                        v-else-if="acceptVideos && !acceptImages"
+                        class="h-8 w-8 text-muted-foreground"
+                    />
                     <IconPhoto v-else class="h-8 w-8 text-muted-foreground" />
                 </div>
                 <div class="text-center">
-                    <p class="text-sm font-medium text-muted-foreground">{{ emptyStateText }}</p>
-                    <p class="text-xs text-muted-foreground/70 mt-1">{{ acceptDescription }}</p>
-                    <p v-if="maxFiles > 1" class="text-xs text-muted-foreground/50 mt-1">
-                        Up to {{ maxFiles }} {{ maxFiles === 1 ? 'file' : 'files' }}
-                        <span v-if="minFiles && minFiles > 1">(min {{ minFiles }})</span>
+                    <p class="text-sm font-medium text-muted-foreground">
+                        {{ emptyStateText }}
+                    </p>
+                    <p class="mt-1 text-xs text-muted-foreground/70">
+                        {{ acceptDescription }}
+                    </p>
+                    <p
+                        v-if="maxFiles > 1"
+                        class="mt-1 text-xs text-muted-foreground/50"
+                    >
+                        Up to {{ maxFiles }}
+                        {{ maxFiles === 1 ? 'file' : 'files' }}
+                        <span v-if="minFiles && minFiles > 1"
+                            >(min {{ minFiles }})</span
+                        >
                     </p>
                 </div>
             </div>
@@ -200,25 +225,25 @@ const handleRemove = (mediaId: string) => {
                 <div
                     v-for="item in media"
                     :key="item.id"
-                    class="relative group aspect-square rounded-lg overflow-hidden bg-muted"
+                    class="group relative aspect-square overflow-hidden rounded-lg bg-muted"
                 >
                     <img
                         v-if="item.type === 'image'"
                         :src="item.url"
                         :alt="item.original_filename"
-                        class="w-full h-full object-cover"
+                        class="h-full w-full object-cover"
                     />
                     <video
                         v-else
                         :src="item.url"
-                        class="w-full h-full object-cover bg-black"
+                        class="h-full w-full bg-black object-cover"
                         muted
                         playsinline
                     />
                     <!-- Video indicator -->
                     <div
                         v-if="item.type === 'video'"
-                        class="absolute bottom-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5"
+                        class="absolute bottom-1 left-1 flex items-center gap-0.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white"
                     >
                         <IconVideo class="h-3 w-3" />
                     </div>
@@ -227,7 +252,7 @@ const handleRemove = (mediaId: string) => {
                         v-if="!disabled"
                         type="button"
                         @click.stop="handleRemove(item.id)"
-                        class="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        class="absolute top-1 right-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/80"
                     >
                         <IconX class="h-3.5 w-3.5" />
                     </button>
@@ -237,10 +262,17 @@ const handleRemove = (mediaId: string) => {
                     v-if="canAddMore && !disabled"
                     type="button"
                     @click="openFilePicker"
-                    class="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/20 hover:border-muted-foreground/40 flex items-center justify-center transition-colors"
-                    :class="isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-muted/50'"
+                    class="flex aspect-square items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/20 transition-colors hover:border-muted-foreground/40"
+                    :class="
+                        isUploading
+                            ? 'cursor-not-allowed opacity-50'
+                            : 'cursor-pointer hover:bg-muted/50'
+                    "
                 >
-                    <IconLoader2 v-if="isUploading" class="h-6 w-6 text-muted-foreground animate-spin" />
+                    <IconLoader2
+                        v-if="isUploading"
+                        class="h-6 w-6 animate-spin text-muted-foreground"
+                    />
                     <IconPlus v-else class="h-6 w-6 text-muted-foreground" />
                 </button>
             </div>
@@ -248,19 +280,22 @@ const handleRemove = (mediaId: string) => {
             <!-- Single media display -->
             <div
                 v-else
-                class="relative group overflow-hidden bg-muted"
-                :class="[aspectRatio, variant === 'vertical' ? 'rounded-2xl' : 'rounded-lg']"
+                class="group relative overflow-hidden bg-muted"
+                :class="[
+                    aspectRatio,
+                    variant === 'vertical' ? 'rounded-2xl' : 'rounded-lg',
+                ]"
             >
                 <img
                     v-if="media[0].type === 'image'"
                     :src="media[0].url"
                     :alt="media[0].original_filename"
-                    class="w-full h-full object-cover"
+                    class="h-full w-full object-cover"
                 />
                 <video
                     v-else
                     :src="media[0].url"
-                    class="w-full h-full object-cover bg-black"
+                    class="h-full w-full bg-black object-cover"
                     muted
                     loop
                     playsinline
@@ -268,7 +303,7 @@ const handleRemove = (mediaId: string) => {
                 <!-- Video indicator -->
                 <div
                     v-if="media[0].type === 'video'"
-                    class="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1"
+                    class="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-xs text-white"
                 >
                     <IconVideo class="h-3.5 w-3.5" />
                     <span>Video</span>
@@ -278,26 +313,33 @@ const handleRemove = (mediaId: string) => {
                     v-if="!disabled"
                     type="button"
                     @click.stop="handleRemove(media[0].id)"
-                    class="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="absolute top-2 right-2 rounded-full bg-black/60 p-2 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/80"
                 >
                     <IconX class="h-4 w-4" />
                 </button>
                 <!-- Carousel indicator (if more than 1 and not showing grid) -->
-                <div v-if="media.length > 1 && !showGrid" class="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                <div
+                    v-if="media.length > 1 && !showGrid"
+                    class="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1"
+                >
                     <div
                         v-for="(_, index) in media.slice(0, 5)"
                         :key="index"
-                        class="w-1.5 h-1.5 rounded-full"
+                        class="h-1.5 w-1.5 rounded-full"
                         :class="index === 0 ? 'bg-white' : 'bg-white/50'"
                     />
-                    <span v-if="media.length > 5" class="text-white text-[10px] ml-1">+{{ media.length - 5 }}</span>
+                    <span
+                        v-if="media.length > 5"
+                        class="ml-1 text-[10px] text-white"
+                        >+{{ media.length - 5 }}</span
+                    >
                 </div>
                 <!-- Upload more overlay (if can add more and single display) -->
                 <button
                     v-if="canAddMore && !disabled && !showGrid"
                     type="button"
                     @click="openFilePicker"
-                    class="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="absolute right-2 bottom-2 rounded-full bg-black/60 p-2 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/80"
                 >
                     <IconPlus class="h-4 w-4" />
                 </button>

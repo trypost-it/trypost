@@ -28,7 +28,7 @@ class LinkedInPageAnalytics
         // LinkedIn-Version header and the current analytics schemas.
         // The legacy `/v2/` path rejects newer parameter formats with
         // "Parameter 'timeIntervals' is invalid".
-        $this->baseUrl = config('trypost.platforms.linkedin-page.api').'/rest';
+        $this->baseUrl = config('postpro.platforms.linkedin-page.api').'/rest';
     }
 
     public function getMetrics(SocialAccount $account, ?CarbonInterface $since = null, ?CarbonInterface $until = null): array
@@ -261,3 +261,4 @@ class LinkedInPageAnalytics
         ]);
     }
 }
+

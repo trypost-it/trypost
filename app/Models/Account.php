@@ -76,7 +76,7 @@ class Account extends Model
 
     public function hasActiveSubscription(): bool
     {
-        if (config('trypost.self_hosted')) {
+        if (config('postpro.self_hosted')) {
             return true;
         }
 
@@ -122,3 +122,4 @@ class Account extends Model
         return $this->name;
     }
 }
+

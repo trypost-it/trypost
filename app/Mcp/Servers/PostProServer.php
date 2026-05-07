@@ -33,10 +33,10 @@ use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Version;
 
-#[Name('TryPost')]
+#[Name('postpro')]
 #[Version('1.0.0')]
-#[Instructions('TryPost is a social media scheduling platform. Use this server to manage posts, signatures, labels, social accounts, workspaces, and API keys.')]
-class TryPostServer extends Server
+#[Instructions('postpro is a social media scheduling platform. Use this server to manage posts, signatures, labels, social accounts, workspaces, and API keys.')]
+class postproServer extends Server
 {
     public int $defaultPaginationLength = 100;
 
@@ -84,3 +84,4 @@ class TryPostServer extends Server
 
     protected array $prompts = [];
 }
+

@@ -35,7 +35,11 @@ export function useDragAndDrop(options: DragAndDropOptions) {
         isDragging.value = false;
     };
 
-    const handleDrop = (e: DragEvent, currentMediaCount: number, onUpload: (files: File[]) => void) => {
+    const handleDrop = (
+        e: DragEvent,
+        currentMediaCount: number,
+        onUpload: (files: File[]) => void,
+    ) => {
         e.preventDefault();
         isDragging.value = false;
 

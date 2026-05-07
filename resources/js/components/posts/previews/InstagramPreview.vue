@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import {
+    IconBookmark,
+    IconCamera,
     IconDots,
     IconHeart,
     IconMessageCircle,
-    IconSend,
-    IconBookmark,
     IconMusic,
-    IconVolume,
-    IconCamera,
-    IconPlayerPlayFilled,
     IconPhoto,
+    IconPlayerPlayFilled,
+    IconSend,
+    IconVolume,
 } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
@@ -48,7 +48,9 @@ const props = defineProps<Props>();
 
 // Content type helpers
 const isReel = computed(() => props.contentType === ContentType.InstagramReel);
-const isStory = computed(() => props.contentType === ContentType.InstagramStory);
+const isStory = computed(
+    () => props.contentType === ContentType.InstagramStory,
+);
 const isFeed = computed(() => !isReel.value && !isStory.value);
 
 // Padding-bottom percentage = height/width. Used instead of CSS `aspect-ratio`
@@ -58,12 +60,14 @@ const ASPECT_PADDING: Record<string, number | null> = {
     '1:1': 100,
     '4:5': 125,
     '16:9': 56.25,
-    'original': null,
+    original: null,
 };
 
 const feedAspectStyle = computed(() => {
     const fraction = ASPECT_PADDING[props.meta?.aspect_ratio ?? '1:1'] ?? 100;
-    return fraction === null ? { aspectRatio: 'auto' } : { paddingBottom: `${fraction}%` };
+    return fraction === null
+        ? { aspectRatio: 'auto' }
+        : { paddingBottom: `${fraction}%` };
 });
 
 // Format numbers like Instagram
@@ -84,48 +88,91 @@ const truncatedCaption = computed(() => {
     return props.content.substring(0, 80) + '...';
 });
 
-const username = computed(() => props.socialAccount.username || props.socialAccount.display_name);
+const username = computed(
+    () => props.socialAccount.username || props.socialAccount.display_name,
+);
 </script>
 
 <template>
-    <div class="w-full h-full bg-white dark:bg-black text-[#262626] dark:text-[#f5f5f5] overflow-hidden flex flex-col">
-
+    <div
+        class="flex h-full w-full flex-col overflow-hidden bg-white text-[#262626] dark:bg-black dark:text-[#f5f5f5]"
+    >
         <!-- ==================== FEED POST ==================== -->
         <template v-if="isFeed">
             <!-- Instagram Header -->
-            <div class="flex-shrink-0 h-11 border-b border-[#dbdbdb] dark:border-[#262626] flex items-center px-3">
-                <div class="text-lg font-semibold tracking-tight"
-                    style="font-family: 'Instagram Sans', -apple-system, BlinkMacSystemFont, sans-serif;">
+            <div
+                class="flex h-11 flex-shrink-0 items-center border-b border-[#dbdbdb] px-3 dark:border-[#262626]"
+            >
+                <div
+                    class="text-lg font-semibold tracking-tight"
+                    style="
+                        font-family:
+                            'Instagram Sans',
+                            -apple-system,
+                            BlinkMacSystemFont,
+                            sans-serif;
+                    "
+                >
                     Instagram
                 </div>
             </div>
 
             <!-- Post Content - No scroll -->
-            <div class="flex-1 flex flex-col min-h-0 pb-6">
+            <div class="flex min-h-0 flex-1 flex-col pb-6">
                 <!-- Post Header -->
-                <div class="flex-shrink-0 flex items-center px-2.5 py-1.5">
-                    <div class="flex items-center gap-2 flex-1">
+                <div class="flex flex-shrink-0 items-center px-2.5 py-1.5">
+                    <div class="flex flex-1 items-center gap-2">
                         <!-- Avatar with gradient ring -->
-                        <div class="p-[2px] rounded-full"
-                            style="background: conic-gradient(from 180deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75)">
-                            <div class="p-[1.5px] bg-white dark:bg-black rounded-full">
-                                <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url"
-                                    :alt="socialAccount.display_name" class="w-7 h-7 rounded-full object-cover" />
-                                <div v-else
-                                    class="w-7 h-7 rounded-full bg-gradient-to-br from-[#833ab4] to-[#fd1d1d] flex items-center justify-center text-white font-semibold text-[10px]">
-                                    {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
+                        <div
+                            class="rounded-full p-[2px]"
+                            style="
+                                background: conic-gradient(
+                                    from 180deg,
+                                    #feda75,
+                                    #fa7e1e,
+                                    #d62976,
+                                    #962fbf,
+                                    #4f5bd5,
+                                    #feda75
+                                );
+                            "
+                        >
+                            <div
+                                class="rounded-full bg-white p-[1.5px] dark:bg-black"
+                            >
+                                <img
+                                    v-if="socialAccount.avatar_url"
+                                    :src="socialAccount.avatar_url"
+                                    :alt="socialAccount.display_name"
+                                    class="h-7 w-7 rounded-full object-cover"
+                                />
+                                <div
+                                    v-else
+                                    class="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#833ab4] to-[#fd1d1d] text-[10px] font-semibold text-white"
+                                >
+                                    {{
+                                        socialAccount.display_name
+                                            ?.charAt(0)
+                                            .toUpperCase()
+                                    }}
                                 </div>
                             </div>
                         </div>
-                        <div class="flex flex-col min-w-0">
-                            <span class="text-[12px] font-semibold leading-tight truncate">{{ username }}</span>
+                        <div class="flex min-w-0 flex-col">
+                            <span
+                                class="truncate text-[12px] leading-tight font-semibold"
+                                >{{ username }}</span
+                            >
                         </div>
                     </div>
-                    <IconDots class="w-4 h-4 flex-shrink-0" />
+                    <IconDots class="h-4 w-4 flex-shrink-0" />
                 </div>
 
                 <!-- Post Media - Aspect ratio matches user's chosen crop -->
-                <div class="relative w-full shrink-0 bg-black" :style="feedAspectStyle">
+                <div
+                    class="relative w-full shrink-0 bg-black"
+                    :style="feedAspectStyle"
+                >
                     <div class="absolute inset-0">
                         <PostMediaPreview
                             :media="media"
@@ -137,23 +184,27 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="flex-shrink-0 flex items-center justify-between px-2.5 py-1.5">
+                <div
+                    class="flex flex-shrink-0 items-center justify-between px-2.5 py-1.5"
+                >
                     <div class="flex items-center gap-3">
-                        <IconHeart class="w-5 h-5" />
-                        <IconMessageCircle class="w-5 h-5 -scale-x-100" />
-                        <IconSend class="w-5 h-5 -rotate-12" />
+                        <IconHeart class="h-5 w-5" />
+                        <IconMessageCircle class="h-5 w-5 -scale-x-100" />
+                        <IconSend class="h-5 w-5 -rotate-12" />
                     </div>
-                    <IconBookmark class="w-5 h-5" />
+                    <IconBookmark class="h-5 w-5" />
                 </div>
 
                 <!-- Likes -->
                 <div class="flex-shrink-0 px-2.5">
-                    <span class="text-[12px] font-semibold">{{ formatNumber(1234) }} likes</span>
+                    <span class="text-[12px] font-semibold"
+                        >{{ formatNumber(1234) }} likes</span
+                    >
                 </div>
 
                 <!-- Caption -->
                 <div v-if="content" class="flex-shrink-0 px-2.5 py-0.5">
-                    <p class="text-[12px] line-clamp-2">
+                    <p class="line-clamp-2 text-[12px]">
                         <span class="font-semibold">{{ username }}</span>
                         <span class="ml-1">{{ content }}</span>
                     </p>
@@ -163,7 +214,9 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
 
         <!-- ==================== REELS ==================== -->
         <template v-else-if="isReel">
-            <div class="relative flex-1 bg-[#fafafa] dark:bg-black overflow-hidden">
+            <div
+                class="relative flex-1 overflow-hidden bg-[#fafafa] dark:bg-black"
+            >
                 <!-- Video/Media - Full screen -->
                 <div class="absolute inset-0">
                     <PostMediaPreview
@@ -176,51 +229,102 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
                 </div>
 
                 <!-- Top Bar - below status bar -->
-                <div class="absolute top-1 left-0 right-0 px-3 flex items-center justify-between z-10">
-                    <span class="text-[#262626] dark:text-white text-[14px] font-semibold"
-                        :class="media.length > 0 ? 'drop-shadow-lg dark:drop-shadow-lg text-white' : ''">Reels</span>
-                    <IconCamera class="w-5 h-5"
-                        :class="media.length > 0 ? 'text-white drop-shadow-lg' : 'text-[#262626] dark:text-white'" />
+                <div
+                    class="absolute top-1 right-0 left-0 z-10 flex items-center justify-between px-3"
+                >
+                    <span
+                        class="text-[14px] font-semibold text-[#262626] dark:text-white"
+                        :class="
+                            media.length > 0
+                                ? 'text-white drop-shadow-lg dark:drop-shadow-lg'
+                                : ''
+                        "
+                        >Reels</span
+                    >
+                    <IconCamera
+                        class="h-5 w-5"
+                        :class="
+                            media.length > 0
+                                ? 'text-white drop-shadow-lg'
+                                : 'text-[#262626] dark:text-white'
+                        "
+                    />
                 </div>
 
                 <!-- Right Sidebar Actions (only show when media exists) -->
-                <div v-if="media.length > 0" class="absolute right-2 bottom-3 flex flex-col items-center gap-4 z-10">
+                <div
+                    v-if="media.length > 0"
+                    class="absolute right-2 bottom-3 z-10 flex flex-col items-center gap-4"
+                >
                     <div class="flex flex-col items-center">
-                        <IconHeart class="w-6 h-6 text-white drop-shadow-lg" />
-                        <span class="text-white text-[10px] font-semibold mt-0.5 drop-shadow">{{ formatNumber(12453)
-                        }}</span>
+                        <IconHeart class="h-6 w-6 text-white drop-shadow-lg" />
+                        <span
+                            class="mt-0.5 text-[10px] font-semibold text-white drop-shadow"
+                            >{{ formatNumber(12453) }}</span
+                        >
                     </div>
                     <div class="flex flex-col items-center">
-                        <IconMessageCircle class="w-6 h-6 text-white drop-shadow-lg" />
-                        <span class="text-white text-[10px] font-semibold mt-0.5 drop-shadow">{{ formatNumber(892)
-                        }}</span>
+                        <IconMessageCircle
+                            class="h-6 w-6 text-white drop-shadow-lg"
+                        />
+                        <span
+                            class="mt-0.5 text-[10px] font-semibold text-white drop-shadow"
+                            >{{ formatNumber(892) }}</span
+                        >
                     </div>
-                    <div class="flex flex-col items-center mb-4">
-                        <IconSend class="w-6 h-6 text-white drop-shadow-lg -rotate-12" />
+                    <div class="mb-4 flex flex-col items-center">
+                        <IconSend
+                            class="h-6 w-6 -rotate-12 text-white drop-shadow-lg"
+                        />
                     </div>
                 </div>
 
                 <!-- Bottom Info (only show when media exists) -->
-                <div v-if="media.length > 0" class="absolute left-0 right-10 bottom-3 px-3 z-10">
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url"
-                            class="w-7 h-7 rounded-full object-cover border border-white/30" />
-                        <div v-else
-                            class="w-7 h-7 rounded-full bg-gradient-to-br from-[#833ab4] to-[#fd1d1d] flex items-center justify-center text-white font-semibold text-[10px] border border-white/30">
-                            {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
+                <div
+                    v-if="media.length > 0"
+                    class="absolute right-10 bottom-3 left-0 z-10 px-3"
+                >
+                    <div class="mb-1.5 flex items-center gap-2">
+                        <img
+                            v-if="socialAccount.avatar_url"
+                            :src="socialAccount.avatar_url"
+                            class="h-7 w-7 rounded-full border border-white/30 object-cover"
+                        />
+                        <div
+                            v-else
+                            class="flex h-7 w-7 items-center justify-center rounded-full border border-white/30 bg-gradient-to-br from-[#833ab4] to-[#fd1d1d] text-[10px] font-semibold text-white"
+                        >
+                            {{
+                                socialAccount.display_name
+                                    ?.charAt(0)
+                                    .toUpperCase()
+                            }}
                         </div>
-                        <span class="text-white text-[12px] font-semibold drop-shadow-lg">{{ username }}</span>
-                        <button class="px-2 py-0.5 border border-white/70 rounded text-white text-[10px] font-semibold">
+                        <span
+                            class="text-[12px] font-semibold text-white drop-shadow-lg"
+                            >{{ username }}</span
+                        >
+                        <button
+                            class="rounded border border-white/70 px-2 py-0.5 text-[10px] font-semibold text-white"
+                        >
                             Follow
                         </button>
                     </div>
-                    <p v-if="content" class="text-white text-[11px] drop-shadow-lg line-clamp-2 mb-1.5">
+                    <p
+                        v-if="content"
+                        class="mb-1.5 line-clamp-2 text-[11px] text-white drop-shadow-lg"
+                    >
                         {{ truncatedCaption }}
                     </p>
                     <div class="flex items-center">
-                        <div class="flex items-center gap-1 bg-white/20 backdrop-blur-sm rounded-full px-2 py-0.5">
-                            <IconMusic class="w-2.5 h-2.5 text-white" />
-                            <span class="text-white text-[9px] truncate max-w-[100px]">Original audio</span>
+                        <div
+                            class="flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 backdrop-blur-sm"
+                        >
+                            <IconMusic class="h-2.5 w-2.5 text-white" />
+                            <span
+                                class="max-w-[100px] truncate text-[9px] text-white"
+                                >Original audio</span
+                            >
                         </div>
                     </div>
                 </div>
@@ -229,7 +333,9 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
 
         <!-- ==================== STORIES ==================== -->
         <template v-else-if="isStory">
-            <div class="relative flex-1 bg-[#fafafa] dark:bg-black overflow-hidden">
+            <div
+                class="relative flex-1 overflow-hidden bg-[#fafafa] dark:bg-black"
+            >
                 <!-- Media - Full screen -->
                 <div class="absolute inset-0">
                     <PostMediaPreview
@@ -242,59 +348,132 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
                 </div>
 
                 <!-- Progress Bars - below status bar -->
-                <div class="absolute top-0.5 left-2 right-2 flex gap-0.5 z-10">
-                    <div class="flex-1 h-[2px] rounded-full overflow-hidden"
-                        :class="media.length > 0 ? 'bg-white/30' : 'bg-[#dbdbdb] dark:bg-white/30'">
-                        <div class="h-full w-1/3 rounded-full"
-                            :class="media.length > 0 ? 'bg-white' : 'bg-[#262626] dark:bg-white'" />
+                <div class="absolute top-0.5 right-2 left-2 z-10 flex gap-0.5">
+                    <div
+                        class="h-[2px] flex-1 overflow-hidden rounded-full"
+                        :class="
+                            media.length > 0
+                                ? 'bg-white/30'
+                                : 'bg-[#dbdbdb] dark:bg-white/30'
+                        "
+                    >
+                        <div
+                            class="h-full w-1/3 rounded-full"
+                            :class="
+                                media.length > 0
+                                    ? 'bg-white'
+                                    : 'bg-[#262626] dark:bg-white'
+                            "
+                        />
                     </div>
                 </div>
 
                 <!-- User Info -->
-                <div class="absolute top-3 left-0 right-0 px-2.5 flex items-center justify-between z-10">
+                <div
+                    class="absolute top-3 right-0 left-0 z-10 flex items-center justify-between px-2.5"
+                >
                     <div class="flex items-center gap-2">
-                        <div class="p-[2px] rounded-full"
-                            style="background: conic-gradient(from 180deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5, #feda75)">
-                            <div class="p-[1.5px] bg-white dark:bg-black rounded-full">
-                                <img v-if="socialAccount.avatar_url" :src="socialAccount.avatar_url"
-                                    class="w-7 h-7 rounded-full object-cover" />
-                                <div v-else
-                                    class="w-7 h-7 rounded-full bg-gradient-to-br from-[#833ab4] to-[#fd1d1d] flex items-center justify-center text-white font-semibold text-[10px]">
-                                    {{ socialAccount.display_name?.charAt(0).toUpperCase() }}
+                        <div
+                            class="rounded-full p-[2px]"
+                            style="
+                                background: conic-gradient(
+                                    from 180deg,
+                                    #feda75,
+                                    #fa7e1e,
+                                    #d62976,
+                                    #962fbf,
+                                    #4f5bd5,
+                                    #feda75
+                                );
+                            "
+                        >
+                            <div
+                                class="rounded-full bg-white p-[1.5px] dark:bg-black"
+                            >
+                                <img
+                                    v-if="socialAccount.avatar_url"
+                                    :src="socialAccount.avatar_url"
+                                    class="h-7 w-7 rounded-full object-cover"
+                                />
+                                <div
+                                    v-else
+                                    class="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#833ab4] to-[#fd1d1d] text-[10px] font-semibold text-white"
+                                >
+                                    {{
+                                        socialAccount.display_name
+                                            ?.charAt(0)
+                                            .toUpperCase()
+                                    }}
                                 </div>
                             </div>
                         </div>
-                        <span class="text-[12px] font-semibold"
-                            :class="media.length > 0 ? 'text-white drop-shadow-lg' : 'text-[#262626] dark:text-white'">{{
-                                username
-                            }}</span>
-                        <span class="text-[10px]"
-                            :class="media.length > 0 ? 'text-white/70 drop-shadow' : 'text-[#737373] dark:text-white/70'">2h</span>
+                        <span
+                            class="text-[12px] font-semibold"
+                            :class="
+                                media.length > 0
+                                    ? 'text-white drop-shadow-lg'
+                                    : 'text-[#262626] dark:text-white'
+                            "
+                            >{{ username }}</span
+                        >
+                        <span
+                            class="text-[10px]"
+                            :class="
+                                media.length > 0
+                                    ? 'text-white/70 drop-shadow'
+                                    : 'text-[#737373] dark:text-white/70'
+                            "
+                            >2h</span
+                        >
                     </div>
                     <div class="flex items-center gap-2">
-                        <IconVolume class="w-4 h-4"
-                            :class="media.length > 0 ? 'text-white drop-shadow-lg' : 'text-[#262626] dark:text-white'" />
-                        <IconDots class="w-4 h-4"
-                            :class="media.length > 0 ? 'text-white drop-shadow-lg' : 'text-[#262626] dark:text-white'" />
+                        <IconVolume
+                            class="h-4 w-4"
+                            :class="
+                                media.length > 0
+                                    ? 'text-white drop-shadow-lg'
+                                    : 'text-[#262626] dark:text-white'
+                            "
+                        />
+                        <IconDots
+                            class="h-4 w-4"
+                            :class="
+                                media.length > 0
+                                    ? 'text-white drop-shadow-lg'
+                                    : 'text-[#262626] dark:text-white'
+                            "
+                        />
                     </div>
                 </div>
 
                 <!-- Caption overlay (if content exists, only show when media) -->
-                <div v-if="content && media.length > 0" class="absolute bottom-14 left-2.5 right-2.5 z-10">
+                <div
+                    v-if="content && media.length > 0"
+                    class="absolute right-2.5 bottom-14 left-2.5 z-10"
+                >
                     <p
-                        class="text-white text-[12px] text-center drop-shadow-lg bg-black/20 backdrop-blur-sm rounded-lg px-2.5 py-1.5 line-clamp-2">
+                        class="line-clamp-2 rounded-lg bg-black/20 px-2.5 py-1.5 text-center text-[12px] text-white drop-shadow-lg backdrop-blur-sm"
+                    >
                         {{ content }}
                     </p>
                 </div>
 
                 <!-- Bottom Reply Bar (only show when media exists) -->
-                <div v-if="media.length > 0"
-                    class="absolute bottom-2.5 left-2.5 right-2.5 flex items-center gap-2 z-10">
-                    <div class="flex-1 bg-white/20 backdrop-blur-md rounded-full px-3 py-2 border border-white/20">
-                        <span class="text-white/80 text-[12px]">Send message</span>
+                <div
+                    v-if="media.length > 0"
+                    class="absolute right-2.5 bottom-2.5 left-2.5 z-10 flex items-center gap-2"
+                >
+                    <div
+                        class="flex-1 rounded-full border border-white/20 bg-white/20 px-3 py-2 backdrop-blur-md"
+                    >
+                        <span class="text-[12px] text-white/80"
+                            >Send message</span
+                        >
                     </div>
-                    <IconHeart class="w-6 h-6 text-white drop-shadow-lg" />
-                    <IconSend class="w-6 h-6 text-white drop-shadow-lg -rotate-12" />
+                    <IconHeart class="h-6 w-6 text-white drop-shadow-lg" />
+                    <IconSend
+                        class="h-6 w-6 -rotate-12 text-white drop-shadow-lg"
+                    />
                 </div>
             </div>
         </template>

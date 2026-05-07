@@ -22,7 +22,7 @@ class PinterestAnalytics
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.pinterest.api');
+        $this->baseUrl = config('postpro.platforms.pinterest.api');
     }
 
     private string $accessToken;
@@ -170,7 +170,7 @@ class PinterestAnalytics
         $response = Http::withBasicAuth(
             config('services.pinterest.client_id'),
             config('services.pinterest.client_secret'),
-        )->asForm()->post(config('trypost.platforms.pinterest.api').'/oauth/token', [
+        )->asForm()->post(config('postpro.platforms.pinterest.api').'/oauth/token', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $account->refresh_token,
         ]);
@@ -189,3 +189,4 @@ class PinterestAnalytics
         ]);
     }
 }
+

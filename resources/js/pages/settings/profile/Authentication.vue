@@ -26,8 +26,10 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { isMobileDevice, parseBrowserName, parseOsName } from '@/lib/userAgent';
-import { settings as settingsHub } from '@/routes/app';
-import { connectProvider, edit as editAuthentication } from '@/routes/app/authentication';
+import {
+    connectProvider,
+    edit as editAuthentication,
+} from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';
 
@@ -53,11 +55,22 @@ const props = defineProps<{
 }>();
 
 const tabs = computed(() => [
-    { name: 'profile', label: trans('settings.nav.profile'), href: editProfile().url },
-    { name: 'authentication', label: trans('settings.nav.authentication'), href: editAuthentication().url },
-    { name: 'notifications', label: trans('settings.nav.notifications'), href: notificationPreferences().url },
+    {
+        name: 'profile',
+        label: trans('settings.nav.profile'),
+        href: editProfile().url,
+    },
+    {
+        name: 'authentication',
+        label: trans('settings.nav.authentication'),
+        href: editAuthentication().url,
+    },
+    {
+        name: 'notifications',
+        label: trans('settings.nav.notifications'),
+        href: notificationPreferences().url,
+    },
 ]);
-
 
 const passwordHeading = computed(() =>
     props.hasPassword
@@ -90,7 +103,9 @@ const logoutDialogOpen = ref(false);
                 <div class="space-y-6">
                     <HeadingSmall
                         :title="$t('settings.authentication.sessions.title')"
-                        :description="$t('settings.authentication.sessions.description')"
+                        :description="
+                            $t('settings.authentication.sessions.description')
+                        "
                     />
 
                     <div class="space-y-3">
@@ -99,18 +114,26 @@ const logoutDialogOpen = ref(false);
                             :key="session.id"
                             :class="[
                                 'flex items-center gap-4 rounded-xl border-2 border-foreground p-4 shadow-2xs',
-                                session.is_current ? 'bg-emerald-50' : 'bg-card',
+                                session.is_current
+                                    ? 'bg-emerald-50'
+                                    : 'bg-card',
                             ]"
                             data-test="session-row"
                         >
                             <div
                                 :class="[
-                                    'inline-flex size-10 -rotate-2 flex-shrink-0 items-center justify-center rounded-2xl border-2 border-foreground shadow-2xs',
-                                    session.is_current ? 'bg-emerald-200' : 'bg-violet-100',
+                                    'inline-flex size-10 flex-shrink-0 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground shadow-2xs',
+                                    session.is_current
+                                        ? 'bg-emerald-200'
+                                        : 'bg-violet-100',
                                 ]"
                             >
                                 <component
-                                    :is="isMobileDevice(session.user_agent) ? IconDeviceMobile : IconDeviceDesktop"
+                                    :is="
+                                        isMobileDevice(session.user_agent)
+                                            ? IconDeviceMobile
+                                            : IconDeviceDesktop
+                                    "
                                     class="size-5 text-foreground"
                                     stroke-width="2"
                                 />
@@ -122,19 +145,41 @@ const logoutDialogOpen = ref(false);
                                         v-if="parseOsName(session.user_agent)"
                                         class="font-medium text-foreground/60"
                                     >
-                                        {{ $t('settings.authentication.sessions.on') }} {{ parseOsName(session.user_agent) }}
+                                        {{
+                                            $t(
+                                                'settings.authentication.sessions.on',
+                                            )
+                                        }}
+                                        {{ parseOsName(session.user_agent) }}
                                     </span>
                                 </div>
-                                <div class="flex items-center gap-1.5 text-xs font-medium text-foreground/60">
-                                    <span>{{ session.ip_address ?? $t('settings.authentication.sessions.unknown_ip') }}</span>
+                                <div
+                                    class="flex items-center gap-1.5 text-xs font-medium text-foreground/60"
+                                >
+                                    <span>{{
+                                        session.ip_address ??
+                                        $t(
+                                            'settings.authentication.sessions.unknown_ip',
+                                        )
+                                    }}</span>
                                     <span aria-hidden="true">·</span>
                                     <template v-if="session.is_current">
                                         <span class="relative flex size-2">
-                                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/60" />
-                                            <span class="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                                            <span
+                                                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/60"
+                                            />
+                                            <span
+                                                class="relative inline-flex size-2 rounded-full bg-emerald-500"
+                                            />
                                         </span>
-                                        <span class="font-bold text-emerald-700">
-                                            {{ $t('settings.authentication.sessions.active_now') }}
+                                        <span
+                                            class="font-bold text-emerald-700"
+                                        >
+                                            {{
+                                                $t(
+                                                    'settings.authentication.sessions.active_now',
+                                                )
+                                            }}
                                         </span>
                                     </template>
                                     <template v-else>
@@ -152,12 +197,18 @@ const logoutDialogOpen = ref(false);
                                 data-test="log-out-other-sessions-button"
                                 :disabled="sessions.length <= 1"
                             >
-                                {{ $t('settings.authentication.sessions.log_out_others') }}
+                                {{
+                                    $t(
+                                        'settings.authentication.sessions.log_out_others',
+                                    )
+                                }}
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <Form
-                                v-bind="AuthenticationController.destroyOtherSessions.form()"
+                                v-bind="
+                                    AuthenticationController.destroyOtherSessions.form()
+                                "
                                 :options="{ preserveScroll: true }"
                                 reset-on-success
                                 @success="logoutDialogOpen = false"
@@ -165,48 +216,89 @@ const logoutDialogOpen = ref(false);
                                 v-slot="{ errors, processing }"
                             >
                                 <DialogHeader>
-                                    <DialogTitle>{{ $t('settings.authentication.sessions.modal_title') }}</DialogTitle>
+                                    <DialogTitle>{{
+                                        $t(
+                                            'settings.authentication.sessions.modal_title',
+                                        )
+                                    }}</DialogTitle>
                                     <DialogDescription>
-                                        {{ hasPassword
-                                            ? $t('settings.authentication.sessions.modal_description_password')
-                                            : $t('settings.authentication.sessions.modal_description_email') }}
+                                        {{
+                                            hasPassword
+                                                ? $t(
+                                                      'settings.authentication.sessions.modal_description_password',
+                                                  )
+                                                : $t(
+                                                      'settings.authentication.sessions.modal_description_email',
+                                                  )
+                                        }}
                                     </DialogDescription>
                                 </DialogHeader>
 
                                 <div v-if="hasPassword" class="grid gap-2">
-                                    <Label for="session_password" class="sr-only">
-                                        {{ $t('settings.authentication.password.current_password') }}
+                                    <Label
+                                        for="session_password"
+                                        class="sr-only"
+                                    >
+                                        {{
+                                            $t(
+                                                'settings.authentication.password.current_password',
+                                            )
+                                        }}
                                     </Label>
                                     <Input
                                         id="session_password"
                                         type="password"
                                         name="password"
-                                        :placeholder="trans('settings.authentication.sessions.password_placeholder')"
+                                        :placeholder="
+                                            trans(
+                                                'settings.authentication.sessions.password_placeholder',
+                                            )
+                                        "
                                     />
                                     <InputError :message="errors.password" />
                                 </div>
 
                                 <div v-else class="grid gap-2">
-                                    <Label for="session_email_confirmation" class="sr-only">
+                                    <Label
+                                        for="session_email_confirmation"
+                                        class="sr-only"
+                                    >
                                         Email
                                     </Label>
                                     <Input
                                         id="session_email_confirmation"
                                         type="email"
                                         name="email_confirmation"
-                                        :placeholder="trans('settings.authentication.sessions.email_placeholder')"
+                                        :placeholder="
+                                            trans(
+                                                'settings.authentication.sessions.email_placeholder',
+                                            )
+                                        "
                                         autocomplete="off"
                                     />
-                                    <InputError :message="errors.email_confirmation" />
+                                    <InputError
+                                        :message="errors.email_confirmation"
+                                    />
                                 </div>
 
                                 <DialogFooter class="gap-2">
-                                    <Button type="submit" :disabled="processing">
-                                        {{ $t('settings.authentication.sessions.submit') }}
+                                    <Button
+                                        type="submit"
+                                        :disabled="processing"
+                                    >
+                                        {{
+                                            $t(
+                                                'settings.authentication.sessions.submit',
+                                            )
+                                        }}
                                     </Button>
                                     <DialogClose as-child>
                                         <Button variant="secondary">
-                                            {{ $t('settings.authentication.sessions.cancel') }}
+                                            {{
+                                                $t(
+                                                    'settings.authentication.sessions.cancel',
+                                                )
+                                            }}
                                         </Button>
                                     </DialogClose>
                                 </DialogFooter>
@@ -218,18 +310,29 @@ const logoutDialogOpen = ref(false);
                 <Separator />
 
                 <div class="space-y-6">
-                    <HeadingSmall :title="passwordHeading" :description="passwordDescription" />
+                    <HeadingSmall
+                        :title="passwordHeading"
+                        :description="passwordDescription"
+                    />
 
                     <Form
                         v-bind="AuthenticationController.updatePassword.form()"
                         :options="{ preserveScroll: true }"
                         reset-on-success
-                        :reset-on-error="['password', 'password_confirmation', 'current_password']"
+                        :reset-on-error="[
+                            'password',
+                            'password_confirmation',
+                            'current_password',
+                        ]"
                         class="space-y-6"
                         v-slot="{ errors, processing }"
                     >
                         <div v-if="hasPassword" class="grid gap-2">
-                            <Label for="current_password">{{ $t('settings.authentication.password.current_password') }}</Label>
+                            <Label for="current_password">{{
+                                $t(
+                                    'settings.authentication.password.current_password',
+                                )
+                            }}</Label>
                             <Input
                                 id="current_password"
                                 name="current_password"
@@ -240,7 +343,11 @@ const logoutDialogOpen = ref(false);
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="password">{{ $t('settings.authentication.password.new_password') }}</Label>
+                            <Label for="password">{{
+                                $t(
+                                    'settings.authentication.password.new_password',
+                                )
+                            }}</Label>
                             <Input
                                 id="password"
                                 name="password"
@@ -251,20 +358,33 @@ const logoutDialogOpen = ref(false);
                         </div>
 
                         <div class="grid gap-2">
-                            <Label for="password_confirmation">{{ $t('settings.authentication.password.confirm_password') }}</Label>
+                            <Label for="password_confirmation">{{
+                                $t(
+                                    'settings.authentication.password.confirm_password',
+                                )
+                            }}</Label>
                             <Input
                                 id="password_confirmation"
                                 name="password_confirmation"
                                 type="password"
                                 autocomplete="new-password"
                             />
-                            <InputError :message="errors.password_confirmation" />
+                            <InputError
+                                :message="errors.password_confirmation"
+                            />
                         </div>
 
-                        <Button :disabled="processing" data-test="update-password-button">
-                            {{ hasPassword
-                                ? $t('settings.authentication.password.save')
-                                : $t('settings.authentication.password.set') }}
+                        <Button
+                            :disabled="processing"
+                            data-test="update-password-button"
+                        >
+                            {{
+                                hasPassword
+                                    ? $t(
+                                          'settings.authentication.password.save',
+                                      )
+                                    : $t('settings.authentication.password.set')
+                            }}
                         </Button>
                     </Form>
                 </div>
@@ -274,7 +394,9 @@ const logoutDialogOpen = ref(false);
                 <div class="space-y-6">
                     <HeadingSmall
                         :title="$t('settings.authentication.providers.title')"
-                        :description="$t('settings.authentication.providers.description')"
+                        :description="
+                            $t('settings.authentication.providers.description')
+                        "
                     />
 
                     <div class="space-y-3">
@@ -284,7 +406,9 @@ const logoutDialogOpen = ref(false);
                             class="flex items-center gap-4 rounded-xl border-2 border-foreground bg-card p-4 shadow-2xs"
                             :data-test="`connected-account-${account.provider}`"
                         >
-                            <div class="inline-flex size-10 rotate-1 flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl border-2 border-foreground bg-card shadow-2xs">
+                            <div
+                                class="inline-flex size-10 flex-shrink-0 rotate-1 items-center justify-center overflow-hidden rounded-2xl border-2 border-foreground bg-card shadow-2xs"
+                            >
                                 <img
                                     :src="`/images/social/${account.provider}.svg`"
                                     :alt="account.label"
@@ -292,21 +416,42 @@ const logoutDialogOpen = ref(false);
                                 />
                             </div>
                             <div class="flex-1 space-y-0.5">
-                                <div class="text-sm font-bold text-foreground">{{ account.label }}</div>
+                                <div class="text-sm font-bold text-foreground">
+                                    {{ account.label }}
+                                </div>
                                 <div
                                     v-if="account.connected"
                                     class="flex items-center gap-1.5 text-xs font-bold text-emerald-700"
                                 >
-                                    <span class="size-1.5 rounded-full bg-emerald-500" />
-                                    <span>{{ $t('settings.authentication.providers.connected') }}</span>
+                                    <span
+                                        class="size-1.5 rounded-full bg-emerald-500"
+                                    />
+                                    <span>{{
+                                        $t(
+                                            'settings.authentication.providers.connected',
+                                        )
+                                    }}</span>
                                 </div>
-                                <div v-else class="text-xs font-medium text-foreground/60">
-                                    {{ $t('settings.authentication.providers.not_connected') }}
+                                <div
+                                    v-else
+                                    class="text-xs font-medium text-foreground/60"
+                                >
+                                    {{
+                                        $t(
+                                            'settings.authentication.providers.not_connected',
+                                        )
+                                    }}
                                 </div>
                             </div>
                             <Form
-                                v-if="account.connected && account.can_disconnect"
-                                v-bind="AuthenticationController.disconnectProvider.form(account.provider)"
+                                v-if="
+                                    account.connected && account.can_disconnect
+                                "
+                                v-bind="
+                                    AuthenticationController.disconnectProvider.form(
+                                        account.provider,
+                                    )
+                                "
                                 :options="{ preserveScroll: true }"
                                 #default="{ processing }"
                             >
@@ -318,7 +463,11 @@ const logoutDialogOpen = ref(false);
                                     class="bg-rose-100 text-rose-700 hover:bg-rose-200"
                                     :data-test="`disconnect-${account.provider}`"
                                 >
-                                    {{ $t('settings.authentication.providers.disconnect') }}
+                                    {{
+                                        $t(
+                                            'settings.authentication.providers.disconnect',
+                                        )
+                                    }}
                                 </Button>
                             </Form>
                             <Button
@@ -329,7 +478,11 @@ const logoutDialogOpen = ref(false);
                                 :href="connectProvider(account.provider).url"
                                 :data-test="`connect-${account.provider}`"
                             >
-                                {{ $t('settings.authentication.providers.connect') }}
+                                {{
+                                    $t(
+                                        'settings.authentication.providers.connect',
+                                    )
+                                }}
                             </Button>
                         </div>
                     </div>

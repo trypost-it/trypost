@@ -1,5 +1,5 @@
 {
-    "$schema": "https://www.schemastore.org/package.json",
+    "name": "postpro",
     "private": true,
     "type": "module",
     "scripts": {
@@ -47,6 +47,7 @@
         "clsx": "^2.1.1",
         "dayjs": "^1.11.19",
         "embla-carousel-vue": "^8.6.0",
+        "firebase": "^12.13.0",
         "laravel-vite-plugin": "^2.0.0",
         "laravel-vue-i18n": "^2.8.0",
         "maska": "^3.2.0",

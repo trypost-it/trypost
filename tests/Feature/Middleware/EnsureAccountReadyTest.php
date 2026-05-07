@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Models\Workspace;
 
 beforeEach(function () {
-    config()->set('trypost.self_hosted', false);
+    config()->set('postpro.self_hosted', false);
 });
 
 test('redirects to subscribe when account has no active subscription', function () {
@@ -57,7 +57,7 @@ test('passes through when subscribed and has workspace', function () {
 });
 
 test('skips subscription check when self-hosted is enabled', function () {
-    config()->set('trypost.self_hosted', true);
+    config()->set('postpro.self_hosted', true);
 
     $account = Account::factory()->create();
     $user = User::factory()->create(['account_id' => $account->id]);
@@ -72,7 +72,7 @@ test('skips subscription check when self-hosted is enabled', function () {
 });
 
 test('redirects to workspace create when self-hosted and no workspace', function () {
-    config()->set('trypost.self_hosted', true);
+    config()->set('postpro.self_hosted', true);
 
     $account = Account::factory()->create();
     $user = User::factory()->create(['account_id' => $account->id]);
@@ -81,3 +81,4 @@ test('redirects to workspace create when self-hosted and no workspace', function
         ->get(route('app.calendar'))
         ->assertRedirect(route('app.workspaces.create'));
 });
+

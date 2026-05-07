@@ -22,7 +22,7 @@ beforeEach(function () {
 });
 
 test('account edit shows account settings with billing email when not self hosted', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $this->account->subscriptions()->create([
         'type' => Account::SUBSCRIPTION_NAME,
@@ -42,7 +42,7 @@ test('account edit shows account settings with billing email when not self hoste
 });
 
 test('account edit shows self hosted flag when self hosted', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $response = $this->actingAs($this->user)->get(route('app.account.edit'));
 
@@ -54,7 +54,7 @@ test('account edit shows self hosted flag when self hosted', function () {
 });
 
 test('account update does not require billing email when self hosted', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $response = $this->actingAs($this->user)->put(route('app.account.update'), [
         'name' => 'Updated Account',
@@ -68,7 +68,7 @@ test('account update does not require billing email when self hosted', function 
 });
 
 test('account update requires billing email when not self hosted', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $this->account->subscriptions()->create([
         'type' => Account::SUBSCRIPTION_NAME,
@@ -83,3 +83,4 @@ test('account update requires billing email when not self hosted', function () {
 
     $response->assertSessionHasErrors('billing_email');
 });
+

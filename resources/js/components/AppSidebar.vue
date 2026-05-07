@@ -9,8 +9,8 @@ import {
     IconFileCheck,
     IconFileText,
     IconHash,
-    IconPhoto,
     IconPencil,
+    IconPhoto,
     IconPlus,
     IconSettings,
     IconTag,
@@ -18,7 +18,10 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
-import { create as createPost, index as postsIndex } from '@/actions/App/Http/Controllers/App/PostController';
+import {
+    create as createPost,
+    index as postsIndex,
+} from '@/actions/App/Http/Controllers/App/PostController';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Avatar } from '@/components/ui/avatar';
@@ -43,11 +46,19 @@ import {
 import { useActiveUrl } from '@/composables/useActiveUrl';
 import { useFeatureAccess } from '@/composables/useFeatureAccess';
 import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
-import { accounts, analytics, calendar, settings as settingsHub } from '@/routes/app';
+import {
+    accounts,
+    analytics,
+    calendar,
+    settings as settingsHub,
+} from '@/routes/app';
 import { index as assets } from '@/routes/app/assets';
 import { index as labels } from '@/routes/app/labels';
 import { index as signatures } from '@/routes/app/signatures';
-import { create as createWorkspaceRoute, switchMethod } from '@/routes/app/workspaces';
+import {
+    create as createWorkspaceRoute,
+    switchMethod,
+} from '@/routes/app/workspaces';
 import type { NavItem } from '@/types';
 
 interface Workspace {
@@ -57,8 +68,12 @@ interface Workspace {
 }
 
 const page = usePage();
-const currentWorkspace = computed<Workspace | null>(() => page.props.auth.currentWorkspace as Workspace | null);
-const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Workspace[]);
+const currentWorkspace = computed<Workspace | null>(
+    () => page.props.auth.currentWorkspace as Workspace | null,
+);
+const workspaces = computed<Workspace[]>(
+    () => page.props.auth.workspaces as Workspace[],
+);
 
 const mainNavItems = computed<NavItem[]>(() => [
     {
@@ -78,7 +93,11 @@ const postsNavItems = computed<NavItem[]>(() => [
         title: trans('sidebar.posts.all'),
         href: postsIndex.url(),
         icon: IconFileText,
-        excludeActive: [postsIndex.url('scheduled'), postsIndex.url('published'), postsIndex.url('draft')],
+        excludeActive: [
+            postsIndex.url('scheduled'),
+            postsIndex.url('published'),
+            postsIndex.url('draft'),
+        ],
     },
     {
         title: trans('sidebar.posts.scheduled'),
@@ -121,9 +140,13 @@ const workspaceNavItems = computed<NavItem[]>(() => [
 ]);
 
 const switchWorkspace = (workspaceId: string) => {
-    router.post(switchMethod.url(workspaceId), {}, {
-        preserveScroll: true,
-    });
+    router.post(
+        switchMethod.url(workspaceId),
+        {},
+        {
+            preserveScroll: true,
+        },
+    );
 };
 
 const { canCreateWorkspace } = useFeatureAccess();
@@ -146,30 +169,55 @@ const handleCreateWorkspace = () => {
                 <SidebarMenuItem>
                     <DropdownMenu>
                         <DropdownMenuTrigger as-child>
-                            <SidebarMenuButton size="lg"
-                                class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                                <Avatar :src="currentWorkspace?.logo_url" :name="currentWorkspace?.name ?? '?'"
+                            <SidebarMenuButton
+                                size="lg"
+                                class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                            >
+                                <Avatar
+                                    :src="currentWorkspace?.logo_url"
+                                    :name="currentWorkspace?.name ?? '?'"
                                     class="h-8 w-8 shrink-0 rounded-md border-2 border-foreground"
-                                    fallback-class="bg-violet-100 text-violet-700 font-bold" />
-                                <div class="grid flex-1 text-left text-sm leading-tight">
+                                    fallback-class="bg-violet-100 text-violet-700 font-bold"
+                                />
+                                <div
+                                    class="grid flex-1 text-left text-sm leading-tight"
+                                >
                                     <span class="truncate font-semibold">
-                                        {{ currentWorkspace?.name ?? $t('sidebar.select_workspace') }}
+                                        {{
+                                            currentWorkspace?.name ??
+                                            $t('sidebar.select_workspace')
+                                        }}
                                     </span>
                                 </div>
                                 <IconChevronRight class="ml-auto size-4" />
                             </SidebarMenuButton>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent class="w-[--reka-dropdown-menu-trigger-width] min-w-56"
-                            align="start" side="right" :side-offset="4">
+                        <DropdownMenuContent
+                            class="w-[--reka-dropdown-menu-trigger-width] min-w-56"
+                            align="start"
+                            side="right"
+                            :side-offset="4"
+                        >
                             <DropdownMenuLabel>
                                 {{ $t('sidebar.workspaces') }}
                             </DropdownMenuLabel>
                             <div class="space-y-0.5">
-                                <DropdownMenuItem v-for="workspace in workspaces" :key="workspace.id"
-                                    :class="workspace.id === currentWorkspace?.id ? 'bg-accent text-accent-foreground' : ''"
-                                    @click="switchWorkspace(workspace.id)">
-                                    <Avatar :src="workspace.logo_url" :name="workspace.name"
-                                        class="h-6 w-6 shrink-0 rounded-md border-2 border-foreground" fallback-class="text-[10px] bg-violet-100 text-violet-700 font-bold" />
+                                <DropdownMenuItem
+                                    v-for="workspace in workspaces"
+                                    :key="workspace.id"
+                                    :class="
+                                        workspace.id === currentWorkspace?.id
+                                            ? 'bg-accent text-accent-foreground'
+                                            : ''
+                                    "
+                                    @click="switchWorkspace(workspace.id)"
+                                >
+                                    <Avatar
+                                        :src="workspace.logo_url"
+                                        :name="workspace.name"
+                                        class="h-6 w-6 shrink-0 rounded-md border-2 border-foreground"
+                                        fallback-class="text-[10px] bg-violet-100 text-violet-700 font-bold"
+                                    />
                                     {{ workspace.name }}
                                 </DropdownMenuItem>
                             </div>
@@ -195,8 +243,16 @@ const handleCreateWorkspace = () => {
             </div>
 
             <NavMain v-if="currentWorkspace" :items="mainNavItems" />
-            <NavMain v-if="currentWorkspace" :items="postsNavItems" :label="$t('sidebar.groups.posts')" />
-            <NavMain v-if="currentWorkspace" :items="workspaceNavItems" :label="$t('sidebar.groups.workspace')" />
+            <NavMain
+                v-if="currentWorkspace"
+                :items="postsNavItems"
+                :label="$t('sidebar.groups.posts')"
+            />
+            <NavMain
+                v-if="currentWorkspace"
+                :items="workspaceNavItems"
+                :label="$t('sidebar.groups.workspace')"
+            />
         </SidebarContent>
 
         <SidebarFooter>

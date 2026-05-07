@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { uploadLogo, deleteLogo } from '@/routes/app/workspace';
+import { deleteLogo, uploadLogo } from '@/routes/app/workspace';
 
 interface Workspace {
     id: string;
@@ -54,7 +54,9 @@ defineProps<{
                 class="space-y-6"
             >
                 <div class="grid gap-2">
-                    <Label for="name">{{ $t('settings.workspace.name') }}</Label>
+                    <Label for="name">{{
+                        $t('settings.workspace.name')
+                    }}</Label>
                     <Input
                         id="name"
                         name="name"
@@ -64,7 +66,9 @@ defineProps<{
                     <InputError :message="errors.name" />
                 </div>
 
-                <Button :disabled="processing">{{ $t('settings.workspace.save') }}</Button>
+                <Button :disabled="processing">{{
+                    $t('settings.workspace.save')
+                }}</Button>
             </Form>
         </div>
     </div>

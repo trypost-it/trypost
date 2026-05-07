@@ -22,7 +22,7 @@ beforeEach(function () {
 });
 
 test('usage index redirects to calendar in self hosted mode', function () {
-    config(['trypost.self_hosted' => true]);
+    config(['postpro.self_hosted' => true]);
 
     $response = $this->actingAs($this->user)->get(route('app.usage.index'));
 
@@ -30,7 +30,7 @@ test('usage index redirects to calendar in self hosted mode', function () {
 });
 
 test('usage index shows usage page when not self hosted', function () {
-    config(['trypost.self_hosted' => false]);
+    config(['postpro.self_hosted' => false]);
 
     $this->account->subscriptions()->create([
         'type' => Account::SUBSCRIPTION_NAME,
@@ -47,3 +47,4 @@ test('usage index shows usage page when not self hosted', function () {
         ->has('usage')
     );
 });
+

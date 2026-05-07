@@ -29,7 +29,7 @@ class LinkedInPagePublisher
 
     public function __construct()
     {
-        $this->baseUrl = config('trypost.platforms.linkedin-page.api');
+        $this->baseUrl = config('postpro.platforms.linkedin-page.api');
     }
 
     private SocialAccount $account;
@@ -486,3 +486,4 @@ class LinkedInPagePublisher
         throw LinkedInPublishException::fromApiResponse($response);
     }
 }
+

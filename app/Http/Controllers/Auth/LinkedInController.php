@@ -50,13 +50,13 @@ class LinkedInController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         try {
@@ -95,13 +95,13 @@ class LinkedInController extends SocialController
             // Sync tokens to LinkedIn Page if it exists
             app(LinkedInTokenSynchronizer::class)->syncTokens($account);
 
-            return $this->popupCallback(true, 'LinkedIn account connected!', $this->platform->value);
+            return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value);
         } catch (\Exception $e) {
             Log::error('LinkedIn OAuth Error', [
                 'error' => $e->getMessage(),
             ]);
 
-            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting'), $this->platform->value);
         }
     }
 

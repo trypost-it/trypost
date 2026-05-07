@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{{ $success ? 'Connected' : 'Error' }}</title>
+    <title>{{ $success ? __('accounts.popup_callback.title_success') : __('accounts.popup_callback.title_error') }}</title>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -35,7 +35,7 @@
     <div class="container">
         <div class="icon">{{ $success ? '✓' : '✕' }}</div>
         <div class="message">{{ $message }}</div>
-        <div class="submessage">This window will close automatically...</div>
+        <div class="submessage">{{ __('accounts.popup_callback.closing') }}</div>
     </div>
 
     <script>
@@ -80,7 +80,7 @@
             // If still open after 2 seconds, show manual close message
             setTimeout(function() {
                 if (!window.closed) {
-                    document.querySelector('.submessage').textContent = 'You can close this window now.';
+                    document.querySelector('.submessage').textContent = @json(__('accounts.popup_callback.close_now'));
                 }
             }, 2000);
         })();

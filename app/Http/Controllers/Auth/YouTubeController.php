@@ -56,13 +56,13 @@ class YouTubeController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         try {
@@ -72,7 +72,7 @@ class YouTubeController extends SocialController
             $channels = $this->fetchChannels($socialUser->token);
 
             if (empty($channels)) {
-                return $this->popupCallback(false, 'No YouTube channels found. Please create a channel first.', $this->platform->value);
+                return $this->popupCallback(false, __('accounts.popup_callback.no_youtube_channels'), $this->platform->value);
             }
 
             // If only one channel, connect directly (most common case)
@@ -103,7 +103,7 @@ class YouTubeController extends SocialController
                     ],
                 );
 
-                return $this->popupCallback(true, 'YouTube channel connected!', $this->platform->value);
+                return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value);
             }
 
             // Multiple channels - store data and show selection screen
@@ -123,7 +123,7 @@ class YouTubeController extends SocialController
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting'), $this->platform->value);
         }
     }
 
@@ -178,13 +178,13 @@ class YouTubeController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $oauthData || ! $workspaceId) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         try {
@@ -192,7 +192,7 @@ class YouTubeController extends SocialController
             $selectedChannel = collect($channels)->firstWhere('id', $request->channel_id);
 
             if (! $selectedChannel) {
-                return $this->popupCallback(false, 'Channel not found.', $this->platform->value);
+                return $this->popupCallback(false, __('accounts.popup_callback.channel_not_found'), $this->platform->value);
             }
 
             $avatarPath = uploadFromUrl(data_get($selectedChannel, 'thumbnail'));
@@ -221,7 +221,7 @@ class YouTubeController extends SocialController
 
                     session()->forget(['youtube_oauth', 'social_reconnect_id']);
 
-                    return $this->popupCallback(true, 'YouTube channel reconnected!', $this->platform->value);
+                    return $this->popupCallback(true, __('accounts.popup_callback.reconnected'), $this->platform->value);
                 }
             }
 
@@ -250,13 +250,13 @@ class YouTubeController extends SocialController
 
             session()->forget(['youtube_oauth', 'social_reconnect_id']);
 
-            return $this->popupCallback(true, 'YouTube channel connected!', $this->platform->value);
+            return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value);
         } catch (\Exception $e) {
             Log::error('YouTube channel selection error', [
                 'error' => $e->getMessage(),
             ]);
 
-            return $this->popupCallback(false, 'Error connecting channel. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting_channel'), $this->platform->value);
         }
     }
 

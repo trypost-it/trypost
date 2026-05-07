@@ -69,13 +69,13 @@ class LinkedInPageController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         try {
@@ -90,7 +90,7 @@ class LinkedInPageController extends SocialController
             $organizations = $this->fetchOrganizations($socialUser->token);
 
             if (empty($organizations)) {
-                return $this->popupCallback(false, 'You are not an administrator of any LinkedIn page.', $this->platform->value);
+                return $this->popupCallback(false, __('accounts.popup_callback.not_linkedin_admin'), $this->platform->value);
             }
 
             // Store data in session and redirect to selection page
@@ -114,7 +114,7 @@ class LinkedInPageController extends SocialController
                 'error' => $e->getMessage(),
             ]);
 
-            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting'), $this->platform->value);
         }
     }
 
@@ -156,13 +156,13 @@ class LinkedInPageController extends SocialController
         $pendingData = session('linkedin_page_pending');
 
         if (! $pendingData) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         $workspace = Workspace::find($pendingData['workspace_id']);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         try {
@@ -195,7 +195,7 @@ class LinkedInPageController extends SocialController
 
                     session()->forget(['linkedin_page_pending', 'linkedin_page_reconnect_id']);
 
-                    return $this->popupCallback(true, 'LinkedIn Page reconnected!', $this->platform->value);
+                    return $this->popupCallback(true, __('accounts.popup_callback.reconnected'), $this->platform->value);
                 }
             }
 
@@ -227,13 +227,13 @@ class LinkedInPageController extends SocialController
 
             session()->forget(['linkedin_page_pending', 'linkedin_page_reconnect_id']);
 
-            return $this->popupCallback(true, 'LinkedIn Page connected!', $this->platform->value);
+            return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value);
         } catch (\Exception $e) {
             Log::error('LinkedIn Page selection error', [
                 'error' => $e->getMessage(),
             ]);
 
-            return $this->popupCallback(false, 'Error connecting page. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting_page'), $this->platform->value);
         }
     }
 

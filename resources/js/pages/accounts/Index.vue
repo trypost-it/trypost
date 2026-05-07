@@ -118,8 +118,11 @@ const handleToggle = (accountId: string) => {
     router.put(toggleAccount.url(accountId), {}, { preserveScroll: true });
 };
 
-const handleDisconnect = (accountId: string) => {
-    deleteModal.value?.open({ url: disconnectAccount.url(accountId) });
+const handleDisconnect = (account: SocialAccount) => {
+    deleteModal.value?.open({
+        url: disconnectAccount.url(account.id),
+        confirmText: account.username,
+    });
 };
 </script>
 
@@ -257,7 +260,7 @@ const handleDisconnect = (accountId: string) => {
                                             <DropdownMenuSeparator v-if="isDisconnected(account)" />
                                             <DropdownMenuItem
                                                 variant="destructive"
-                                                @click="handleDisconnect(account.id)"
+                                                @click="handleDisconnect(account)"
                                             >
                                                 <IconTrash class="size-4" />
                                                 {{ $t('accounts.disconnect') }}

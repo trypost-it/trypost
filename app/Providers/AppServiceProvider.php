@@ -37,6 +37,7 @@ use App\Models\Workspace;
 use App\Models\WorkspaceInvite;
 use App\Models\WorkspaceLabel;
 use App\Models\WorkspaceSignature;
+use App\Services\PostHogService;
 use App\Services\PostTemplate\Registry as PostTemplateRegistry;
 use App\Socialite\InstagramProvider;
 use App\Socialite\LinkedInPageExtendSocialite;
@@ -187,13 +188,13 @@ class AppServiceProvider extends ServiceProvider
 
     protected function configurePostHog(): void
     {
-        $apiKey = config('services.posthog.api_key');
-
-        if ($apiKey) {
-            PostHog::init($apiKey, [
-                'host' => config('services.posthog.host'),
-            ]);
+        if (! PostHogService::isEnabled()) {
+            return;
         }
+
+        PostHog::init(config('services.posthog.api_key'), [
+            'host' => config('services.posthog.host'),
+        ]);
     }
 
     protected function configureRateLimiting(): void

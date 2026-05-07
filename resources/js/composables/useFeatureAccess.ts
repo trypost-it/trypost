@@ -1,18 +1,12 @@
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
+import type { Usage } from '@/types';
+
 interface Plan {
     id: string;
     slug: string;
     name: string;
-}
-
-interface Usage {
-    workspaceCount: number;
-    socialAccountCount: number;
-    memberCount: number;
-    pendingInviteCount: number;
-    creditsUsed: number;
 }
 
 interface Features {

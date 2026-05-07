@@ -112,7 +112,7 @@ class BlueskyController extends SocialController
                 ],
             );
 
-            return $this->popupCallback(true, 'Bluesky account connected!', $this->platform->value);
+            return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value);
         } catch (\Exception $e) {
             Log::error('Bluesky connection error', [
                 'error' => $e->getMessage(),

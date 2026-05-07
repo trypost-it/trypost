@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import UserInfo from '@/components/UserInfo.vue';
 import dayjs from '@/dayjs';
+import posthog from '@/posthog';
 import { logout } from '@/routes';
 import { edit } from '@/routes/app/profile';
 import type { User } from '@/types';
@@ -59,6 +60,7 @@ const switchLanguage = (code: string) => {
 };
 
 const handleLogout = () => {
+    posthog.reset();
     router.flushAll();
 };
 </script>

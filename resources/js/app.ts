@@ -9,7 +9,7 @@ import { createApp, h } from 'vue';
 
 import { initializeDataLayer } from './datalayer';
 import dayjs from './dayjs';
-import posthog from './posthog';
+import { capturePageview, initializePostHog, syncPostHogContext } from './posthog';
 import type { Auth } from './types';
 
 configureEcho({
@@ -44,23 +44,17 @@ createInertiaApp({
             props.initialPage.props.env as string,
         );
 
-        if (auth?.user) {
-            posthog.identify(auth.user.id, {
-                $email: auth.user.email,
-                $name: auth.user.name,
-            });
+        // Initial PostHog identify + dual-group context + first pageview.
+        // The same hooks fire on every Inertia navigation below so the
+        // account group counts stay reactive and workspace switches
+        // re-attach the right workspace group.
+        initializePostHog();
+        syncPostHogContext(props.initialPage);
+        capturePageview();
 
-            if (auth.currentWorkspace) {
-                posthog.group('workspace', auth.currentWorkspace.id, {
-                    name: auth.currentWorkspace.name,
-                });
-            }
-        }
-
-        router.on('navigate', () => {
-            posthog.capture('$pageview', {
-                $current_url: window.location.href,
-            });
+        router.on('navigate', (event) => {
+            syncPostHogContext(event.detail.page);
+            capturePageview();
         });
 
         createApp({ render: () => h(App, props) })

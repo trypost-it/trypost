@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions\User;
 
+use App\Jobs\PostHog\SyncUser;
 use App\Models\Account;
 use App\Models\User;
+use App\Services\PostHogService;
 use Illuminate\Support\Facades\DB;
 
 class CreateUser
@@ -16,7 +18,7 @@ class CreateUser
      */
     public static function execute(array $data, array $utmParameters = []): User
     {
-        return DB::transaction(function () use ($data, $utmParameters): User {
+        $user = DB::transaction(function () use ($data, $utmParameters): User {
             $isInviteRegistration = data_get($data, 'is_invite', false);
 
             $account = Account::create([
@@ -39,5 +41,11 @@ class CreateUser
 
             return $user;
         });
+
+        if (PostHogService::isEnabled()) {
+            SyncUser::dispatch((string) $user->id);
+        }
+
+        return $user;
     }
 }

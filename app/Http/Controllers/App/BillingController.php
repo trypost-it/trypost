@@ -70,8 +70,6 @@ class BillingController extends Controller
             'cancel_url' => route('app.subscribe'),
         ]);
 
-        $account->update(['plan_id' => $plan->id]);
-
         return Inertia::location($checkoutSession->url);
     }
 
@@ -145,16 +143,6 @@ class BillingController extends Controller
             'Invalid price for this plan',
         );
 
-        $currentPlan = $account->plan;
-        $isOnYearly = $currentPlan && $subscription->stripe_price === $currentPlan->stripe_yearly_price_id;
-        $isTargetMonthly = $priceId === $plan->stripe_monthly_price_id;
-
-        abort_if(
-            $isOnYearly && $isTargetMonthly,
-            422,
-            'Cannot downgrade from yearly to monthly billing.',
-        );
-
         $authorization = Gate::inspect('swapPlan', [$account, $plan]);
 
         if ($authorization->denied()) {
@@ -163,6 +151,7 @@ class BillingController extends Controller
 
         $subscription->swap($priceId);
         $account->update(['plan_id' => $plan->id]);
+        $account->forgetPlanFeatureCache();
 
         return redirect()->route('app.billing.index')
             ->with('flash.success', __('billing.flash.plan_changed', ['plan' => $plan->name]));

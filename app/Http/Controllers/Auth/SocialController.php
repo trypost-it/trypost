@@ -167,13 +167,13 @@ class SocialController extends Controller
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $platform->value);
         }
 
         try {
@@ -200,14 +200,14 @@ class SocialController extends Controller
                 ],
             );
 
-            return $this->popupCallback(true, 'Account connected!', $platform->value);
+            return $this->popupCallback(true, __('accounts.popup_callback.connected'), $platform->value);
         } catch (\Exception $e) {
             Log::error('Social OAuth Error', [
                 'platform' => $platform->value,
                 'error' => $e->getMessage(),
             ]);
 
-            return $this->popupCallback(false, 'Error connecting account. Please try again.', $platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting'), $platform->value);
         }
     }
 

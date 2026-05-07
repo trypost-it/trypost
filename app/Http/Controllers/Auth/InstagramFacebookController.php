@@ -67,13 +67,13 @@ class InstagramFacebookController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         $reconnectId = session('social_reconnect_id');
@@ -94,7 +94,7 @@ class InstagramFacebookController extends SocialController
             $pages = $this->fetchPagesWithInstagram($socialUser->token);
 
             if (empty($pages)) {
-                return $this->popupCallback(false, 'No Facebook Pages with linked Instagram accounts found.', $this->platform->value);
+                return $this->popupCallback(false, __('accounts.popup_callback.no_facebook_instagram_pages'), $this->platform->value);
             }
 
             if (count($pages) === 1) {
@@ -117,7 +117,7 @@ class InstagramFacebookController extends SocialController
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting'), $this->platform->value);
         }
     }
 
@@ -159,13 +159,13 @@ class InstagramFacebookController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $oauthData || ! $workspaceId) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         $reconnectId = data_get($oauthData, 'reconnect_id');
@@ -175,7 +175,7 @@ class InstagramFacebookController extends SocialController
             $selectedPage = collect(data_get($oauthData, 'pages'))->firstWhere('page_id', $request->page_id);
 
             if (! $selectedPage) {
-                return $this->popupCallback(false, 'Page not found.', $this->platform->value);
+                return $this->popupCallback(false, __('accounts.popup_callback.page_not_found'), $this->platform->value);
             }
 
             $result = $this->connectInstagramAccount($workspace, $selectedPage, $existingAccount);
@@ -186,7 +186,7 @@ class InstagramFacebookController extends SocialController
         } catch (\Exception $e) {
             Log::error('Instagram via Facebook page selection error', ['error' => $e->getMessage()]);
 
-            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting'), $this->platform->value);
         }
     }
 
@@ -215,7 +215,7 @@ class InstagramFacebookController extends SocialController
 
             session()->forget('social_reconnect_id');
 
-            return $this->popupCallback(true, 'Instagram account reconnected!', $this->platform->value);
+            return $this->popupCallback(true, __('accounts.popup_callback.reconnected'), $this->platform->value);
         }
 
         $account = $workspace->socialAccounts()->updateOrCreate(
@@ -232,7 +232,7 @@ class InstagramFacebookController extends SocialController
 
         $isOnboarding = session('social_connect_onboarding', false);
 
-        return $this->popupCallback(true, 'Instagram account connected!', $this->platform->value, $isOnboarding);
+        return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value, $isOnboarding);
     }
 
     private function fetchPagesWithInstagram(string $userToken): array

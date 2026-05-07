@@ -1,4 +1,4 @@
-import posthog from '@/posthog';
+import { captureEvent } from '@/posthog';
 
 const push = (data: Record<string, unknown>) => {
     window.dataLayer = window.dataLayer || [];
@@ -7,7 +7,7 @@ const push = (data: Record<string, unknown>) => {
 
 export const useTracking = () => ({
     trackSignUp: (authProvider: string) => {
-        posthog.capture('user.signed_up', {
+        captureEvent('user.signed_up', {
             auth_provider: authProvider,
         });
 
@@ -18,7 +18,7 @@ export const useTracking = () => ({
     },
 
     trackBeginCheckout: (plan: { name: string; interval: string }) => {
-        posthog.capture('checkout.started', {
+        captureEvent('checkout.started', {
             plan_name: plan.name,
             interval: plan.interval,
         });
@@ -31,7 +31,7 @@ export const useTracking = () => ({
     },
 
     trackPurchase: (plan: { name: string; interval: string }) => {
-        posthog.capture('checkout.completed', {
+        captureEvent('checkout.completed', {
             plan_name: plan.name,
             interval: plan.interval,
         });

@@ -65,13 +65,13 @@ class ThreadsController extends SocialController
         if (! $workspaceId) {
             session()->forget(['threads_oauth_state', 'social_reconnect_id']);
 
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         if ($request->state !== $savedState) {
             session()->forget(['threads_oauth_state', 'social_reconnect_id']);
 
-            return $this->popupCallback(false, 'Invalid state. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.invalid_state'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
@@ -79,7 +79,7 @@ class ThreadsController extends SocialController
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
             session()->forget(['threads_oauth_state', 'social_reconnect_id']);
 
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         try {
@@ -157,7 +157,7 @@ class ThreadsController extends SocialController
 
             session()->forget(['threads_oauth_state', 'social_reconnect_id']);
 
-            return $this->popupCallback(true, 'Threads account connected!', $this->platform->value);
+            return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value);
         } catch (\Exception $e) {
             Log::error('Threads OAuth Error', [
                 'error' => $e->getMessage(),
@@ -166,7 +166,7 @@ class ThreadsController extends SocialController
 
             session()->forget(['threads_oauth_state', 'social_reconnect_id']);
 
-            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting'), $this->platform->value);
         }
     }
 }

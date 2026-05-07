@@ -32,7 +32,15 @@ export interface Auth {
     account: AuthAccount | null;
     plan: AuthPlan | null;
     hasActiveSubscription: boolean;
-    currentPriceId: string | null;
+}
+
+export interface Usage {
+    workspaceCount: number;
+    socialAccountCount: number;
+    memberCount: number;
+    pendingInviteCount: number;
+    postCount: number;
+    creditsUsed: number;
 }
 
 export interface FlashData {

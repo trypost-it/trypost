@@ -64,13 +64,13 @@ class FacebookController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         try {
@@ -87,7 +87,7 @@ class FacebookController extends SocialController
             $pages = $this->fetchPages($socialUser->token);
 
             if (empty($pages)) {
-                return $this->popupCallback(false, 'No Facebook Pages found. You need to be an admin of at least one page.', $this->platform->value);
+                return $this->popupCallback(false, __('accounts.popup_callback.no_facebook_pages'), $this->platform->value);
             }
 
             // If only one page, connect directly
@@ -119,7 +119,7 @@ class FacebookController extends SocialController
                     ],
                 );
 
-                return $this->popupCallback(true, 'Facebook Page connected!', $this->platform->value);
+                return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value);
             }
 
             // Multiple pages - store data and show selection
@@ -138,7 +138,7 @@ class FacebookController extends SocialController
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting'), $this->platform->value);
         }
     }
 
@@ -183,20 +183,20 @@ class FacebookController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $oauthData || ! $workspaceId) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         try {
             $selectedPage = collect(data_get($oauthData, 'pages'))->firstWhere('id', $request->page_id);
 
             if (! $selectedPage) {
-                return $this->popupCallback(false, 'Page not found.', $this->platform->value);
+                return $this->popupCallback(false, __('accounts.popup_callback.page_not_found'), $this->platform->value);
             }
 
             $avatarPath = uploadFromUrl(data_get($selectedPage, 'picture'));
@@ -226,7 +226,7 @@ class FacebookController extends SocialController
 
                     session()->forget(['facebook_oauth', 'social_reconnect_id']);
 
-                    return $this->popupCallback(true, 'Facebook Page reconnected!', $this->platform->value);
+                    return $this->popupCallback(true, __('accounts.popup_callback.reconnected'), $this->platform->value);
                 }
             }
 
@@ -256,13 +256,13 @@ class FacebookController extends SocialController
 
             session()->forget(['facebook_oauth', 'social_reconnect_id']);
 
-            return $this->popupCallback(true, 'Facebook Page connected!', $this->platform->value);
+            return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value);
         } catch (\Exception $e) {
             Log::error('Facebook page selection error', [
                 'error' => $e->getMessage(),
             ]);
 
-            return $this->popupCallback(false, 'Error connecting page. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting_page'), $this->platform->value);
         }
     }
 

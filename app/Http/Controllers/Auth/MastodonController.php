@@ -129,13 +129,13 @@ class MastodonController extends SocialController
         if (! $workspaceId || ! $instance) {
             $this->clearMastodonSession();
 
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         if ($request->state !== $savedState) {
             $this->clearMastodonSession();
 
-            return $this->popupCallback(false, 'Invalid state. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.invalid_state'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
@@ -143,7 +143,7 @@ class MastodonController extends SocialController
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
             $this->clearMastodonSession();
 
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         try {
@@ -163,7 +163,7 @@ class MastodonController extends SocialController
                 ]);
                 $this->clearMastodonSession();
 
-                return $this->popupCallback(false, 'Failed to authenticate.', $this->platform->value);
+                return $this->popupCallback(false, __('accounts.popup_callback.failed_to_authenticate'), $this->platform->value);
             }
 
             $tokenData = $tokenResponse->json();
@@ -176,7 +176,7 @@ class MastodonController extends SocialController
             if ($profileResponse->failed()) {
                 $this->clearMastodonSession();
 
-                return $this->popupCallback(false, 'Failed to get profile.', $this->platform->value);
+                return $this->popupCallback(false, __('accounts.popup_callback.failed_to_get_profile'), $this->platform->value);
             }
 
             $profile = $profileResponse->json();
@@ -215,7 +215,7 @@ class MastodonController extends SocialController
 
             $this->clearMastodonSession();
 
-            return $this->popupCallback(true, 'Mastodon account connected!', $this->platform->value);
+            return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value);
         } catch (\Exception $e) {
             Log::error('Mastodon callback error', [
                 'error' => $e->getMessage(),
@@ -223,7 +223,7 @@ class MastodonController extends SocialController
             ]);
             $this->clearMastodonSession();
 
-            return $this->popupCallback(false, 'Error connecting account.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting'), $this->platform->value);
         }
     }
 

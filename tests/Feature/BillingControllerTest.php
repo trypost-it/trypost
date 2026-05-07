@@ -244,33 +244,6 @@ test('swap blocks downgrade when usage exceeds target plan limits', function () 
     ]));
 });
 
-test('swap blocks yearly to monthly downgrade', function () {
-    config(['trypost.self_hosted' => false]);
-
-    $plan = Plan::where('slug', 'max')->first();
-    $plan->update([
-        'stripe_monthly_price_id' => 'price_monthly',
-        'stripe_yearly_price_id' => 'price_yearly',
-    ]);
-    $this->account->update(['plan_id' => $plan->id]);
-
-    $this->user->unsetRelation('account');
-
-    $this->account->subscriptions()->create([
-        'type' => Account::SUBSCRIPTION_NAME,
-        'stripe_id' => 'sub_test_'.fake()->uuid(),
-        'stripe_status' => 'active',
-        'stripe_price' => 'price_yearly',
-    ]);
-
-    $response = $this->actingAs($this->user)
-        ->post(route('app.billing.swap', $plan), [
-            'price_id' => 'price_monthly',
-        ]);
-
-    $response->assertStatus(422);
-});
-
 test('swap rejects invalid price_id for plan', function () {
     config(['trypost.self_hosted' => false]);
 

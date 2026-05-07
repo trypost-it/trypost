@@ -5,9 +5,11 @@ declare(strict_types=1);
 use App\Models\Account;
 use App\Models\Invite;
 use App\Models\Plan;
+use App\Models\Post;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
+use Illuminate\Support\Facades\Cache;
 
 beforeEach(function () {
     $this->account = Account::factory()->create();
@@ -36,6 +38,7 @@ test('usage returns correct counts across the account', function () {
         'socialAccountCount' => 3,
         'memberCount' => 3,
         'pendingInviteCount' => 2,
+        'postCount' => 0,
         'creditsUsed' => 0,
     ]);
 });
@@ -66,4 +69,38 @@ test('pendingInviteCount excludes accepted invites', function () {
     ]);
 
     expect($this->account->usage()['pendingInviteCount'])->toBe(1);
+});
+
+test('postCount is cached and survives new posts within the TTL', function () {
+    $workspace = Workspace::factory()->create([
+        'account_id' => $this->account->id,
+        'user_id' => $this->owner->id,
+    ]);
+
+    Post::factory()->count(2)->create([
+        'workspace_id' => $workspace->id,
+        'user_id' => $this->owner->id,
+    ]);
+
+    // First call primes the cache.
+    expect($this->account->usage()['postCount'])->toBe(2);
+
+    // A new post is created mid-window. The cached value should win.
+    Post::factory()->create([
+        'workspace_id' => $workspace->id,
+        'user_id' => $this->owner->id,
+    ]);
+
+    expect($this->account->usage()['postCount'])->toBe(2);
+
+    // Forgetting the cache key returns the fresh count.
+    Cache::forget("account:{$this->account->id}:posts_count");
+    expect($this->account->usage()['postCount'])->toBe(3);
+});
+
+test('postCount returns zero without querying when account has no workspaces', function () {
+    expect($this->account->usage()['postCount'])->toBe(0);
+
+    // No cache entry should be written for the empty case.
+    expect(Cache::has("account:{$this->account->id}:posts_count"))->toBeFalse();
 });

@@ -48,13 +48,13 @@ class PinterestController extends SocialController
         $workspaceId = session('social_connect_workspace');
 
         if (! $workspaceId) {
-            return $this->popupCallback(false, 'Session expired. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.session_expired'), $this->platform->value);
         }
 
         $workspace = Workspace::find($workspaceId);
 
         if (! $workspace || ! $request->user()->can('manageAccounts', $workspace)) {
-            return $this->popupCallback(false, 'Workspace not found.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.workspace_not_found'), $this->platform->value);
         }
 
         try {
@@ -83,14 +83,14 @@ class PinterestController extends SocialController
                 'status' => Status::Connected,
             ]);
 
-            return $this->popupCallback(true, 'Pinterest account connected!', $this->platform->value);
+            return $this->popupCallback(true, __('accounts.popup_callback.connected'), $this->platform->value);
         } catch (\Exception $e) {
             Log::error('Pinterest OAuth Error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            return $this->popupCallback(false, 'Error connecting account. Please try again.', $this->platform->value);
+            return $this->popupCallback(false, __('accounts.popup_callback.error_connecting'), $this->platform->value);
         }
     }
 }

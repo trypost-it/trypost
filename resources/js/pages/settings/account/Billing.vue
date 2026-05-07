@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { IconCreditCard, IconDownload, IconFileText, IconSparkles } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
@@ -16,6 +16,7 @@ import { settings as settingsHub } from '@/routes/app';
 import { edit as accountEdit } from '@/routes/app/account';
 import { index as billingIndex, portal } from '@/routes/app/billing';
 import { index as usageIndex } from '@/routes/app/usage';
+import type { AuthPlan } from '@/types';
 
 interface Plan {
     name: string;
@@ -59,9 +60,14 @@ const tabs = computed(() => [
     { name: 'billing', label: trans('settings.account.tabs.billing'), href: billingIndex().url },
 ]);
 
-const monthlyPrice = (slug: string | undefined): string => {
+const page = usePage();
+const authPlan = computed<AuthPlan | null>(() => (page.props.auth as { plan: AuthPlan | null }).plan ?? null);
+const isYearly = computed(() => authPlan.value?.interval === 'yearly');
+
+const displayPrice = (slug: string | undefined): string => {
     if (! slug) return 'Free';
-    return trans(`billing.subscribe.prices.${slug}.monthly`);
+    const key = isYearly.value ? 'yearly_per_month' : 'monthly';
+    return trans(`billing.subscribe.prices.${slug}.${key}`);
 };
 
 const { openUpgrade } = useUpgradeDialog();
@@ -106,8 +112,11 @@ const { openUpgrade } = useUpgradeDialog();
                                     <Badge v-else-if="subscription?.ends_at" variant="secondary">{{ $t('billing.plan.cancelling') }}</Badge>
                                 </div>
                                 <p class="text-base text-foreground/70">
-                                    <span class="text-2xl font-bold tabular-nums text-foreground">{{ monthlyPrice(plan?.slug) }}</span>
+                                    <span class="text-2xl font-bold tabular-nums text-foreground">{{ displayPrice(plan?.slug) }}</span>
                                     <span class="ml-1">/{{ $t('billing.plan.month') }}</span>
+                                </p>
+                                <p v-if="plan" class="text-xs font-medium text-foreground/60">
+                                    {{ isYearly ? $t('billing.subscribe.billed_yearly') : $t('billing.subscribe.billed_monthly') }}
                                 </p>
                                 <p
                                     v-if="onTrial && trialEndsAt"

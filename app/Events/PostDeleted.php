@@ -4,29 +4,29 @@ declare(strict_types=1);
 
 namespace App\Events;
 
-use App\Models\PostPlatform;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
-class PostPlatformStatusUpdated implements ShouldBroadcast
+class PostDeleted implements ShouldBroadcast
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets;
 
-    public function __construct(public PostPlatform $postPlatform) {}
+    public function __construct(
+        public string $postId,
+        public string $workspaceId,
+    ) {}
 
     public function broadcastAs(): string
     {
-        return 'post.platform.status.updated';
+        return 'post.deleted';
     }
 
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('post.'.$this->postPlatform->post_id),
-            new PrivateChannel('workspace.'.$this->postPlatform->post->workspace_id),
+            new PrivateChannel('workspace.'.$this->workspaceId),
         ];
     }
 
@@ -36,7 +36,7 @@ class PostPlatformStatusUpdated implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'post_id' => $this->postPlatform->post_id,
+            'post_id' => $this->postId,
         ];
     }
 

@@ -7,14 +7,19 @@ namespace App\Events;
 use App\Models\Notification;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
-class NotificationCreated implements ShouldBroadcastNow
+class NotificationCreated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets;
 
     public function __construct(public Notification $notification) {}
+
+    public function broadcastAs(): string
+    {
+        return 'notification.created';
+    }
 
     public function broadcastOn(): array
     {
@@ -23,11 +28,9 @@ class NotificationCreated implements ShouldBroadcastNow
         ];
     }
 
-    public function broadcastAs(): string
-    {
-        return 'NotificationCreated';
-    }
-
+    /**
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array
     {
         return [
@@ -46,5 +49,10 @@ class NotificationCreated implements ShouldBroadcastNow
                 'updated_at' => $this->notification->updated_at->toISOString(),
             ],
         ];
+    }
+
+    public function broadcastQueue(): string
+    {
+        return 'broadcasts';
     }
 }

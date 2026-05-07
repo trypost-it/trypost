@@ -9,14 +9,19 @@ use App\Models\User;
 use App\Support\MentionParser;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
-class PostCommentCreated implements ShouldBroadcastNow
+class PostCommentCreated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets;
 
     public function __construct(public PostComment $comment) {}
+
+    public function broadcastAs(): string
+    {
+        return 'post.comment.created';
+    }
 
     public function broadcastOn(): array
     {
@@ -25,11 +30,9 @@ class PostCommentCreated implements ShouldBroadcastNow
         ];
     }
 
-    public function broadcastAs(): string
-    {
-        return 'PostCommentCreated';
-    }
-
+    /**
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array
     {
         $mentionedIds = MentionParser::extractUserIds($this->comment->body ?? '');
@@ -58,5 +61,10 @@ class PostCommentCreated implements ShouldBroadcastNow
             ],
             'mentioned_users' => $mentionedUsers,
         ];
+    }
+
+    public function broadcastQueue(): string
+    {
+        return 'broadcasts';
     }
 }

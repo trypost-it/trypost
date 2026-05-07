@@ -66,6 +66,15 @@ trait HasUsage
     }
 
     /**
+     * The `(int)` cast on the cached value is load-bearing: Laravel's
+     * RedisStore skips serialize()/unserialize() for is_numeric values so
+     * they can be incremented atomically — the side effect is that an int
+     * stored via `Cache::put` comes back as a string on read. Without the
+     * cast, the strict `: int` return type throws a TypeError under the
+     * Redis cache driver (production). File/array/database drivers don't
+     * have this optimisation and preserve the type, which is why the bug
+     * never surfaced in tests or local dev.
+     *
      * @param  array<int, string>  $workspaceIds
      */
     private function cachedPostCount(array $workspaceIds): int
@@ -74,7 +83,7 @@ trait HasUsage
             return 0;
         }
 
-        return Cache::remember(
+        return (int) Cache::remember(
             "account:{$this->id}:posts_count",
             self::POST_COUNT_CACHE_TTL,
             fn () => Post::whereIn('workspace_id', $workspaceIds)->count(),

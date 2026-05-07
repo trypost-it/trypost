@@ -104,3 +104,22 @@ test('postCount returns zero without querying when account has no workspaces', f
     // No cache entry should be written for the empty case.
     expect(Cache::has("account:{$this->account->id}:posts_count"))->toBeFalse();
 });
+
+test('postCount survives a string-typed cache value (Redis serializer quirk)', function () {
+    // Laravel's RedisStore stores numeric values raw (not serialised) so they
+    // can be INCRemented atomically. The side effect: an int written via
+    // Cache::put comes back as a string on read. The test driver is `array`
+    // which preserves type, so we seed the cache with a literal string here
+    // to mimic what production sees and assert the return type stays int.
+    Workspace::factory()->create([
+        'account_id' => $this->account->id,
+        'user_id' => $this->owner->id,
+    ]);
+
+    Cache::put("account:{$this->account->id}:posts_count", '42', 300);
+
+    $usage = $this->account->usage();
+
+    expect($usage['postCount'])->toBe(42);
+    expect($usage['postCount'])->toBeInt();
+});

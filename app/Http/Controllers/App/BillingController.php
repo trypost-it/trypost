@@ -143,16 +143,6 @@ class BillingController extends Controller
             'Invalid price for this plan',
         );
 
-        $currentPlan = $account->plan;
-        $isOnYearly = $currentPlan && $subscription->stripe_price === $currentPlan->stripe_yearly_price_id;
-        $isTargetMonthly = $priceId === $plan->stripe_monthly_price_id;
-
-        abort_if(
-            $isOnYearly && $isTargetMonthly,
-            422,
-            'Cannot downgrade from yearly to monthly billing.',
-        );
-
         $authorization = Gate::inspect('swapPlan', [$account, $plan]);
 
         if ($authorization->denied()) {

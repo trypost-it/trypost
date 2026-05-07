@@ -38,7 +38,7 @@ export const initializePostHog = (): void => {
  * - Workspace switches re-attach the right `workspace` group (the
  *   navigation event carries the fresh `auth.currentWorkspace`).
  *
- * Hierarchy mirrors the backend `app/Jobs/SyncUserToPostHog.php`:
+ * Hierarchy mirrors the backend `app/Jobs/PostHog/SyncUser.php`:
  * person → User, group `account` → billing/plan parent,
  * group `workspace` → collaboration child (carries `account_id`).
  */
@@ -88,6 +88,19 @@ export const capturePageview = (): void => {
         return;
     }
     posthog.capture('$pageview', { $current_url: window.location.href });
+};
+
+/**
+ * Gated wrapper around `posthog.capture` for arbitrary domain events. Use
+ * this from composables/components instead of calling `posthog.capture`
+ * directly so self-hosted (or otherwise disabled) installs never queue
+ * events into the SDK buffer.
+ */
+export const captureEvent = (event: string, properties?: Record<string, unknown>): void => {
+    if (!enabled) {
+        return;
+    }
+    posthog.capture(event, properties);
 };
 
 export default posthog;

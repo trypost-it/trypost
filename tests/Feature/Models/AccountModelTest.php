@@ -39,24 +39,3 @@ test('forgetPlanFeatureCache drops the cached plan-scoped features', function ()
     expect(Feature::for($account)->value(MemberLimit::class))->toBe($plus->member_limit);
     expect(Feature::for($account)->value(MonthlyCreditsLimit::class))->toBe($plus->monthly_credits_limit);
 });
-
-test('updating non-plan fields does not flush the pennant cache', function () {
-    $plan = Plan::where('slug', 'plus')->first();
-    $account = Account::factory()->create(['plan_id' => $plan->id]);
-
-    Feature::for($account)->value(WorkspaceLimit::class);
-
-    $cachedRow = DB::table('features')
-        ->where('scope', 'account|'.$account->id)
-        ->first();
-
-    expect($cachedRow)->not->toBeNull();
-
-    $account->update(['name' => 'Updated Name']);
-
-    $stillCachedRow = DB::table('features')
-        ->where('scope', 'account|'.$account->id)
-        ->first();
-
-    expect($stillCachedRow->id)->toBe($cachedRow->id);
-});

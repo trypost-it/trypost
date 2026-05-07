@@ -183,6 +183,9 @@ test('subscription updated dispatches TrackBilling with subscription.updated eve
 });
 
 test('subscription deleted dispatches TrackBilling with subscription.cancelled event', function () {
+    $starter = Plan::query()->where('slug', 'starter')->firstOrFail();
+    $this->account->update(['plan_id' => $starter->id]);
+
     Bus::fake([TrackBilling::class]);
 
     $this->listener->handle(new WebhookReceived([
@@ -330,12 +333,18 @@ test('subscription deleted clears the account plan_id', function () {
 test('subscription deleted is idempotent when plan_id is already null', function () {
     $this->account->update(['plan_id' => null]);
 
+    Bus::fake([TrackBilling::class]);
+
     $this->listener->handle(new WebhookReceived([
         'type' => 'customer.subscription.deleted',
         'data' => ['object' => ['customer' => 'cus_test123']],
     ]));
 
     expect($this->account->fresh()->plan_id)->toBeNull();
+
+    // Re-delivery of a cancellation must not produce a duplicate
+    // 'subscription.cancelled' event downstream.
+    Bus::assertNotDispatched(TrackBilling::class);
 });
 
 // ========================================

@@ -91,6 +91,14 @@ class StripeEventListener
      */
     protected function handleSubscriptionDeleted(Account $account, array $payload): void
     {
+        // Stripe re-delivers webhooks on transient failures; if the plan is
+        // already cleared we skip the rest so the cancellation event isn't
+        // captured twice and the (idempotent but pointless) cache flush
+        // doesn't run again.
+        if ($account->plan_id === null) {
+            return;
+        }
+
         $previousPlan = $account->plan?->name;
 
         $account->update(['plan_id' => null]);

@@ -103,7 +103,7 @@ test('handle does not push a PostHog network call when api key is unset', functi
     (new TrackBilling((string) $this->account->id, BillingEvent::Created, $this->payload))
         ->handle(app(PostHogService::class));
 
-    // SyncUser can still be queued but it would itself no-op when handled.
-    // The contract of this job is: no PostHog network call without a key.
+    // The contract of this job is: when PostHog is disabled, handle short-
+    // circuits before any DB query and no SendEvent reaches the queue.
     Queue::assertNotPushed(SendEvent::class);
 });

@@ -49,8 +49,8 @@ test('handle identifies the user with email, name and signed_up_at', function ()
     Queue::assertPushed(SendEvent::class, function ($job) {
         return $job->method === 'identify'
             && $job->payload['distinctId'] === (string) $this->user->id
-            && $job->payload['properties']['email'] === $this->user->email
-            && $job->payload['properties']['name'] === $this->user->name
+            && $job->payload['properties']['$email'] === $this->user->email
+            && $job->payload['properties']['$name'] === $this->user->name
             && isset($job->payload['properties']['$set_once']['signed_up_at']);
     });
 });

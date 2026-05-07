@@ -47,13 +47,11 @@ test('handle identifies the user with email, name and signed_up_at', function ()
     (new SyncUser((string) $this->user->id))->handle(app(PostHogService::class));
 
     Queue::assertPushed(SendEvent::class, function ($job) {
-        $call = $job->calls[0];
-
-        return $call['method'] === 'identify'
-            && $call['payload']['distinctId'] === (string) $this->user->id
-            && $call['payload']['properties']['email'] === $this->user->email
-            && $call['payload']['properties']['name'] === $this->user->name
-            && isset($call['payload']['properties']['$set_once']['signed_up_at']);
+        return $job->method === 'identify'
+            && $job->payload['distinctId'] === (string) $this->user->id
+            && $job->payload['properties']['email'] === $this->user->email
+            && $job->payload['properties']['name'] === $this->user->name
+            && isset($job->payload['properties']['$set_once']['signed_up_at']);
     });
 });
 
@@ -73,17 +71,13 @@ test('handle group-identifies the account with usage metrics', function () {
     (new SyncUser((string) $this->user->id))->handle(app(PostHogService::class));
 
     Queue::assertPushed(SendEvent::class, function ($job) {
-        $accountCall = collect($job->calls)
-            ->merge(collect(Queue::pushed(SendEvent::class))->flatMap(fn ($j) => $j->calls))
-            ->first(fn ($c) => $c['method'] === 'groupIdentify' && $c['payload']['groupType'] === 'account');
-
-        if (! $accountCall) {
+        if ($job->method !== 'groupIdentify' || $job->payload['groupType'] !== 'account') {
             return false;
         }
 
-        $props = $accountCall['payload']['properties'];
+        $props = $job->payload['properties'];
 
-        return $accountCall['payload']['groupKey'] === (string) $this->account->id
+        return $job->payload['groupKey'] === (string) $this->account->id
             && $props['workspaces_count'] === 1
             && $props['social_accounts_count'] === 2
             && $props['posts_count'] === 3
@@ -106,15 +100,13 @@ test('handle group-identifies the current workspace when set', function () {
 
     (new SyncUser((string) $this->user->id))->handle(app(PostHogService::class));
 
-    $allCalls = collect(Queue::pushed(SendEvent::class))->flatMap(fn ($j) => $j->calls);
-    $workspaceCall = $allCalls->first(
-        fn ($c) => $c['method'] === 'groupIdentify' && $c['payload']['groupType'] === 'workspace',
-    );
-
-    expect($workspaceCall)->not->toBeNull();
-    expect($workspaceCall['payload']['groupKey'])->toBe((string) $workspace->id);
-    expect($workspaceCall['payload']['properties']['account_id'])->toBe((string) $this->account->id);
-    expect($workspaceCall['payload']['properties']['social_accounts_count'])->toBe(1);
+    Queue::assertPushed(SendEvent::class, function ($job) use ($workspace) {
+        return $job->method === 'groupIdentify'
+            && $job->payload['groupType'] === 'workspace'
+            && $job->payload['groupKey'] === (string) $workspace->id
+            && $job->payload['properties']['account_id'] === (string) $this->account->id
+            && $job->payload['properties']['social_accounts_count'] === 1;
+    });
 });
 
 test('handle skips workspace group identify when user has no current workspace', function () {
@@ -124,12 +116,9 @@ test('handle skips workspace group identify when user has no current workspace',
 
     (new SyncUser((string) $this->user->id))->handle(app(PostHogService::class));
 
-    $allCalls = collect(Queue::pushed(SendEvent::class))->flatMap(fn ($j) => $j->calls);
-    $workspaceCall = $allCalls->first(
-        fn ($c) => $c['method'] === 'groupIdentify' && $c['payload']['groupType'] === 'workspace',
-    );
-
-    expect($workspaceCall)->toBeNull();
+    Queue::assertNotPushed(SendEvent::class, function ($job) {
+        return $job->method === 'groupIdentify' && $job->payload['groupType'] === 'workspace';
+    });
 });
 
 test('job is queued on the posthog connection queue', function () {

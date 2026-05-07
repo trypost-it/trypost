@@ -13,11 +13,10 @@ use Illuminate\Support\Facades\Log;
 use PostHog\PostHog;
 
 /**
- * Low-level PostHog dispatch worker. Receives an array of pre-built API
- * calls (`capture`, `identify`, `groupIdentify`) and forwards them to the
- * PostHog SDK. Higher-level jobs in this namespace (`SyncUser`,
- * `TrackBilling`) build the payloads and queue this job to do the network
- * work.
+ * Low-level PostHog dispatch worker. Forwards a single API call (`capture`,
+ * `identify`, `groupIdentify`) to the PostHog SDK. Higher-level jobs in this
+ * namespace (`SyncUser`, `TrackBilling`) build the payloads and queue this
+ * job to do the network work.
  *
  * No-op when `POSTHOG_API_KEY` is unset so self-hosted installs are
  * unaffected.
@@ -31,10 +30,11 @@ class SendEvent implements ShouldQueue
     public int $timeout = 15;
 
     /**
-     * @param  array<array{method: string, payload: array<string, mixed>}>  $calls
+     * @param  array<string, mixed>  $payload
      */
     public function __construct(
-        public array $calls,
+        public string $method,
+        public array $payload,
     ) {
         $this->onQueue('posthog');
     }
@@ -45,14 +45,12 @@ class SendEvent implements ShouldQueue
             return;
         }
 
-        foreach ($this->calls as $call) {
-            match (data_get($call, 'method')) {
-                'capture' => PostHog::capture(data_get($call, 'payload')),
-                'identify' => PostHog::identify(data_get($call, 'payload')),
-                'groupIdentify' => PostHog::groupIdentify(data_get($call, 'payload')),
-                default => Log::warning('PostHog SendEvent: unknown method', ['method' => data_get($call, 'method')]),
-            };
-        }
+        match ($this->method) {
+            'capture' => PostHog::capture($this->payload),
+            'identify' => PostHog::identify($this->payload),
+            'groupIdentify' => PostHog::groupIdentify($this->payload),
+            default => Log::warning('PostHog SendEvent: unknown method', ['method' => $this->method]),
+        };
 
         PostHog::flush();
     }

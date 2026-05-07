@@ -43,7 +43,10 @@ class SyncUser implements ShouldQueue
 
     public function handle(PostHogService $postHog): void
     {
-        $user = User::with(['account.plan', 'currentWorkspace'])->find($this->userId);
+        $user = User::with([
+            'account.plan',
+            'currentWorkspace' => fn ($query) => $query->withCount('socialAccounts'),
+        ])->find($this->userId);
 
         if (! $user) {
             return;
@@ -78,8 +81,7 @@ class SyncUser implements ShouldQueue
             $postHog->groupIdentify('workspace', (string) $workspace->id, [
                 'name' => $workspace->name,
                 'account_id' => (string) $workspace->account_id,
-                'social_accounts_count' => $workspace->socialAccounts()->count(),
-                'posts_count' => $workspace->posts()->count(),
+                'social_accounts_count' => (int) $workspace->social_accounts_count,
                 'created_at' => $workspace->created_at?->toIso8601String(),
             ]);
         }

@@ -35,6 +35,15 @@ export interface Auth {
     currentPriceId: string | null;
 }
 
+export interface Usage {
+    workspaceCount: number;
+    socialAccountCount: number;
+    memberCount: number;
+    pendingInviteCount: number;
+    postCount: number;
+    creditsUsed: number;
+}
+
 export interface FlashData {
     banner?: string;
     bannerStyle?: 'success' | 'danger' | 'info' | 'warning';

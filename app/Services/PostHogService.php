@@ -19,7 +19,7 @@ class PostHogService
      */
     public function capture(string $distinctId, string $event, array $properties = [], ?Account $account = null): void
     {
-        if (! config('services.posthog.api_key')) {
+        if (! $this->shouldSend()) {
             return;
         }
 
@@ -43,7 +43,7 @@ class PostHogService
      */
     public function identify(string $distinctId, array $properties = []): void
     {
-        if (! config('services.posthog.api_key')) {
+        if (! $this->shouldSend()) {
             return;
         }
 
@@ -58,7 +58,7 @@ class PostHogService
      */
     public function groupIdentify(string $groupType, string $groupKey, array $properties = []): void
     {
-        if (! config('services.posthog.api_key')) {
+        if (! $this->shouldSend()) {
             return;
         }
 
@@ -69,15 +69,18 @@ class PostHogService
         ]);
     }
 
+    private function shouldSend(): bool
+    {
+        return (bool) config('services.posthog.api_key');
+    }
+
     /**
      * @param  array<string, mixed>  $payload
      */
     private function dispatch(string $method, array $payload): void
     {
         try {
-            SendEvent::dispatch([
-                ['method' => $method, 'payload' => $payload],
-            ]);
+            SendEvent::dispatch($method, $payload);
         } catch (\Throwable $e) {
             Log::warning('PostHogService: failed to dispatch event', ['method' => $method, 'error' => $e->getMessage()]);
         }

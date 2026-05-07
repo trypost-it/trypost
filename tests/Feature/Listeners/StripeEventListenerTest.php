@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\PostHog\BillingEvent;
 use App\Events\SubscriptionCreated;
 use App\Jobs\PostHog\TrackBilling;
 use App\Listeners\StripeEventListener;
@@ -160,7 +161,7 @@ test('subscription created dispatches TrackBilling with subscription.created eve
     Bus::assertDispatched(
         TrackBilling::class,
         fn ($job) => $job->accountId === (string) $this->account->id
-            && $job->event === 'subscription.created',
+            && $job->event === BillingEvent::Created,
     );
 });
 
@@ -174,7 +175,7 @@ test('subscription updated dispatches TrackBilling with subscription.updated eve
 
     Bus::assertDispatched(
         TrackBilling::class,
-        fn ($job) => $job->event === 'subscription.updated',
+        fn ($job) => $job->event === BillingEvent::Updated,
     );
 });
 
@@ -188,7 +189,7 @@ test('subscription deleted dispatches TrackBilling with subscription.cancelled e
 
     Bus::assertDispatched(
         TrackBilling::class,
-        fn ($job) => $job->event === 'subscription.cancelled',
+        fn ($job) => $job->event === BillingEvent::Cancelled,
     );
 });
 
@@ -354,7 +355,7 @@ test('subscription updated forwards the previous plan name to TrackBilling', fun
 
     Bus::assertDispatched(
         TrackBilling::class,
-        fn ($job) => $job->event === 'subscription.updated' && $job->previousPlan === $starter->name,
+        fn ($job) => $job->event === BillingEvent::Updated && $job->previousPlan === $starter->name,
     );
 });
 
@@ -371,7 +372,7 @@ test('subscription deleted forwards the previous plan name to TrackBilling', fun
 
     Bus::assertDispatched(
         TrackBilling::class,
-        fn ($job) => $job->event === 'subscription.cancelled' && $job->previousPlan === $starter->name,
+        fn ($job) => $job->event === BillingEvent::Cancelled && $job->previousPlan === $starter->name,
     );
 });
 
@@ -390,6 +391,6 @@ test('subscription created forwards a null previous plan when account had none',
 
     Bus::assertDispatched(
         TrackBilling::class,
-        fn ($job) => $job->event === 'subscription.created' && $job->previousPlan === null,
+        fn ($job) => $job->event === BillingEvent::Created && $job->previousPlan === null,
     );
 });

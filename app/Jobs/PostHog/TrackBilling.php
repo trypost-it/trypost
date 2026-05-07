@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs\PostHog;
 
+use App\Enums\PostHog\BillingEvent;
 use App\Models\Account;
 use App\Services\PostHogService;
 use Illuminate\Bus\Queueable;
@@ -33,7 +34,7 @@ class TrackBilling implements ShouldQueue
      */
     public function __construct(
         public string $accountId,
-        public string $event,
+        public BillingEvent $event,
         public array $payload,
         public ?string $previousPlan = null,
     ) {
@@ -50,7 +51,7 @@ class TrackBilling implements ShouldQueue
 
         $postHog->capture(
             (string) $account->owner_id,
-            $this->event,
+            $this->event->value,
             [
                 'stripe_status' => data_get($this->payload, 'data.object.status'),
                 'plan' => $account->plan?->name,

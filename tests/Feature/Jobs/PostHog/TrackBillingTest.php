@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\PostHog\BillingEvent;
 use App\Jobs\PostHog\SendEvent;
 use App\Jobs\PostHog\SyncUser;
 use App\Jobs\PostHog\TrackBilling;
@@ -28,7 +29,7 @@ beforeEach(function () {
 });
 
 test('job is queued on the posthog queue', function () {
-    $job = new TrackBilling((string) $this->account->id, 'subscription.updated', $this->payload);
+    $job = new TrackBilling((string) $this->account->id, BillingEvent::Updated, $this->payload);
 
     expect($job->queue)->toBe('posthog');
 });
@@ -36,36 +37,34 @@ test('job is queued on the posthog queue', function () {
 test('handle captures event on the owner profile with account group attached', function () {
     Queue::fake();
 
-    (new TrackBilling((string) $this->account->id, 'subscription.updated', $this->payload))
+    (new TrackBilling((string) $this->account->id, BillingEvent::Updated, $this->payload))
         ->handle(app(PostHogService::class));
 
     Queue::assertPushed(SendEvent::class, function ($job) {
-        $call = $job->calls[0];
-
-        return $call['method'] === 'capture'
-            && $call['payload']['event'] === 'subscription.updated'
-            && $call['payload']['distinctId'] === (string) $this->user->id
-            && $call['payload']['properties']['$groups']['account'] === (string) $this->account->id
-            && $call['payload']['properties']['stripe_status'] === 'active'
-            && array_key_exists('previous_plan', $call['payload']['properties']);
+        return $job->method === 'capture'
+            && $job->payload['event'] === BillingEvent::Updated->value
+            && $job->payload['distinctId'] === (string) $this->user->id
+            && $job->payload['properties']['$groups']['account'] === (string) $this->account->id
+            && $job->payload['properties']['stripe_status'] === 'active'
+            && array_key_exists('previous_plan', $job->payload['properties']);
     });
 });
 
 test('handle forwards previousPlan as a property when supplied', function () {
     Queue::fake();
 
-    (new TrackBilling((string) $this->account->id, 'subscription.updated', $this->payload, 'Starter'))
+    (new TrackBilling((string) $this->account->id, BillingEvent::Updated, $this->payload, 'Starter'))
         ->handle(app(PostHogService::class));
 
     Queue::assertPushed(SendEvent::class, function ($job) {
-        return $job->calls[0]['payload']['properties']['previous_plan'] === 'Starter';
+        return $job->payload['properties']['previous_plan'] === 'Starter';
     });
 });
 
 test('handle dispatches SyncUser for the account owner', function () {
     Bus::fake([SyncUser::class]);
 
-    (new TrackBilling((string) $this->account->id, 'subscription.cancelled', $this->payload))
+    (new TrackBilling((string) $this->account->id, BillingEvent::Cancelled, $this->payload))
         ->handle(app(PostHogService::class));
 
     Bus::assertDispatched(
@@ -78,7 +77,7 @@ test('handle returns silently when account does not exist', function () {
     Queue::fake();
     Bus::fake([SyncUser::class]);
 
-    (new TrackBilling('00000000-0000-0000-0000-000000000000', 'subscription.created', $this->payload))
+    (new TrackBilling('00000000-0000-0000-0000-000000000000', BillingEvent::Created, $this->payload))
         ->handle(app(PostHogService::class));
 
     Queue::assertNothingPushed();
@@ -90,7 +89,7 @@ test('handle returns silently when account has no owner', function () {
     Queue::fake();
     Bus::fake([SyncUser::class]);
 
-    (new TrackBilling((string) $this->account->id, 'subscription.created', $this->payload))
+    (new TrackBilling((string) $this->account->id, BillingEvent::Created, $this->payload))
         ->handle(app(PostHogService::class));
 
     Queue::assertNothingPushed();
@@ -101,7 +100,7 @@ test('handle does not push a PostHog network call when api key is unset', functi
     config(['services.posthog.api_key' => null]);
     Queue::fake();
 
-    (new TrackBilling((string) $this->account->id, 'subscription.created', $this->payload))
+    (new TrackBilling((string) $this->account->id, BillingEvent::Created, $this->payload))
         ->handle(app(PostHogService::class));
 
     // SyncUser can still be queued but it would itself no-op when handled.

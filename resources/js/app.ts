@@ -9,7 +9,7 @@ import { createApp, h } from 'vue';
 
 import { initializeDataLayer } from './datalayer';
 import dayjs from './dayjs';
-import { capturePageview, syncPostHogContext } from './posthog';
+import { capturePageview, initializePostHog, syncPostHogContext } from './posthog';
 import type { Auth } from './types';
 
 configureEcho({
@@ -48,6 +48,7 @@ createInertiaApp({
         // The same hooks fire on every Inertia navigation below so the
         // account group counts stay reactive and workspace switches
         // re-attach the right workspace group.
+        initializePostHog();
         syncPostHogContext(props.initialPage);
         capturePageview();
 

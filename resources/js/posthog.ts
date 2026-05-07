@@ -1,12 +1,16 @@
 import type { Page } from '@inertiajs/core';
 import posthog from 'posthog-js';
 
-import type { Auth } from './types';
+import type { Auth, Usage } from './types';
 
 const apiKey = import.meta.env.VITE_POSTHOG_API_KEY as string | undefined;
 const host = import.meta.env.VITE_POSTHOG_HOST as string | undefined;
 
-if (apiKey) {
+export const initializePostHog = (): void => {
+    if (!apiKey) {
+        return;
+    }
+
     posthog.init(apiKey, {
         api_host: host || 'https://us.i.posthog.com',
         ui_host: 'https://us.posthog.com',
@@ -19,16 +23,7 @@ if (apiKey) {
             maskTextSelector: '.ph-no-capture',
         },
     });
-}
-
-interface Usage {
-    workspaceCount: number;
-    socialAccountCount: number;
-    memberCount: number;
-    pendingInviteCount: number;
-    postCount: number;
-    creditsUsed: number;
-}
+};
 
 /**
  * Identify the current person and refresh the dual group context (account +

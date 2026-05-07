@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
+use App\Enums\PostHog\BillingEvent;
 use App\Events\SubscriptionCreated;
 use App\Jobs\PostHog\TrackBilling;
 use App\Models\Account;
@@ -49,15 +50,14 @@ class StripeEventListener
     protected function handleSubscriptionCreated(Account $account, array $payload): void
     {
         $previousPlan = $account->plan?->name;
-        $plan = $this->resolvePlanFromSubscriptionItems($payload, $account);
 
-        if ($plan && $account->plan_id !== $plan->id) {
+        if ($plan = $this->resolvePlanFromSubscriptionItems($payload, $account)) {
             $account->update(['plan_id' => $plan->id]);
         }
 
         SubscriptionCreated::dispatch($account);
 
-        $this->trackPlanChange($account, 'subscription.created', $previousPlan, $payload);
+        $this->trackPlanChange($account, BillingEvent::Created, $previousPlan, $payload);
     }
 
     /**
@@ -72,13 +72,12 @@ class StripeEventListener
     protected function handleSubscriptionUpdated(Account $account, array $payload): void
     {
         $previousPlan = $account->plan?->name;
-        $plan = $this->resolvePlanFromSubscriptionItems($payload, $account);
 
-        if ($plan && $account->plan_id !== $plan->id) {
+        if ($plan = $this->resolvePlanFromSubscriptionItems($payload, $account)) {
             $account->update(['plan_id' => $plan->id]);
         }
 
-        $this->trackPlanChange($account, 'subscription.updated', $previousPlan, $payload);
+        $this->trackPlanChange($account, BillingEvent::Updated, $previousPlan, $payload);
     }
 
     /**
@@ -93,11 +92,9 @@ class StripeEventListener
     {
         $previousPlan = $account->plan?->name;
 
-        if ($account->plan_id !== null) {
-            $account->update(['plan_id' => null]);
-        }
+        $account->update(['plan_id' => null]);
 
-        $this->trackPlanChange($account, 'subscription.cancelled', $previousPlan, $payload);
+        $this->trackPlanChange($account, BillingEvent::Cancelled, $previousPlan, $payload);
     }
 
     /**
@@ -141,7 +138,7 @@ class StripeEventListener
      *
      * @param  array<string, mixed>  $payload
      */
-    private function trackPlanChange(Account $account, string $event, ?string $previousPlan, array $payload): void
+    private function trackPlanChange(Account $account, BillingEvent $event, ?string $previousPlan, array $payload): void
     {
         TrackBilling::dispatch((string) $account->id, $event, $payload, $previousPlan);
     }

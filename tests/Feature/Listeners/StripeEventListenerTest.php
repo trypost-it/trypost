@@ -18,6 +18,8 @@ use Laravel\Cashier\Events\WebhookReceived;
 use Laravel\Pennant\Feature;
 
 beforeEach(function () {
+    config(['services.posthog.enabled' => true, 'services.posthog.api_key' => 'phc_test_key']);
+
     $this->account = Account::factory()->create(['stripe_id' => 'cus_test123']);
     $this->user = User::factory()->create([
         'account_id' => $this->account->id,
@@ -205,6 +207,30 @@ test('unknown event types do not dispatch TrackBilling', function () {
     $this->listener->handle(new WebhookReceived([
         'type' => 'invoice.payment_succeeded',
         'data' => ['object' => ['customer' => 'cus_test123']],
+    ]));
+
+    Bus::assertNotDispatched(TrackBilling::class);
+});
+
+test('TrackBilling is not dispatched when PostHog is disabled', function () {
+    config(['services.posthog.enabled' => false]);
+    Bus::fake([TrackBilling::class]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.created',
+        'data' => ['object' => ['customer' => 'cus_test123', 'id' => 'sub_123']],
+    ]));
+
+    Bus::assertNotDispatched(TrackBilling::class);
+});
+
+test('TrackBilling is not dispatched when api key is missing', function () {
+    config(['services.posthog.api_key' => null]);
+    Bus::fake([TrackBilling::class]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.created',
+        'data' => ['object' => ['customer' => 'cus_test123', 'id' => 'sub_123']],
     ]));
 
     Bus::assertNotDispatched(TrackBilling::class);

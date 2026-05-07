@@ -9,6 +9,7 @@ use App\Events\SubscriptionCreated;
 use App\Jobs\PostHog\TrackBilling;
 use App\Models\Account;
 use App\Models\Plan;
+use App\Services\PostHogService;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Events\WebhookReceived;
 
@@ -145,11 +146,17 @@ class StripeEventListener
 
     /**
      * Hand the lifecycle event off to the queue so the listener stays fast.
+     * Skip dispatch when PostHog is disabled — `TrackBilling::handle` would
+     * no-op anyway, but enqueuing it still costs queue worker cycles.
      *
      * @param  array<string, mixed>  $payload
      */
     private function trackPlanChange(Account $account, BillingEvent $event, ?string $previousPlan, array $payload): void
     {
+        if (! PostHogService::isEnabled()) {
+            return;
+        }
+
         TrackBilling::dispatch((string) $account->id, $event, $payload, $previousPlan);
     }
 }

@@ -72,6 +72,10 @@ class BillingController extends Controller
 
         $account->update(['plan_id' => $plan->id]);
 
+        if ($account->wasChanged('plan_id')) {
+            $account->forgetPlanFeatureCache();
+        }
+
         return Inertia::location($checkoutSession->url);
     }
 
@@ -163,6 +167,10 @@ class BillingController extends Controller
 
         $subscription->swap($priceId);
         $account->update(['plan_id' => $plan->id]);
+
+        if ($account->wasChanged('plan_id')) {
+            $account->forgetPlanFeatureCache();
+        }
 
         return redirect()->route('app.billing.index')
             ->with('flash.success', __('billing.flash.plan_changed', ['plan' => $plan->name]));

@@ -53,6 +53,10 @@ class StripeEventListener
 
         if ($plan = $this->resolvePlanFromSubscriptionItems($payload, $account)) {
             $account->update(['plan_id' => $plan->id]);
+
+            if ($account->wasChanged('plan_id')) {
+                $account->forgetPlanFeatureCache();
+            }
         }
 
         SubscriptionCreated::dispatch($account);
@@ -64,8 +68,7 @@ class StripeEventListener
      * Plan changes coming from Stripe (billing portal, dashboard, or our own
      * `BillingController@swap`) re-arrive here. Re-resolving the plan from
      * the price ids guarantees the local state matches Stripe even when a
-     * change happens out-of-band. Pennant feature caches are forgotten
-     * automatically via Account::booted() when `plan_id` changes.
+     * change happens out-of-band.
      *
      * @param  array<string, mixed>  $payload
      */
@@ -75,6 +78,10 @@ class StripeEventListener
 
         if ($plan = $this->resolvePlanFromSubscriptionItems($payload, $account)) {
             $account->update(['plan_id' => $plan->id]);
+
+            if ($account->wasChanged('plan_id')) {
+                $account->forgetPlanFeatureCache();
+            }
         }
 
         $this->trackPlanChange($account, BillingEvent::Updated, $previousPlan, $payload);
@@ -93,6 +100,10 @@ class StripeEventListener
         $previousPlan = $account->plan?->name;
 
         $account->update(['plan_id' => null]);
+
+        if ($account->wasChanged('plan_id')) {
+            $account->forgetPlanFeatureCache();
+        }
 
         $this->trackPlanChange($account, BillingEvent::Cancelled, $previousPlan, $payload);
     }

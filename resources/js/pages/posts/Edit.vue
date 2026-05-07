@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { useEcho } from '@laravel/echo-vue';
 import {
     IconCalendar,
     IconCircleCheck,
@@ -18,6 +17,7 @@ import PostEditorSidebar from '@/components/posts/editor/PostEditorSidebar.vue';
 import PickTimePopover from '@/components/posts/PickTimePopover.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { usePostEcho } from '@/composables/echo/usePostEcho';
 import { getMediaItemIssue } from '@/composables/useMedia';
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
 import dayjs from '@/dayjs';
@@ -422,13 +422,13 @@ const unschedulePost = () => {
 // Event fires when any post_platform completes publishing (success or fail).
 // Full reload of the post prop so the new status + post_platforms propagate and
 // the overlay dismisses.
-useEcho(`post.${post.value.id}`, '.PostPlatformStatusUpdated', () => {
+usePostEcho(post.value.id, '.post.platform.status.updated', () => {
     router.reload({ only: ['post'] });
 });
 
 
 // Echo: listen for real-time comments
-useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
+usePostEcho(post.value.id, '.post.comment.created', (e: any) => {
     if (e.mentioned_users) {
         editorSidebarRef.value?.registerMentionedUsers(e.mentioned_users);
     }

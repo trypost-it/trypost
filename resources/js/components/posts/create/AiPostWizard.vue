@@ -229,7 +229,7 @@ const subscribeToCreation = (userId: string, creationId: string) => {
     const channelName = `users.${userId}.ai-creation.${creationId}`;
     subscribedChannelName = channelName;
 
-    echoChannel = echo().private(channelName).listen('.PostCreationReady', (e: any) => {
+    echoChannel = echo().private(channelName).listen('.ai.creation.completed', (e: any) => {
         if (e.error) {
             previewStatus.value = 'error';
             previewError.value = e.error;

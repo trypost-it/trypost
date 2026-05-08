@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
 import { IconBuildingCommunity, IconChevronRight, IconCreditCard, IconUser } from '@tabler/icons-vue';
+
 import PageHeader from '@/components/PageHeader.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { edit as accountEdit } from '@/routes/app/account';

@@ -3,11 +3,11 @@ import { Head } from '@inertiajs/vue3';
 import { trans } from 'laravel-vue-i18n';
 import { computed } from 'vue';
 
-import BrandTab from '@/components/settings/BrandTab.vue';
 import PageHeader from '@/components/PageHeader.vue';
+import BrandTab from '@/components/settings/BrandTab.vue';
 import SettingsTabsNav from '@/components/settings/SettingsTabsNav.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { members as membersRoute, settings as settingsHub } from '@/routes/app';
+import { members as membersRoute } from '@/routes/app';
 import { index as apiKeysRoute } from '@/routes/app/api-keys';
 import { brand as brandRoute, settings as workspaceSettings } from '@/routes/app/workspace';
 

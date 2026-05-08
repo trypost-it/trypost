@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import VideoPreview from "@/components/posts/previews/VideoPreview.vue";
 import { IconPlus } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
+import VideoPreview from "@/components/posts/previews/VideoPreview.vue";
 import { isVideoMedia, type MediaItem } from '@/composables/useMedia';
 
 interface SocialAccount {

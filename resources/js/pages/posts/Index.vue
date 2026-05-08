@@ -148,9 +148,6 @@ const handleCopyId = (post: Post) => copyToClipboard(post.id, trans('posts.actio
 
 const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 
-// `reset: ['posts']` forces a replace on the InfiniteScroll merge prop —
-// without it, every broadcast would append a fresh page 1 onto the
-// existing list and produce duplicates.
 const refreshPosts = () => router.reload({ only: ['posts'], reset: ['posts'] });
 
 useWorkspaceEcho(

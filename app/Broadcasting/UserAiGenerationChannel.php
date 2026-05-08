@@ -8,8 +8,8 @@ use App\Models\User;
 
 class UserAiGenerationChannel
 {
-    public function join(User $user, string $userId, string $generationId): bool
+    public function join(User $user, User $owner, string $generationId): bool
     {
-        return $user->id === $userId;
+        return $user->is($owner);
     }
 }

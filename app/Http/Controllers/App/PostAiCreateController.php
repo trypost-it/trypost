@@ -8,8 +8,11 @@ use App\Http\Requests\App\Ai\StartPostCreationRequest;
 use App\Jobs\Ai\StreamPostCreation;
 use App\Models\SocialAccount;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 class PostAiCreateController extends Controller
@@ -52,7 +55,18 @@ class PostAiCreateController extends Controller
 
         return response()->json([
             'creation_id' => $creationId,
-            'channel' => "users.{$request->user()->id}.ai-creation.{$creationId}",
+            'channel' => "user.{$request->user()->id}.ai-creation.{$creationId}",
         ], Response::HTTP_ACCEPTED);
+    }
+
+    public function loading(Request $request, string $creationId): InertiaResponse
+    {
+        return Inertia::render('posts/ai/Loading', [
+            'creationId' => $creationId,
+            'channel' => "user.{$request->user()->id}.ai-creation.{$creationId}",
+            'imageCount' => (int) $request->query('images', '0'),
+            'format' => (string) $request->query('format', ''),
+            'prompt' => (string) $request->query('prompt', ''),
+        ]);
     }
 }

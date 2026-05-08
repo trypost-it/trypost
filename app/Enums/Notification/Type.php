@@ -9,6 +9,7 @@ enum Type: string
     case PostPublished = 'post_published';
     case PostFailed = 'post_failed';
     case PostPartiallyPublished = 'post_partially_published';
+    case PostReady = 'post_ready';
     case AccountDisconnected = 'account_disconnected';
     case InviteReceived = 'invite_received';
     case MemberJoined = 'member_joined';

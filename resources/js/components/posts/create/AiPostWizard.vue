@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { router, useHttp } from '@inertiajs/vue3';
-import { echo } from '@laravel/echo-vue';
 import {
     IconArrowLeft,
     IconCheck,
-    IconLoader2,
-    IconRefresh,
 } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
-import { computed, onUnmounted, ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
+
 
 import { start as startRoute } from '@/actions/App/Http/Controllers/App/PostAiCreateController';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getPlatformLogo } from '@/composables/usePlatformLogo';
 import { ContentType, type ContentTypeValue } from '@/enums/content-type';
-import { edit as editPostRoute } from '@/routes/app/posts';
+import { loading as loadingRoute } from '@/routes/app/posts/ai';
 
 interface SocialAccount {
     id: string;
@@ -36,16 +35,12 @@ const props = withDefaults(defineProps<Props>(), {
     date: null,
 });
 
-type WizardStep = 'configure' | 'generating';
-
 const emit = defineEmits<{
     /** Parent mirrors this in the PageHeader for context. */
     'update:stepHeader': [{ title: string; description: string }];
-    /** Back button on the configure step asks parent to leave the AI flow. */
+    /** Back button asks parent to leave the AI flow. */
     cancel: [];
 }>();
-
-const step = ref<WizardStep>('configure');
 
 // Selections
 const selectedFormat = ref<ContentTypeValue | null>(null);
@@ -54,12 +49,7 @@ const includeImages = ref(true);
 const imageCount = ref(2);
 const promptText = ref('');
 
-// Generation state
 const submitting = ref(false);
-const generationStatus = ref<'loading' | 'error'>('loading');
-const generationError = ref('');
-let echoChannel: any = null;
-let subscribedChannelName: string | null = null;
 
 const httpStart = useHttp<{
     format: string | null;
@@ -172,69 +162,17 @@ const selectFormat = (format: ContentTypeValue) => {
     }
 };
 
-// Step header text — the parent reflects this in the PageHeader.
-const stepHeaderFor = (s: WizardStep) => {
-    switch (s) {
-        case 'configure':
-            return {
-                title: trans('posts.create.ai_title'),
-                description: trans('posts.create.ai_configure_description'),
-            };
-        case 'generating':
-            return {
-                title: trans('posts.create.steps.generating_title'),
-                description: '',
-            };
-    }
-};
+emit('update:stepHeader', {
+    title: trans('posts.create.ai_title'),
+    description: trans('posts.create.ai_configure_description'),
+});
 
-const goToStep = (s: WizardStep) => {
-    step.value = s;
-    emit('update:stepHeader', stepHeaderFor(s));
-};
-
-emit('update:stepHeader', stepHeaderFor(step.value));
-
-const goBack = () => {
-    if (step.value === 'configure') {
-        emit('cancel');
-    } else if (step.value === 'generating') {
-        unsubscribeEcho();
-        goToStep('configure');
-    }
-};
-
-const unsubscribeEcho = () => {
-    if (echoChannel && subscribedChannelName) {
-        echo().leave(`private-${subscribedChannelName}`);
-        echoChannel = null;
-        subscribedChannelName = null;
-    }
-};
-
-const subscribeToCreation = (userId: string, creationId: string) => {
-    unsubscribeEcho();
-    const channelName = `users.${userId}.ai-creation.${creationId}`;
-    subscribedChannelName = channelName;
-
-    echoChannel = echo().private(channelName).listen('.ai.creation.completed', (e: any) => {
-        unsubscribeEcho();
-        if (e.error || !e.post_id) {
-            generationStatus.value = 'error';
-            generationError.value = e.error ?? trans('posts.create.steps.preview_error');
-            return;
-        }
-        router.visit(editPostRoute(e.post_id).url);
-    });
-};
+const goBack = () => emit('cancel');
 
 const startGeneration = async () => {
     if (!canSubmit.value || submitting.value) return;
 
     submitting.value = true;
-    generationStatus.value = 'loading';
-    generationError.value = '';
-    goToStep('generating');
 
     httpStart.format = selectedFormat.value;
     httpStart.social_account_id = selectedAccountId.value;
@@ -244,26 +182,29 @@ const startGeneration = async () => {
 
     try {
         const data = await httpStart.post(startRoute.url()) as { creation_id: string; channel: string };
-        const userId = data.channel.split('.')[1] ?? '';
-        subscribeToCreation(userId, data.creation_id);
+
+        router.visit(loadingRoute(
+            { creationId: data.creation_id },
+            {
+                query: {
+                    images: String(submittedImageCount.value),
+                    format: selectedFormat.value ?? '',
+                    prompt: promptText.value.trim(),
+                },
+            },
+        ).url);
     } catch (err: any) {
-        generationStatus.value = 'error';
-        generationError.value = err?.response?.data?.message ?? trans('posts.create.steps.preview_error');
-    } finally {
+        toast.error(err?.response?.data?.message ?? trans('posts.create.steps.preview_error'));
         submitting.value = false;
     }
 };
 
-const retryGeneration = () => startGeneration();
-
-onUnmounted(() => unsubscribeEcho());
 </script>
 
 <template>
     <div class="space-y-6">
         <!-- Back button — sticker arrow + ink label, mirrors the marketing site -->
         <button
-            v-if="step !== 'generating' || generationStatus === 'error'"
             type="button"
             class="group inline-flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-foreground/70 transition-colors hover:text-foreground"
             @click="goBack"
@@ -273,9 +214,6 @@ onUnmounted(() => unsubscribeEcho());
             </span>
             {{ $t('posts.create.steps.back') }}
         </button>
-
-        <!-- ====== Step 1: Configure (everything in one screen) ====== -->
-        <template v-if="step === 'configure'">
             <!-- Format -->
             <div class="space-y-2">
                 <Label class="text-sm font-bold">{{ $t('posts.create.steps.format_title') }}</Label>
@@ -386,33 +324,9 @@ onUnmounted(() => unsubscribeEcho());
 
             <!-- Generate -->
             <div v-if="selectedFormat" class="flex justify-end pt-1">
-                <Button :disabled="!canSubmit" @click="startGeneration">
+                <Button :disabled="!canSubmit || submitting" @click="startGeneration">
                     {{ $t('posts.ai.generate.start') }}
                 </Button>
             </div>
-        </template>
-
-        <!-- ====== Step 2: Generating ====== -->
-        <template v-else-if="step === 'generating'">
-            <div v-if="generationStatus === 'loading'" class="flex flex-col items-center gap-4 rounded-2xl border-2 border-foreground bg-card py-16 text-center shadow-2xs">
-                <div class="inline-flex size-12 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
-                    <IconLoader2 class="size-6 animate-spin text-foreground" stroke-width="2" />
-                </div>
-                <p class="text-sm font-semibold text-foreground/70">{{ $t('posts.create.steps.generation_loading') }}</p>
-            </div>
-
-            <div v-else class="space-y-4">
-                <div class="rounded-xl border-2 border-foreground bg-rose-50 p-4 shadow-2xs">
-                    <p class="text-sm font-semibold text-rose-700">{{ generationError || $t('posts.create.steps.preview_error') }}</p>
-                </div>
-
-                <div class="flex justify-end">
-                    <Button variant="outline" @click="retryGeneration">
-                        <IconRefresh class="size-4" />
-                        {{ $t('posts.create.steps.retry') }}
-                    </Button>
-                </div>
-            </div>
-        </template>
     </div>
 </template>

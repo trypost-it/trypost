@@ -28,7 +28,7 @@ class PostCreationReady implements ShouldBroadcast
 
     public function broadcastOn(): PrivateChannel
     {
-        return new PrivateChannel("users.{$this->userId}.ai-creation.{$this->creationId}");
+        return new PrivateChannel("user.{$this->userId}.ai-creation.{$this->creationId}");
     }
 
     /**

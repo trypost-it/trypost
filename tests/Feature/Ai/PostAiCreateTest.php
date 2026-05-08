@@ -87,7 +87,7 @@ test('start dispatches StreamPostCreation and returns creation_id and channel', 
 
     $creationId = $response->json('creation_id');
     expect($creationId)->toBeString()->not->toBeEmpty();
-    expect($response->json('channel'))->toBe("users.{$this->user->id}.ai-creation.{$creationId}");
+    expect($response->json('channel'))->toBe("user.{$this->user->id}.ai-creation.{$creationId}");
 
     Bus::assertDispatched(StreamPostCreation::class, function ($job) use ($creationId, $account) {
         return $job->userId === $this->user->id
@@ -141,4 +141,30 @@ test('start rejects invalid date format', function () {
         ->assertJsonValidationErrors(['date']);
 
     Bus::assertNotDispatched(StreamPostCreation::class);
+});
+
+test('loading page requires authentication', function () {
+    $this->get(route('app.posts.ai.loading', '019e0532-7b74-7369-b238-a5f2a93d12b7'))
+        ->assertStatus(Response::HTTP_FOUND);
+});
+
+test('loading page renders the Inertia component with channel and query context', function () {
+    $creationId = '019e0532-7b74-7369-b238-a5f2a93d12b7';
+
+    $this->actingAs($this->user)
+        ->get(route('app.posts.ai.loading', $creationId).'?images=5&format=instagram_carousel&prompt=Hello')
+        ->assertInertia(fn ($page) => $page
+            ->component('posts/ai/Loading')
+            ->where('creationId', $creationId)
+            ->where('channel', "user.{$this->user->id}.ai-creation.{$creationId}")
+            ->where('imageCount', 5)
+            ->where('format', 'instagram_carousel')
+            ->where('prompt', 'Hello')
+        );
+});
+
+test('loading page rejects non-uuid creation ids', function () {
+    $this->actingAs($this->user)
+        ->get('/posts/ai/not-a-uuid/loading')
+        ->assertStatus(Response::HTTP_NOT_FOUND);
 });

@@ -15,6 +15,6 @@ Broadcast::channel('workspace.{workspace}', WorkspaceChannel::class);
 
 Broadcast::channel('workspace.{workspace}.user.{owner}', WorkspaceUserChannel::class);
 
-Broadcast::channel('users.{userId}.ai-gen.{generationId}', UserAiGenerationChannel::class);
+Broadcast::channel('user.{owner}.ai-gen.{generationId}', UserAiGenerationChannel::class);
 
-Broadcast::channel('users.{userId}.ai-creation.{creationId}', UserAiCreationChannel::class);
+Broadcast::channel('user.{owner}.ai-creation.{creationId}', UserAiCreationChannel::class);

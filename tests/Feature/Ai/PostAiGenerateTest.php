@@ -56,7 +56,7 @@ test('endpoint dispatches StreamPostContent and returns generation id and channe
 
     $generationId = $response->json('generation_id');
     expect($generationId)->toBeString()->not->toBeEmpty();
-    expect($response->json('channel'))->toBe("users.{$this->user->id}.ai-gen.{$generationId}");
+    expect($response->json('channel'))->toBe("user.{$this->user->id}.ai-gen.{$generationId}");
 
     Bus::assertDispatched(StreamPostContent::class, function ($job) use ($generationId) {
         return $job->workspaceId === $this->workspace->id

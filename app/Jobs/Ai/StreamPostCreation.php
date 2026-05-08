@@ -9,8 +9,11 @@ use App\Ai\Agents\PostContentGenerator;
 use App\Ai\Agents\PostContentHumanizer;
 use App\Enums\Media\Source;
 use App\Enums\Media\Type as MediaType;
+use App\Enums\Notification\Channel as NotificationChannel;
+use App\Enums\Notification\Type as NotificationType;
 use App\Enums\PostPlatform\ContentType;
 use App\Events\Ai\PostCreationReady;
+use App\Jobs\SendNotification;
 use App\Models\Post;
 use App\Models\SocialAccount;
 use App\Models\User;
@@ -219,11 +222,7 @@ class StreamPostCreation implements ShouldQueue
 
         $post = $this->createPost($workspace, $caption, $media, $socialAccount);
 
-        PostCreationReady::dispatch(
-            userId: $this->userId,
-            creationId: $this->creationId,
-            postId: $post->id,
-        );
+        $this->notifyReady($workspace, $post);
     }
 
     /**
@@ -263,11 +262,7 @@ class StreamPostCreation implements ShouldQueue
         $caption = $supportsCaption ? $rawContent : '';
         $post = $this->createPost($workspace, $caption, $media, $socialAccount);
 
-        PostCreationReady::dispatch(
-            userId: $this->userId,
-            creationId: $this->creationId,
-            postId: $post->id,
-        );
+        $this->notifyReady($workspace, $post);
     }
 
     /**
@@ -306,6 +301,29 @@ class StreamPostCreation implements ShouldQueue
         }
 
         return $post;
+    }
+
+    private function notifyReady(Workspace $workspace, Post $post): void
+    {
+        PostCreationReady::dispatch(
+            userId: $this->userId,
+            creationId: $this->creationId,
+            postId: $post->id,
+        );
+
+        $user = User::findOrFail($this->userId);
+
+        $locale = $workspace->content_language ?? 'en';
+
+        SendNotification::dispatch(
+            user: $user,
+            workspaceId: $workspace->id,
+            type: NotificationType::PostReady,
+            channel: NotificationChannel::InApp,
+            title: trans('notifications.post_ready.title', [], $locale),
+            body: trans('notifications.post_ready.body', [], $locale),
+            data: ['post_id' => $post->id],
+        );
     }
 
     private function aspectRatioFor(ContentType $type): ?string

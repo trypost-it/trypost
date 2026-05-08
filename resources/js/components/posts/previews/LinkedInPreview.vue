@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import VideoPreview from "@/components/posts/previews/VideoPreview.vue";
 import { isVideoMedia, type MediaItem } from '@/composables/useMedia';
 
 interface SocialAccount {
@@ -77,8 +78,7 @@ defineProps<Props>();
                         }">
                         <img v-if="!isVideoMedia(item)" :src="item.url" :alt="item.original_filename"
                             class="w-full h-full object-cover" />
-                        <video v-else :src="item.url" class="w-full h-full object-cover bg-black" muted loop
-                            playsinline />
+                        <VideoPreview v-else :src="item.url" video-class="w-full h-full object-cover bg-black" />
                         <div v-if="media.length > 4 && index === 3"
                             class="absolute inset-0 bg-black/70 flex items-center justify-center">
                             <span class="text-white text-3xl font-semibold">+{{ media.length - 4 }}</span>

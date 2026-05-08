@@ -2,6 +2,7 @@
 import { IconChevronLeft, IconChevronRight, IconPhoto } from '@tabler/icons-vue';
 import { computed, ref, watch, type Component } from 'vue';
 
+import VideoPreview from '@/components/posts/previews/VideoPreview.vue';
 import { isVideoMedia, type MediaItem } from '@/composables/useMedia';
 
 interface Props {
@@ -54,13 +55,10 @@ const goToSlide = (index: number) => {
 <template>
     <template v-if="media.length > 0">
         <template v-for="(item, index) in media" :key="item.id">
-            <video
+            <VideoPreview
                 v-if="isVideoMedia(item) && index === currentIndex"
                 :src="item.url"
-                :class="mediaClass"
-                muted
-                loop
-                playsinline
+                :video-class="mediaClass"
             />
             <img
                 v-else-if="index === currentIndex"

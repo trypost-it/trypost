@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import VideoPreview from "@/components/posts/previews/VideoPreview.vue";
 import { IconPlus } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
@@ -40,7 +41,7 @@ const username = computed(() => props.socialAccount.username || props.socialAcco
         <div class="absolute inset-0">
             <!-- Video content -->
             <div v-if="media.length > 0 && isVideoMedia(media[0])" class="w-full h-full">
-                <video :src="media[0].url" class="w-full h-full object-cover" muted loop playsinline />
+                <VideoPreview :src="media[0].url" />
             </div>
             <div v-else-if="media.length > 0" class="w-full h-full">
                 <img :src="media[0].url" :alt="media[0].original_filename" class="w-full h-full object-cover" />

@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import {
     IconAlertTriangle,
-    IconCloudUpload,
     IconGripVertical,
     IconHash,
     IconLibraryPhoto,
-    IconLoader2,
     IconMoodSmile,
     IconSparkles,
     IconTrash,
@@ -22,9 +20,8 @@ import SignaturesModal from '@/components/posts/SignaturesModal.vue';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { formatBytes, readFileMetadata } from '@/composables/useMedia';
+import { formatBytes } from '@/composables/useMedia';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
-import { store as storeAsset } from '@/routes/app/assets';
 
 interface MediaItem {
     id: string;
@@ -67,8 +64,6 @@ const emit = defineEmits<{
     (e: 'open-ai-review'): void;
 }>();
 
-const isDragging = ref(false);
-const uploading = ref(false);
 const emojiOpen = ref(false);
 const mediaPickerDialog = ref<InstanceType<typeof MediaPickerDialog> | null>(null);
 const signaturesModal = ref<InstanceType<typeof SignaturesModal> | null>(null);
@@ -78,19 +73,17 @@ const dragOverIndex = ref<number | null>(null);
 const mediaThumbRefs = ref<HTMLElement[]>([]);
 const previewIndex = ref<number | null>(null);
 
-// Image-only URLs (videos are skipped) in the same order as `media`. The
-// preview index is computed against THIS list to keep arrow navigation tight.
-const previewImages = computed(() =>
-    media.value.filter((m) => !isVideo(m)).map((m) => m.url),
+const previewItems = computed<{ url: string; type: 'image' | 'video' }[]>(() =>
+    media.value.map((m) => ({
+        url: m.url,
+        type: isVideo(m) ? 'video' : 'image',
+    })),
 );
 
 const openPreview = (item: MediaItem) => {
-    if (isVideo(item)) return;
-    const idx = previewImages.value.indexOf(item.url);
+    const idx = media.value.findIndex((m) => m.id === item.id);
     previewIndex.value = idx >= 0 ? idx : 0;
 };
-
-const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
 
 const isVideo = (item: MediaItem): boolean =>
     item.type === 'video' || Boolean(item.mime_type?.startsWith('video/'));
@@ -132,60 +125,6 @@ const overflowParts = computed(() => {
         overflow: content.value.slice(limit),
     };
 });
-
-const handleDrop = (event: DragEvent) => {
-    isDragging.value = false;
-    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
-        uploadFiles(Array.from(event.dataTransfer.files));
-    }
-};
-
-const uploadFiles = async (files: File[]) => {
-    uploading.value = true;
-
-    for (const file of files) {
-        const clientMeta = await readFileMetadata(file);
-
-        const formData = new FormData();
-        formData.append('media', file);
-        if (clientMeta.width) formData.append('meta[width]', String(clientMeta.width));
-        if (clientMeta.height) formData.append('meta[height]', String(clientMeta.height));
-        if (clientMeta.duration) formData.append('meta[duration]', String(clientMeta.duration));
-
-        try {
-            const response = await fetch(storeAsset.url(), {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                body: formData,
-            });
-
-            if (!response.ok) continue;
-
-            const data = await response.json();
-            media.value = [
-                ...media.value,
-                {
-                    id: data.id,
-                    path: data.path,
-                    url: data.url,
-                    type: data.type,
-                    mime_type: data.mime_type,
-                    original_filename: data.original_filename,
-                    size: data.size,
-                    meta: data.meta,
-                },
-            ];
-        } catch {
-            // ignore
-        }
-    }
-
-    uploading.value = false;
-};
 
 const removeMedia = (mediaId: string) => {
     media.value = media.value.filter((m) => m.id !== mediaId);
@@ -276,12 +215,7 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
 
 <template>
     <div class="mx-auto max-w-2xl px-6 py-10">
-        <div
-            class="relative"
-            @dragover.prevent="isDragging = true"
-            @dragleave.prevent="isDragging = false"
-            @drop.prevent="handleDrop"
-        >
+        <div class="relative">
             <!-- Media grid (top) — always shown so "Add" tile is discoverable -->
             <div class="mb-6">
                 <div class="grid grid-cols-4 gap-2">
@@ -452,9 +386,6 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                     </Tooltip>
                 </TooltipProvider>
 
-                <span v-if="uploading" class="flex items-center gap-1.5 text-xs font-medium text-foreground/60">
-                    <IconLoader2 class="size-3.5 animate-spin" />
-                </span>
             </div>
 
             <!-- Per-platform counters (below menu, above textarea) -->
@@ -499,27 +430,12 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                 />
             </div>
 
-            <!-- Drag-drop overlay (full-bleed over the editor area) -->
-            <div
-                v-if="isDragging"
-                class="pointer-events-none absolute -inset-6 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-foreground bg-violet-100/80 backdrop-blur-sm"
-            >
-                <div class="inline-flex size-12 -rotate-3 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
-                    <IconCloudUpload class="size-6 text-foreground" stroke-width="2" />
-                </div>
-                <p
-                    class="text-xl font-semibold text-foreground"
-                    style="font-family: var(--font-display)"
-                >
-                    {{ $t('posts.edit.drag_drop') }}
-                </p>
-            </div>
         </div>
 
         <SignaturesModal ref="signaturesModal" :signatures="signatures" @select="appendSignature" />
         <MediaPickerDialog ref="mediaPickerDialog" @select="addMediaFromGallery" />
         <ImagePreviewDialog
-            :images="previewImages"
+            :items="previewItems"
             :index="previewIndex"
             @update:index="previewIndex = $event"
             @close="previewIndex = null"

@@ -62,7 +62,7 @@ class PostContentGenerator implements Agent, HasStructuredOutput
             'brand_description' => $this->workspace->brand_description ?? '',
             'brand_tone' => $this->workspace->brand_tone ?? '',
             'brand_voice_notes' => $this->workspace->brand_voice_notes ?? '',
-            'content_language' => $this->workspace->content_language ?? 'en',
+            'content_language' => $this->workspace->content_language,
             'current_content' => $this->currentContent,
             'format' => $this->format,
             'slide_count' => $this->slideCount,

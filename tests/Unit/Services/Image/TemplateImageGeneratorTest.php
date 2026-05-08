@@ -73,8 +73,8 @@ test('renders a slide and stores webp when AI returns bytes', function () use ($
     );
 
     if ($result !== null) {
-        expect($result->path)->toStartWith('ai-images/')->toEndWith('.webp');
-        expect($result->sourceMeta)
+        expect($result['path'])->toStartWith('ai-images/')->toEndWith('.webp');
+        expect($result['source_meta'])
             ->toHaveKey('keywords')
             ->toHaveKey('style', 'illustration')
             ->toHaveKey('model', 'gpt-image-2')

@@ -35,10 +35,12 @@ class TemplateImageGenerator
     ) {}
 
     /**
-     * Render a slide using Template A (full bleed) or Template B (photo card).
+     * Render a slide and return the storage path plus the source meta needed
+     * to regenerate it later. Returns null on failure (e.g. the AI client
+     * could not produce a usable image).
      *
      * @param  array<int, string>  $imageKeywords
-     * @return RenderedSlide|null The storage path + source meta, or null on failure.
+     * @return array{path: string, source_meta: array<string, mixed>}|null
      */
     public function render(
         Workspace $workspace,
@@ -48,7 +50,7 @@ class TemplateImageGenerator
         array $imageKeywords,
         int $width = self::DEFAULT_WIDTH,
         int $height = self::DEFAULT_HEIGHT,
-    ): ?RenderedSlide {
+    ): ?array {
         $this->width = $width;
         $this->height = $height;
 
@@ -59,7 +61,7 @@ class TemplateImageGenerator
             is_string($rawStyle) => ImageStyle::tryFrom($rawStyle) ?? ImageStyle::DEFAULT,
             default => ImageStyle::DEFAULT,
         };
-        $language = $workspace->content_language ?? 'en';
+        $language = $workspace->content_language;
 
         $imageData = $this->aiImage->generate(
             keywords: $imageKeywords,
@@ -101,9 +103,9 @@ class TemplateImageGenerator
             ],
         );
 
-        return new RenderedSlide(
-            path: $filename,
-            sourceMeta: [
+        return [
+            'path' => $filename,
+            'source_meta' => [
                 'keywords' => array_values($imageKeywords),
                 'style' => $imageStyle->value,
                 'language' => $language,
@@ -113,7 +115,7 @@ class TemplateImageGenerator
                 'width' => $this->width,
                 'height' => $this->height,
             ],
-        );
+        ];
     }
 
     /**

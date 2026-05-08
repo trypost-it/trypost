@@ -34,7 +34,7 @@ class PostContentHumanizer implements Agent, HasStructuredOutput
             'brand_name' => $this->workspace->name ?? '',
             'brand_tone' => $this->workspace->brand_tone ?? '',
             'brand_voice_notes' => $this->workspace->brand_voice_notes ?? '',
-            'content_language' => $this->workspace->content_language ?? 'en',
+            'content_language' => $this->workspace->content_language,
             'format' => $this->format,
         ])->render();
     }

@@ -21,7 +21,6 @@ use App\Models\Workspace;
 use App\Services\Ai\AiImageClient;
 use App\Services\Ai\RecordAiUsage;
 use App\Services\Image\BrandColorMapper;
-use App\Services\Image\RenderedSlide;
 use App\Services\Image\TemplateImageGenerator;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -313,15 +312,13 @@ class StreamPostCreation implements ShouldQueue
 
         $user = User::findOrFail($this->userId);
 
-        $locale = $workspace->content_language ?? 'en';
-
         SendNotification::dispatch(
             user: $user,
             workspaceId: $workspace->id,
             type: NotificationType::PostReady,
             channel: NotificationChannel::InApp,
-            title: trans('notifications.post_ready.title', [], $locale),
-            body: trans('notifications.post_ready.body', [], $locale),
+            title: trans('notifications.post_ready.title', [], $workspace->content_language),
+            body: trans('notifications.post_ready.body', [], $workspace->content_language),
             data: ['post_id' => $post->id],
         );
     }
@@ -340,17 +337,18 @@ class StreamPostCreation implements ShouldQueue
     }
 
     /**
+     * @param  array{path: string, source_meta: array<string, mixed>}  $rendered
      * @return array<string, mixed>
      */
-    private function buildAiMediaItem(Workspace $workspace, RenderedSlide $rendered): array
+    private function buildAiMediaItem(Workspace $workspace, array $rendered): array
     {
         $media = $workspace->media()->create([
             'collection' => 'ai-generated',
             'type' => MediaType::Image,
-            'path' => $rendered->path,
-            'original_filename' => basename($rendered->path),
+            'path' => $rendered['path'],
+            'original_filename' => basename($rendered['path']),
             'mime_type' => 'image/webp',
-            'size' => Storage::size($rendered->path),
+            'size' => Storage::size($rendered['path']),
             'order' => 0,
         ]);
 
@@ -361,7 +359,7 @@ class StreamPostCreation implements ShouldQueue
             'type' => 'image',
             'mime_type' => 'image/webp',
             'source' => Source::Ai->value,
-            'source_meta' => $rendered->sourceMeta,
+            'source_meta' => $rendered['source_meta'],
         ];
     }
 }

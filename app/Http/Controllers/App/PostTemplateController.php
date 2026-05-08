@@ -79,7 +79,7 @@ class PostTemplateController extends Controller
                 );
 
                 if ($rendered) {
-                    $mediaItem = $this->createMediaItem($workspace, $rendered->path);
+                    $mediaItem = $this->createMediaItem($workspace, $rendered['path']);
                     $media[] = $mediaItem;
                 }
             }

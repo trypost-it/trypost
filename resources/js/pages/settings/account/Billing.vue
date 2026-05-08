@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 import date from '@/date';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { settings as settingsHub } from '@/routes/app';
 import { edit as accountEdit } from '@/routes/app/account';
 import { index as billingIndex, portal } from '@/routes/app/billing';
 import { index as usageIndex } from '@/routes/app/usage';

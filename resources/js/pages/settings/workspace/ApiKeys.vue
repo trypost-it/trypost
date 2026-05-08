@@ -30,7 +30,7 @@ import {
 import date from '@/date';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { copyToClipboard } from '@/lib/utils';
-import { members as membersRoute, settings as settingsHub } from '@/routes/app';
+import { members as membersRoute } from '@/routes/app';
 import { index as apiKeysRoute } from '@/routes/app/api-keys';
 import { brand as brandRoute, settings as workspaceSettings } from '@/routes/app/workspace';
 interface ApiToken {

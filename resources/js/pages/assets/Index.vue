@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { trans } from 'laravel-vue-i18n';
-import { computed } from 'vue';
 
 import GalleryBrowser from '@/components/assets/GalleryBrowser.vue';
 import PageHeader from '@/components/PageHeader.vue';

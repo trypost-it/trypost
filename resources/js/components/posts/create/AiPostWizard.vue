@@ -116,11 +116,6 @@ const supportsOptionalImages = computed(() =>
 const maxOptionalImages = computed(() =>
     selectedFormat.value === ContentType.InstagramFeed ? 1 : 4,
 );
-// Mirrors ContentType::supportsCaption() in PHP.
-const supportsCaption = computed(() =>
-    selectedFormat.value !== ContentType.InstagramStory &&
-    selectedFormat.value !== ContentType.FacebookStory,
-);
 const showsAccountPicker = computed(() => accountsForFormat.value.length > 1);
 
 const submittedImageCount = computed(() => {

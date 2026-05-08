@@ -23,7 +23,6 @@ import { getPlatformLogo } from '@/composables/usePlatformLogo';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { cn } from '@/lib/utils';
-import { calendar } from '@/routes/app';
 
 interface Slide {
     title: string;

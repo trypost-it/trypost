@@ -23,7 +23,7 @@ import { getMediaRulesForContentType } from '@/composables/useMediaRules';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { destroy as destroyPost, index as postsIndex, update as updatePost } from '@/routes/app/posts';
+import { destroy as destroyPost, update as updatePost } from '@/routes/app/posts';
 
 interface MediaItem {
     id: string;

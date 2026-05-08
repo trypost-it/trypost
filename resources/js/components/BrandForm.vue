@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/* eslint-disable vue/no-mutating-props */
 import { useHttp } from '@inertiajs/vue3';
 import { IconCheck, IconLoader2, IconSparkles } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';

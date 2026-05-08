@@ -17,7 +17,6 @@ import ImagePreviewDialog from '@/components/ImagePreviewDialog.vue';
 import EmojiPicker from '@/components/posts/EmojiPicker.vue';
 import MediaPickerDialog from '@/components/posts/MediaPickerDialog.vue';
 import SignaturesModal from '@/components/posts/SignaturesModal.vue';
-import { Button } from '@/components/ui/button';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatBytes } from '@/composables/useMedia';

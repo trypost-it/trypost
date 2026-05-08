@@ -165,6 +165,6 @@ test('loading page renders the Inertia component with channel and query context'
 
 test('loading page rejects non-uuid creation ids', function () {
     $this->actingAs($this->user)
-        ->get('/posts/ai/not-a-uuid/loading')
+        ->get(route('app.posts.ai.loading', 'not-a-uuid'))
         ->assertStatus(Response::HTTP_NOT_FOUND);
 });

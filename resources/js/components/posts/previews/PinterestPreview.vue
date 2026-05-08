@@ -2,6 +2,7 @@
 import { IconPhoto, IconStack2 } from '@tabler/icons-vue';
 import { computed } from 'vue';
 
+import VideoPreview from "@/components/posts/previews/VideoPreview.vue";
 import { isVideoMedia, type MediaItem } from '@/composables/useMedia';
 
 interface SocialAccount {
@@ -51,13 +52,10 @@ const isCarousel = computed(() => props.contentType === 'pinterest_carousel');
                                     :alt="media[0].original_filename"
                                     class="w-full aspect-[2/3] object-cover"
                                 />
-                                <video
+                                <VideoPreview
                                     v-else
                                     :src="media[0].url"
-                                    class="w-full aspect-[2/3] object-cover bg-black"
-                                    muted
-                                    loop
-                                    playsinline
+                                    video-class="w-full aspect-[2/3] object-cover bg-black"
                                 />
                                 <!-- Video indicator -->
                                 <div v-if="isVideoMedia(media[0])" class="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">

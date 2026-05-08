@@ -38,7 +38,7 @@ class StreamPostContent implements ShouldQueue
             currentContent: $this->currentContent,
         );
 
-        $channel = new PrivateChannel("users.{$this->userId}.ai-gen.{$this->generationId}");
+        $channel = new PrivateChannel("user.{$this->userId}.ai-gen.{$this->generationId}");
 
         try {
             $response = $agent->broadcast($this->prompt, $channel, now: true);

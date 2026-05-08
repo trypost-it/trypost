@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { settings as settingsHub } from '@/routes/app';
 import { edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { deletePhoto, edit as editProfile, uploadPhoto } from '@/routes/app/profile';

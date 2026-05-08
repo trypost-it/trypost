@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useAiStream } from '@/composables/useAiStream';
+import { useAiStream } from '@/composables/echo/useAiStream';
 import { generate as generatePostAi } from '@/routes/app/posts/ai';
 
 const props = defineProps<{

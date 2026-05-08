@@ -8,4 +8,5 @@ enum UsageType: string
 {
     case Template = 'template';
     case Text = 'text';
+    case Image = 'image';
 }

@@ -7,11 +7,11 @@ namespace App\Events;
 use App\Models\PostPlatform;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class PostPlatformStatusUpdated implements ShouldBroadcastNow
+class PostPlatformStatusUpdated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -19,33 +19,29 @@ class PostPlatformStatusUpdated implements ShouldBroadcastNow
 
     public function broadcastAs(): string
     {
-        return 'PostPlatformStatusUpdated';
+        return 'post.platform.status.updated';
     }
 
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('post.'.$this->postPlatform->post_id),
+            new PrivateChannel("post.{$this->postPlatform->post_id}"),
+            new PrivateChannel("workspace.{$this->postPlatform->post->workspace_id}"),
         ];
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function broadcastWith(): array
     {
-        $post = $this->postPlatform->post->fresh();
-
         return [
-            'post_platform' => [
-                'id' => $this->postPlatform->id,
-                'status' => $this->postPlatform->status->value,
-                'platform_url' => $this->postPlatform->platform_url,
-                'error_message' => $this->postPlatform->error_message,
-                'published_at' => $this->postPlatform->published_at?->toISOString(),
-            ],
-            'post' => [
-                'id' => $post->id,
-                'status' => $post->status->value,
-                'published_at' => $post->published_at?->toISOString(),
-            ],
+            'post_id' => $this->postPlatform->post_id,
         ];
+    }
+
+    public function broadcastQueue(): string
+    {
+        return 'broadcasts';
     }
 }

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services\Image;
 
+use App\Enums\Workspace\ImageStyle;
 use App\Models\SocialAccount;
 use App\Models\Workspace;
+use App\Services\Ai\AiImageClient;
 use App\Services\Ai\RecordAiUsage;
-use App\Services\Unsplash\UnsplashClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -29,100 +30,19 @@ class TemplateImageGenerator
     private int $height = self::DEFAULT_HEIGHT;
 
     public function __construct(
-        private UnsplashClient $unsplash,
         private BrandColorMapper $colorMapper,
+        private AiImageClient $aiImage,
     ) {}
 
     /**
-     * Render a slide using Template A (full bleed) or Template B (photo card).
+     * Render a slide and return the storage path plus the source meta needed
+     * to regenerate it later. Returns null on failure (e.g. the AI client
+     * could not produce a usable image).
      *
      * @param  array<int, string>  $imageKeywords
-     * @return string|null The storage path, or null on failure.
+     * @return array{path: string, source_meta: array<string, mixed>}|null
      */
-    /**
-     * Render a closing/CTA slide (Template C) for the end of a carousel.
-     * Solid brand-colored background with centered avatar + display name +
-     * short divider + @handle.
-     */
-    public function renderClosing(
-        Workspace $workspace,
-        SocialAccount $socialAccount,
-        int $width = self::DEFAULT_WIDTH,
-        int $height = self::DEFAULT_HEIGHT,
-    ): ?string {
-        $this->width = $width;
-        $this->height = $height;
-
-        $bgColor = $workspace->background_color ?? '#0F172A';
-        $brandColor = $workspace->brand_color ?? '#D4AF37';
-        $textColor = $workspace->text_color ?? '#FFFFFF';
-
-        $manager = new ImageManager(Driver::class);
-        $canvas = $manager->createImage($this->width, $this->height)->fill($bgColor);
-        $core = $canvas->core()->native();
-
-        $fontBold = $this->fontPath('Inter-Bold.ttf');
-        $fontMedium = $this->fontPath('Inter-Medium.ttf');
-
-        // Centered avatar — size scales with the smaller canvas dimension.
-        $avatarSize = (int) round(min($this->width, $this->height) * 0.14);
-        $avatarX = (int) (($this->width - $avatarSize) / 2);
-        $avatarY = (int) ($this->height / 2 - $avatarSize - 10);
-
-        $avatarBinary = $this->fetchAvatarBinary($socialAccount);
-        if ($avatarBinary) {
-            $this->drawCircularAvatar($canvas, $avatarBinary, $avatarX, $avatarY, $avatarSize);
-        }
-
-        // Display name (bold uppercase, letter-spaced, centered).
-        $name = strtoupper((string) ($socialAccount->display_name ?? ''));
-        $nameSize = (int) round(min($this->width, $this->height) * 0.037);
-        $nameBaselineY = $avatarY + $avatarSize + 60 + (int) round($nameSize * 0.82);
-
-        if ($fontBold && $name !== '') {
-            $nameWidth = $this->measureLetterSpacedWidth($name, $fontBold, $nameSize, 6);
-            $nameX = (int) (($this->width - $nameWidth) / 2);
-            $this->drawTextAt($core, $name, $fontBold, $nameSize, $textColor, $nameX, $nameBaselineY, letterSpacing: 6);
-        }
-
-        // Short divider line under the name.
-        $smallDividerY = $nameBaselineY + 30;
-        $smallDividerWidth = 80;
-        $smallDividerX = (int) (($this->width - $smallDividerWidth) / 2);
-        $this->drawHorizontalLine($core, $smallDividerX, $smallDividerX + $smallDividerWidth, $smallDividerY, $brandColor, 1.0);
-
-        // @handle (lighter weight, lighter color, centered).
-        $handle = $socialAccount->username ? '@'.$socialAccount->username : '';
-        $handleSize = (int) round($nameSize * 0.65);
-        $handleBaselineY = $smallDividerY + 30 + (int) round($handleSize * 0.82);
-
-        if ($fontMedium && $handle !== '') {
-            // @handle uses text_color blended with the bg at 0.8 opacity —
-            // legible on any brand palette, slightly muted vs the display name.
-            $handleColor = $this->blendHex($textColor, $bgColor, 0.8);
-            $handleWidth = $this->measureLetterSpacedWidth($handle, $fontMedium, $handleSize, 1);
-            $handleX = (int) (($this->width - $handleWidth) / 2);
-            $this->drawTextAt($core, $handle, $fontMedium, $handleSize, $handleColor, $handleX, $handleBaselineY, letterSpacing: 1);
-        }
-
-        $filename = 'ai-images/'.uniqid('slide_', true).'.webp';
-        Storage::put($filename, (string) $canvas->encode(new WebpEncoder(quality: 85)));
-
-        RecordAiUsage::recordTemplate(
-            workspace: $workspace,
-            provider: 'internal',
-            metadata: [
-                'template' => 'C',
-                'width' => $this->width,
-                'height' => $this->height,
-            ],
-        );
-
-        return $filename;
-    }
-
     public function render(
-        string $template,
         Workspace $workspace,
         SocialAccount $socialAccount,
         string $title,
@@ -130,54 +50,79 @@ class TemplateImageGenerator
         array $imageKeywords,
         int $width = self::DEFAULT_WIDTH,
         int $height = self::DEFAULT_HEIGHT,
-    ): ?string {
+    ): ?array {
         $this->width = $width;
         $this->height = $height;
 
-        $colorBucket = $this->colorMapper->fromWorkspace($workspace);
-        $orientation = $this->unsplashOrientation();
-        $photo = $this->unsplash->searchPhoto($imageKeywords, $orientation, $colorBucket);
+        $orientation = $this->orientationForCanvas();
+        $rawStyle = $workspace->image_style;
+        $imageStyle = match (true) {
+            $rawStyle instanceof ImageStyle => $rawStyle,
+            is_string($rawStyle) => ImageStyle::tryFrom($rawStyle) ?? ImageStyle::DEFAULT,
+            default => ImageStyle::DEFAULT,
+        };
+        $language = $workspace->content_language;
 
-        if (! $photo) {
-            return null;
-        }
-
-        $imageData = @file_get_contents($photo['url']);
-        if (! $imageData) {
-            Log::warning('TemplateImageGenerator: failed to download Unsplash photo', ['url' => $photo['url']]);
-
+        $imageData = $this->aiImage->generate(
+            keywords: $imageKeywords,
+            style: $imageStyle,
+            orientation: $orientation,
+            language: $language,
+            brandColor: $workspace->brand_color,
+            brandDescription: $workspace->brand_description,
+        );
+        if ($imageData === null) {
             return null;
         }
 
         $manager = new ImageManager(Driver::class);
 
-        $canvas = $template === 'A'
-            ? $this->renderTemplateA($manager, $imageData, $title, $body)
-            : $this->renderTemplateB($manager, $imageData, $title, $body, $workspace);
-
-        $canvas = $this->renderFooter($canvas, $socialAccount, $template, $workspace);
+        $canvas = $this->renderTemplateA($manager, $imageData, $title, $body);
+        $canvas = $this->renderFooter($canvas, $socialAccount);
 
         $filename = 'ai-images/'.uniqid('slide_', true).'.webp';
         Storage::put($filename, (string) $canvas->encode(new WebpEncoder(quality: 85)));
 
-        RecordAiUsage::recordTemplate(
+        RecordAiUsage::recordImage(
             workspace: $workspace,
-            provider: 'internal',
+            provider: 'openai',
+            model: AiImageClient::MODEL,
             metadata: [
-                'template' => $template,
+                'image_style' => $imageStyle->value,
                 'width' => $this->width,
                 'height' => $this->height,
             ],
         );
 
-        return $filename;
+        RecordAiUsage::recordTemplate(
+            workspace: $workspace,
+            provider: 'internal',
+            metadata: [
+                'width' => $this->width,
+                'height' => $this->height,
+            ],
+        );
+
+        return [
+            'path' => $filename,
+            'source_meta' => [
+                'keywords' => array_values($imageKeywords),
+                'style' => $imageStyle->value,
+                'language' => $language,
+                'model' => AiImageClient::MODEL,
+                'title' => $title,
+                'body' => $body,
+                'width' => $this->width,
+                'height' => $this->height,
+            ],
+        ];
     }
 
     /**
-     * Pick the closest Unsplash orientation for the active canvas. Avoids
-     * stretching/cropping a portrait photo into a landscape canvas.
+     * Pick the closest aspect ratio for the active canvas so the AI image
+     * generator returns a photo that doesn't need heavy cropping.
      */
-    private function unsplashOrientation(): string
+    private function orientationForCanvas(): string
     {
         $ratio = $this->width / $this->height;
         if ($ratio > 1.1) {
@@ -310,26 +255,6 @@ class TemplateImageGenerator
     }
 
     /**
-     * Same as renderTextLines but each line is horizontally centered within the
-     * canvas based on its measured glyph width.
-     */
-    private function renderTextLinesCentered($core, array $lines, string $fontPath, int $fontSize, float $lineHeight, string $hexColor, int $topY): void
-    {
-        $color = $this->allocateColor($core, $hexColor);
-        $lineSpacing = (int) round($fontSize * $lineHeight);
-        $ascent = (int) round($fontSize * 0.82);
-        $baselineY = $topY + $ascent;
-
-        foreach ($lines as $line) {
-            $bbox = imagettfbbox($fontSize, 0, $fontPath, $line);
-            $lineWidth = abs($bbox[2] - $bbox[0]);
-            $x = (int) round(($this->width - $lineWidth) / 2);
-            imagettftext($core, $fontSize, 0, $x, $baselineY, $color, $fontPath, $line);
-            $baselineY += $lineSpacing;
-        }
-    }
-
-    /**
      * Allocate a GD color from a hex string (#rrggbb).
      *
      * @return int Color identifier suitable for GD draw functions.
@@ -341,23 +266,6 @@ class TemplateImageGenerator
         $color = imagecolorallocate($core, $r, $g, $b);
 
         return $color === false ? imagecolorallocate($core, 255, 255, 255) : $color;
-    }
-
-    /**
-     * Linearly blend two hex colors. $weight is the share of $foreground in the
-     * mix (0.0 = pure background, 1.0 = pure foreground).
-     */
-    private function blendHex(string $foreground, string $background, float $weight): string
-    {
-        [$fr, $fg, $fb] = $this->hexToRgb($foreground);
-        [$br, $bg, $bb] = $this->hexToRgb($background);
-        $w = max(0.0, min(1.0, $weight));
-
-        $r = (int) round($fr * $w + $br * (1 - $w));
-        $g = (int) round($fg * $w + $bg * (1 - $w));
-        $b = (int) round($fb * $w + $bb * (1 - $w));
-
-        return sprintf('#%02x%02x%02x', $r, $g, $b);
     }
 
     /**
@@ -403,103 +311,11 @@ class TemplateImageGenerator
         }
     }
 
-    /**
-     * Punch transparent corners into the image's alpha channel so it renders as
-     * a rounded rectangle when copied onto another canvas.
-     */
-    private function roundCorners(ImageInterface $image, int $radius): void
+    private function renderFooter(ImageInterface $canvas, SocialAccount $socialAccount): ImageInterface
     {
-        $core = $image->core()->native();
-        $w = imagesx($core);
-        $h = imagesy($core);
-
-        imagealphablending($core, false);
-        imagesavealpha($core, true);
-        $transparent = imagecolorallocatealpha($core, 0, 0, 0, 127);
-
-        $corners = [
-            ['x0' => 0,            'y0' => 0,            'cx' => $radius,         'cy' => $radius],
-            ['x0' => $w - $radius, 'y0' => 0,            'cx' => $w - $radius - 1, 'cy' => $radius],
-            ['x0' => 0,            'y0' => $h - $radius, 'cx' => $radius,         'cy' => $h - $radius - 1],
-            ['x0' => $w - $radius, 'y0' => $h - $radius, 'cx' => $w - $radius - 1, 'cy' => $h - $radius - 1],
-        ];
-
-        foreach ($corners as $c) {
-            for ($y = $c['y0']; $y < $c['y0'] + $radius; $y++) {
-                for ($x = $c['x0']; $x < $c['x0'] + $radius; $x++) {
-                    $dx = $x - $c['cx'];
-                    $dy = $y - $c['cy'];
-                    if ($dx * $dx + $dy * $dy > $radius * $radius) {
-                        imagesetpixel($core, $x, $y, $transparent);
-                    }
-                }
-            }
-        }
-
-        imagealphablending($core, true);
-    }
-
-    private function renderTemplateB(ImageManager $manager, string $imageData, string $title, string $body, Workspace $workspace): ImageInterface
-    {
-        $bgColor = $workspace->background_color ?? '#F0F4F0';
-        $brandColor = $workspace->brand_color ?? '#0F4C2A';
-        $textColor = $workspace->text_color ?? '#0F172A';
-
-        // Solid background canvas at active dimensions.
-        $canvas = $manager->createImage($this->width, $this->height)->fill($bgColor);
-
-        $fontBold = $this->fontPath('Inter-Bold.ttf');
-        $fontMedium = $this->fontPath('Inter-Medium.ttf');
-
-        $titleSize = 56;
-        $bodySize = 28;
-        $titleLineHeight = 1.25;
-        $bodyLineHeight = 1.55;
-        $padding = 60;
-        $maxWidth = $this->width - 2 * $padding;
-        $photoWidth = $this->width - 2 * $padding;
-        // Photo card height scales with the canvas: ~37% of total height. This
-        // keeps a comfortable text/photo balance across 1:1, 4:5 and 9:16 sizes.
-        $photoHeight = (int) round($this->height * 0.37);
-        $titleTopY = (int) round($this->height * 0.09);
-        $gapTitleToPhoto = 60;
-        $gapPhotoToBody = 60;
-
-        $core = $canvas->core()->native();
-
-        $titleLines = ($fontBold && file_exists($fontBold)) ? $this->wrapText($title, $fontBold, $titleSize, $maxWidth) : [];
-        $bodyLines = ($fontMedium && file_exists($fontMedium)) ? $this->wrapText($body, $fontMedium, $bodySize, $maxWidth) : [];
-
-        $titleHeight = $this->measureBlockHeight($titleLines, $titleSize, $titleLineHeight);
-        $photoY = $titleTopY + $titleHeight + $gapTitleToPhoto;
-        $bodyTopY = $photoY + $photoHeight + $gapPhotoToBody;
-        $photoX = (int) (($this->width - $photoWidth) / 2);
-
-        if ($titleLines) {
-            $this->renderTextLines($core, $titleLines, $fontBold, $titleSize, $titleLineHeight, $brandColor, $padding, $titleTopY);
-        }
-
-        // Photo card with rounded corners, horizontally centered.
-        $photo = $manager->decodeBinary($imageData)->cover($photoWidth, $photoHeight);
-        $this->roundCorners($photo, 20);
-        $canvas->insert($photo, $photoX, $photoY);
-
-        if ($bodyLines) {
-            $this->renderTextLines($core, $bodyLines, $fontMedium, $bodySize, $bodyLineHeight, $textColor, $padding, $bodyTopY);
-        }
-
-        return $canvas;
-    }
-
-    private function renderFooter(ImageInterface $canvas, SocialAccount $socialAccount, string $template, Workspace $workspace): ImageInterface
-    {
-        // Footer uses Inter Light (300) in a muted color for both @handle and display_name.
-        // Template A: hardcoded slate (always on dark gradient).
-        // Template B: blend the brand's text color with its background so the footer is
-        // always legibly muted regardless of which palette the workspace picked.
-        $footerColor = $template === 'A'
-            ? '#9ca3af'
-            : $this->blendHex($workspace->text_color ?? '#0F172A', $workspace->background_color ?? '#F0F4F0', 0.45);
+        // Footer uses Inter Light (300) in slate-grey — always legible on top
+        // of the bottom dark gradient applied by Template A.
+        $footerColor = '#9ca3af';
 
         $username = $socialAccount->username ?? '';
         $displayName = $socialAccount->display_name ?? '';
@@ -686,18 +502,6 @@ class TemplateImageGenerator
         $color = imagecolorallocatealpha($core, $r, $g, $b, $gdAlpha);
         imageline($core, $x1, $y, $x2, $y, $color);
         imagecolordeallocate($core, $color);
-    }
-
-    /**
-     * Localized "Follow me" CTA based on the workspace's content_language.
-     */
-    private function followCta(Workspace $workspace): string
-    {
-        return match ($workspace->content_language) {
-            'pt-BR' => 'ME SIGA',
-            'es' => 'SÍGUEME',
-            default => 'FOLLOW ME',
-        };
     }
 
     private function fontPath(string $filename): ?string

@@ -26,7 +26,6 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { isMobileDevice, parseBrowserName, parseOsName } from '@/lib/userAgent';
-import { settings as settingsHub } from '@/routes/app';
 import { connectProvider, edit as editAuthentication } from '@/routes/app/authentication';
 import { preferences as notificationPreferences } from '@/routes/app/notifications';
 import { edit as editProfile } from '@/routes/app/profile';

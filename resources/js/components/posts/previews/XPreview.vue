@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import VideoPreview from "@/components/posts/previews/VideoPreview.vue";
 import { isVideoMedia, type MediaItem } from '@/composables/useMedia';
 
 interface SocialAccount {
@@ -95,8 +96,7 @@ const username = computed(() => props.socialAccount.username || 'username');
                             }">
                             <img v-if="!isVideoMedia(item)" :src="item.url" :alt="item.original_filename"
                                 class="w-full h-full object-cover" />
-                            <video v-else :src="item.url" class="w-full h-full object-cover bg-black" muted loop
-                                playsinline />
+                            <VideoPreview v-else :src="item.url" video-class="w-full h-full object-cover bg-black" />
                             <!-- Video duration badge -->
                             <div v-if="isVideoMedia(item)"
                                 class="absolute bottom-2 left-2 bg-black/70 text-white text-[13px] px-1.5 py-0.5 rounded">

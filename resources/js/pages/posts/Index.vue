@@ -29,6 +29,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useWorkspaceEcho } from '@/composables/echo/useWorkspaceEcho';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 import { getPostStatusConfig } from '@/composables/usePostStatus';
 import dayjs from '@/dayjs';
@@ -133,7 +134,10 @@ const postUrl = (post: Post): string =>
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 
 const handleDelete = (post: Post) => {
-    deleteModal.value?.open({ url: destroyPost.url(post.id) });
+    deleteModal.value?.open({
+        url: destroyPost.url(post.id),
+        confirmText: trans('common.confirm_modal.delete_keyword'),
+    });
 };
 
 const handleDuplicate = (post: Post) => {
@@ -143,6 +147,13 @@ const handleDuplicate = (post: Post) => {
 const handleCopyId = (post: Post) => copyToClipboard(post.id, trans('posts.actions.copied'));
 
 const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
+
+const refreshPosts = () => router.reload({ only: ['posts'], reset: ['posts'] });
+
+useWorkspaceEcho(
+    ['.post.created', '.post.deleted', '.post.platform.status.updated'],
+    refreshPosts,
+);
 </script>
 
 <template>

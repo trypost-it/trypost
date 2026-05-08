@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import VideoPreview from "@/components/posts/previews/VideoPreview.vue";
 import { isVideoMedia, type MediaItem } from '@/composables/useMedia';
 
 interface SocialAccount {
@@ -60,8 +61,7 @@ defineProps<Props>();
                             }">
                             <img v-if="!isVideoMedia(item)" :src="item.url" :alt="item.original_filename"
                                 class="w-full h-full object-cover" />
-                            <video v-else :src="item.url" class="w-full h-full object-cover bg-black" muted loop
-                                playsinline />
+                            <VideoPreview v-else :src="item.url" video-class="w-full h-full object-cover bg-black" />
                             <!-- Hide button -->
                             <button
                                 class="absolute top-2 right-2 bg-black/60 text-white text-[12px] px-2 py-0.5 rounded">

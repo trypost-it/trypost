@@ -11,7 +11,7 @@ withDefaults(defineProps<Props>(), {
 <template>
     <div class="relative mx-auto select-none origin-top">
         <!-- Phone Frame - iPhone 14 Pro style -->
-        <div class="relative bg-[#1a1a1a] rounded-[44px] p-[10px] shadow-2xl ring-1 ring-white/10">
+        <div class="relative bg-[#1a1a1a] rounded-[44px] p-[10px] ring-1 ring-white/10">
             <!-- Inner frame -->
             <div class="relative bg-[#0a0a0a] rounded-[34px] overflow-hidden">
                 <!-- Screen Content - iPhone 14 Pro proportions (393x852 scaled down) -->

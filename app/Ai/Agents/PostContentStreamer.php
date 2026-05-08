@@ -35,7 +35,7 @@ class PostContentStreamer implements Agent
             'brand_description' => $this->workspace->brand_description ?? '',
             'brand_tone' => $this->workspace->brand_tone ?? '',
             'brand_voice_notes' => $this->workspace->brand_voice_notes ?? '',
-            'content_language' => $this->workspace->content_language ?? 'en',
+            'content_language' => $this->workspace->content_language,
             'current_content' => $this->currentContent,
             'format' => 'single',
             'slide_count' => 1,

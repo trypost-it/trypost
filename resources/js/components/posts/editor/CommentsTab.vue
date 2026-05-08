@@ -733,14 +733,14 @@ watch(() => props.postId, () => {
                     v-model="newBody"
                     :member-names="memberNames"
                     :placeholder="replyingTo ? $t('comments.reply_placeholder') : $t('comments.placeholder')"
-                    class="min-h-[36px] max-h-[120px] flex-1 resize-none text-sm"
+                    class="min-h-10 max-h-[120px] flex-1 resize-none text-sm"
                     :rows="1"
                     @keydown="handleKeydown"
                     @mention="registerMention"
                 />
                 <Button
                     size="icon"
-                    class="size-9 shrink-0"
+                    class="shrink-0"
                     :disabled="!newBody.trim() || sending"
                     @click="sendComment"
                 >

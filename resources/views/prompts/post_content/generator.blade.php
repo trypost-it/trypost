@@ -61,9 +61,24 @@ Output format: a JSON object with `caption` (the Instagram caption text) and a `
 CRITICAL: The `slides` array MUST contain exactly {{ $slide_count ?? 1 }} items — no fewer, no more. Count carefully before responding. Each slide object must have:
 - `title`: a short, impactful headline for that slide (in {{ $content_language ?? 'en' }})
 - `body`: 1-3 sentences of supporting text (in {{ $content_language ?? 'en' }})
-- `image_keywords`: 2-4 keywords for an Unsplash image search.
+- `image_keywords`: 2-4 words describing a CONCRETE VISUAL SCENE for an Unsplash image search.
+  Think like an art director, not a copywriter. Describe what should literally be IN the photo: physical objects, specific settings, people doing specific things, lighting, mood. Avoid abstract concepts (Unsplash is a photo library — it can't return "growth" or "innovation", only photos of things).
+
+  GOOD (concrete scenes a photographer could shoot):
+  - `["person typing laptop", "coffee shop morning"]`
+  - `["modern minimal desk", "plant natural light"]`
+  - `["whiteboard team meeting", "collaboration"]`
+  - `["sunrise mountain hiker", "silhouette"]`
+  - `["empty notebook", "pen wooden table"]`
+
+  BAD (abstract concepts → returns generic stock):
+  - `["growth strategy", "business success"]`
+  - `["productivity mindset", "innovation"]`
+  - `["leadership", "vision"]`
+  - `["happiness", "motivation"]`
+
   ALWAYS write these in English, even when content_language is not 'en'. Unsplash's search index is English-only — Portuguese/Spanish queries return poor results.
-  Example for a pt-BR post: `["calendar", "team meeting"]`, NOT `["calendário", "reunião de equipe"]`.
+  Example for a pt-BR post about productivity: `["person typing laptop", "coffee shop morning"]`, NOT `["produtividade", "trabalho"]`.
 
 Plan the {{ $slide_count ?? 1 }}-slide narrative arc first (intro → development → conclusion or hook → points → CTA), then write each slide. The caption should tease the carousel content and encourage swiping.
 @else
@@ -71,7 +86,22 @@ Output format: a JSON object with:
 - `content`: the full post caption in {{ $content_language ?? 'en' }} (no preamble, no quotation marks). This is what gets published.
 - `image_title`: a short headline (5-12 words) in {{ $content_language ?? 'en' }} that will be overlaid on the image. Make it a hook that stops the scroll. Do NOT just copy the first sentence of content — write something punchier.
 - `image_body`: 1-2 short sentences (max 25 words) in {{ $content_language ?? 'en' }} that go below image_title on the image. Tease the rest so the reader opens the caption.
-- `image_keywords`: 2-4 keywords for an Unsplash image search.
+- `image_keywords`: 2-4 words describing a CONCRETE VISUAL SCENE for an Unsplash image search.
+  Think like an art director, not a copywriter. Describe what should literally be IN the photo: physical objects, specific settings, people doing specific things, lighting, mood. Avoid abstract concepts (Unsplash is a photo library — it can't return "growth" or "innovation", only photos of things).
+
+  GOOD (concrete scenes a photographer could shoot):
+  - `["person typing laptop", "coffee shop morning"]`
+  - `["modern minimal desk", "plant natural light"]`
+  - `["whiteboard team meeting", "collaboration"]`
+  - `["sunrise mountain hiker", "silhouette"]`
+  - `["empty notebook", "pen wooden table"]`
+
+  BAD (abstract concepts → returns generic stock):
+  - `["growth strategy", "business success"]`
+  - `["productivity mindset", "innovation"]`
+  - `["leadership", "vision"]`
+  - `["happiness", "motivation"]`
+
   ALWAYS write these in English, even when content_language is not 'en'. Unsplash's search index is English-only — Portuguese/Spanish queries return poor results.
-  Example for a pt-BR post: `["calendar", "team meeting"]`, NOT `["calendário", "reunião de equipe"]`.
+  Example for a pt-BR post about productivity: `["person typing laptop", "coffee shop morning"]`, NOT `["produtividade", "trabalho"]`.
 @endif

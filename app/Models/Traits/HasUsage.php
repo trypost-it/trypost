@@ -66,14 +66,8 @@ trait HasUsage
     }
 
     /**
-     * The `(int)` cast on the cached value is load-bearing: Laravel's
-     * RedisStore skips serialize()/unserialize() for is_numeric values so
-     * they can be incremented atomically — the side effect is that an int
-     * stored via `Cache::put` comes back as a string on read. Without the
-     * cast, the strict `: int` return type throws a TypeError under the
-     * Redis cache driver (production). File/array/database drivers don't
-     * have this optimisation and preserve the type, which is why the bug
-     * never surfaced in tests or local dev.
+     * The `(int)` cast is load-bearing: Laravel's RedisStore stores numeric
+     * values raw (for atomic INCR) and returns them as strings on read.
      *
      * @param  array<int, string>  $workspaceIds
      */

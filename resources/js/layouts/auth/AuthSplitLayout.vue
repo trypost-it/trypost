@@ -96,7 +96,7 @@ const platforms = [
             </div>
 
             <div class="flex flex-1 items-center justify-center">
-                <div class="w-full max-w-md">
+                <div class="w-full max-w-lg">
                     <div class="flex flex-col gap-6">
                         <div class="flex flex-col items-center gap-2 text-center">
                             <h1 v-if="title" class="text-2xl font-bold">{{ title }}</h1>
@@ -112,7 +112,7 @@ const platforms = [
         </div>
 
         <div
-            class="relative hidden overflow-hidden border-l-2 border-foreground bg-accent lg:block"
+            class="relative hidden overflow-hidden border-l-2 border-foreground bg-accent lg:sticky lg:top-0 lg:block lg:h-svh lg:self-start"
             @mouseenter="isPaused = true"
             @mouseleave="isPaused = false"
         >

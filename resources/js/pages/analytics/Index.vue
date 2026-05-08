@@ -10,9 +10,9 @@ import LinkedInPageAnalytics from '@/components/analytics/LinkedInPageAnalytics.
 import PinterestAnalytics from '@/components/analytics/PinterestAnalytics.vue';
 import ThreadsAnalytics from '@/components/analytics/ThreadsAnalytics.vue';
 import TikTokAnalytics from '@/components/analytics/TikTokAnalytics.vue';
+import type { AnalyticsAccount } from '@/components/analytics/types';
 import XAnalytics from '@/components/analytics/XAnalytics.vue';
 import YouTubeAnalytics from '@/components/analytics/YouTubeAnalytics.vue';
-import type { AnalyticsAccount } from '@/components/analytics/types';
 import PageHeader from '@/components/PageHeader.vue';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import dayjs from '@/dayjs';

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { useEcho } from '@laravel/echo-vue';
 import {
     IconCalendar,
     IconCircleCheck,
@@ -18,12 +17,13 @@ import PostEditorSidebar from '@/components/posts/editor/PostEditorSidebar.vue';
 import PickTimePopover from '@/components/posts/PickTimePopover.vue';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { usePostEcho } from '@/composables/echo/usePostEcho';
 import { getMediaItemIssue } from '@/composables/useMedia';
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { destroy as destroyPost, index as postsIndex, update as updatePost } from '@/routes/app/posts';
+import { destroy as destroyPost, update as updatePost } from '@/routes/app/posts';
 
 interface MediaItem {
     id: string;
@@ -407,7 +407,10 @@ const toggleLabel = (labelId: string) => {
 
 const deletePost = () => {
     if (isReadOnly.value) return;
-    deleteModal.value?.open({ url: destroyPost.url(post.value.id) });
+    deleteModal.value?.open({
+        url: destroyPost.url(post.value.id),
+        confirmText: trans('common.confirm_modal.delete_keyword'),
+    });
 };
 
 const unschedulePost = () => {
@@ -422,13 +425,13 @@ const unschedulePost = () => {
 // Event fires when any post_platform completes publishing (success or fail).
 // Full reload of the post prop so the new status + post_platforms propagate and
 // the overlay dismisses.
-useEcho(`post.${post.value.id}`, '.PostPlatformStatusUpdated', () => {
+usePostEcho(post.value.id, '.post.platform.status.updated', () => {
     router.reload({ only: ['post'] });
 });
 
 
 // Echo: listen for real-time comments
-useEcho(`post.${post.value.id}`, '.PostCommentCreated', (e: any) => {
+usePostEcho(post.value.id, '.post.comment.created', (e: any) => {
     if (e.mentioned_users) {
         editorSidebarRef.value?.registerMentionedUsers(e.mentioned_users);
     }

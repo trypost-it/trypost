@@ -295,6 +295,13 @@ Vue components must have a single root element.
 - When returning JSON responses with explicit status codes, always use `Symfony\Component\HttpFoundation\Response` constants instead of magic numbers.
     - Example: `Response::HTTP_CREATED` instead of `201`, `Response::HTTP_NO_CONTENT` instead of `204`.
 
+## String Interpolation
+
+- When injecting variables into strings, prefer **double-quoted interpolation** with curly braces over concatenation with `.`.
+    - PHP: `"workspace.{$workspace->id}"` instead of `'workspace.'.$workspace->id`.
+    - Use curly braces `{}` even for simple variables to keep the boundary explicit and to allow object/array access without ambiguity.
+    - Single quotes are still preferred when the string has no interpolation.
+
 ## TryPost.it Documentation
 
 - All our documentation to final user it's under https://docs.trypost.it

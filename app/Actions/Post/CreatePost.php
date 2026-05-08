@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Post;
 
 use App\Enums\Post\Status as PostStatus;
+use App\Events\PostCreated;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\Workspace;
@@ -38,7 +39,7 @@ class CreatePost
     {
         $scheduledAt = self::resolveScheduledAt($data);
 
-        return DB::transaction(function () use ($workspace, $user, $data, $scheduledAt): Post {
+        $post = DB::transaction(function () use ($workspace, $user, $data, $scheduledAt): Post {
             $post = $workspace->posts()->create([
                 'user_id' => $user->id,
                 'content' => data_get($data, 'content', ''),
@@ -72,6 +73,10 @@ class CreatePost
 
             return $post;
         });
+
+        PostCreated::dispatch($post);
+
+        return $post;
     }
 
     /**

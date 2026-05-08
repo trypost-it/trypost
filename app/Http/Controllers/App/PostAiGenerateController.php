@@ -39,7 +39,7 @@ class PostAiGenerateController extends Controller
 
         return response()->json([
             'generation_id' => $generationId,
-            'channel' => "users.{$request->user()->id}.ai-gen.{$generationId}",
+            'channel' => "user.{$request->user()->id}.ai-gen.{$generationId}",
         ], Response::HTTP_ACCEPTED);
     }
 }

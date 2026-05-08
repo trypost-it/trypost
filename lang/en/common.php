@@ -8,6 +8,7 @@ return [
         'type' => 'Type',
         'to_confirm' => 'to confirm.',
         'copy_to_clipboard' => 'Copy to clipboard',
+        'delete_keyword' => 'delete',
     ],
 
     'photo_upload' => [

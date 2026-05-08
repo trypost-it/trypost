@@ -27,6 +27,9 @@ return [
         'default' => 50,
         'gpt-image-1.5' => 50,
         'gpt-image-1.5-hd' => 100,
+        // gpt-image-2 is currently called at quality=low (~$0.01/image at 1024².
+        // If we ever expose medium/high to users, add gpt-image-2-medium / -hd.
+        'gpt-image-2' => 15,
         'flux-pro' => 30,
     ],
 

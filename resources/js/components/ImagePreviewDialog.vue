@@ -1,52 +1,51 @@
 <script setup lang="ts">
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-vue';
-import { computed, onUnmounted, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
-interface Props {
-    /** Single-image mode (backward compatible). */
-    src?: string | null;
-    /** Multi-image mode — pass the full list and bind v-model:index to control which one is shown. */
-    images?: string[];
+interface MediaItem {
+    url: string;
+    type: 'image' | 'video';
 }
 
-const props = withDefaults(defineProps<Props>(), {
-    src: null,
-    images: () => [],
-});
+const items = ref<MediaItem[]>([]);
+const index = ref<number | null>(null);
 
-const index = defineModel<number | null>('index', { default: null });
-
-const emit = defineEmits<{
-    close: [];
-}>();
-
-// Multi-image takes precedence; falls back to single src when no list provided.
-const allImages = computed<string[]>(() =>
-    props.images.length > 0 ? props.images : (props.src ? [props.src] : []),
-);
-
-// In multi-image mode the dialog is open when index is a number. In single src
-// mode (legacy) it's open whenever src is set.
 const isOpen = computed({
-    get: () => allImages.value.length > 0 && (props.images.length === 0 || index.value !== null),
+    get: () => index.value !== null && items.value.length > 0,
     set: (val) => {
-        if (!val) emit('close');
+        if (!val) close();
     },
 });
 
 const safeIndex = computed(() =>
-    Math.max(0, Math.min(index.value ?? 0, allImages.value.length - 1)),
+    Math.max(0, Math.min(index.value ?? 0, items.value.length - 1)),
 );
-const currentImage = computed(() => allImages.value[safeIndex.value] ?? null);
+const currentItem = computed(() => items.value[safeIndex.value] ?? null);
 const hasPrev = computed(() => safeIndex.value > 0);
-const hasNext = computed(() => safeIndex.value < allImages.value.length - 1);
-const showNav = computed(() => allImages.value.length > 1);
+const hasNext = computed(() => safeIndex.value < items.value.length - 1);
+const showNav = computed(() => items.value.length > 1);
+
+const open = (url: string, type: 'image' | 'video' = 'image') => {
+    items.value = [{ url, type }];
+    index.value = 0;
+};
+
+const openCollection = (collection: MediaItem[], startIndex = 0) => {
+    if (collection.length === 0) return;
+    items.value = [...collection];
+    index.value = Math.max(0, Math.min(startIndex, collection.length - 1));
+};
+
+const close = () => {
+    index.value = null;
+};
 
 const goPrev = () => {
     if (hasPrev.value) index.value = safeIndex.value - 1;
 };
+
 const goNext = () => {
     if (hasNext.value) index.value = safeIndex.value + 1;
 };
@@ -75,6 +74,8 @@ watch(
 );
 
 onUnmounted(() => window.removeEventListener('keydown', onKeydown));
+
+defineExpose({ open, openCollection, close });
 </script>
 
 <template>
@@ -83,20 +84,32 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
             class="max-w-5xl gap-0 border-0 bg-transparent p-0 shadow-none outline-none focus:outline-none focus-visible:outline-none sm:max-w-5xl"
             :show-close-button="false"
         >
-            <DialogTitle class="sr-only">Image preview</DialogTitle>
-            <div class="relative flex justify-center">
+            <DialogTitle class="sr-only">Media preview</DialogTitle>
+            <div class="relative flex justify-center" @click.self="close">
                 <img
-                    v-if="currentImage"
-                    :src="currentImage"
+                    v-if="currentItem && currentItem.type === 'image'"
+                    :src="currentItem.url"
                     alt="Preview"
                     class="max-h-[85vh] max-w-full cursor-pointer rounded-2xl object-contain"
-                    @click="emit('close')"
+                    @click="close"
+                />
+
+                <video
+                    v-else-if="currentItem && currentItem.type === 'video'"
+                    :key="currentItem.url"
+                    :src="currentItem.url"
+                    class="max-h-[85vh] max-w-full rounded-2xl bg-black"
+                    controls
+                    autoplay
+                    preload="metadata"
+                    playsinline
+                    @click.stop
                 />
 
                 <button
                     v-if="showNav && hasPrev"
                     type="button"
-                    aria-label="Previous image"
+                    aria-label="Previous"
                     class="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white transition hover:bg-black/70"
                     @click.stop="goPrev"
                 >
@@ -106,7 +119,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                 <button
                     v-if="showNav && hasNext"
                     type="button"
-                    aria-label="Next image"
+                    aria-label="Next"
                     class="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white transition hover:bg-black/70"
                     @click.stop="goNext"
                 >
@@ -117,7 +130,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                     v-if="showNav"
                     class="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white tabular-nums"
                 >
-                    {{ safeIndex + 1 }} / {{ allImages.length }}
+                    {{ safeIndex + 1 }} / {{ items.length }}
                 </div>
             </div>
         </DialogContent>

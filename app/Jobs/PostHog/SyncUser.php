@@ -12,22 +12,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-/**
- * Centralised PostHog sync for a single user. Dispatched from places the
- * frontend can't observe (signup, Stripe webhooks) so the person profile
- * and account/workspace groups carry up-to-date properties without blocking
- * the calling request. Inertia navigations refresh group counts on the
- * client (see `syncPostHogContext` in resources/js/posthog.ts), so this job
- * is not needed on every domain trigger.
- *
- * Hierarchy mirrors the domain model:
- * - person  → User
- * - group `account`   → Account (billing/plan, parent of workspaces)
- * - group `workspace` → Workspace (collaboration unit, child of account)
- *
- * No-op when PostHog is disabled (`POSTHOG_ENABLED=false` or no API key)
- * via `PostHogService::isEnabled()`, so self-hosted installs are unaffected.
- */
 class SyncUser implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;

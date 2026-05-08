@@ -280,7 +280,7 @@ test('falls back to dominant logo color when CSS has no signal', function () {
     expect($result->brandColor)->toBe('#1e6fff');
 });
 
-test('rejects malformed color values', function () {
+test('returns null when CSS contains no extractable colour values', function () {
     Http::fake([
         'example.com' => Http::response(<<<'HTML'
             <!DOCTYPE html>
@@ -288,7 +288,7 @@ test('rejects malformed color values', function () {
             <head>
               <title>Acme</title>
               <meta name="theme-color" content="rgb(255, 0, 0)">
-              <style>:root { --primary: hsl(200 50% 50%); --background: red; }</style>
+              <style>:root { --primary: notacolor; --background: red; }</style>
             </head>
             <body></body>
             </html>
@@ -297,8 +297,32 @@ test('rejects malformed color values', function () {
 
     $result = ($this->autofill)('https://example.com');
 
+    // theme-color tier-1 and CSS-var tier-2 reject the rgb()/named values;
+    // the frequency tier-3 finds nothing extractable in this CSS.
     expect($result->brandColor)->toBeNull();
     expect($result->backgroundColor)->toBeNull();
+});
+
+test('falls back to CSS colour frequency when no semantic var is exposed', function () {
+    // Tailwind/utility-style CSS with no --primary var: the brand colour just
+    // appears many times across utility classes. Frequency tier picks it up.
+    $css = str_repeat('.btn-primary { background-color: #2563eb; } ', 30);
+    Http::fake([
+        'example.com' => Http::response(<<<HTML
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Acme</title>
+              <style>{$css}</style>
+            </head>
+            <body></body>
+            </html>
+        HTML, 200),
+    ]);
+
+    $result = ($this->autofill)('https://example.com');
+
+    expect($result->brandColor)->toBe('#2563eb');
 });
 
 test('throws when upstream site returns an error', function () {

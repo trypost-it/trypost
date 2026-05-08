@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { useEcho } from '@laravel/echo-vue';
 import { IconArrowLeft, IconCalendar, IconExternalLink, IconLoader2, IconX } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
@@ -12,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { usePostEcho } from '@/composables/echo/usePostEcho';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 import { getPlatformStatusConfig, getPostStatusConfig } from '@/composables/usePostStatus';
 import dayjs from '@/dayjs';
@@ -104,7 +104,7 @@ const openLightbox = (i: number) => {
     lightboxOpen.value = true;
 };
 
-useEcho(`post.${props.post.id}`, '.PostPlatformStatusUpdated', () => {
+usePostEcho(props.post.id, '.post.platform.status.updated', () => {
     router.reload({ only: ['post'] });
 });
 </script>

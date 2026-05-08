@@ -9,7 +9,7 @@ test('user can join their own generation channel', function () {
     $user = User::factory()->create();
     $channel = new UserAiGenerationChannel;
 
-    expect($channel->join($user, $user->id, 'some-uuid'))->toBeTrue();
+    expect($channel->join($user, $user, 'some-uuid'))->toBeTrue();
 });
 
 test('user cannot join another users generation channel', function () {
@@ -17,5 +17,5 @@ test('user cannot join another users generation channel', function () {
     $other = User::factory()->create();
     $channel = new UserAiGenerationChannel;
 
-    expect($channel->join($user, $other->id, 'some-uuid'))->toBeFalse();
+    expect($channel->join($user, $other, 'some-uuid'))->toBeFalse();
 });

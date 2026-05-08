@@ -8,6 +8,7 @@ return [
         'type' => 'Digite',
         'to_confirm' => 'para confirmar.',
         'copy_to_clipboard' => 'Copiar para a área de transferência',
+        'delete_keyword' => 'deletar',
     ],
 
     'photo_upload' => [

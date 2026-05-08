@@ -32,13 +32,6 @@ class Account extends Model
         'plan_id',
     ];
 
-    /**
-     * Drop the cached Pennant feature values for the plan-scoped limits so
-     * the next read resolves against the current plan. Call this right after
-     * any `plan_id` change. Centralised here (instead of as a model hook) so
-     * self-hosted installs — where Stripe webhooks never fire and the billing
-     * controllers redirect away — never trigger this path.
-     */
     public function forgetPlanFeatureCache(): void
     {
         Feature::for($this)->forget([

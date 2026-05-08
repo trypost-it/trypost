@@ -44,7 +44,7 @@ const channelName = computed(() =>
 );
 
 if (channelName.value) {
-    useEcho(channelName.value, '.NotificationCreated', (e: { notification: Notification }) => {
+    useEcho(channelName.value, '.notification.created', (e: { notification: Notification }) => {
         const exists = notifications.value.some((n) => n.id === e.notification.id);
         if (exists) return;
 

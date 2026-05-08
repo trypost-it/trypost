@@ -156,51 +156,6 @@ export const getMediaItemIssue = (item: MediaItem, contentType: string): string 
     return null;
 };
 
-/**
- * Read metadata from a File in the browser before uploading.
- * Returns width/height for images, width/height/duration for videos.
- */
-export const readFileMetadata = async (file: File): Promise<{ width?: number; height?: number; duration?: number }> => {
-    if (file.type.startsWith('image/')) {
-        return new Promise((resolve) => {
-            const img = new Image();
-            const url = URL.createObjectURL(file);
-            img.onload = () => {
-                URL.revokeObjectURL(url);
-                resolve({ width: img.naturalWidth, height: img.naturalHeight });
-            };
-            img.onerror = () => {
-                URL.revokeObjectURL(url);
-                resolve({});
-            };
-            img.src = url;
-        });
-    }
-
-    if (file.type.startsWith('video/')) {
-        return new Promise((resolve) => {
-            const video = document.createElement('video');
-            const url = URL.createObjectURL(file);
-            video.preload = 'metadata';
-            video.onloadedmetadata = () => {
-                URL.revokeObjectURL(url);
-                resolve({
-                    width: video.videoWidth,
-                    height: video.videoHeight,
-                    duration: video.duration,
-                });
-            };
-            video.onerror = () => {
-                URL.revokeObjectURL(url);
-                resolve({});
-            };
-            video.src = url;
-        });
-    }
-
-    return {};
-};
-
 export const isVideoMedia = (item: MediaItem | null | undefined): boolean => {
     if (! item) return false;
     return item.type === 'video' || Boolean(item.mime_type?.startsWith('video/'));

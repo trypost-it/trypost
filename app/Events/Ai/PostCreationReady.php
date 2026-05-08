@@ -6,31 +6,29 @@ namespace App\Events\Ai;
 
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class PostCreationReady implements ShouldBroadcastNow
+class PostCreationReady implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
         public string $userId,
         public string $creationId,
-        public ?string $content,
+        public ?string $postId = null,
         public ?string $error = null,
-        public ?string $imageTitle = null,
-        public ?string $imageBody = null,
     ) {}
-
-    public function broadcastOn(): PrivateChannel
-    {
-        return new PrivateChannel("users.{$this->userId}.ai-creation.{$this->creationId}");
-    }
 
     public function broadcastAs(): string
     {
-        return 'PostCreationReady';
+        return 'ai.creation.completed';
+    }
+
+    public function broadcastOn(): PrivateChannel
+    {
+        return new PrivateChannel("user.{$this->userId}.ai-creation.{$this->creationId}");
     }
 
     /**
@@ -40,10 +38,13 @@ class PostCreationReady implements ShouldBroadcastNow
     {
         return [
             'creation_id' => $this->creationId,
-            'content' => $this->content,
-            'image_title' => $this->imageTitle,
-            'image_body' => $this->imageBody,
+            'post_id' => $this->postId,
             'error' => $this->error,
         ];
+    }
+
+    public function broadcastQueue(): string
+    {
+        return 'broadcasts';
     }
 }

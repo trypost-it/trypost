@@ -13,16 +13,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use PostHog\PostHog;
 
-/**
- * Low-level PostHog dispatch worker. Forwards a single API call (`capture`,
- * `identify`, `groupIdentify`) to the PostHog SDK. Higher-level jobs in this
- * namespace (`SyncUser`, `TrackBilling`) build the payloads and queue this
- * job to do the network work.
- *
- * No-op when `POSTHOG_ENABLED` is false (or `POSTHOG_API_KEY` is unset),
- * via `PostHogService::isEnabled()`, so self-hosted installs never reach
- * the SDK.
- */
 class SendEvent implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;

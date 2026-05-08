@@ -5,12 +5,10 @@ declare(strict_types=1);
 use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
 use App\Jobs\Ai\StreamPostCreation;
-use App\Models\Post;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 
 beforeEach(function () {
@@ -19,8 +17,6 @@ beforeEach(function () {
     $this->workspace->members()->attach($this->user->id, ['role' => Role::Member->value]);
     $this->user->update(['current_workspace_id' => $this->workspace->id]);
 });
-
-// --- POST /posts/ai/create (start) ---
 
 test('start requires authentication', function () {
     $this->postJson(route('app.posts.ai.create'), ['prompt' => 'hello', 'format' => 'x_post'])
@@ -91,7 +87,7 @@ test('start dispatches StreamPostCreation and returns creation_id and channel', 
 
     $creationId = $response->json('creation_id');
     expect($creationId)->toBeString()->not->toBeEmpty();
-    expect($response->json('channel'))->toBe("users.{$this->user->id}.ai-creation.{$creationId}");
+    expect($response->json('channel'))->toBe("user.{$this->user->id}.ai-creation.{$creationId}");
 
     Bus::assertDispatched(StreamPostCreation::class, function ($job) use ($creationId, $account) {
         return $job->userId === $this->user->id
@@ -116,115 +112,6 @@ test('start works without social_account_id', function () {
         ->assertJsonStructure(['creation_id', 'channel']);
 
     Bus::assertDispatched(StreamPostCreation::class, fn ($job) => is_null($job->socialAccountId));
-});
-
-// --- POST /posts/ai/create/{creationId}/finalize ---
-
-test('finalize requires authentication', function () {
-    $this->postJson(route('app.posts.ai.create.finalize', 'fake-id'))
-        ->assertStatus(Response::HTTP_UNAUTHORIZED);
-});
-
-test('finalize returns 404 if creation not found in cache', function () {
-    $this->actingAs($this->user)
-        ->postJson(route('app.posts.ai.create.finalize', 'nonexistent-id'))
-        ->assertStatus(Response::HTTP_NOT_FOUND);
-});
-
-test('finalize returns 404 if creation belongs to another user', function () {
-    $otherUser = User::factory()->create();
-    $creationId = 'test-creation-id';
-
-    Cache::put("ai-creation:{$creationId}", [
-        'workspace_id' => $this->workspace->id,
-        'user_id' => $otherUser->id,
-        'format' => 'x_post',
-        'social_account_id' => null,
-        'image_count' => 0,
-        'content' => 'Some generated content',
-        'created_at' => now()->toIso8601String(),
-    ], now()->addMinutes(30));
-
-    $this->actingAs($this->user)
-        ->postJson(route('app.posts.ai.create.finalize', $creationId))
-        ->assertStatus(Response::HTTP_NOT_FOUND);
-});
-
-test('finalize creates a post and returns post_id and redirect_url', function () {
-    $creationId = 'test-creation-id';
-    $content = 'AI-generated content for the post';
-
-    Cache::put("ai-creation:{$creationId}", [
-        'workspace_id' => $this->workspace->id,
-        'user_id' => $this->user->id,
-        'format' => 'x_post',
-        'social_account_id' => null,
-        'image_count' => 0,
-        'content' => $content,
-        'created_at' => now()->toIso8601String(),
-    ], now()->addMinutes(30));
-
-    $response = $this->actingAs($this->user)
-        ->postJson(route('app.posts.ai.create.finalize', $creationId))
-        ->assertStatus(Response::HTTP_OK)
-        ->assertJsonStructure(['post_id', 'redirect_url']);
-
-    $postId = $response->json('post_id');
-    $post = Post::find($postId);
-
-    expect($post)->not->toBeNull();
-    expect($post->content)->toBe($content);
-    expect($post->workspace_id)->toBe($this->workspace->id);
-    expect($post->user_id)->toBe($this->user->id);
-
-    // Cache entry should be cleared
-    expect(Cache::get("ai-creation:{$creationId}"))->toBeNull();
-
-    // Redirect URL should point to the edit page
-    expect($response->json('redirect_url'))->toContain("/posts/{$postId}/edit");
-});
-
-test('finalize defaults scheduled_at to today when no date is in cache state', function () {
-    $creationId = 'no-date-creation';
-
-    Cache::put("ai-creation:{$creationId}", [
-        'workspace_id' => $this->workspace->id,
-        'user_id' => $this->user->id,
-        'format' => 'x_post',
-        'social_account_id' => null,
-        'image_count' => 0,
-        'content' => 'hello',
-        'created_at' => now()->toIso8601String(),
-    ], now()->addMinutes(30));
-
-    $response = $this->actingAs($this->user)
-        ->postJson(route('app.posts.ai.create.finalize', $creationId))
-        ->assertOk();
-
-    $post = Post::find($response->json('post_id'));
-    expect($post->scheduled_at->format('Y-m-d'))->toBe(now('UTC')->format('Y-m-d'));
-});
-
-test('finalize schedules the post on the date stored in cache state', function () {
-    $creationId = 'with-date-creation';
-
-    Cache::put("ai-creation:{$creationId}", [
-        'workspace_id' => $this->workspace->id,
-        'user_id' => $this->user->id,
-        'format' => 'x_post',
-        'social_account_id' => null,
-        'image_count' => 0,
-        'content' => 'hello',
-        'date' => '2026-06-15',
-        'created_at' => now()->toIso8601String(),
-    ], now()->addMinutes(30));
-
-    $response = $this->actingAs($this->user)
-        ->postJson(route('app.posts.ai.create.finalize', $creationId))
-        ->assertOk();
-
-    $post = Post::find($response->json('post_id'));
-    expect($post->scheduled_at->format('Y-m-d'))->toBe('2026-06-15');
 });
 
 test('start dispatches the job carrying the date param when provided', function () {
@@ -254,4 +141,30 @@ test('start rejects invalid date format', function () {
         ->assertJsonValidationErrors(['date']);
 
     Bus::assertNotDispatched(StreamPostCreation::class);
+});
+
+test('loading page requires authentication', function () {
+    $this->get(route('app.posts.ai.loading', '019e0532-7b74-7369-b238-a5f2a93d12b7'))
+        ->assertStatus(Response::HTTP_FOUND);
+});
+
+test('loading page renders the Inertia component with channel and query context', function () {
+    $creationId = '019e0532-7b74-7369-b238-a5f2a93d12b7';
+
+    $this->actingAs($this->user)
+        ->get(route('app.posts.ai.loading', $creationId).'?images=5&format=instagram_carousel&prompt=Hello')
+        ->assertInertia(fn ($page) => $page
+            ->component('posts/ai/Loading')
+            ->where('creationId', $creationId)
+            ->where('channel', "user.{$this->user->id}.ai-creation.{$creationId}")
+            ->where('imageCount', 5)
+            ->where('format', 'instagram_carousel')
+            ->where('prompt', 'Hello')
+        );
+});
+
+test('loading page rejects non-uuid creation ids', function () {
+    $this->actingAs($this->user)
+        ->get(route('app.posts.ai.loading', 'not-a-uuid'))
+        ->assertStatus(Response::HTTP_NOT_FOUND);
 });

@@ -8,7 +8,6 @@ import { index as templatesIndex } from '@/actions/App/Http/Controllers/App/Post
 import PageHeader from '@/components/PageHeader.vue';
 import AiPostWizard from '@/components/posts/create/AiPostWizard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { calendar } from '@/routes/app';
 import { store as storePost } from '@/routes/app/posts';
 
 interface SocialAccount {

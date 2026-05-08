@@ -164,7 +164,6 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::post('posts/{post}/ai/generate', [PostAiGenerateController::class, 'generate'])->name('app.posts.ai.generate');
     Route::post('posts/{post}/ai/review', [PostAiReviewController::class, 'review'])->name('app.posts.ai.review');
     Route::post('posts/ai/create', [PostAiCreateController::class, 'start'])->name('app.posts.ai.create');
-    Route::post('posts/ai/create/{creationId}/finalize', [PostAiCreateController::class, 'finalize'])->name('app.posts.ai.create.finalize');
 
     // Post Comments
     Route::get('posts/{post}/comments', [PostCommentController::class, 'index'])->name('app.posts.comments.index');

@@ -211,12 +211,34 @@ test('update workspace settings updates workspace and redirects back', function 
         ->put(route('app.workspace.settings.update'), [
             'name' => 'Updated Name',
             'brand_font' => 'Inter',
+            'image_style' => 'cinematic',
         ]);
 
     $response->assertRedirect(route('app.workspace.brand'));
 
     $this->workspace->refresh();
     expect($this->workspace->name)->toBe('Updated Name');
+});
+
+test('update workspace settings persists the image_style choice', function () {
+    $this->actingAs($this->user)
+        ->from(route('app.workspace.brand'))
+        ->put(route('app.workspace.settings.update'), [
+            'name' => $this->workspace->name,
+            'brand_font' => 'Inter',
+            'image_style' => 'minimalist',
+        ])->assertRedirect(route('app.workspace.brand'));
+
+    expect($this->workspace->refresh()->image_style->value)->toBe('minimalist');
+});
+
+test('update workspace settings rejects unknown image_style values', function () {
+    $this->actingAs($this->user)
+        ->put(route('app.workspace.settings.update'), [
+            'name' => $this->workspace->name,
+            'brand_font' => 'Inter',
+            'image_style' => 'pixel-art',
+        ])->assertSessionHasErrors(['image_style']);
 });
 
 test('update workspace settings validates required fields', function () {

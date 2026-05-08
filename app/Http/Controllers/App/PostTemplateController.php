@@ -69,11 +69,8 @@ class PostTemplateController extends Controller
         $media = [];
 
         if ($socialAccount && $template->slides) {
-            foreach ($template->slides as $i => $slide) {
-                // Even-indexed slides use Template A (full-bleed cover); odd-indexed slides use Template B.
-                $tmpl = $i % 2 === 0 ? 'A' : 'B';
-                $path = $generator->render(
-                    template: $tmpl,
+            foreach ($template->slides as $slide) {
+                $rendered = $generator->render(
                     workspace: $workspace,
                     socialAccount: $socialAccount,
                     title: $this->interpolate(data_get($slide, 'title', ''), $workspace),
@@ -81,8 +78,8 @@ class PostTemplateController extends Controller
                     imageKeywords: data_get($slide, 'image_keywords', []),
                 );
 
-                if ($path) {
-                    $mediaItem = $this->createMediaItem($workspace, $path);
+                if ($rendered) {
+                    $mediaItem = $this->createMediaItem($workspace, $rendered->path);
                     $media[] = $mediaItem;
                 }
             }

@@ -71,6 +71,8 @@ interface PickedMedia {
     original_filename?: string;
     size?: number;
     meta?: { width?: number; height?: number; duration?: number };
+    source?: 'ai' | 'unsplash' | 'giphy';
+    source_meta?: Record<string, unknown>;
 }
 
 const props = defineProps<{
@@ -357,7 +359,7 @@ const saveAndPickUnsplash = async (photo: UnsplashPhoto) => {
     if (!media) return;
 
     if (isPicker.value) {
-        toggleSelect(media);
+        toggleSelect(media, { source: 'unsplash', source_meta: { photo_id: photo.id } });
     } else {
         toast.success(trans('assets.saved'));
         await loadUploadsFirstPage();
@@ -376,7 +378,15 @@ const createPostFromUnsplash = async (photo: UnsplashPhoto) => {
         return;
     }
     router.post(storePost.url(), {
-        media: [{ id: media.id, path: media.path, url: media.url, type: media.type, mime_type: media.mime_type }],
+        media: [{
+            id: media.id,
+            path: media.path,
+            url: media.url,
+            type: media.type,
+            mime_type: media.mime_type,
+            source: 'unsplash',
+            source_meta: { photo_id: photo.id },
+        }],
     });
 };
 
@@ -485,7 +495,7 @@ const saveAndPickGiphy = async (gif: GiphyGif) => {
     if (!media) return;
 
     if (isPicker.value) {
-        toggleSelect(media);
+        toggleSelect(media, { source: 'giphy', source_meta: { gif_id: gif.id } });
     } else {
         toast.success(trans('assets.saved'));
         await loadUploadsFirstPage();
@@ -503,7 +513,15 @@ const createPostFromGiphy = async (gif: GiphyGif) => {
         return;
     }
     router.post(storePost.url(), {
-        media: [{ id: media.id, path: media.path, url: media.url, type: media.type, mime_type: media.mime_type }],
+        media: [{
+            id: media.id,
+            path: media.path,
+            url: media.url,
+            type: media.type,
+            mime_type: media.mime_type,
+            source: 'giphy',
+            source_meta: { gif_id: gif.id },
+        }],
     });
 };
 

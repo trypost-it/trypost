@@ -28,7 +28,6 @@ class StartPostCreationRequest extends FormRequest
             ],
             'social_account_id' => ['nullable', 'uuid'],
             'image_count' => ['nullable', 'integer', 'min:0', 'max:10'],
-            // Stories accept 1 image, no carousel — the wizard handles this client-side too.
             'prompt' => ['required', 'string', 'max:2000'],
             'date' => ['nullable', 'date_format:Y-m-d'],
         ];

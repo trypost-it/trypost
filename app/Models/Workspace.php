@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\Workspace\ImageStyle;
 use App\Models\Traits\HasMedia;
 use Database\Factories\WorkspaceFactory;
 use Illuminate\Database\Eloquent\Collection;
@@ -31,8 +32,16 @@ class Workspace extends Model
         'background_color',
         'text_color',
         'brand_font',
+        'image_style',
         'content_language',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'image_style' => ImageStyle::class,
+        ];
+    }
 
     protected $appends = ['has_logo', 'logo_url'];
 

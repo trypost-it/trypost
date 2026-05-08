@@ -22,12 +22,14 @@ interface Workspace {
     background_color: string | null;
     text_color: string | null;
     brand_font: string;
+    image_style: string;
     content_language: string;
 }
 
 defineProps<{
     workspace: Workspace;
     availableFonts: string[];
+    availableImageStyles: string[];
 }>();
 
 const tabs = computed(() => [
@@ -50,7 +52,11 @@ const tabs = computed(() => [
 
             <SettingsTabsNav :tabs="tabs" active="brand" />
 
-            <BrandTab :workspace="workspace" :available-fonts="availableFonts" />
+            <BrandTab
+                :workspace="workspace"
+                :available-fonts="availableFonts"
+                :available-image-styles="availableImageStyles"
+            />
         </div>
     </AppLayout>
 </template>

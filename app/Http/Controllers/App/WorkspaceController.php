@@ -8,6 +8,7 @@ use App\Actions\Ai\AutofillBrand;
 use App\Actions\Workspace\CreateWorkspace;
 use App\Actions\Workspace\DeleteWorkspace;
 use App\Enums\Workspace\BrandFont;
+use App\Enums\Workspace\ImageStyle;
 use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
 use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
 use App\Http\Resources\App\WorkspaceMemberResource;
@@ -77,7 +78,10 @@ class WorkspaceController extends Controller
             return back()->with('flash.error', __('workspaces.limit_reached'));
         }
 
-        return Inertia::render('workspaces/Create');
+        return Inertia::render('workspaces/Create', [
+            'availableFonts' => BrandFont::values(),
+            'availableImageStyles' => ImageStyle::values(),
+        ]);
     }
 
     public function autofillBrand(Request $request, AutofillBrand $autofill): JsonResponse
@@ -173,6 +177,7 @@ class WorkspaceController extends Controller
         return Inertia::render('settings/workspace/Brand', [
             'workspace' => $workspace,
             'availableFonts' => BrandFont::values(),
+            'availableImageStyles' => ImageStyle::values(),
         ]);
     }
 

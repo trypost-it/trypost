@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\App\Workspace;
 
 use App\Enums\Workspace\BrandFont;
+use App\Enums\Workspace\ImageStyle;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -29,6 +30,7 @@ class UpdateWorkspaceRequest extends FormRequest
             'background_color' => $hex,
             'text_color' => $hex,
             'brand_font' => ['required', 'string', Rule::in(BrandFont::values())],
+            'image_style' => ['required', 'string', Rule::in(ImageStyle::values())],
             'content_language' => ['sometimes', 'string', 'in:en,pt-BR,es'],
         ];
     }

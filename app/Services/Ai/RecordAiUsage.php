@@ -56,6 +56,37 @@ final class RecordAiUsage
     }
 
     /**
+     * Record a usage entry for an AI image generation (gpt-image-* etc.).
+     * Credits are flat per call via CreditCost::forImage($model).
+     *
+     * @param  array<string, mixed>  $metadata
+     */
+    public static function recordImage(
+        Workspace $workspace,
+        string $provider,
+        string $model,
+        ?string $userId = null,
+        ?string $postId = null,
+        array $metadata = [],
+    ): void {
+        $credits = CreditCost::forImage($model);
+
+        self::persist(
+            workspace: $workspace,
+            type: UsageType::Image,
+            credits: $credits,
+            provider: $provider,
+            model: $model,
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+            userId: $userId,
+            postId: $postId,
+            metadata: $metadata,
+        );
+    }
+
+    /**
      * Record a usage entry for an image-template generation. Templates do not
      * call an LLM (composed via Unsplash + branding) so we charge zero credits.
      *

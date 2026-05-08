@@ -10,13 +10,13 @@ import {
 import { trans } from 'laravel-vue-i18n';
 import { computed, onUnmounted, ref, watch } from 'vue';
 
-import { finalize as finalizeRoute, start as startRoute } from '@/actions/App/Http/Controllers/App/PostAiCreateController';
+import { start as startRoute } from '@/actions/App/Http/Controllers/App/PostAiCreateController';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { getPlatformLogo } from '@/composables/usePlatformLogo';
 import { ContentType, type ContentTypeValue } from '@/enums/content-type';
+import { edit as editPostRoute } from '@/routes/app/posts';
 
 interface SocialAccount {
     id: string;
@@ -36,7 +36,7 @@ const props = withDefaults(defineProps<Props>(), {
     date: null,
 });
 
-type WizardStep = 'configure' | 'preview';
+type WizardStep = 'configure' | 'generating';
 
 const emit = defineEmits<{
     /** Parent mirrors this in the PageHeader for context. */
@@ -54,15 +54,10 @@ const includeImages = ref(true);
 const imageCount = ref(2);
 const promptText = ref('');
 
-// Preview state
+// Generation state
 const submitting = ref(false);
-const finalizing = ref(false);
-const previewStatus = ref<'loading' | 'done' | 'error'>('loading');
-const previewContent = ref('');
-const previewImageTitle = ref('');
-const previewImageBody = ref('');
-const previewError = ref('');
-const previewCreationId = ref<string | null>(null);
+const generationStatus = ref<'loading' | 'error'>('loading');
+const generationError = ref('');
 let echoChannel: any = null;
 let subscribedChannelName: string | null = null;
 
@@ -73,12 +68,6 @@ const httpStart = useHttp<{
     prompt: string;
     date: string | null;
 }>({ format: null, social_account_id: null, image_count: 0, prompt: '', date: null });
-
-const httpFinalize = useHttp<{ content: string; image_title: string; image_body: string }>({
-    content: '',
-    image_title: '',
-    image_body: '',
-});
 
 const AI_FORMATS: Array<{ value: ContentTypeValue; platforms: string[] }> = [
     { value: ContentType.InstagramFeed, platforms: ['instagram', 'instagram-facebook'] },
@@ -191,9 +180,9 @@ const stepHeaderFor = (s: WizardStep) => {
                 title: trans('posts.create.ai_title'),
                 description: trans('posts.create.ai_configure_description'),
             };
-        case 'preview':
+        case 'generating':
             return {
-                title: trans('posts.create.steps.preview_title'),
+                title: trans('posts.create.steps.generating_title'),
                 description: '',
             };
     }
@@ -209,12 +198,12 @@ emit('update:stepHeader', stepHeaderFor(step.value));
 const goBack = () => {
     if (step.value === 'configure') {
         emit('cancel');
-    } else if (step.value === 'preview') {
+    } else if (step.value === 'generating') {
+        unsubscribeEcho();
         goToStep('configure');
     }
 };
 
-// Echo subscription for AI streaming
 const unsubscribeEcho = () => {
     if (echoChannel && subscribedChannelName) {
         echo().leave(`private-${subscribedChannelName}`);
@@ -225,21 +214,17 @@ const unsubscribeEcho = () => {
 
 const subscribeToCreation = (userId: string, creationId: string) => {
     unsubscribeEcho();
-    previewCreationId.value = creationId;
     const channelName = `users.${userId}.ai-creation.${creationId}`;
     subscribedChannelName = channelName;
 
     echoChannel = echo().private(channelName).listen('.ai.creation.completed', (e: any) => {
-        if (e.error) {
-            previewStatus.value = 'error';
-            previewError.value = e.error;
-        } else {
-            previewContent.value = e.content ?? '';
-            previewImageTitle.value = e.image_title ?? '';
-            previewImageBody.value = e.image_body ?? '';
-            previewStatus.value = 'done';
-        }
         unsubscribeEcho();
+        if (e.error || !e.post_id) {
+            generationStatus.value = 'error';
+            generationError.value = e.error ?? trans('posts.create.steps.preview_error');
+            return;
+        }
+        router.visit(editPostRoute(e.post_id).url);
     });
 };
 
@@ -247,12 +232,9 @@ const startGeneration = async () => {
     if (!canSubmit.value || submitting.value) return;
 
     submitting.value = true;
-    previewStatus.value = 'loading';
-    previewContent.value = '';
-    previewImageTitle.value = '';
-    previewImageBody.value = '';
-    previewError.value = '';
-    goToStep('preview');
+    generationStatus.value = 'loading';
+    generationError.value = '';
+    goToStep('generating');
 
     httpStart.format = selectedFormat.value;
     httpStart.social_account_id = selectedAccountId.value;
@@ -265,33 +247,14 @@ const startGeneration = async () => {
         const userId = data.channel.split('.')[1] ?? '';
         subscribeToCreation(userId, data.creation_id);
     } catch (err: any) {
-        previewStatus.value = 'error';
-        previewError.value = err?.response?.data?.message ?? trans('posts.create.steps.preview_error');
+        generationStatus.value = 'error';
+        generationError.value = err?.response?.data?.message ?? trans('posts.create.steps.preview_error');
     } finally {
         submitting.value = false;
     }
 };
 
 const retryGeneration = () => startGeneration();
-
-const createPost = async () => {
-    if (!previewCreationId.value || finalizing.value) return;
-    finalizing.value = true;
-
-    httpFinalize.content = previewContent.value;
-    httpFinalize.image_title = previewImageTitle.value;
-    httpFinalize.image_body = previewImageBody.value;
-
-    try {
-        const data = await httpFinalize.post(finalizeRoute.url(previewCreationId.value)) as { redirect_url: string };
-        router.visit(data.redirect_url);
-    } catch {
-        previewStatus.value = 'error';
-        previewError.value = trans('posts.create.steps.preview_error');
-    } finally {
-        finalizing.value = false;
-    }
-};
 
 onUnmounted(() => unsubscribeEcho());
 </script>
@@ -300,6 +263,7 @@ onUnmounted(() => unsubscribeEcho());
     <div class="space-y-6">
         <!-- Back button — sticker arrow + ink label, mirrors the marketing site -->
         <button
+            v-if="step !== 'generating' || generationStatus === 'error'"
             type="button"
             class="group inline-flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-foreground/70 transition-colors hover:text-foreground"
             @click="goBack"
@@ -428,56 +392,24 @@ onUnmounted(() => unsubscribeEcho());
             </div>
         </template>
 
-        <!-- ====== Step 2: Preview ====== -->
-        <template v-else-if="step === 'preview'">
-            <div v-if="previewStatus === 'loading'" class="flex flex-col items-center gap-4 rounded-2xl border-2 border-foreground bg-card py-16 text-center shadow-2xs">
+        <!-- ====== Step 2: Generating ====== -->
+        <template v-else-if="step === 'generating'">
+            <div v-if="generationStatus === 'loading'" class="flex flex-col items-center gap-4 rounded-2xl border-2 border-foreground bg-card py-16 text-center shadow-2xs">
                 <div class="inline-flex size-12 -rotate-2 items-center justify-center rounded-2xl border-2 border-foreground bg-violet-200 shadow-2xs">
                     <IconLoader2 class="size-6 animate-spin text-foreground" stroke-width="2" />
                 </div>
-                <p class="text-sm font-semibold text-foreground/70">{{ $t('posts.create.steps.preview_loading') }}</p>
+                <p class="text-sm font-semibold text-foreground/70">{{ $t('posts.create.steps.generation_loading') }}</p>
             </div>
 
-            <div v-else-if="previewStatus === 'error'" class="space-y-4">
+            <div v-else class="space-y-4">
                 <div class="rounded-xl border-2 border-foreground bg-rose-50 p-4 shadow-2xs">
-                    <p class="text-sm font-semibold text-rose-700">{{ previewError || $t('posts.create.steps.preview_error') }}</p>
+                    <p class="text-sm font-semibold text-rose-700">{{ generationError || $t('posts.create.steps.preview_error') }}</p>
                 </div>
 
                 <div class="flex justify-end">
                     <Button variant="outline" @click="retryGeneration">
                         <IconRefresh class="size-4" />
                         {{ $t('posts.create.steps.retry') }}
-                    </Button>
-                </div>
-            </div>
-
-            <div v-else-if="previewStatus === 'done'" class="space-y-4">
-                <!-- Caption-less formats (Stories): edit title + body separately. -->
-                <div v-if="!supportsCaption" class="space-y-3 rounded-2xl border-2 border-foreground bg-card p-5 shadow-2xs">
-                    <div class="space-y-1.5">
-                        <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.create.preview.image_title') }}</Label>
-                        <Input v-model="previewImageTitle" />
-                    </div>
-                    <div class="space-y-1.5">
-                        <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.create.preview.image_body') }}</Label>
-                        <Textarea v-model="previewImageBody" class="min-h-[120px] resize-none" />
-                    </div>
-                </div>
-
-                <!-- Default: edit caption text. -->
-                <Textarea
-                    v-else
-                    v-model="previewContent"
-                    class="min-h-[200px] resize-none p-5 text-sm leading-relaxed"
-                />
-
-                <div class="flex justify-end gap-2">
-                    <Button variant="outline" @click="retryGeneration">
-                        <IconRefresh class="size-4" />
-                        {{ $t('posts.create.steps.retry') }}
-                    </Button>
-                    <Button :disabled="finalizing" @click="createPost">
-                        <IconLoader2 v-if="finalizing" class="size-4 animate-spin" />
-                        {{ $t('posts.create.steps.create') }}
                     </Button>
                 </div>
             </div>

@@ -15,6 +15,10 @@ final class HomepageMetaExtractor
 {
     private const array TITLE_SEPARATORS = [' | ', ' - ', ' — ', ' – '];
 
+    public function __construct(
+        private readonly CssColorFrequencyExtractor $cssColorFrequency = new CssColorFrequencyExtractor,
+    ) {}
+
     public function extract(string $html, string $baseUrl, string $extraCss = ''): BrandMetadata
     {
         $crawler = new Crawler($html, $baseUrl);
@@ -75,6 +79,14 @@ final class HomepageMetaExtractor
 
         if ($brand === null || $this->normalizeHex($brand) === null) {
             $brand = $this->matchCssVar($css, ['primary', 'brand', 'brand-primary', 'accent', 'color-primary', 'main', 'theme']);
+        }
+
+        // Final fallback: scan all colour values in the collected CSS, cluster
+        // perceptually similar shades and pick the most frequent non-neutral
+        // cluster. Catches Tailwind/utility-CSS sites where no semantic var
+        // exposes the brand colour.
+        if ($brand === null || $this->normalizeHex($brand) === null) {
+            $brand = $this->cssColorFrequency->extract($css);
         }
 
         $background = $this->matchCssVar($css, ['background', 'bg', 'background-color', 'surface', 'color-bg', 'body-bg']);

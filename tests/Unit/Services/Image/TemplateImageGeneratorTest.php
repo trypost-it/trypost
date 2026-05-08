@@ -4,42 +4,40 @@ declare(strict_types=1);
 
 use App\Models\SocialAccount;
 use App\Models\Workspace;
+use App\Services\Ai\AiImageClient;
 use App\Services\Image\BrandColorMapper;
 use App\Services\Image\TemplateImageGenerator;
-use App\Services\Unsplash\UnsplashClient;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Ai\Image;
+
+$minimalPng = fn () => base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
 
 beforeEach(function () {
     Storage::fake();
     Cache::flush();
-    config()->set('services.unsplash.access_key', 'test-key');
+    Image::fake();
 });
 
-test('returns null when Unsplash returns no photos', function () {
-    Http::fake(['api.unsplash.com/*' => Http::response(['results' => []])]);
-
-    $service = new TemplateImageGenerator(new UnsplashClient, new BrandColorMapper);
+test('returns null when AI client cannot generate (no keywords)', function () {
+    $service = new TemplateImageGenerator(new BrandColorMapper, new AiImageClient);
     $result = $service->render(
-        template: 'A',
         workspace: Workspace::factory()->make(),
         socialAccount: SocialAccount::factory()->make(['username' => 'testuser', 'display_name' => 'Test User']),
         title: 'Hello',
         body: 'World',
-        imageKeywords: ['kitchen'],
+        imageKeywords: [],
     );
 
     expect($result)->toBeNull();
+    Image::assertNothingGenerated();
 });
 
-test('returns null when Unsplash access key is not configured', function () {
-    config()->set('services.unsplash.access_key', null);
-    Http::fake();
+test('returns null when AI generation throws', function () {
+    Image::fake(fn () => throw new RuntimeException('upstream outage'));
 
-    $service = new TemplateImageGenerator(new UnsplashClient, new BrandColorMapper);
+    $service = new TemplateImageGenerator(new BrandColorMapper, new AiImageClient);
     $result = $service->render(
-        template: 'A',
         workspace: Workspace::factory()->make(),
         socialAccount: SocialAccount::factory()->make(),
         title: 'Hello',
@@ -50,31 +48,17 @@ test('returns null when Unsplash access key is not configured', function () {
     expect($result)->toBeNull();
 });
 
-test('render returns a storage path when given a valid Unsplash photo', function () {
-    // Serve a tiny 1x1 transparent PNG as the "photo" to avoid real HTTP calls
-    $minimalPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+test('renders a slide and stores webp when AI returns bytes', function () use ($minimalPng) {
+    Image::fake([base64_encode($minimalPng())]);
 
-    Http::fake([
-        'api.unsplash.com/*' => Http::response([
-            'results' => [[
-                'id' => 'test123',
-                'urls' => ['regular' => 'https://images.unsplash.com/test123'],
-                'alt_description' => 'test image',
-            ]],
-        ]),
-        'images.unsplash.com/*' => Http::response($minimalPng, 200, ['Content-Type' => 'image/png']),
-    ]);
-
-    // We need to use a real HTTP response for the image download since file_get_contents
-    // is used internally. Skip if fonts are missing — architecture is tested, rendering is best-effort.
     if (! file_exists(base_path('resources/fonts/Inter-Bold.ttf'))) {
-        $this->markTestSkipped('Inter fonts not available — skipping full render test.');
+        $this->markTestSkipped('Inter fonts not available — skipping render-dependent test.');
     }
 
-    $service = new TemplateImageGenerator(new UnsplashClient, new BrandColorMapper);
+    $service = new TemplateImageGenerator(new BrandColorMapper, new AiImageClient);
     $result = $service->render(
-        template: 'A',
         workspace: Workspace::factory()->make([
+            'image_style' => 'illustration',
             'brand_color' => '#0000ff',
             'background_color' => '#ffffff',
             'text_color' => '#000000',
@@ -85,30 +69,17 @@ test('render returns a storage path when given a valid Unsplash photo', function
         ]),
         title: 'Hello World',
         body: 'This is a test slide body.',
-        imageKeywords: ['technology', 'office'],
+        imageKeywords: ['kitchen', 'morning'],
     );
 
-    // Result may be null if GD font rendering fails in test env — that's acceptable
     if ($result !== null) {
-        expect($result)->toStartWith('ai-images/')
-            ->toEndWith('.webp');
-    } else {
-        expect($result)->toBeNull(); // graceful failure is acceptable
+        expect($result->path)->toStartWith('ai-images/')->toEndWith('.webp');
+        expect($result->sourceMeta)
+            ->toHaveKey('keywords')
+            ->toHaveKey('style', 'illustration')
+            ->toHaveKey('model', 'gpt-image-2')
+            ->toHaveKey('title', 'Hello World');
     }
+
+    Image::assertGenerated(fn ($prompt) => $prompt->contains('kitchen'));
 })->skip(fn () => ! extension_loaded('gd'), 'GD extension required');
-
-test('uses brand color to filter Unsplash search', function () {
-    Http::fake(['api.unsplash.com/*' => Http::response(['results' => []])]);
-
-    $service = new TemplateImageGenerator(new UnsplashClient, new BrandColorMapper);
-    $service->render(
-        template: 'B',
-        workspace: Workspace::factory()->make(['brand_color' => '#ff0000']),
-        socialAccount: SocialAccount::factory()->make(),
-        title: 'Test',
-        body: 'Body',
-        imageKeywords: ['food'],
-    );
-
-    Http::assertSent(fn ($request) => str_contains($request->url(), 'color=red'));
-});

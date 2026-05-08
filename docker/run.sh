@@ -1,4 +1,10 @@
 #!/bin/sh
+# Use the PORT environment variable provided by Cloud Run (defaults to 8080)
+if [ -z "$PORT" ]; then
+    PORT=8080
+fi
+sed -i "s/Listen 80/Listen $PORT/g" /etc/apache2/ports.conf
+sed -i "s/:80/:$PORT/g" /etc/apache2/sites-available/000-default.conf
 
 # Ensure storage directories exist and have correct permissions
 mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs
@@ -12,8 +18,8 @@ fi
 
 # Run migrations if database is ready
 if [ "$RUN_MIGRATIONS" = "true" ]; then
-    echo "Running migrations..."
-    php artisan migrate --force --no-interaction
+    echo "Attempting to run migrations..."
+    php artisan migrate --force --no-interaction || echo "Migration failed - check DB connection."
 fi
 
 # Cache configuration and routes for performance

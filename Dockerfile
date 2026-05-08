@@ -62,10 +62,6 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 # Set permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Use the PORT environment variable provided by Cloud Run
-RUN sed -i 's/Listen 80/Listen ${PORT}/' /etc/apache2/ports.conf
-RUN sed -i 's/:80/:${PORT}/' /etc/apache2/sites-available/000-default.conf
-
 # PHP configuration for production
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY docker/opcache.ini $PHP_INI_DIR/conf.d/opcache.ini
@@ -74,4 +70,4 @@ COPY docker/opcache.ini $PHP_INI_DIR/conf.d/opcache.ini
 COPY docker/run.sh /usr/local/bin/run.sh
 RUN chmod +x /usr/local/bin/run.sh
 
-ENTRYPOINT ["run.sh"]
+ENTRYPOINT ["/usr/local/bin/run.sh"]

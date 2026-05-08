@@ -34,9 +34,9 @@ test('event broadcasts on the per-post and per-workspace channels', function () 
 
     expect($channels)->toHaveCount(2);
     expect($channels[0])->toBeInstanceOf(PrivateChannel::class);
-    expect($channels[0]->name)->toBe('private-post.'.$this->post->id);
+    expect($channels[0]->name)->toBe("private-post.{$this->post->id}");
     expect($channels[1])->toBeInstanceOf(PrivateChannel::class);
-    expect($channels[1]->name)->toBe('private-workspace.'.$this->workspace->id);
+    expect($channels[1]->name)->toBe("private-workspace.{$this->workspace->id}");
 });
 
 test('event broadcasts with the post id', function () {

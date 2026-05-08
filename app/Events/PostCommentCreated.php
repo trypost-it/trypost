@@ -26,7 +26,7 @@ class PostCommentCreated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('post.'.$this->comment->post_id),
+            new PrivateChannel("post.{$this->comment->post_id}"),
         ];
     }
 

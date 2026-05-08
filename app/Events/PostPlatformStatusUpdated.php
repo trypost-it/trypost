@@ -25,8 +25,8 @@ class PostPlatformStatusUpdated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('post.'.$this->postPlatform->post_id),
-            new PrivateChannel('workspace.'.$this->postPlatform->post->workspace_id),
+            new PrivateChannel("post.{$this->postPlatform->post_id}"),
+            new PrivateChannel("workspace.{$this->postPlatform->post->workspace_id}"),
         ];
     }
 

@@ -26,7 +26,7 @@ class PostDeleted implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('workspace.'.$this->workspaceId),
+            new PrivateChannel("workspace.{$this->workspaceId}"),
         ];
     }
 

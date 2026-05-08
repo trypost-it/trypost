@@ -25,7 +25,7 @@ class PostCreated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('workspace.'.$this->post->workspace_id),
+            new PrivateChannel("workspace.{$this->post->workspace_id}"),
         ];
     }
 

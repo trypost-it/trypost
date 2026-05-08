@@ -71,18 +71,18 @@ const signaturesModal = ref<InstanceType<typeof SignaturesModal> | null>(null);
 const dragMediaIndex = ref<number | null>(null);
 const dragOverIndex = ref<number | null>(null);
 const mediaThumbRefs = ref<HTMLElement[]>([]);
-const previewIndex = ref<number | null>(null);
-
-const previewItems = computed<{ url: string; type: 'image' | 'video' }[]>(() =>
-    media.value.map((m) => ({
-        url: m.url,
-        type: isVideo(m) ? 'video' : 'image',
-    })),
-);
+const lightbox = ref<InstanceType<typeof ImagePreviewDialog> | null>(null);
 
 const openPreview = (item: MediaItem) => {
     const idx = media.value.findIndex((m) => m.id === item.id);
-    previewIndex.value = idx >= 0 ? idx : 0;
+    if (idx < 0) return;
+    lightbox.value?.openCollection(
+        media.value.map((m) => ({
+            url: m.url,
+            type: isVideo(m) ? 'video' as const : 'image' as const,
+        })),
+        idx,
+    );
 };
 
 const isVideo = (item: MediaItem): boolean =>
@@ -434,11 +434,6 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
 
         <SignaturesModal ref="signaturesModal" :signatures="signatures" @select="appendSignature" />
         <MediaPickerDialog ref="mediaPickerDialog" @select="addMediaFromGallery" />
-        <ImagePreviewDialog
-            :items="previewItems"
-            :index="previewIndex"
-            @update:index="previewIndex = $event"
-            @close="previewIndex = null"
-        />
+        <ImagePreviewDialog ref="lightbox" />
     </div>
 </template>

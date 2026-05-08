@@ -83,16 +83,37 @@ const selected = defineModel<PickedMedia[]>('selected', { default: () => [] });
 
 const isPicker = computed(() => props.mode === 'picker');
 
-const previewImage = ref<string | null>(null);
+const lightbox = ref<InstanceType<typeof ImagePreviewDialog> | null>(null);
 
-const handleAssetClick = (asset: { id: string; url: string; type?: string }) => {
+const handleAssetClick = (asset: AssetMedia) => {
     if (isPicker.value) {
-        toggleSelect(asset as AssetMedia);
+        toggleSelect(asset);
         return;
     }
-    if (asset.type !== 'video') {
-        previewImage.value = asset.url;
-    }
+    const items = uploads.value.map((a) => ({
+        url: a.url,
+        type: a.type === 'video' ? ('video' as const) : ('image' as const),
+    }));
+    const idx = uploads.value.findIndex((a) => a.id === asset.id);
+    lightbox.value?.openCollection(items, idx);
+};
+
+const previewUnsplashPhoto = (photo: UnsplashPhoto) => {
+    const items = displayedPhotos.value.map((p) => ({
+        url: p.url_regular,
+        type: 'image' as const,
+    }));
+    const idx = displayedPhotos.value.findIndex((p) => p.id === photo.id);
+    lightbox.value?.openCollection(items, idx);
+};
+
+const previewGiphyGif = (gif: GiphyGif) => {
+    const items = displayedGifs.value.map((g) => ({
+        url: g.url_original,
+        type: 'image' as const,
+    }));
+    const idx = displayedGifs.value.findIndex((g) => g.id === gif.id);
+    lightbox.value?.openCollection(items, idx);
 };
 
 const selectedIds = computed(() => new Set(selected.value.map((m) => m.id)));
@@ -227,7 +248,10 @@ const uploadFiles = async (files: File[]) => {
 
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const handleDelete = (assetId: string) => {
-    deleteModal.value?.open({ url: assetsDestroy.url(assetId) });
+    deleteModal.value?.open({
+        url: assetsDestroy.url(assetId),
+        confirmText: trans('common.confirm_modal.delete_keyword'),
+    });
 };
 
 const createPostFromAsset = (asset: AssetMedia) => {
@@ -719,7 +743,7 @@ onUnmounted(() => {
                             v-for="photo in displayedPhotos"
                             :key="photo.id"
                             class="group relative cursor-pointer overflow-hidden rounded-xl border-2 border-foreground bg-muted shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
-                            @click="previewImage = photo.url_regular"
+                            @click="previewUnsplashPhoto(photo)"
                         >
                             <div class="aspect-[4/3]">
                                 <img
@@ -821,7 +845,7 @@ onUnmounted(() => {
                             v-for="gif in displayedGifs"
                             :key="gif.id"
                             class="group relative cursor-pointer overflow-hidden rounded-xl border-2 border-foreground bg-muted shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md"
-                            @click="previewImage = gif.url_original"
+                            @click="previewGiphyGif(gif)"
                         >
                             <div class="aspect-[4/3]">
                                 <img :src="gif.url_preview" :alt="gif.title || 'GIF'" class="size-full object-cover" loading="lazy" />
@@ -900,6 +924,6 @@ onUnmounted(() => {
             :cancel="trans('assets.delete.cancel')"
         />
 
-        <ImagePreviewDialog :src="previewImage" @close="previewImage = null" />
+        <ImagePreviewDialog ref="lightbox" />
     </div>
 </template>

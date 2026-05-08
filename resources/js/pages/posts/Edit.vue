@@ -407,7 +407,10 @@ const toggleLabel = (labelId: string) => {
 
 const deletePost = () => {
     if (isReadOnly.value) return;
-    deleteModal.value?.open({ url: destroyPost.url(post.value.id) });
+    deleteModal.value?.open({
+        url: destroyPost.url(post.value.id),
+        confirmText: trans('common.confirm_modal.delete_keyword'),
+    });
 };
 
 const unschedulePost = () => {

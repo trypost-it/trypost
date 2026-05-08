@@ -134,7 +134,10 @@ const postUrl = (post: Post): string =>
 const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 
 const handleDelete = (post: Post) => {
-    deleteModal.value?.open({ url: destroyPost.url(post.id) });
+    deleteModal.value?.open({
+        url: destroyPost.url(post.id),
+        confirmText: trans('common.confirm_modal.delete_keyword'),
+    });
 };
 
 const handleDuplicate = (post: Post) => {

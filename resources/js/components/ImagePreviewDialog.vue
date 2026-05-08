@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-vue';
-import { computed, onUnmounted, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
@@ -9,58 +9,43 @@ interface MediaItem {
     type: 'image' | 'video';
 }
 
-interface Props {
-    /** Single-image mode (backward compatible). */
-    src?: string | null;
-    /** Multi-image mode (legacy) — list of image URLs. */
-    images?: string[];
-    /** Multi-media mode — list of items with type. Use this for mixed image/video. */
-    items?: MediaItem[];
-}
+const items = ref<MediaItem[]>([]);
+const index = ref<number | null>(null);
 
-const props = withDefaults(defineProps<Props>(), {
-    src: null,
-    images: () => [],
-    items: () => [],
-});
-
-const index = defineModel<number | null>('index', { default: null });
-
-const emit = defineEmits<{
-    close: [];
-}>();
-
-// Resolve to a unified MediaItem[] regardless of which prop variant was used.
-const allItems = computed<MediaItem[]>(() => {
-    if (props.items.length > 0) return props.items;
-    if (props.images.length > 0) {
-        return props.images.map((url) => ({ url, type: 'image' as const }));
-    }
-    if (props.src) return [{ url: props.src, type: 'image' as const }];
-    return [];
-});
-
-// In multi-item mode the dialog is open when index is a number. Single-src mode
-// (legacy) is open whenever src is set.
 const isOpen = computed({
-    get: () => allItems.value.length > 0
-        && (props.images.length === 0 && props.items.length === 0 ? true : index.value !== null),
+    get: () => index.value !== null && items.value.length > 0,
     set: (val) => {
-        if (!val) emit('close');
+        if (!val) close();
     },
 });
 
 const safeIndex = computed(() =>
-    Math.max(0, Math.min(index.value ?? 0, allItems.value.length - 1)),
+    Math.max(0, Math.min(index.value ?? 0, items.value.length - 1)),
 );
-const currentItem = computed(() => allItems.value[safeIndex.value] ?? null);
+const currentItem = computed(() => items.value[safeIndex.value] ?? null);
 const hasPrev = computed(() => safeIndex.value > 0);
-const hasNext = computed(() => safeIndex.value < allItems.value.length - 1);
-const showNav = computed(() => allItems.value.length > 1);
+const hasNext = computed(() => safeIndex.value < items.value.length - 1);
+const showNav = computed(() => items.value.length > 1);
+
+const open = (url: string, type: 'image' | 'video' = 'image') => {
+    items.value = [{ url, type }];
+    index.value = 0;
+};
+
+const openCollection = (collection: MediaItem[], startIndex = 0) => {
+    if (collection.length === 0) return;
+    items.value = [...collection];
+    index.value = Math.max(0, Math.min(startIndex, collection.length - 1));
+};
+
+const close = () => {
+    index.value = null;
+};
 
 const goPrev = () => {
     if (hasPrev.value) index.value = safeIndex.value - 1;
 };
+
 const goNext = () => {
     if (hasNext.value) index.value = safeIndex.value + 1;
 };
@@ -89,6 +74,8 @@ watch(
 );
 
 onUnmounted(() => window.removeEventListener('keydown', onKeydown));
+
+defineExpose({ open, openCollection, close });
 </script>
 
 <template>
@@ -98,13 +85,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
             :show-close-button="false"
         >
             <DialogTitle class="sr-only">Media preview</DialogTitle>
-            <div class="relative flex justify-center">
+            <div class="relative flex justify-center" @click.self="close">
                 <img
                     v-if="currentItem && currentItem.type === 'image'"
                     :src="currentItem.url"
                     alt="Preview"
                     class="max-h-[85vh] max-w-full cursor-pointer rounded-2xl object-contain"
-                    @click="emit('close')"
+                    @click="close"
                 />
 
                 <video
@@ -116,6 +103,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                     autoplay
                     preload="metadata"
                     playsinline
+                    @click.stop
                 />
 
                 <button
@@ -142,7 +130,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown));
                     v-if="showNav"
                     class="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-xs text-white tabular-nums"
                 >
-                    {{ safeIndex + 1 }} / {{ allItems.length }}
+                    {{ safeIndex + 1 }} / {{ items.length }}
                 </div>
             </div>
         </DialogContent>

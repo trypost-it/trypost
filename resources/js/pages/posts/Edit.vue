@@ -213,12 +213,18 @@ const getMediaIncompatibilityReason = (contentType: string, mediaItems: MediaIte
     return null;
 };
 
-// Platforms whose tile should consider every available content type when
-// deciding whether the attached media is compatible. The user's actual
-// variant is picked inside the platform's settings panel — at the tile
-// level we just need to know if any variant works.
+// Platforms whose default content_type doesn't accept every media type,
+// so the tile would otherwise block silently when the user attaches the
+// "wrong" kind. List the variants that should be considered at the tile
+// level — togglePlatform snaps content_type to whichever fits the media.
+//
+// Instagram/Facebook/LinkedIn are intentionally NOT here: their defaults
+// already accept image and video, and their secondary variants (Reel,
+// Carousel) are picked manually by the user. Including them would hide
+// real picker errors (e.g. Reel + image incompatibility) at the tile level.
 const PLATFORM_VARIANTS: Record<string, string[]> = {
     [Platform.TikTok]: ['tiktok_video', 'tiktok_photo'],
+    [Platform.Pinterest]: ['pinterest_pin', 'pinterest_video_pin', 'pinterest_carousel'],
 };
 
 const firstCompatibleVariant = (platform: string, mediaItems: MediaItem[]): string | null => {

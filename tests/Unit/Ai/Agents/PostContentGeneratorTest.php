@@ -66,6 +66,21 @@ test('carousel format schema returns caption and slides', function () {
     expect($schema)->not->toHaveKey('content');
 });
 
+test('carousel slide schema includes role enum', function () {
+    $workspace = Workspace::factory()->make();
+    $agent = new PostContentGenerator(workspace: $workspace, format: 'carousel', slideCount: 4);
+
+    $schemaFactory = new JsonSchemaTypeFactory;
+    $schema = $agent->schema($schemaFactory);
+
+    $slidesArray = $schema['slides']->toArray();
+    $slideItem = $slidesArray['items'];
+
+    expect($slideItem['properties'])->toHaveKey('role');
+    expect($slideItem['properties']['role']['enum'])->toBe(['hook', 'development', 'proof', 'cta']);
+    expect($slideItem['required'])->toContain('role');
+});
+
 test('carousel instructions mention slide count', function () {
     $workspace = Workspace::factory()->make();
     $agent = new PostContentGenerator(workspace: $workspace, format: 'carousel', slideCount: 5);
@@ -74,6 +89,29 @@ test('carousel instructions mention slide count', function () {
 
     expect($instructions)->toContain('5');
     expect($instructions)->toContain('slides');
+});
+
+test('carousel instructions describe the roteiro arc with hook, development, proof and cta', function () {
+    $workspace = Workspace::factory()->make();
+    $agent = new PostContentGenerator(workspace: $workspace, format: 'carousel', slideCount: 4);
+
+    $instructions = $agent->instructions();
+
+    expect($instructions)->toContain('hook');
+    expect($instructions)->toContain('development');
+    expect($instructions)->toContain('proof');
+    expect($instructions)->toContain('cta');
+    expect($instructions)->toContain('next action');
+});
+
+test('single format instructions do not include carousel roteiro section', function () {
+    $workspace = Workspace::factory()->make();
+    $agent = new PostContentGenerator(workspace: $workspace, format: 'single');
+
+    $instructions = $agent->instructions();
+
+    expect($instructions)->not->toContain('Carousel script');
+    expect($instructions)->not->toContain('Role distribution by slide count');
 });
 
 test('single instructions mention image_keywords', function () {

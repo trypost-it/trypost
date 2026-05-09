@@ -80,13 +80,17 @@ class PostContentGenerator implements Agent, HasStructuredOutput
                 'caption' => $schema->string()->description('The Instagram caption for the carousel post.')->required(),
                 'slides' => $schema->array()
                     ->items($schema->object(fn ($s) => [
+                        'role' => $s->string()
+                            ->enum(['hook', 'development', 'proof', 'cta'])
+                            ->description('The role of this slide in the carousel arc. First slide is `hook` (specific real problem). Last slide is `cta` (one specific next action). Middle slides are `development` (unfold the idea) or `proof` (concrete result, before/after, behind-the-scenes, real learning). For 4+ slides, at least one middle slide must be `proof`.')
+                            ->required(),
                         'title' => $s->string()->description('Headline of the slide. Short, impactful.')->required(),
                         'body' => $s->string()->description('Supporting text below the headline. 1-3 sentences.')->required(),
                         'image_keywords' => $s->array()->items($schema->string())->description('2-4 search keywords for Unsplash.')->required(),
                     ]))
                     ->min($this->slideCount)
                     ->max($this->slideCount)
-                    ->description("Exactly {$this->slideCount} slides for the carousel, in order.")
+                    ->description("Exactly {$this->slideCount} slides for the carousel, in order. First slide must have role `hook`, last slide must have role `cta`.")
                     ->required(),
             ];
         }

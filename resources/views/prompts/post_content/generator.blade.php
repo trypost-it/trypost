@@ -59,6 +59,7 @@ Use these as a stylistic reference. Generate something different (about the user
 Output format: a JSON object with `caption` (the Instagram caption text) and a `slides` array.
 
 CRITICAL: The `slides` array MUST contain exactly {{ $slide_count ?? 1 }} items — no fewer, no more. Count carefully before responding. Each slide object must have:
+- `role`: one of `hook`, `development`, `proof`, `cta` (see roteiro rules below)
 - `title`: a short, impactful headline for that slide (in {{ $content_language ?? 'en' }})
 - `body`: 1-3 sentences of supporting text (in {{ $content_language ?? 'en' }})
 - `image_keywords`: 2-4 words describing a CONCRETE VISUAL SCENE for an Unsplash image search.
@@ -80,7 +81,31 @@ CRITICAL: The `slides` array MUST contain exactly {{ $slide_count ?? 1 }} items 
   ALWAYS write these in English, even when content_language is not 'en'. Unsplash's search index is English-only — Portuguese/Spanish queries return poor results.
   Example for a pt-BR post about productivity: `["person typing laptop", "coffee shop morning"]`, NOT `["produtividade", "trabalho"]`.
 
-Plan the {{ $slide_count ?? 1 }}-slide narrative arc first (intro → development → conclusion or hook → points → CTA), then write each slide. The caption should tease the carousel content and encourage swiping.
+## Carousel script (roteiro) — this is the difference between a carousel that converts and one that gets ignored
+
+A carousel is not a list of bullet points. It's a sequence with a structure: open a problem, develop the idea, prove it works, give a next step. Plan the arc BEFORE writing — decide what each slide does — then write.
+
+**Slide 1 — `hook` (always the first slide):**
+Open with a SPECIFIC, real, urgent problem the reader recognizes — something that makes them think "isso é comigo agora". Not a generic theme ("productivity tips"), not a greeting ("hey there!"), not a setup ("today we'll talk about..."). State the pain or the surprising claim directly. If the reader doesn't feel the hook in the first 2 seconds, the rest doesn't matter.
+
+**Middle slides — `development` and `proof` (slides 2 to N-1):**
+Each middle slide opens an idea and gives the reader a reason to swipe to the next. Don't deliver the full answer in any single slide — that kills the swipe. Move from abstract (the problem) to concrete (here's how it actually works). Trust rises sharply the moment the carousel goes from "isso é importante" to "funciona assim, na prática".
+
+- `development` slides: unfold the idea, show the path, walk the reader through the how. One step or one angle per slide.
+- `proof` slides: concrete evidence — a result, a before/after, a behind-the-scenes detail, a real number, a learning from doing it. The more applicable, the more it converts. When the carousel has 4 or more slides, INCLUDE AT LEAST ONE `proof` slide in the middle.
+
+**Last slide — `cta` (always the final slide):**
+A single, specific next action the reader can do right now. Not "follow for more content", not "let me know what you think", not loose. Something concrete tied to the post's promise — what to apply today, what to try tomorrow, what to read/save/comment specifically. Never end the carousel hanging.
+
+**Role distribution by slide count:**
+- 2 slides: `hook` + `cta`
+- 3 slides: `hook` + `development` + `cta`
+- 4 slides: `hook` + `development` + `proof` + `cta`
+- 5 slides: `hook` + `development` + `proof` + `development` + `cta`
+- 6+ slides: `hook` + alternate `development`/`proof` (at least one `proof`) + `cta`
+
+**Caption:**
+The `caption` should tease the carousel's promise and reinforce the swipe — not summarize. Make the reader curious about what's inside the slides, then encourage swiping.
 @else
 Output format: a JSON object with:
 - `content`: the full post caption in {{ $content_language ?? 'en' }} (no preamble, no quotation marks). This is what gets published.

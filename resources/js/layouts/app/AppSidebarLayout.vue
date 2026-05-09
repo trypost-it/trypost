@@ -11,6 +11,7 @@ import {
     SidebarTrigger,
 } from '@/components/ui/sidebar';
 import UpgradeDialog from '@/components/UpgradeDialog.vue';
+import BrainAssistant from '@/components/Ai/BrainAssistant.vue';
 import { heartbeat as heartbeatRoute } from '@/routes/app/presence';
 
 const page = usePage();
@@ -80,4 +81,5 @@ onBeforeUnmount(() => {
     </SidebarProvider>
     <UpgradeDialog />
     <Toast />
+    <BrainAssistant />
 </template>

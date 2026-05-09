@@ -219,6 +219,8 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::get('settings/account/billing/portal', [BillingController::class, 'portal'])->name('app.billing.portal');
     Route::post('settings/account/billing/swap/{plan}', [BillingController::class, 'swap'])->name('app.billing.swap');
 
+    // Brain Assistant
+    Route::post('brain/chat', [\App\Http\Controllers\App\BrainController::class, 'chat'])->name('app.brain.chat');
 });
 
 // Notifications (auth only, no subscription required)

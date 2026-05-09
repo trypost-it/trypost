@@ -1,0 +1,1022 @@
+﻿
+--- FILE: composer.json ---
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "postpro-it/postpro",
+    "type": "project",
+    "description": "Open-source social media scheduling for creators and teams",
+    "keywords": [
+        "open-source",
+        "self-hosted",
+        "laravel",
+        "social-media",
+        "social-media-scheduler",
+        "social-media-management",
+        "content-scheduling",
+        "twitter",
+        "linkedin",
+        "instagram",
+        "facebook",
+        "tiktok",
+        "youtube",
+        "threads",
+        "pinterest"
+    ],
+    "license": "AGPL-3.0-only",
+    "homepage": "https://postpro.it",
+    "support": {
+        "issues": "https://github.com/postpro-it/postpro/issues",
+        "source": "https://github.com/postpro-it/postpro"
+    },
+    "authors": [
+        {
+            "name": "Paulo Castellano",
+            "homepage": "https://github.com/paulocastellano"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "google/apiclient": "^2.19",
+        "inertiajs/inertia-laravel": "^3.0",
+        "intervention/image": "^4.0",
+        "laravel/ai": "^0.5.1",
+        "laravel/boost": "^2.0",
+        "laravel/cashier": "^16.2",
+        "laravel/framework": "^13.0",
+        "laravel/horizon": "^5.45",
+        "laravel/mcp": "^0.6.4",
+        "laravel/nightwatch": "^1.22",
+        "laravel/passport": "^13.7",
+        "laravel/pennant": "^1.23",
+        "laravel/reverb": "^1.0",
+        "laravel/socialite": "^5.24",
+        "laravel/tinker": "^3.0",
+        "laravel/wayfinder": "^0.1.9",
+        "league/color-extractor": "^0.4.0",
+        "league/flysystem-aws-s3-v3": "^3.0",
+        "league/html-to-markdown": "^5.1",
+        "posthog/posthog-php": "^4.1",
+        "predis/predis": "^3.3",
+        "sendkit/sendkit-laravel": "^1.1",
+        "socialiteproviders/facebook": "^4.1",
+        "socialiteproviders/instagram": "^5.1",
+        "socialiteproviders/linkedin": "^5.0",
+        "socialiteproviders/pinterest": "^4.3",
+        "socialiteproviders/tiktok": "^5.2",
+        "socialiteproviders/twitter": "^4.1",
+        "symfony/css-selector": "^8.0",
+        "symfony/dom-crawler": "^8.0"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.23",
+        "laravel/pail": "^1.2.2",
+        "laravel/pint": "^1.24",
+        "laravel/sail": "*",
+        "laravel/telescope": "^5.19",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.6",
+        "pestphp/pest": "^4.4",
+        "pestphp/pest-plugin-laravel": "^4.1"
+    },
+    "autoload": {
+        "files": [
+            "app/Helpers/Upload.php"
+        ],
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "setup": [
+            "composer install",
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate",
+            "@php artisan migrate --force",
+            "npm install",
+            "npm run build"
+        ],
+        "dev": [
+            "Composer\\Config::disableProcessTimeout",
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
+        ],
+        "dev:ssr": [
+            "npm run build:ssr",
+            "Composer\\Config::disableProcessTimeout",
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"php artisan inertia:start-ssr\" --names=server,queue,logs,ssr --kill-others"
+        ],
+        "lint": [
+            "pint --parallel"
+        ],
+        "test:lint": [
+            "pint --parallel --test"
+        ],
+        "test": [
+            "@php artisan config:clear --ansi",
+            "@test:lint",
+            "@php artisan test"
+        ],
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+            "@php artisan boost:update --ansi"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate --graceful --ansi"
+        ],
+        "pre-package-uninstall": [
+            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": [
+                "laravel/telescope"
+            ]
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
+
+
+
+
+--- FILE: package.json ---
+{
+    "name": "postpro",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "build:ssr": "vite build && vite build --ssr",
+        "dev": "vite",
+        "format": "prettier --write resources/",
+        "format:check": "prettier --check resources/",
+        "lint": "eslint . --fix"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.19.0",
+        "@laravel/echo-vue": "^2.3.0",
+        "@laravel/vite-plugin-wayfinder": "^0.1.3",
+        "@tailwindcss/vite": "^4.1.11",
+        "@types/node": "^22.13.5",
+        "@unovis/ts": "^1.6.4",
+        "@unovis/vue": "^1.6.4",
+        "@vitejs/plugin-vue": "^6.0.0",
+        "@vue/eslint-config-typescript": "^14.3.0",
+        "chokidar": "^5.0.0",
+        "concurrently": "^9.0.1",
+        "eslint": "^9.17.0",
+        "eslint-config-prettier": "^10.0.1",
+        "eslint-import-resolver-typescript": "^4.4.4",
+        "eslint-plugin-import": "^2.32.0",
+        "eslint-plugin-vue": "^9.32.0",
+        "laravel-echo": "^2.3.0",
+        "prettier": "^3.4.2",
+        "prettier-plugin-organize-imports": "^4.1.0",
+        "prettier-plugin-tailwindcss": "^0.6.11",
+        "pusher-js": "^8.4.0",
+        "typescript": "^5.2.2",
+        "typescript-eslint": "^8.23.0",
+        "vite": "^7.0.4",
+        "vue-tsc": "^2.2.4"
+    },
+    "dependencies": {
+        "@inertiajs/vue3": "^3.0.0",
+        "@tabler/icons-vue": "^3.36.1",
+        "@tailwindcss/typography": "^0.5.19",
+        "@vueuse/core": "^12.8.2",
+        "axios": "^1.13.2",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "dayjs": "^1.11.19",
+        "embla-carousel-vue": "^8.6.0",
+        "firebase": "^12.13.0",
+        "laravel-vite-plugin": "^2.0.0",
+        "laravel-vue-i18n": "^2.8.0",
+        "maska": "^3.2.0",
+        "posthog-js": "^1.364.2",
+        "reka-ui": "^2.7.0",
+        "tailwind-merge": "^3.2.0",
+        "tailwindcss": "^4.1.1",
+        "tw-animate-css": "^1.2.5",
+        "vaul-vue": "^0.4.1",
+        "vue": "^3.5.13",
+        "vue-input-otp": "^0.3.2",
+        "vue-sonner": "^2.0.9"
+    },
+    "optionalDependencies": {
+        "@rollup/rollup-linux-x64-gnu": "4.9.5",
+        "@rollup/rollup-win32-x64-msvc": "4.9.5",
+        "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
+        "@tailwindcss/oxide-win32-x64-msvc": "^4.0.1",
+        "lightningcss-linux-x64-gnu": "^1.29.1",
+        "lightningcss-win32-x64-msvc": "^1.29.1"
+    }
+}
+
+
+
+--- FILE: routes/web.php ---
+<?php
+
+declare(strict_types=1);
+
+require __DIR__.'/auth.php';
+require __DIR__.'/app.php';
+
+
+
+--- FILE: routes/api.php ---
+<?php
+
+declare(strict_types=1);
+
+use App\Http\Controllers\Api\ApiKeyController;
+use App\Http\Controllers\Api\LabelController;
+use App\Http\Controllers\Api\PlatformController;
+use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\SignatureController;
+use App\Http\Controllers\Api\SocialAccountController;
+use App\Http\Controllers\Api\WorkspaceController;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware(['auth:api', 'workspace.token', 'throttle:api'])->group(function () {
+    // Posts
+    Route::get('/posts', [PostController::class, 'index'])->name('api.posts.index');
+    Route::post('/posts', [PostController::class, 'store'])->name('api.posts.store');
+    Route::get('/posts/{post}', [PostController::class, 'show'])->name('api.posts.show');
+    Route::put('/posts/{post}', [PostController::class, 'update'])->name('api.posts.update');
+    Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('api.posts.destroy');
+    Route::post('/posts/{post}/media', [PostController::class, 'storeMedia'])->name('api.posts.store-media');
+    Route::post('/posts/{post}/media/from-url', [PostController::class, 'attachMediaFromUrl'])->name('api.posts.attach-media-from-url');
+    Route::get('/posts/{post}/metrics', [PostController::class, 'metrics'])->name('api.posts.metrics');
+    Route::get('/posts/{post}/preview', [PostController::class, 'preview'])->name('api.posts.preview');
+
+    // Platforms (read-only metadata)
+    Route::get('/content-types', [PlatformController::class, 'contentTypes'])->name('api.content-types');
+
+    // Workspace
+    Route::get('/workspace', [WorkspaceController::class, 'show'])->name('api.workspace.show');
+
+    // Signatures
+    Route::get('/signatures', [SignatureController::class, 'index'])->name('api.signatures.index');
+    Route::post('/signatures', [SignatureController::class, 'store'])->name('api.signatures.store');
+    Route::put('/signatures/{signature}', [SignatureController::class, 'update'])->name('api.signatures.update');
+    Route::delete('/signatures/{signature}', [SignatureController::class, 'destroy'])->name('api.signatures.destroy');
+
+    // Labels
+    Route::get('/labels', [LabelController::class, 'index'])->name('api.labels.index');
+    Route::post('/labels', [LabelController::class, 'store'])->name('api.labels.store');
+    Route::put('/labels/{label}', [LabelController::class, 'update'])->name('api.labels.update');
+    Route::delete('/labels/{label}', [LabelController::class, 'destroy'])->name('api.labels.destroy');
+
+    // Social Accounts
+    Route::get('/social-accounts', [SocialAccountController::class, 'index'])->name('api.social-accounts.index');
+    Route::put('/social-accounts/{account}/toggle', [SocialAccountController::class, 'toggle'])->name('api.social-accounts.toggle');
+
+    // API Keys
+    Route::get('/api-keys', [ApiKeyController::class, 'index'])->name('api.api-keys.index');
+    Route::post('/api-keys', [ApiKeyController::class, 'store'])->name('api.api-keys.store');
+    Route::delete('/api-keys/{apiToken}', [ApiKeyController::class, 'destroy'])->name('api.api-keys.destroy');
+});
+
+
+
+--- FILE: app/Ai/Agents/PostContentGenerator.php ---
+<?php
+
+declare(strict_types=1);
+
+namespace App\Ai\Agents;
+
+use App\Enums\PostPlatform\ContentType;
+use App\Models\Workspace;
+use App\Services\Ai\TemplateContextResolver;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Contracts\HasStructuredOutput;
+use Laravel\Ai\Enums\Lab;
+use Laravel\Ai\Promptable;
+
+#[Temperature(0.7)]
+class PostContentGenerator implements Agent, HasStructuredOutput
+{
+    use Promptable;
+
+    public function __construct(
+        public Workspace $workspace,
+        public ?string $currentContent = null,
+        public string $format = 'single',
+        public int $slideCount = 1,
+        public ?string $platformContext = null,
+    ) {}
+
+    public function instructions(): string
+    {
+        $examples = [];
+
+        if ($this->platformContext !== null) {
+            $resolver = app(TemplateContextResolver::class);
+            $examples = $resolver->relevantFor($this->platformContext, 2)
+                ->map(fn ($t) => [
+                    'name' => $t->name,
+                    'description' => $t->description,
+                    'content' => $t->content,
+                    'slides' => $t->slides,
+                ])
+                ->all();
+        }
+
+        // Two budgets: the platform's HARD cap (must never exceed â€” would break
+        // publishing) and the recommended SWEET SPOT length (what well-performing
+        // posts actually look like, way below the hard cap on most platforms).
+        $hardMaxChars = null;
+        $targetChars = null;
+        $platformLabel = null;
+        $contentType = $this->platformContext ? ContentType::tryFrom($this->platformContext) : null;
+        if ($contentType) {
+            $platform = $contentType->platform();
+            $hardMaxChars = $platform->maxContentLength();
+            $targetChars = $platform->recommendedAiContentLength();
+            $platformLabel = $platform->label();
+        }
+
+        return view('prompts.post_content.generator', [
+            'brand_name' => $this->workspace->name ?? '',
+            'brand_description' => $this->workspace->brand_description ?? '',
+            'brand_tone' => $this->workspace->brand_tone ?? '',
+            'brand_voice_notes' => $this->workspace->brand_voice_notes ?? '',
+            'content_language' => $this->workspace->content_language ?? 'en',
+            'current_content' => $this->currentContent,
+            'format' => $this->format,
+            'slide_count' => $this->slideCount,
+            'examples' => $examples,
+            'hard_max_chars' => $hardMaxChars,
+            'target_chars' => $targetChars,
+            'platform_label' => $platformLabel,
+        ])->render();
+    }
+
+    public function schema(JsonSchema $schema): array
+    {
+        if ($this->format === 'carousel') {
+            return [
+                'caption' => $schema->string()->description('The Instagram caption for the carousel post.')->required(),
+                'slides' => $schema->array()
+                    ->items($schema->object(fn ($s) => [
+                        'title' => $s->string()->description('Headline of the slide. Short, impactful.')->required(),
+                        'body' => $s->string()->description('Supporting text below the headline. 1-3 sentences.')->required(),
+                        'image_keywords' => $s->array()->items($schema->string())->description('2-4 search keywords for Unsplash.')->required(),
+                    ]))
+                    ->min($this->slideCount)
+                    ->max($this->slideCount)
+                    ->description("Exactly {$this->slideCount} slides for the carousel, in order.")
+                    ->required(),
+            ];
+        }
+
+        return [
+            'content' => $schema->string()->description('The full post caption text that will be published on the platform.')->required(),
+            'image_title' => $schema->string()->description('Short headline (5-12 words) overlaid on the image. The hook â€” should make a scroller stop. Distinct from content.')->required(),
+            'image_body' => $schema->string()->description('1-2 short sentences (max 25 words) overlaid below the image_title. Expands the hook just enough to compel reading the caption.')->required(),
+            'image_keywords' => $schema->array()->items($schema->string())->description('2-4 search keywords for Unsplash for the single image.')->required(),
+        ];
+    }
+
+    public function provider(): Lab
+    {
+        return match (config('ai.default')) {
+            'openai' => Lab::OpenAI,
+            'anthropic' => Lab::Anthropic,
+            default => Lab::Gemini,
+        };
+    }
+
+    public function model(): string
+    {
+        return config('ai.default_text_model');
+    }
+}
+
+
+
+--- FILE: app/Ai/Agents/BrandAnalyzer.php ---
+<?php
+
+declare(strict_types=1);
+
+namespace App\Ai\Agents;
+
+use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Contracts\HasStructuredOutput;
+use Laravel\Ai\Enums\Lab;
+use Laravel\Ai\Promptable;
+
+class BrandAnalyzer implements Agent, HasStructuredOutput
+{
+    use Promptable;
+
+    public function instructions(): string
+    {
+        return view('prompts.brand_analyzer')->render();
+    }
+
+    public function provider(): Lab
+    {
+        return match (config('ai.default')) {
+            'openai' => Lab::OpenAI,
+            'anthropic' => Lab::Anthropic,
+            default => Lab::Gemini,
+        };
+    }
+
+    public function model(): string
+    {
+        return config('ai.default_text_model');
+    }
+
+    public function schema(JsonSchema $schema): array
+    {
+        return [
+            'name' => $schema->string()
+                ->description('The actual brand or company name (1-4 words, e.g. "Sendkit", "Acme Coffee", "Stripe"). Strip any tagline, slogan, or product descriptor â€” return only the brand identity itself.')
+                ->required(),
+            'description' => $schema->string()
+                ->description('A concise 2-3 sentence brand description summarizing what the company does, who they serve, and what makes them unique. Written in the detected content language.')
+                ->required(),
+            'tone' => $schema->string()
+                ->enum(['professional', 'casual', 'friendly', 'bold', 'inspirational', 'humorous', 'educational'])
+                ->description('The tone of voice the brand uses in their content.')
+                ->required(),
+            'language' => $schema->string()
+                ->enum(['en', 'pt-BR', 'es'])
+                ->description('The primary language of the content.')
+                ->required(),
+            'voice_notes' => $schema->string()
+                ->description('2-3 sentences of concrete writing guidelines inferred from the site style (e.g. "Use technical but approachable language", "Avoid marketing buzzwords"). Written in the detected content language.')
+                ->required(),
+            'brand_color' => $schema->string()
+                ->description('The primary brand color as a hex string starting with # (e.g. "#0ea5e9"). Pick the most prominent accent color used in CTAs, links, or logos. Return empty string if not confidently identifiable.')
+                ->required(),
+            'background_color' => $schema->string()
+                ->description('The dominant page background color as a hex string starting with # (e.g. "#ffffff" or "#0b0f19"). Return empty string if not confidently identifiable.')
+                ->required(),
+            'text_color' => $schema->string()
+                ->description('The dominant body text color as a hex string starting with # (e.g. "#0f172a"). Return empty string if not confidently identifiable.')
+                ->required(),
+        ];
+    }
+}
+
+
+
+--- FILE: app/Ai/Agents/PostContentReviewer.php ---
+<?php
+
+declare(strict_types=1);
+
+namespace App\Ai\Agents;
+
+use App\Models\Workspace;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Contracts\HasStructuredOutput;
+use Laravel\Ai\Enums\Lab;
+use Laravel\Ai\Promptable;
+
+#[Temperature(0.2)]
+class PostContentReviewer implements Agent, HasStructuredOutput
+{
+    use Promptable;
+
+    public function __construct(
+        public Workspace $workspace,
+    ) {}
+
+    public function instructions(): string
+    {
+        return view('prompts.post_content.reviewer', [
+            'brand_name' => $this->workspace->name ?? '',
+            'brand_tone' => $this->workspace->brand_tone ?? '',
+            'brand_voice_notes' => $this->workspace->brand_voice_notes ?? '',
+            'content_language' => $this->workspace->content_language ?? 'en',
+        ])->render();
+    }
+
+    public function schema(JsonSchema $schema): array
+    {
+        return [
+            'suggestions' => $schema->array()
+                ->items($schema->object(fn ($s) => [
+                    'original' => $s->string()->description('The exact substring of the input that needs correction.')->required(),
+                    'suggestion' => $s->string()->description('The corrected version.')->required(),
+                    'reason' => $s->string()->description('1-line explanation in the output language.')->required(),
+                ]))
+                ->description('Up to 8 grammar/spelling/clarity suggestions. Empty array if the text is fine.')
+                ->required(),
+        ];
+    }
+
+    public function provider(): Lab
+    {
+        return match (config('ai.default')) {
+            'openai' => Lab::OpenAI,
+            'anthropic' => Lab::Anthropic,
+            default => Lab::Gemini,
+        };
+    }
+
+    public function model(): string
+    {
+        return config('ai.default_text_model');
+    }
+}
+
+
+
+--- FILE: app/Ai/Agents/PostContentStreamer.php ---
+<?php
+
+declare(strict_types=1);
+
+namespace App\Ai\Agents;
+
+use App\Models\Workspace;
+use Laravel\Ai\Attributes\Temperature;
+use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Enums\Lab;
+use Laravel\Ai\Promptable;
+
+/**
+ * Streaming-compatible agent for inline post content generation in the editor.
+ *
+ * This is a separate agent from PostContentGenerator because the Laravel AI SDK
+ * does not support streaming with HasStructuredOutput. Use this agent for
+ * broadcast()/stream() calls; use PostContentGenerator for prompt() with
+ * structured output in the AI wizard pipeline.
+ */
+#[Temperature(0.7)]
+class PostContentStreamer implements Agent
+{
+    use Promptable;
+
+    public function __construct(
+        public Workspace $workspace,
+        public ?string $currentContent = null,
+    ) {}
+
+    public function instructions(): string
+    {
+        return view('prompts.post_content.generator', [
+            'brand_name' => $this->workspace->name ?? '',
+            'brand_description' => $this->workspace->brand_description ?? '',
+            'brand_tone' => $this->workspace->brand_tone ?? '',
+            'brand_voice_notes' => $this->workspace->brand_voice_notes ?? '',
+            'content_language' => $this->workspace->content_language ?? 'en',
+            'current_content' => $this->currentContent,
+            'format' => 'single',
+            'slide_count' => 1,
+        ])->render();
+    }
+
+    public function provider(): Lab
+    {
+        return match (config('ai.default')) {
+            'openai' => Lab::OpenAI,
+            'anthropic' => Lab::Anthropic,
+            default => Lab::Gemini,
+        };
+    }
+
+    public function model(): string
+    {
+        return config('ai.default_text_model');
+    }
+}
+
+
+
+--- FILE: resources/js/lib/firebase.ts ---
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+
+const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+
+export { app, auth, db, googleProvider };
+
+
+
+--- FILE: config/ai.php ---
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default AI Provider Names
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify which of the AI providers below should be the
+    | default for AI operations when no explicit provider is provided
+    | for the operation. This should be any provider defined below.
+    |
+    */
+
+    'default' => env('AI_TEXT_PROVIDER', 'openai'),
+    'default_text_model' => env('AI_TEXT_MODEL', 'gpt-5.4'),
+    'default_for_images' => env('AI_IMAGE_PROVIDER', 'openai'),
+    'default_for_audio' => env('AI_AUDIO_PROVIDER', 'openai'),
+    'default_for_transcription' => env('AI_TRANSCRIPTION_PROVIDER', 'openai'),
+    'default_for_embeddings' => env('AI_EMBEDDINGS_PROVIDER', 'openai'),
+    'default_for_reranking' => env('AI_RERANKING_PROVIDER', 'cohere'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Caching
+    |--------------------------------------------------------------------------
+    |
+    | Below you may configure caching strategies for AI related operations
+    | such as embedding generation. You are free to adjust these values
+    | based on your application's available caching stores and needs.
+    |
+    */
+
+    'caching' => [
+        'embeddings' => [
+            'cache' => false,
+            'store' => env('CACHE_STORE', 'database'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Providers
+    |--------------------------------------------------------------------------
+    |
+    | Below are each of your AI providers defined for this application. Each
+    | represents an AI provider and API key combination which can be used
+    | to perform tasks like text, image, and audio creation via agents.
+    |
+    */
+
+    'providers' => [
+        'anthropic' => [
+            'driver' => 'anthropic',
+            'key' => env('ANTHROPIC_API_KEY'),
+            'url' => env('ANTHROPIC_URL', 'https://api.anthropic.com/v1'),
+        ],
+
+        'azure' => [
+            'driver' => 'azure',
+            'key' => env('AZURE_OPENAI_API_KEY'),
+            'url' => env('AZURE_OPENAI_URL'),
+            'api_version' => env('AZURE_OPENAI_API_VERSION', '2024-10-21'),
+            'deployment' => env('AZURE_OPENAI_DEPLOYMENT', 'gpt-4o'),
+            'embedding_deployment' => env('AZURE_OPENAI_EMBEDDING_DEPLOYMENT', 'text-embedding-3-small'),
+        ],
+
+        'cohere' => [
+            'driver' => 'cohere',
+            'key' => env('COHERE_API_KEY'),
+        ],
+
+        'deepseek' => [
+            'driver' => 'deepseek',
+            'key' => env('DEEPSEEK_API_KEY'),
+        ],
+
+        'eleven' => [
+            'driver' => 'eleven',
+            'key' => env('ELEVENLABS_API_KEY'),
+        ],
+
+        'gemini' => [
+            'driver' => 'gemini',
+            'key' => env('GEMINI_API_KEY'),
+        ],
+
+        'groq' => [
+            'driver' => 'groq',
+            'key' => env('GROQ_API_KEY'),
+            'url' => env('GROQ_URL', 'https://api.groq.com/openai/v1'),
+        ],
+
+        'jina' => [
+            'driver' => 'jina',
+            'key' => env('JINA_API_KEY'),
+        ],
+
+        'mistral' => [
+            'driver' => 'mistral',
+            'key' => env('MISTRAL_API_KEY'),
+            'url' => env('MISTRAL_URL', 'https://api.mistral.ai/v1'),
+        ],
+
+        'ollama' => [
+            'driver' => 'ollama',
+            'key' => env('OLLAMA_API_KEY', ''),
+            'url' => env('OLLAMA_BASE_URL', 'http://localhost:11434'),
+        ],
+
+        'openai' => [
+            'driver' => 'openai',
+            'key' => env('OPENAI_API_KEY'),
+            'url' => env('OPENAI_URL', 'https://api.openai.com/v1'),
+        ],
+
+        'openrouter' => [
+            'driver' => 'openrouter',
+            'key' => env('OPENROUTER_API_KEY'),
+        ],
+
+        'voyageai' => [
+            'driver' => 'voyageai',
+            'key' => env('VOYAGEAI_API_KEY'),
+        ],
+
+        'xai' => [
+            'driver' => 'xai',
+            'key' => env('XAI_API_KEY'),
+            'url' => env('XAI_URL', 'https://api.x.ai/v1'),
+        ],
+    ],
+
+];
+
+
+
+--- FILE: config/postpro.php ---
+<?php
+
+declare(strict_types=1);
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Self-Hosted Mode
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, the application runs in self-hosted mode which skips
+    | payment/subscription requirements during onboarding.
+    |
+    */
+
+    'self_hosted' => env('SELF_HOSTED', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Media Size Limits
+    |--------------------------------------------------------------------------
+    |
+    | Per-type size caps in megabytes. Single source of truth â€” direct
+    | uploads (StoreAssetRequest, AssetController::storeChunked), URL
+    | fetches (MediaAttacher), and the MediaType enum all read from here.
+    |
+    */
+
+    'media' => [
+        'max_size_mb' => [
+            'image' => (int) env('MEDIA_IMAGE_MAX_SIZE_MB', 10),
+            'video' => (int) env('MEDIA_VIDEO_MAX_SIZE_MB', 1024),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Google Authentication
+    |--------------------------------------------------------------------------
+    |
+    | Enable or disable "Login with Google" on the login and register pages.
+    | Disable this if you don't have Google OAuth credentials configured.
+    |
+    */
+
+    'google_auth_enabled' => env('GOOGLE_AUTH_ENABLED', false),
+
+    'github_auth_enabled' => env('GITHUB_AUTH_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Social Platforms
+    |--------------------------------------------------------------------------
+    |
+    | Configure which social platforms are enabled in the application.
+    | Set to false to temporarily disable a platform (e.g., when credentials
+    | are revoked, expired, or pending approval).
+    |
+    */
+
+    'platforms' => [
+        'linkedin' => [
+            'enabled' => env('LINKEDIN_ENABLED', true),
+            'api' => env('LINKEDIN_API', 'https://api.linkedin.com'),
+        ],
+        'linkedin-page' => [
+            'enabled' => env('LINKEDIN_PAGE_ENABLED', true),
+            'api' => env('LINKEDIN_PAGE_API', 'https://api.linkedin.com'),
+        ],
+        'x' => [
+            'enabled' => env('X_ENABLED', true),
+            'api' => env('X_API', 'https://api.x.com/2'),
+        ],
+        'tiktok' => [
+            'enabled' => env('TIKTOK_ENABLED', true),
+            'api' => env('TIKTOK_API', 'https://open.tiktokapis.com/v2'),
+        ],
+        'youtube' => [
+            'enabled' => env('YOUTUBE_ENABLED', true),
+            'data_api' => env('YOUTUBE_DATA_API', 'https://www.googleapis.com/youtube/v3'),
+            'analytics_api' => env('YOUTUBE_ANALYTICS_API', 'https://youtubeanalytics.googleapis.com/v2'),
+        ],
+        'facebook' => [
+            'enabled' => env('FACEBOOK_ENABLED', true),
+            'graph_api' => env('FACEBOOK_GRAPH_API', 'https://graph.facebook.com/v25.0'),
+        ],
+        'instagram' => [
+            'enabled' => env('INSTAGRAM_ENABLED', true),
+            'graph_api' => env('INSTAGRAM_GRAPH_API', 'https://graph.instagram.com/v25.0'),
+            // graph.instagram.com (no version) is the auth/refresh host.
+            'auth_api' => env('INSTAGRAM_AUTH_API', 'https://graph.instagram.com'),
+        ],
+        'instagram-facebook' => [
+            'enabled' => env('INSTAGRAM_FACEBOOK_ENABLED', true),
+            'graph_api' => env('INSTAGRAM_FACEBOOK_GRAPH_API', 'https://graph.facebook.com/v25.0'),
+        ],
+        'threads' => [
+            'enabled' => env('THREADS_ENABLED', true),
+            'graph_api' => env('THREADS_GRAPH_API', 'https://graph.threads.net/v1.0'),
+            // graph.threads.net (no version) is the auth/refresh host.
+            'auth_api' => env('THREADS_AUTH_API', 'https://graph.threads.net'),
+        ],
+        'pinterest' => [
+            'enabled' => env('PINTEREST_ENABLED', true),
+            'api' => env('PINTEREST_API', 'https://api.pinterest.com/v5'),
+        ],
+        'bluesky' => [
+            'enabled' => env('BLUESKY_ENABLED', true),
+            'public_appview' => env('BLUESKY_PUBLIC_APPVIEW', 'https://public.api.bsky.app'),
+        ],
+        'mastodon' => [
+            'enabled' => env('MASTODON_ENABLED', true),
+        ],
+    ],
+
+];
+
+
+
+--- FILE: Dockerfile ---
+# Stage 1: Build assets with Node.js
+FROM node:20-alpine AS assets
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Stage 2: PHP with Apache
+FROM php:8.4-apache
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    libpq-dev \
+    libicu-dev \
+    unzip \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+    gd \
+    zip \
+    pdo \
+    pdo_pgsql \
+    intl \
+    opcache \
+    bcmath
+
+# Enable Apache modules
+RUN a2enmod rewrite headers
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy application files
+COPY . .
+
+# Copy built assets from Stage 1
+COPY --from=assets /app/public/build ./public/build
+
+# Copy manifest (if needed by Wayfinder/Vite)
+COPY --from=assets /app/public/wayfinder.json ./public/wayfinder.json 2>/dev/null || true
+
+# Install production dependencies
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Configure Apache
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# Set permissions
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+# Use the PORT environment variable provided by Cloud Run
+RUN sed -i 's/Listen 80/Listen ${PORT}/' /etc/apache2/ports.conf
+RUN sed -i 's/:80/:${PORT}/' /etc/apache2/sites-available/000-default.conf
+
+# PHP configuration for production
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+COPY docker/opcache.ini $PHP_INI_DIR/conf.d/opcache.ini
+
+# Entrypoint script
+COPY docker/run.sh /usr/local/bin/run.sh
+RUN chmod +x /usr/local/bin/run.sh
+
+ENTRYPOINT ["run.sh"]
+
+
+
+--- FILE: cloudbuild.yaml ---
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/postpro', '.']
+
+  # Push the container image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/postpro']
+
+  # Deploy container image to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'postpro'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/postpro'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'APP_ENV=production,RUN_MIGRATIONS=true'
+
+images:
+  - 'gcr.io/$PROJECT_ID/postpro'
+
+
+

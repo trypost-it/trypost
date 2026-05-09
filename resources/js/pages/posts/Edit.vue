@@ -392,6 +392,28 @@ const triggerAutosave = () => {
     }
 };
 
+// Auto-switch TikTok content_type to match the attached media. Without this,
+// a fresh post defaults TikTok to tiktok_video, so attaching images first
+// disables the TikTok tile (compliance check rejects images for video posts).
+// User can still override via the variant picker in TikTokSettings.
+watch(media, () => {
+    if (media.value.length === 0) return;
+
+    const first = media.value[0];
+    const isVideo = first.type === 'video' || first.mime_type?.startsWith('video/');
+    const isImage = first.type === 'image' || first.mime_type?.startsWith('image/');
+    const target = isVideo ? 'tiktok_video' : isImage ? 'tiktok_photo' : null;
+    if (!target) return;
+
+    for (const pp of post.value.post_platforms) {
+        if (pp.platform !== Platform.TikTok) continue;
+        const current = platformContentTypes.value[pp.id];
+        if (current && current !== target && (current === 'tiktok_video' || current === 'tiktok_photo')) {
+            platformContentTypes.value = { ...platformContentTypes.value, [pp.id]: target };
+        }
+    }
+}, { deep: true });
+
 watch([content, media, selectedPlatformIds, scheduledDateTime, selectedLabelIds, platformMeta, platformContentTypes], triggerAutosave, { deep: true });
 
 onUnmounted(() => {

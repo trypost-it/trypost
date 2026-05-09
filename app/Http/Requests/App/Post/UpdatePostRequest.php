@@ -92,9 +92,6 @@ class UpdatePostRequest extends FormRequest
             $platforms = $this->input('platforms', []);
             $ids = collect($platforms)->pluck('id')->filter()->all();
 
-            // Scope to the current post via the route-bound relation — defensive
-            // (cross-post leakage is prevented and we use the existing relation
-            // rather than a separate global query).
             $platformsById = $this->route('post')
                 ->postPlatforms()
                 ->whereIn('id', $ids)
@@ -106,7 +103,7 @@ class UpdatePostRequest extends FormRequest
                     && blank(data_get($platform, 'meta.privacy_level'))) {
                     $validator->errors()->add(
                         "platforms.{$i}.meta.privacy_level",
-                        'TikTok privacy level is required when publishing.',
+                        trans('posts.form.tiktok.privacy_required'),
                     );
                 }
             }

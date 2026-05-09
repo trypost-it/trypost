@@ -78,27 +78,7 @@ enum ContentType: string
 
     public function description(): string
     {
-        return match ($this) {
-            self::InstagramFeed => 'Appears in your feed and profile',
-            self::InstagramCarousel => 'Multi-slide swipeable post (2-10 images)',
-            self::InstagramReel => 'Short video up to 90 seconds',
-            self::InstagramStory => 'Disappears after 24 hours',
-            self::LinkedInPost, self::LinkedInPagePost => 'Standard post with text and media',
-            self::LinkedInCarousel, self::LinkedInPageCarousel => 'Swipeable document or images',
-            self::FacebookPost => 'Standard post on your page',
-            self::FacebookReel => 'Short video up to 90 seconds',
-            self::FacebookStory => 'Disappears after 24 hours',
-            self::TikTokVideo => 'Short-form video content',
-            self::TikTokPhoto => 'Up to 35 photos as a swipeable carousel',
-            self::YouTubeShort => 'Vertical video up to 60 seconds',
-            self::XPost => 'Tweet with text and media',
-            self::ThreadsPost => 'Text post with optional media',
-            self::PinterestPin => 'Standard image pin',
-            self::PinterestVideoPin => 'Video pin (4s - 15min)',
-            self::PinterestCarousel => 'Multi-image carousel (2-5 images)',
-            self::BlueskyPost => 'Text post with optional images',
-            self::MastodonPost => 'Text post with optional media',
-        };
+        return (string) trans("posts.content_types.{$this->value}.description");
     }
 
     public function platform(): SocialPlatform

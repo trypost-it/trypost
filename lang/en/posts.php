@@ -80,6 +80,7 @@ return [
             'promotional_paid_title' => 'Your photo/video will be labeled as "Paid partnership".',
             'promotional_description' => 'This cannot be changed once your video is posted.',
             'compliance_incomplete' => 'You need to indicate if your content promotes yourself, a third party, or both.',
+            'privacy_required' => 'TikTok privacy level is required when publishing.',
             'branded_cleared_private' => 'Privacy was cleared because Branded Content cannot be private.',
             'interaction_disabled_by_creator' => 'Disabled by your TikTok account settings.',
             'max_duration_exceeded' => 'Video is :duration s long but this account can only post videos up to :max s.',
@@ -404,6 +405,10 @@ return [
             'label' => 'Video',
             'description' => 'Short-form video content',
         ],
+        'tiktok_photo' => [
+            'label' => 'Photo carousel',
+            'description' => 'Up to 35 photos as a swipeable carousel',
+        ],
         'youtube_short' => [
             'label' => 'Short',
             'description' => 'Vertical video up to 60 seconds',
@@ -418,15 +423,15 @@ return [
         ],
         'pinterest_pin' => [
             'label' => 'Pin',
-            'description' => 'Image pin with link',
+            'description' => 'Standard image pin',
         ],
         'pinterest_video_pin' => [
             'label' => 'Video Pin',
-            'description' => 'Video content',
+            'description' => 'Video pin (4s - 15min)',
         ],
         'pinterest_carousel' => [
             'label' => 'Carousel',
-            'description' => '2-5 images',
+            'description' => 'Multi-image carousel (2-5 images)',
         ],
         'bluesky_post' => [
             'label' => 'Post',

@@ -80,6 +80,7 @@ return [
             'promotional_paid_title' => 'Sua foto/vídeo será rotulado como "Parceria paga".',
             'promotional_description' => 'Isso não poderá ser alterado após a publicação.',
             'compliance_incomplete' => 'Você precisa indicar se o conteúdo promove você mesmo, terceiros ou ambos.',
+            'privacy_required' => 'A visibilidade do TikTok é obrigatória ao publicar.',
             'branded_cleared_private' => 'A visibilidade foi limpa porque conteúdo de marca não pode ser privado.',
             'interaction_disabled_by_creator' => 'Desativado pelas configurações da sua conta TikTok.',
             'max_duration_exceeded' => 'Vídeo tem :duration s mas esta conta só permite vídeos de até :max s.',
@@ -404,6 +405,10 @@ return [
             'label' => 'Vídeo',
             'description' => 'Conteúdo de vídeo curto',
         ],
+        'tiktok_photo' => [
+            'label' => 'Carrossel de fotos',
+            'description' => 'Até 35 fotos em um carrossel deslizável',
+        ],
         'youtube_short' => [
             'label' => 'Short',
             'description' => 'Vídeo vertical de até 60 segundos',
@@ -418,15 +423,15 @@ return [
         ],
         'pinterest_pin' => [
             'label' => 'Pin',
-            'description' => 'Pin de imagem com link',
+            'description' => 'Pin de imagem padrão',
         ],
         'pinterest_video_pin' => [
             'label' => 'Pin de Vídeo',
-            'description' => 'Conteúdo em vídeo',
+            'description' => 'Pin de vídeo (4s - 15min)',
         ],
         'pinterest_carousel' => [
             'label' => 'Carrossel',
-            'description' => '2-5 imagens',
+            'description' => 'Carrossel multi-imagem (2-5 imagens)',
         ],
         'bluesky_post' => [
             'label' => 'Post',

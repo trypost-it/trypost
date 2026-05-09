@@ -8,6 +8,7 @@ use App\Exceptions\TokenExpiredException;
 use App\Models\SocialAccount;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -37,6 +38,27 @@ class TikTokCreatorInfo
      * }
      */
     public function fetch(SocialAccount $account): array
+    {
+        return Cache::remember(
+            "tiktok:creator_info:{$account->id}",
+            now()->addMinutes(5),
+            fn () => $this->fetchFresh($account),
+        );
+    }
+
+    /**
+     * @return array{
+     *     creator_nickname: ?string,
+     *     creator_username: ?string,
+     *     creator_avatar_url: ?string,
+     *     privacy_level_options: array<int, string>,
+     *     comment_disabled: bool,
+     *     duet_disabled: bool,
+     *     stitch_disabled: bool,
+     *     max_video_post_duration_sec: ?int,
+     * }
+     */
+    private function fetchFresh(SocialAccount $account): array
     {
         if ($account->is_token_expired || $account->is_token_expiring_soon) {
             $this->refreshTokenWithLock($account, fn () => $this->refreshToken($account));

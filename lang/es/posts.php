@@ -84,7 +84,6 @@ return [
             'branded_cleared_private' => 'La visibilidad se borró porque el contenido de marca no puede ser privado.',
             'interaction_disabled_by_creator' => 'Desactivado por la configuración de tu cuenta TikTok.',
             'max_duration_exceeded' => 'El video dura :duration s pero esta cuenta solo permite videos de hasta :max s.',
-            'creator_info_loading' => 'Cargando la configuración de tu cuenta TikTok…',
             'processing_hint' => 'Después de publicar, puede tardar unos minutos en procesarse y aparecer en tu perfil de TikTok.',
             'brand_organic' => 'Tu marca',
             'brand_organic_hint' => 'Estás promocionándote a ti mismo o a tu propia marca. Este video será clasificado como Brand Organic.',

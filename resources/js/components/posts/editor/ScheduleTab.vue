@@ -266,7 +266,6 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                 :social-account="pp.social_account"
                 :publish-config="getPublishConfig(pp)"
                 :creator-info="getCreatorInfo(pp)"
-                :creator-info-loading="tiktokCreatorInfos === undefined || tiktokCreatorInfos === null"
                 :video-duration-sec="videoDurationSec"
                 :content-type="platformContentTypes[pp.id] ?? ''"
                 :meta="platformMeta[pp.id] ?? {}"

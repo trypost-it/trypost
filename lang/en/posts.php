@@ -84,7 +84,6 @@ return [
             'branded_cleared_private' => 'Privacy was cleared because Branded Content cannot be private.',
             'interaction_disabled_by_creator' => 'Disabled by your TikTok account settings.',
             'max_duration_exceeded' => 'Video is :duration s long but this account can only post videos up to :max s.',
-            'creator_info_loading' => 'Loading your TikTok account settings…',
             'processing_hint' => 'After publishing, it may take a few minutes for the content to process and appear on your TikTok profile.',
             'brand_organic' => 'Your brand',
             'brand_organic_hint' => 'You are promoting yourself or your own brand. This video will be classified as Brand Organic.',

@@ -40,7 +40,6 @@ interface Props {
     socialAccount: SocialAccount | null;
     publishConfig: Record<string, any> | null;
     creatorInfo?: CreatorInfo | null;
-    creatorInfoLoading?: boolean;
     videoDurationSec?: number | null;
     contentType: string;
     meta: Record<string, any>;
@@ -49,7 +48,6 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     creatorInfo: null,
-    creatorInfoLoading: false,
     videoDurationSec: null,
     disabled: false,
 });
@@ -235,11 +233,6 @@ watch(
                     </button>
                 </div>
             </div>
-
-            <p v-if="creatorInfoLoading" class="flex items-center gap-2 text-xs font-medium text-foreground/60">
-                <span class="inline-block size-3 animate-pulse rounded-full bg-foreground/30" />
-                {{ $t('posts.form.tiktok.creator_info_loading') }}
-            </p>
 
             <!-- Creator identity -->
             <div v-if="socialAccount" class="flex items-center gap-3 rounded-lg bg-foreground/5 p-3">

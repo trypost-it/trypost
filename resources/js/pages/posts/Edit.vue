@@ -213,6 +213,20 @@ const getMediaIncompatibilityReason = (contentType: string, mediaItems: MediaIte
     return null;
 };
 
+// Platforms whose tile should consider every available content type when
+// deciding whether the attached media is compatible. The user's actual
+// variant is picked inside the platform's settings panel — at the tile
+// level we just need to know if any variant works.
+const PLATFORM_VARIANTS: Record<string, string[]> = {
+    [Platform.TikTok]: ['tiktok_video', 'tiktok_photo'],
+};
+
+const firstCompatibleVariant = (platform: string, mediaItems: MediaItem[]): string | null => {
+    const variants = PLATFORM_VARIANTS[platform];
+    if (!variants) return null;
+    return variants.find((ct) => !getMediaIncompatibilityReason(ct, mediaItems)) ?? null;
+};
+
 const platformIssues = computed<Record<string, string>>(() => {
     const issues: Record<string, string> = {};
 
@@ -223,15 +237,13 @@ const platformIssues = computed<Record<string, string>>(() => {
             continue;
         }
 
-        // TikTok has two content types (video / photo) that the user toggles
-        // inside TikTokSettings. The tile-level check is lenient: a tile is
-        // only blocked when neither variant accepts the current media. If the
-        // current variant doesn't fit but the other one does, togglePlatform
-        // auto-corrects on selection.
-        if (pp.platform === Platform.TikTok) {
-            const videoReason = getMediaIncompatibilityReason('tiktok_video', media.value);
-            const photoReason = getMediaIncompatibilityReason('tiktok_photo', media.value);
-            if (videoReason && photoReason) issues[pp.id] = videoReason;
+        // For platforms that expose multiple content types via a variant picker,
+        // the tile is only blocked when no variant fits — togglePlatform will
+        // switch to a compatible variant on selection.
+        if (PLATFORM_VARIANTS[pp.platform]) {
+            if (!firstCompatibleVariant(pp.platform, media.value)) {
+                issues[pp.id] = getMediaIncompatibilityReason(contentType, media.value) ?? '';
+            }
             continue;
         }
 
@@ -343,28 +355,17 @@ const togglePlatform = (platformId: string) => {
     if (isReadOnly.value) return;
     const index = selectedPlatformIds.value.indexOf(platformId);
     if (index === -1) {
-        adjustTikTokContentTypeForMedia(platformId);
+        // For platforms with a variant picker, snap the post-platform's
+        // content_type to one that fits the current media before selection.
+        const pp = post.value.post_platforms.find((p) => p.id === platformId);
+        const variant = pp ? firstCompatibleVariant(pp.platform, media.value) : null;
+        if (variant && platformContentTypes.value[platformId] !== variant) {
+            platformContentTypes.value = { ...platformContentTypes.value, [platformId]: variant };
+        }
         selectedPlatformIds.value.push(platformId);
     } else {
         selectedPlatformIds.value.splice(index, 1);
     }
-};
-
-// TikTok has two content types (video, photo) backed by different API endpoints.
-// When the user picks the TikTok tile while media is already attached, switch
-// to the matching variant so they don't land on tiktok_video with images and
-// see a compliance error. The variant picker in TikTokSettings can still override.
-const adjustTikTokContentTypeForMedia = (platformId: string) => {
-    const pp = post.value.post_platforms.find((p) => p.id === platformId);
-    if (!pp || pp.platform !== Platform.TikTok || media.value.length === 0) return;
-
-    const first = media.value[0];
-    const isImage = first.type === 'image' || first.mime_type?.startsWith('image/');
-    const isVideo = first.type === 'video' || first.mime_type?.startsWith('video/');
-    const target = isImage ? 'tiktok_photo' : isVideo ? 'tiktok_video' : null;
-    if (!target || platformContentTypes.value[platformId] === target) return;
-
-    platformContentTypes.value = { ...platformContentTypes.value, [platformId]: target };
 };
 
 // Save logic

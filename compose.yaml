@@ -1,91 +1,83 @@
 services:
-    laravel.test:
+    app:
         build:
-            context: './vendor/laravel/sail/runtimes/8.5'
-            dockerfile: Dockerfile
+            context: .
+            dockerfile: docker/Dockerfile
+            target: dev
             args:
-                WWWGROUP: '${WWWGROUP}'
-        image: 'sail-8.5/app'
+                UID: ${UID:-1000}
+                GID: ${GID:-1000}
+        image: trypost-app:dev
+        ports:
+            - '${APP_PORT:-8000}:80'
+            - '${REVERB_PORT:-8080}:8080'
+            - '${VITE_PORT:-5173}:5173'
+        environment:
+            TRYPOST_DOCKER_BOOTSTRAP: '1'
+            UID: ${UID:-1000}
+            GID: ${GID:-1000}
+            # Real env vars take precedence over .env.testing (which pins
+            # DB_HOST=127.0.0.1, DB_USERNAME=root). Without these, the test
+            # suite can't see Postgres / Redis from inside the container.
+            DB_HOST: pgsql
+            DB_USERNAME: postgres
+            REDIS_HOST: redis
+        volumes:
+            - .:/var/www/html
+            - app-vendor:/var/www/html/vendor
+            - app-node-modules:/var/www/html/node_modules
         extra_hosts:
             - 'host.docker.internal:host-gateway'
-        ports:
-            - '${APP_PORT:-80}:80'
-            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
-        environment:
-            WWWUSER: '${WWWUSER}'
-            LARAVEL_SAIL: 1
-            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
-            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
-            IGNITION_LOCAL_SITES_PATH: '${PWD}'
-        volumes:
-            - '.:/var/www/html'
-        networks:
-            - sail
         depends_on:
-            - pgsql
-            - redis
-            - mailpit
-            - selenium
+            pgsql:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        healthcheck:
+            test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1/up']
+            interval: 30s
+            timeout: 5s
+            retries: 5
+            start_period: 90s
+
     pgsql:
-        image: 'postgres:18-alpine'
+        image: postgres:16-alpine
+        environment:
+            POSTGRES_DB: ${DB_DATABASE:-trypost}
+            POSTGRES_USER: ${DB_USERNAME:-postgres}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+        volumes:
+            - pgdata:/var/lib/postgresql/data
+            - ./docker/postgres-init.sh:/docker-entrypoint-initdb.d/10-create-test-db.sh:ro
         ports:
             - '${FORWARD_DB_PORT:-5432}:5432'
-        environment:
-            PGPASSWORD: '${DB_PASSWORD:-secret}'
-            POSTGRES_DB: '${DB_DATABASE}'
-            POSTGRES_USER: '${DB_USERNAME}'
-            POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
-        volumes:
-            - 'sail-pgsql:/var/lib/postgresql'
-            - './vendor/laravel/sail/database/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql'
-        networks:
-            - sail
         healthcheck:
-            test:
-                - CMD
-                - pg_isready
-                - '-q'
-                - '-d'
-                - '${DB_DATABASE}'
-                - '-U'
-                - '${DB_USERNAME}'
-            retries: 3
+            test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-trypost}']
+            interval: 10s
             timeout: 5s
+            retries: 5
+
     redis:
-        image: 'redis:alpine'
+        image: redis:7-alpine
+        command: redis-server --appendonly yes
+        volumes:
+            - redisdata:/data
         ports:
             - '${FORWARD_REDIS_PORT:-6379}:6379'
-        volumes:
-            - 'sail-redis:/data'
-        networks:
-            - sail
         healthcheck:
-            test:
-                - CMD
-                - redis-cli
-                - ping
-            retries: 3
-            timeout: 5s
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 10s
+            timeout: 3s
+            retries: 5
+
     mailpit:
-        image: 'axllent/mailpit:latest'
+        image: axllent/mailpit:latest
         ports:
-            - '${FORWARD_MAILPIT_PORT:-1025}:1025'
-            - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
-        networks:
-            - sail
-    selenium:
-        image: selenium/standalone-chromium
-        extra_hosts:
-            - 'host.docker.internal:host-gateway'
-        volumes:
-            - '/dev/shm:/dev/shm'
-        networks:
-            - sail
-networks:
-    sail:
-        driver: bridge
+            - '${FORWARD_MAILPIT_SMTP_PORT:-1025}:1025'
+            - '${FORWARD_MAILPIT_UI_PORT:-8025}:8025'
+
 volumes:
-    sail-pgsql:
-        driver: local
-    sail-redis:
-        driver: local
+    pgdata:
+    redisdata:
+    app-vendor:
+    app-node-modules:

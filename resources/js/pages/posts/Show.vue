@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { IconArrowLeft, IconCalendar, IconExternalLink, IconLoader2, IconX } from '@tabler/icons-vue';
+import { IconArrowLeft, IconCalendar, IconExternalLink, IconLoader2 } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { computed, ref } from 'vue';
 
+import ImagePreviewDialog from '@/components/ImagePreviewDialog.vue';
 import LabelBadge from '@/components/labels/LabelBadge.vue';
 import PostPlatformMetrics from '@/components/posts/PostPlatformMetrics.vue';
 import { Avatar } from '@/components/ui/avatar';
@@ -90,18 +91,17 @@ const getDisplayAvatar = (pp: PostPlatform): string | null => pp.display_avatar;
 const formatDateTime = (date: string | null): string =>
     date ? dayjs.utc(date).local().format('D MMM YYYY, HH:mm') : '';
 
-const mediaGridClass = computed(() => {
-    const count = props.post.media.length;
-    if (count <= 1) return 'grid-cols-1';
-    if (count === 2) return 'grid-cols-2';
-    return 'grid-cols-3';
-});
+const lightbox = ref<InstanceType<typeof ImagePreviewDialog> | null>(null);
 
-const lightboxOpen = ref(false);
-const lightboxIndex = ref(0);
+const isVideoItem = (item: MediaItem): boolean =>
+    item.type === 'video' || (item.mime_type?.startsWith('video/') ?? false);
+
 const openLightbox = (i: number) => {
-    lightboxIndex.value = i;
-    lightboxOpen.value = true;
+    const collection = props.post.media.map((m) => ({
+        url: m.url,
+        type: isVideoItem(m) ? ('video' as const) : ('image' as const),
+    }));
+    lightbox.value?.openCollection(collection, i);
 };
 
 usePostEcho(props.post.id, '.post.platform.status.updated', () => {
@@ -158,46 +158,46 @@ usePostEcho(props.post.id, '.post.platform.status.updated', () => {
             </header>
 
             <div class="grid flex-1 grid-cols-1 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:overflow-hidden">
-                <!-- LEFT: post preview -->
-                <div class="border-b-2 border-foreground/10 p-6 lg:overflow-y-auto lg:border-b-0 lg:border-r-2 lg:border-foreground">
-                    <Card class="mx-auto max-w-xl overflow-hidden py-0">
-                        <CardContent v-if="post.content" class="p-6">
-                            <p class="whitespace-pre-wrap text-sm leading-relaxed text-foreground">{{ post.content }}</p>
-                        </CardContent>
-
-                        <div
-                            v-if="post.media.length > 0"
-                            :class="['grid gap-1 bg-foreground', mediaGridClass, post.content ? 'border-t-2 border-foreground/10' : '']"
-                        >
-                            <button
-                                v-for="(item, i) in post.media"
-                                :key="item.id"
-                                type="button"
-                                :class="[
-                                    'group relative cursor-pointer overflow-hidden bg-muted transition-opacity hover:opacity-90',
-                                    post.media.length === 1 ? 'flex items-center justify-center' : 'aspect-square',
-                                ]"
-                                @click="openLightbox(i)"
-                            >
-                                <video
-                                    v-if="item.type === 'video' || item.mime_type?.startsWith('video/')"
-                                    :src="item.url"
-                                    :class="post.media.length === 1 ? 'max-h-[480px] w-full object-contain' : 'size-full object-cover'"
-                                    muted
-                                />
-                                <img
-                                    v-else
-                                    :src="item.url"
-                                    :alt="item.original_filename"
-                                    :class="post.media.length === 1 ? 'max-h-[480px] w-full object-contain' : 'size-full object-cover'"
-                                    loading="lazy"
-                                />
-                            </button>
+                <!-- LEFT: post preview (mirrors PostEditorComposer layout) -->
+                <div class="border-b-2 border-foreground/10 lg:overflow-y-auto lg:border-b-0 lg:border-r-2 lg:border-foreground">
+                    <div class="mx-auto max-w-2xl px-6 py-10">
+                        <!-- Media grid (top) — separate rounded tiles, 4-col -->
+                        <div v-if="post.media.length > 0" class="mb-6">
+                            <div class="grid grid-cols-4 gap-2">
+                                <button
+                                    v-for="(item, i) in post.media"
+                                    :key="item.id"
+                                    type="button"
+                                    class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-xl border-2 border-foreground bg-muted shadow-2xs transition-all focus:outline-none focus:ring-2 focus:ring-foreground focus:ring-offset-2"
+                                    @click="openLightbox(i)"
+                                >
+                                    <video
+                                        v-if="isVideoItem(item)"
+                                        :src="item.url"
+                                        class="h-full w-full object-cover"
+                                        muted
+                                    />
+                                    <img
+                                        v-else
+                                        :src="item.url"
+                                        :alt="item.original_filename"
+                                        class="h-full w-full object-cover"
+                                        loading="lazy"
+                                    />
+                                </button>
+                            </div>
                         </div>
 
+                        <!-- Caption -->
+                        <p
+                            v-if="post.content"
+                            class="whitespace-pre-wrap break-words font-sans text-base leading-[1.7] text-foreground"
+                        >{{ post.content }}</p>
+
+                        <!-- Labels -->
                         <div
                             v-if="post.labels && post.labels.length > 0"
-                            class="flex flex-wrap gap-2 border-t-2 border-foreground/10 px-6 py-3"
+                            class="mt-6 flex flex-wrap gap-2"
                         >
                             <LabelBadge
                                 v-for="label in post.labels"
@@ -205,7 +205,7 @@ usePostEcho(props.post.id, '.post.platform.status.updated', () => {
                                 :label="label"
                             />
                         </div>
-                    </Card>
+                    </div>
                 </div>
 
                 <!-- RIGHT: platforms breakdown -->
@@ -295,36 +295,6 @@ usePostEcho(props.post.id, '.post.platform.status.updated', () => {
             </div>
         </div>
 
-        <!-- Lightbox -->
-        <Teleport to="body">
-            <div
-                v-if="lightboxOpen"
-                class="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-                @click="lightboxOpen = false"
-            >
-                <button
-                    type="button"
-                    class="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-                    @click.stop="lightboxOpen = false"
-                >
-                    <IconX class="size-5" />
-                </button>
-                <video
-                    v-if="post.media[lightboxIndex]?.type === 'video' || post.media[lightboxIndex]?.mime_type?.startsWith('video/')"
-                    :src="post.media[lightboxIndex]?.url"
-                    class="max-h-full max-w-full"
-                    controls
-                    autoplay
-                    @click.stop
-                />
-                <img
-                    v-else
-                    :src="post.media[lightboxIndex]?.url"
-                    :alt="post.media[lightboxIndex]?.original_filename"
-                    class="max-h-full max-w-full object-contain"
-                    @click.stop
-                />
-            </div>
-        </Teleport>
+        <ImagePreviewDialog ref="lightbox" />
     </AppLayout>
 </template>

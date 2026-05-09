@@ -72,16 +72,6 @@ class UpdatePostRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
-    {
-        return [
-            'status.required' => 'The post status is required.',
-            'status.in' => 'Invalid post status.',
-            'platforms.*.content_type.in' => 'Invalid content type.',
-            'scheduled_at.after' => 'The scheduled date must be in the future.',
-        ];
-    }
-
     public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator): void {

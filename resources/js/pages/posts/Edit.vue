@@ -223,6 +223,18 @@ const platformIssues = computed<Record<string, string>>(() => {
             continue;
         }
 
+        // TikTok has two content types (video / photo) that the user toggles
+        // inside TikTokSettings. The tile-level check is lenient: a tile is
+        // only blocked when neither variant accepts the current media. If the
+        // current variant doesn't fit but the other one does, togglePlatform
+        // auto-corrects on selection.
+        if (pp.platform === Platform.TikTok) {
+            const videoReason = getMediaIncompatibilityReason('tiktok_video', media.value);
+            const photoReason = getMediaIncompatibilityReason('tiktok_photo', media.value);
+            if (videoReason && photoReason) issues[pp.id] = videoReason;
+            continue;
+        }
+
         const reason = getMediaIncompatibilityReason(contentType, media.value);
         if (reason) issues[pp.id] = reason;
     }
@@ -331,10 +343,28 @@ const togglePlatform = (platformId: string) => {
     if (isReadOnly.value) return;
     const index = selectedPlatformIds.value.indexOf(platformId);
     if (index === -1) {
+        adjustTikTokContentTypeForMedia(platformId);
         selectedPlatformIds.value.push(platformId);
     } else {
         selectedPlatformIds.value.splice(index, 1);
     }
+};
+
+// TikTok has two content types (video, photo) backed by different API endpoints.
+// When the user picks the TikTok tile while media is already attached, switch
+// to the matching variant so they don't land on tiktok_video with images and
+// see a compliance error. The variant picker in TikTokSettings can still override.
+const adjustTikTokContentTypeForMedia = (platformId: string) => {
+    const pp = post.value.post_platforms.find((p) => p.id === platformId);
+    if (!pp || pp.platform !== Platform.TikTok || media.value.length === 0) return;
+
+    const first = media.value[0];
+    const isImage = first.type === 'image' || first.mime_type?.startsWith('image/');
+    const isVideo = first.type === 'video' || first.mime_type?.startsWith('video/');
+    const target = isImage ? 'tiktok_photo' : isVideo ? 'tiktok_video' : null;
+    if (!target || platformContentTypes.value[platformId] === target) return;
+
+    platformContentTypes.value = { ...platformContentTypes.value, [platformId]: target };
 };
 
 // Save logic
@@ -391,28 +421,6 @@ const triggerAutosave = () => {
         debouncedSave();
     }
 };
-
-// Auto-switch TikTok content_type to match the attached media. Without this,
-// a fresh post defaults TikTok to tiktok_video, so attaching images first
-// disables the TikTok tile (compliance check rejects images for video posts).
-// User can still override via the variant picker in TikTokSettings.
-watch(media, () => {
-    if (media.value.length === 0) return;
-
-    const first = media.value[0];
-    const isVideo = first.type === 'video' || first.mime_type?.startsWith('video/');
-    const isImage = first.type === 'image' || first.mime_type?.startsWith('image/');
-    const target = isVideo ? 'tiktok_video' : isImage ? 'tiktok_photo' : null;
-    if (!target) return;
-
-    for (const pp of post.value.post_platforms) {
-        if (pp.platform !== Platform.TikTok) continue;
-        const current = platformContentTypes.value[pp.id];
-        if (current && current !== target && (current === 'tiktok_video' || current === 'tiktok_photo')) {
-            platformContentTypes.value = { ...platformContentTypes.value, [pp.id]: target };
-        }
-    }
-}, { deep: true });
 
 watch([content, media, selectedPlatformIds, scheduledDateTime, selectedLabelIds, platformMeta, platformContentTypes], triggerAutosave, { deep: true });
 

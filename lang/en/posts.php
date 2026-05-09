@@ -49,6 +49,11 @@ return [
         'write_caption' => 'Write your caption...',
         'tiktok' => [
             'settings' => 'TikTok Settings',
+            'variant_label' => 'Post type',
+            'variant' => [
+                'video' => 'Video',
+                'photo' => 'Photo carousel',
+            ],
             'posting_to' => 'Posting to',
             'privacy_level' => 'Who can see this video?',
             'privacy_placeholder' => 'Select visibility',
@@ -57,6 +62,7 @@ return [
                 'friends' => 'Mutual follow friends',
                 'followers' => 'Followers',
                 'private' => 'Only me',
+                'private_disabled_branded' => 'Branded content visibility cannot be set to private.',
             ],
             'privacy_hint' => 'The available options depend on your TikTok account settings.',
             'auto_add_music' => 'Auto add music',
@@ -74,7 +80,7 @@ return [
             'promotional_paid_title' => 'Your photo/video will be labeled as "Paid partnership".',
             'promotional_description' => 'This cannot be changed once your video is posted.',
             'compliance_incomplete' => 'You need to indicate if your content promotes yourself, a third party, or both.',
-            'branded_blocks_private' => 'Branded content cannot be private. Choose Public or Mutual follow friends.',
+            'branded_cleared_private' => 'Privacy was cleared because Branded Content cannot be private.',
             'interaction_disabled_by_creator' => 'Disabled by your TikTok account settings.',
             'max_duration_exceeded' => 'Video is :duration s long but this account can only post videos up to :max s.',
             'creator_info_loading' => 'Loading your TikTok account settings…',

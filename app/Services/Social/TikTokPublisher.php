@@ -75,26 +75,24 @@ class TikTokPublisher
         return $this->socialHttp()->asJson()->withToken($this->accessToken);
     }
 
-    private function queryCreatorInfo(SocialAccount $account): array
+    /**
+     * Resolve the user-selected privacy_level from meta, throwing when missing.
+     * TikTok UX Guideline Point 2b forbids any default — the user must pick
+     * explicitly. The FormRequest validates this upstream; this is the safety
+     * net for queue/job paths that bypass the request layer.
+     */
+    private function resolveRequiredPrivacyLevel(PostPlatform $postPlatform): string
     {
-        $info = app(TikTokCreatorInfo::class)->fetch($account);
-        $privacyOptions = data_get($info, 'privacy_level_options') ?: ['SELF_ONLY'];
+        $privacyLevel = data_get($postPlatform->meta ?? [], 'privacy_level');
 
-        // Prefer PUBLIC_TO_EVERYONE > MUTUAL_FOLLOW_FRIENDS > FOLLOWER_OF_CREATOR > SELF_ONLY
-        $preferred = ['PUBLIC_TO_EVERYONE', 'MUTUAL_FOLLOW_FRIENDS', 'FOLLOWER_OF_CREATOR', 'SELF_ONLY'];
-
-        $privacyLevel = 'SELF_ONLY';
-        foreach ($preferred as $level) {
-            if (in_array($level, $privacyOptions)) {
-                $privacyLevel = $level;
-                break;
-            }
+        if (blank($privacyLevel)) {
+            throw new TikTokPublishException(
+                userMessage: 'TikTok privacy level is required. Please open the post and pick a visibility option.',
+                category: ErrorCategory::ContentPolicy,
+            );
         }
 
-        return [
-            'privacy_level' => $privacyLevel,
-            'max_video_post_duration_sec' => data_get($info, 'max_video_post_duration_sec'),
-        ];
+        return (string) $privacyLevel;
     }
 
     /**
@@ -104,16 +102,13 @@ class TikTokPublisher
      *
      * @return array<string, mixed>
      */
-    private function buildVideoPostInfo(PostPlatform $postPlatform, ?string $content, array $creatorInfo): array
+    private function buildVideoPostInfo(PostPlatform $postPlatform, ?string $content): array
     {
         $meta = $postPlatform->meta ?? [];
 
-        $privacyLevel = data_get($meta, 'privacy_level')
-            ?: data_get($creatorInfo, 'privacy_level', 'SELF_ONLY');
-
         $postInfo = [
             'title' => $content ?? '',
-            'privacy_level' => $privacyLevel,
+            'privacy_level' => $this->resolveRequiredPrivacyLevel($postPlatform),
             'disable_duet' => ! data_get($meta, 'allow_duet', false),
             'disable_comment' => ! data_get($meta, 'allow_comments', true),
             'disable_stitch' => ! data_get($meta, 'allow_stitch', false),
@@ -142,16 +137,13 @@ class TikTokPublisher
      *
      * @return array<string, mixed>
      */
-    private function buildPhotoPostInfo(PostPlatform $postPlatform, ?string $content, array $creatorInfo): array
+    private function buildPhotoPostInfo(PostPlatform $postPlatform, ?string $content): array
     {
         $meta = $postPlatform->meta ?? [];
 
-        $privacyLevel = data_get($meta, 'privacy_level')
-            ?: data_get($creatorInfo, 'privacy_level', 'SELF_ONLY');
-
         $postInfo = [
             'description' => $content ?? '',
-            'privacy_level' => $privacyLevel,
+            'privacy_level' => $this->resolveRequiredPrivacyLevel($postPlatform),
             'disable_comment' => ! data_get($meta, 'allow_comments', true),
         ];
 
@@ -168,11 +160,9 @@ class TikTokPublisher
 
     private function publishVideo(PostPlatform $postPlatform, $media, ?string $content): array
     {
-        $creatorInfo = $this->queryCreatorInfo($postPlatform->socialAccount);
-
         $response = $this->getHttpClient()
             ->post("{$this->baseUrl}/post/publish/video/init/", [
-                'post_info' => $this->buildVideoPostInfo($postPlatform, $content, $creatorInfo),
+                'post_info' => $this->buildVideoPostInfo($postPlatform, $content),
                 'source_info' => [
                     'source' => 'PULL_FROM_URL',
                     'video_url' => $media->url,
@@ -223,9 +213,7 @@ class TikTokPublisher
             );
         }
 
-        $creatorInfo = $this->queryCreatorInfo($postPlatform->socialAccount);
-
-        $postInfo = $this->buildPhotoPostInfo($postPlatform, $content, $creatorInfo);
+        $postInfo = $this->buildPhotoPostInfo($postPlatform, $content);
 
         // Auto add music is only for photos.
         $meta = $postPlatform->meta ?? [];

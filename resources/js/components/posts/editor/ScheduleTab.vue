@@ -12,6 +12,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
+import { Platform } from '@/enums/platform';
 
 interface SocialAccount {
     id: string;
@@ -97,33 +98,33 @@ const emit = defineEmits<{
 
 const selectedTikTokPlatforms = computed(() =>
     props.postPlatforms.filter(
-        (pp) => pp.platform === 'tiktok' && props.selectedPlatformIds.includes(pp.id),
+        (pp) => pp.platform === Platform.TikTok && props.selectedPlatformIds.includes(pp.id),
     ),
 );
 
 const selectedInstagramPlatforms = computed(() =>
     props.postPlatforms.filter(
-        (pp) => ['instagram', 'instagram-facebook'].includes(pp.platform)
+        (pp) => (pp.platform === Platform.Instagram || pp.platform === Platform.InstagramFacebook)
             && props.selectedPlatformIds.includes(pp.id),
     ),
 );
 
 const selectedFacebookPlatforms = computed(() =>
     props.postPlatforms.filter(
-        (pp) => pp.platform === 'facebook' && props.selectedPlatformIds.includes(pp.id),
+        (pp) => pp.platform === Platform.Facebook && props.selectedPlatformIds.includes(pp.id),
     ),
 );
 
 const selectedLinkedInPlatforms = computed(() =>
     props.postPlatforms.filter(
-        (pp) => ['linkedin', 'linkedin-page'].includes(pp.platform)
+        (pp) => (pp.platform === Platform.LinkedIn || pp.platform === Platform.LinkedInPage)
             && props.selectedPlatformIds.includes(pp.id),
     ),
 );
 
 const selectedPinterestPlatforms = computed(() =>
     props.postPlatforms.filter(
-        (pp) => pp.platform === 'pinterest' && props.selectedPlatformIds.includes(pp.id),
+        (pp) => pp.platform === Platform.Pinterest && props.selectedPlatformIds.includes(pp.id),
     ),
 );
 
@@ -267,8 +268,10 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                 :creator-info="getCreatorInfo(pp)"
                 :creator-info-loading="tiktokCreatorInfos === undefined || tiktokCreatorInfos === null"
                 :video-duration-sec="videoDurationSec"
+                :content-type="platformContentTypes[pp.id] ?? ''"
                 :meta="platformMeta[pp.id] ?? {}"
                 :disabled="isReadOnly"
+                @update:content-type="emit('update:platformContentType', pp.id, $event)"
                 @update:meta="emit('update:platformMeta', pp.id, $event)"
             />
         </div>

@@ -49,6 +49,11 @@ return [
         'write_caption' => 'Escreva sua legenda...',
         'tiktok' => [
             'settings' => 'Configurações do TikTok',
+            'variant_label' => 'Tipo de publicação',
+            'variant' => [
+                'video' => 'Vídeo',
+                'photo' => 'Carrossel de fotos',
+            ],
             'posting_to' => 'Publicando em',
             'privacy_level' => 'Quem pode ver este vídeo?',
             'privacy_placeholder' => 'Selecione a visibilidade',
@@ -57,6 +62,7 @@ return [
                 'friends' => 'Amigos em comum',
                 'followers' => 'Seguidores',
                 'private' => 'Apenas eu',
+                'private_disabled_branded' => 'Conteúdo de marca não pode ser privado.',
             ],
             'privacy_hint' => 'As opções disponíveis dependem das configurações da sua conta TikTok.',
             'auto_add_music' => 'Adicionar música automaticamente',
@@ -74,7 +80,7 @@ return [
             'promotional_paid_title' => 'Sua foto/vídeo será rotulado como "Parceria paga".',
             'promotional_description' => 'Isso não poderá ser alterado após a publicação.',
             'compliance_incomplete' => 'Você precisa indicar se o conteúdo promove você mesmo, terceiros ou ambos.',
-            'branded_blocks_private' => 'Conteúdo patrocinado não pode ser privado. Escolha Público ou Amigos em comum.',
+            'branded_cleared_private' => 'A visibilidade foi limpa porque conteúdo de marca não pode ser privado.',
             'interaction_disabled_by_creator' => 'Desativado pelas configurações da sua conta TikTok.',
             'max_duration_exceeded' => 'Vídeo tem :duration s mas esta conta só permite vídeos de até :max s.',
             'creator_info_loading' => 'Carregando configurações da sua conta TikTok…',

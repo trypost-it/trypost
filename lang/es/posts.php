@@ -49,6 +49,11 @@ return [
         'write_caption' => 'Escribe tu descripción...',
         'tiktok' => [
             'settings' => 'Configuración de TikTok',
+            'variant_label' => 'Tipo de publicación',
+            'variant' => [
+                'video' => 'Video',
+                'photo' => 'Carrusel de fotos',
+            ],
             'posting_to' => 'Publicando en',
             'privacy_level' => '¿Quién puede ver este video?',
             'privacy_placeholder' => 'Selecciona la visibilidad',
@@ -57,6 +62,7 @@ return [
                 'friends' => 'Amigos mutuos',
                 'followers' => 'Seguidores',
                 'private' => 'Solo yo',
+                'private_disabled_branded' => 'El contenido de marca no puede ser privado.',
             ],
             'privacy_hint' => 'Las opciones disponibles dependen de la configuración de tu cuenta de TikTok.',
             'auto_add_music' => 'Agregar música automáticamente',
@@ -74,7 +80,7 @@ return [
             'promotional_paid_title' => 'Tu foto/video será etiquetado como "Asociación pagada".',
             'promotional_description' => 'Esto no se puede cambiar una vez publicado el video.',
             'compliance_incomplete' => 'Debes indicar si tu contenido promociona a ti mismo, a un tercero o a ambos.',
-            'branded_blocks_private' => 'El contenido patrocinado no puede ser privado. Elige Público o Amigos mutuos.',
+            'branded_cleared_private' => 'La visibilidad se borró porque el contenido de marca no puede ser privado.',
             'interaction_disabled_by_creator' => 'Desactivado por la configuración de tu cuenta TikTok.',
             'max_duration_exceeded' => 'El video dura :duration s pero esta cuenta solo permite videos de hasta :max s.',
             'creator_info_loading' => 'Cargando la configuración de tu cuenta TikTok…',

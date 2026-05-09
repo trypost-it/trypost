@@ -22,6 +22,7 @@ import { getMediaItemIssue } from '@/composables/useMedia';
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
+import { Platform } from '@/enums/platform';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { destroy as destroyPost, update as updatePost } from '@/routes/app/posts';
 
@@ -238,7 +239,7 @@ const mediaCompliancePerPlatformValid = computed(
 // - if disclosure toggle is ON, at least one sub-toggle must be selected
 const tiktokComplianceValid = computed(() => {
     const tiktokPlatforms = post.value.post_platforms.filter(
-        (pp) => pp.platform === 'tiktok' && selectedPlatformIds.value.includes(pp.id),
+        (pp) => pp.platform === Platform.TikTok && selectedPlatformIds.value.includes(pp.id),
     );
     return tiktokPlatforms.every((pp) => {
         const meta = platformMeta.value[pp.id] ?? {};
@@ -255,13 +256,29 @@ const canSchedule = computed(
 const postActionTooltip = computed(() => {
     if (canSchedule.value) return '';
 
+    // Collect platform-specific media compatibility issues.
     const reasons = post.value.post_platforms
         .filter((pp) => selectedPlatformIds.value.includes(pp.id) && platformIssues.value[pp.id])
         .map((pp) => `${pp.platform_name ?? pp.platform}: ${platformIssues.value[pp.id]}`);
 
-    if (reasons.length === 0) return trans('posts.edit.compliance_incomplete');
+    if (reasons.length > 0) return reasons.join('\n');
 
-    return reasons.join('\n');
+    // No media issues — the only remaining blocker is TikTok compliance.
+    // Surface the exact TikTok-required tooltip when the disclosure toggle
+    // is on without a sub-selection (UX Guideline Point 3a). For other TikTok
+    // cases (e.g. missing privacy_level), fall back to the generic message.
+    const tiktokDisclosureIncomplete = post.value.post_platforms.some((pp) => {
+        if (pp.platform !== Platform.TikTok) return false;
+        if (!selectedPlatformIds.value.includes(pp.id)) return false;
+        const meta = platformMeta.value[pp.id] ?? {};
+        return Boolean(meta.disclose) && !meta.brand_organic_toggle && !meta.brand_content_toggle;
+    });
+
+    if (tiktokDisclosureIncomplete) {
+        return trans('posts.form.tiktok.compliance_incomplete');
+    }
+
+    return trans('posts.edit.compliance_incomplete');
 });
 
 // Schedule

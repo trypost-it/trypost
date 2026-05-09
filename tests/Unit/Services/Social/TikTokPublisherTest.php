@@ -310,7 +310,10 @@ test('tiktok publisher returns null url when username missing', function () {
     expect($result['url'])->toBeNull();
 });
 
-test('tiktok publisher falls back to self only when creator info fails', function () {
+test('tiktok publisher publishes with user-selected privacy level even when creator info query fails', function () {
+    // User has explicitly selected SELF_ONLY in meta. creator_info failure must not block publishing.
+    $this->postPlatform->update(['meta' => ['privacy_level' => 'SELF_ONLY']]);
+
     $this->post->update([
         'media' => [
             [
@@ -324,7 +327,7 @@ test('tiktok publisher falls back to self only when creator info fails', functio
     ]);
 
     Http::fake([
-        // creator_info/query returns 500 — publisher should fall back to SELF_ONLY
+        // creator_info/query returns 500 — should not affect publishing since user picked privacy_level.
         'https://open.tiktokapis.com/v2/post/publish/creator_info/query/' => Http::response([
             'error' => ['code' => 'internal_error', 'message' => 'Internal server error'],
         ], 500),
@@ -344,7 +347,7 @@ test('tiktok publisher falls back to self only when creator info fails', functio
     expect($result)->toHaveKey('id');
     expect($result['id'])->toBe('pub_fallback_123');
 
-    // Assert SELF_ONLY was used in the video init payload
+    // Assert SELF_ONLY (user's explicit pick) was used in the video init payload
     Http::assertSent(function ($request) {
         if (! str_contains($request->url(), '/post/publish/video/init/')) {
             return false;
@@ -538,8 +541,9 @@ test('tiktok publisher does not send auto_add_music for video posts', function (
     });
 });
 
-test('tiktok publisher uses default settings when meta is empty', function () {
-    $this->postPlatform->update(['meta' => null]);
+test('tiktok publisher uses default settings when only privacy_level is set', function () {
+    // Only privacy_level is set (required); all other meta keys absent — exercise default toggles.
+    $this->postPlatform->update(['meta' => ['privacy_level' => 'PUBLIC_TO_EVERYONE']]);
 
     $this->post->update([
         'media' => [
@@ -576,7 +580,7 @@ test('tiktok publisher uses default settings when meta is empty', function () {
         $body = json_decode($request->body(), true);
         $postInfo = data_get($body, 'post_info');
 
-        // When meta is empty, uses creator_info privacy and defaults
+        // privacy_level passes through; toggles use safe defaults (duet/stitch off, comments on).
         return $postInfo['privacy_level'] === 'PUBLIC_TO_EVERYONE'
             && $postInfo['disable_comment'] === false
             && $postInfo['disable_duet'] === true
@@ -626,4 +630,38 @@ test('tiktok publisher sends video caption in title field, never description', f
         return data_get($body, 'post_info.title') === 'My video caption'
             && ! isset($body['post_info']['description']);
     });
+});
+
+test('tiktok publisher throws when meta.privacy_level is missing and user did not pick', function () {
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
+    ]);
+    // Explicitly clear privacy_level from meta (simulate UI never set it).
+    $this->postPlatform->update(['meta' => []]);
+
+    Http::fake([
+        // creator_info returns a healthy response — fallback would have silently picked PUBLIC_TO_EVERYONE.
+        'https://open.tiktokapis.com/v2/post/publish/creator_info/query/' => Http::response([
+            'data' => [
+                'creator_nickname' => 'test',
+                'creator_username' => 'test',
+                'privacy_level_options' => ['PUBLIC_TO_EVERYONE', 'SELF_ONLY'],
+                'comment_disabled' => false,
+                'duet_disabled' => false,
+                'stitch_disabled' => false,
+                'max_video_post_duration_sec' => 300,
+            ],
+        ], 200),
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(TikTokPublishException::class);
 });

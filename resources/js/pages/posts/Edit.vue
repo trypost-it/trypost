@@ -22,6 +22,7 @@ import { getMediaItemIssue } from '@/composables/useMedia';
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
+import { Platform } from '@/enums/platform';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { destroy as destroyPost, update as updatePost } from '@/routes/app/posts';
 
@@ -212,6 +213,26 @@ const getMediaIncompatibilityReason = (contentType: string, mediaItems: MediaIte
     return null;
 };
 
+// Platforms whose default content_type doesn't accept every media type,
+// so the tile would otherwise block silently when the user attaches the
+// "wrong" kind. List the variants that should be considered at the tile
+// level — togglePlatform snaps content_type to whichever fits the media.
+//
+// Instagram/Facebook/LinkedIn are intentionally NOT here: their defaults
+// already accept image and video, and their secondary variants (Reel,
+// Carousel) are picked manually by the user. Including them would hide
+// real picker errors (e.g. Reel + image incompatibility) at the tile level.
+const PLATFORM_VARIANTS: Record<string, string[]> = {
+    [Platform.TikTok]: ['tiktok_video', 'tiktok_photo'],
+    [Platform.Pinterest]: ['pinterest_pin', 'pinterest_video_pin', 'pinterest_carousel'],
+};
+
+const firstCompatibleVariant = (platform: string, mediaItems: MediaItem[]): string | null => {
+    const variants = PLATFORM_VARIANTS[platform];
+    if (!variants) return null;
+    return variants.find((ct) => !getMediaIncompatibilityReason(ct, mediaItems)) ?? null;
+};
+
 const platformIssues = computed<Record<string, string>>(() => {
     const issues: Record<string, string> = {};
 
@@ -219,6 +240,16 @@ const platformIssues = computed<Record<string, string>>(() => {
         const contentType = platformContentTypes.value[pp.id];
         if (!contentType) {
             issues[pp.id] = trans('posts.edit.compliance.no_content_type');
+            continue;
+        }
+
+        // For platforms that expose multiple content types via a variant picker,
+        // the tile is only blocked when no variant fits — togglePlatform will
+        // switch to a compatible variant on selection.
+        if (PLATFORM_VARIANTS[pp.platform]) {
+            if (!firstCompatibleVariant(pp.platform, media.value)) {
+                issues[pp.id] = getMediaIncompatibilityReason(contentType, media.value) ?? '';
+            }
             continue;
         }
 
@@ -238,7 +269,7 @@ const mediaCompliancePerPlatformValid = computed(
 // - if disclosure toggle is ON, at least one sub-toggle must be selected
 const tiktokComplianceValid = computed(() => {
     const tiktokPlatforms = post.value.post_platforms.filter(
-        (pp) => pp.platform === 'tiktok' && selectedPlatformIds.value.includes(pp.id),
+        (pp) => pp.platform === Platform.TikTok && selectedPlatformIds.value.includes(pp.id),
     );
     return tiktokPlatforms.every((pp) => {
         const meta = platformMeta.value[pp.id] ?? {};
@@ -255,13 +286,29 @@ const canSchedule = computed(
 const postActionTooltip = computed(() => {
     if (canSchedule.value) return '';
 
+    // Collect platform-specific media compatibility issues.
     const reasons = post.value.post_platforms
         .filter((pp) => selectedPlatformIds.value.includes(pp.id) && platformIssues.value[pp.id])
         .map((pp) => `${pp.platform_name ?? pp.platform}: ${platformIssues.value[pp.id]}`);
 
-    if (reasons.length === 0) return trans('posts.edit.compliance_incomplete');
+    if (reasons.length > 0) return reasons.join('\n');
 
-    return reasons.join('\n');
+    // No media issues — the only remaining blocker is TikTok compliance.
+    // Surface the exact TikTok-required tooltip when the disclosure toggle
+    // is on without a sub-selection (UX Guideline Point 3a). For other TikTok
+    // cases (e.g. missing privacy_level), fall back to the generic message.
+    const tiktokDisclosureIncomplete = post.value.post_platforms.some((pp) => {
+        if (pp.platform !== Platform.TikTok) return false;
+        if (!selectedPlatformIds.value.includes(pp.id)) return false;
+        const meta = platformMeta.value[pp.id] ?? {};
+        return Boolean(meta.disclose) && !meta.brand_organic_toggle && !meta.brand_content_toggle;
+    });
+
+    if (tiktokDisclosureIncomplete) {
+        return trans('posts.form.tiktok.compliance_incomplete');
+    }
+
+    return trans('posts.edit.compliance_incomplete');
 });
 
 // Schedule
@@ -314,6 +361,13 @@ const togglePlatform = (platformId: string) => {
     if (isReadOnly.value) return;
     const index = selectedPlatformIds.value.indexOf(platformId);
     if (index === -1) {
+        // For platforms with a variant picker, snap the post-platform's
+        // content_type to one that fits the current media before selection.
+        const pp = post.value.post_platforms.find((p) => p.id === platformId);
+        const variant = pp ? firstCompatibleVariant(pp.platform, media.value) : null;
+        if (variant && platformContentTypes.value[platformId] !== variant) {
+            platformContentTypes.value = { ...platformContentTypes.value, [platformId]: variant };
+        }
         selectedPlatformIds.value.push(platformId);
     } else {
         selectedPlatformIds.value.splice(index, 1);

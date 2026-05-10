@@ -11,6 +11,7 @@ export const ContentType = {
     FacebookReel: 'facebook_reel',
     FacebookStory: 'facebook_story',
     TikTokVideo: 'tiktok_video',
+    TikTokPhoto: 'tiktok_photo',
     YouTubeShort: 'youtube_short',
     XPost: 'x_post',
     ThreadsPost: 'threads_post',

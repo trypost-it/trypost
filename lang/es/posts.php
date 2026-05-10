@@ -49,6 +49,11 @@ return [
         'write_caption' => 'Escribe tu descripción...',
         'tiktok' => [
             'settings' => 'Configuración de TikTok',
+            'variant_label' => 'Tipo de publicación',
+            'variant' => [
+                'video' => 'Video',
+                'photo' => 'Carrusel de fotos',
+            ],
             'posting_to' => 'Publicando en',
             'privacy_level' => '¿Quién puede ver este video?',
             'privacy_placeholder' => 'Selecciona la visibilidad',
@@ -57,6 +62,7 @@ return [
                 'friends' => 'Amigos mutuos',
                 'followers' => 'Seguidores',
                 'private' => 'Solo yo',
+                'private_disabled_branded' => 'El contenido de marca no puede ser privado.',
             ],
             'privacy_hint' => 'Las opciones disponibles dependen de la configuración de tu cuenta de TikTok.',
             'auto_add_music' => 'Agregar música automáticamente',
@@ -74,10 +80,10 @@ return [
             'promotional_paid_title' => 'Tu foto/video será etiquetado como "Asociación pagada".',
             'promotional_description' => 'Esto no se puede cambiar una vez publicado el video.',
             'compliance_incomplete' => 'Debes indicar si tu contenido promociona a ti mismo, a un tercero o a ambos.',
-            'branded_blocks_private' => 'El contenido patrocinado no puede ser privado. Elige Público o Amigos mutuos.',
+            'privacy_required' => 'La visibilidad de TikTok es obligatoria al publicar.',
+            'branded_cleared_private' => 'La visibilidad se borró porque el contenido de marca no puede ser privado.',
             'interaction_disabled_by_creator' => 'Desactivado por la configuración de tu cuenta TikTok.',
             'max_duration_exceeded' => 'El video dura :duration s pero esta cuenta solo permite videos de hasta :max s.',
-            'creator_info_loading' => 'Cargando la configuración de tu cuenta TikTok…',
             'processing_hint' => 'Después de publicar, puede tardar unos minutos en procesarse y aparecer en tu perfil de TikTok.',
             'brand_organic' => 'Tu marca',
             'brand_organic_hint' => 'Estás promocionándote a ti mismo o a tu propia marca. Este video será clasificado como Brand Organic.',
@@ -398,6 +404,10 @@ return [
             'label' => 'Video',
             'description' => 'Contenido de video corto',
         ],
+        'tiktok_photo' => [
+            'label' => 'Carrusel de fotos',
+            'description' => 'Hasta 35 fotos en un carrusel deslizable',
+        ],
         'youtube_short' => [
             'label' => 'Short',
             'description' => 'Video vertical de hasta 60 segundos',
@@ -412,15 +422,15 @@ return [
         ],
         'pinterest_pin' => [
             'label' => 'Pin',
-            'description' => 'Pin de imagen con enlace',
+            'description' => 'Pin de imagen estándar',
         ],
         'pinterest_video_pin' => [
             'label' => 'Pin de video',
-            'description' => 'Contenido de video',
+            'description' => 'Pin de video (4s - 15min)',
         ],
         'pinterest_carousel' => [
             'label' => 'Carrusel',
-            'description' => '2-5 imágenes',
+            'description' => 'Carrusel multi-imagen (2-5 imágenes)',
         ],
         'bluesky_post' => [
             'label' => 'Post',

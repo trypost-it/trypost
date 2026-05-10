@@ -29,6 +29,7 @@ enum ContentType: string
 
     // TikTok
     case TikTokVideo = 'tiktok_video';
+    case TikTokPhoto = 'tiktok_photo';
 
     // YouTube
     case YouTubeShort = 'youtube_short';
@@ -63,6 +64,7 @@ enum ContentType: string
             self::FacebookReel => 'Reel',
             self::FacebookStory => 'Story',
             self::TikTokVideo => 'Video',
+            self::TikTokPhoto => 'Photo carousel',
             self::YouTubeShort => 'Short',
             self::XPost => 'Post',
             self::ThreadsPost => 'Post',
@@ -76,26 +78,7 @@ enum ContentType: string
 
     public function description(): string
     {
-        return match ($this) {
-            self::InstagramFeed => 'Appears in your feed and profile',
-            self::InstagramCarousel => 'Multi-slide swipeable post (2-10 images)',
-            self::InstagramReel => 'Short video up to 90 seconds',
-            self::InstagramStory => 'Disappears after 24 hours',
-            self::LinkedInPost, self::LinkedInPagePost => 'Standard post with text and media',
-            self::LinkedInCarousel, self::LinkedInPageCarousel => 'Swipeable document or images',
-            self::FacebookPost => 'Standard post on your page',
-            self::FacebookReel => 'Short video up to 90 seconds',
-            self::FacebookStory => 'Disappears after 24 hours',
-            self::TikTokVideo => 'Short-form video content',
-            self::YouTubeShort => 'Vertical video up to 60 seconds',
-            self::XPost => 'Tweet with text and media',
-            self::ThreadsPost => 'Text post with optional media',
-            self::PinterestPin => 'Standard image pin',
-            self::PinterestVideoPin => 'Video pin (4s - 15min)',
-            self::PinterestCarousel => 'Multi-image carousel (2-5 images)',
-            self::BlueskyPost => 'Text post with optional images',
-            self::MastodonPost => 'Text post with optional media',
-        };
+        return (string) trans("posts.content_types.{$this->value}.description");
     }
 
     public function platform(): SocialPlatform
@@ -105,7 +88,7 @@ enum ContentType: string
             self::LinkedInPost, self::LinkedInCarousel => SocialPlatform::LinkedIn,
             self::LinkedInPagePost, self::LinkedInPageCarousel => SocialPlatform::LinkedInPage,
             self::FacebookPost, self::FacebookReel, self::FacebookStory => SocialPlatform::Facebook,
-            self::TikTokVideo => SocialPlatform::TikTok,
+            self::TikTokVideo, self::TikTokPhoto => SocialPlatform::TikTok,
             self::YouTubeShort => SocialPlatform::YouTube,
             self::XPost => SocialPlatform::X,
             self::ThreadsPost => SocialPlatform::Threads,
@@ -156,6 +139,7 @@ enum ContentType: string
             self::InstagramReel, self::InstagramStory => '9:16',
             self::FacebookReel, self::FacebookStory => '9:16',
             self::TikTokVideo, self::YouTubeShort => '9:16',
+            self::TikTokPhoto => '1:1',
             self::PinterestPin, self::PinterestCarousel => '2:3',
             self::PinterestVideoPin => '9:16',
             default => null,
@@ -173,6 +157,7 @@ enum ContentType: string
             self::FacebookPost => 10,
             self::FacebookReel, self::FacebookStory => 1,
             self::TikTokVideo => 1,
+            self::TikTokPhoto => 35,
             self::YouTubeShort => 1,
             self::XPost => 4,
             self::ThreadsPost => 10,
@@ -192,6 +177,7 @@ enum ContentType: string
             self::LinkedInCarousel, self::LinkedInPageCarousel => false,
             self::FacebookPost, self::FacebookReel, self::FacebookStory => true,
             self::TikTokVideo => true,
+            self::TikTokPhoto => false,
             self::YouTubeShort => true,
             self::XPost => true,
             self::ThreadsPost => true,
@@ -207,6 +193,7 @@ enum ContentType: string
         return match ($this) {
             self::InstagramReel => false,
             self::TikTokVideo => false,
+            self::TikTokPhoto => true,
             self::YouTubeShort => false,
             self::PinterestVideoPin => false,
             default => true,

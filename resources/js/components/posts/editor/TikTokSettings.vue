@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { IconAlertTriangle, IconChevronDown, IconChevronUp } from '@tabler/icons-vue';
+import { trans } from 'laravel-vue-i18n';
 import { computed, ref, watch } from 'vue';
+import { toast } from 'vue-sonner';
 
 import { Avatar } from '@/components/ui/avatar';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -13,6 +15,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { getPlatformLogo } from '@/composables/usePlatformLogo';
+import { ContentType } from '@/enums/content-type';
 
 interface SocialAccount {
     id: string;
@@ -37,22 +40,32 @@ interface Props {
     socialAccount: SocialAccount | null;
     publishConfig: Record<string, any> | null;
     creatorInfo?: CreatorInfo | null;
-    creatorInfoLoading?: boolean;
     videoDurationSec?: number | null;
+    contentType: string;
     meta: Record<string, any>;
     disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     creatorInfo: null,
-    creatorInfoLoading: false,
     videoDurationSec: null,
     disabled: false,
 });
 
 const emit = defineEmits<{
     'update:meta': [value: Record<string, any>];
+    'update:contentType': [value: string];
 }>();
+
+const variants = [
+    { value: ContentType.TikTokVideo, labelKey: 'posts.form.tiktok.variant.video' },
+    { value: ContentType.TikTokPhoto, labelKey: 'posts.form.tiktok.variant.photo' },
+] as const;
+
+const pickVariant = (value: string) => {
+    if (props.disabled) return;
+    emit('update:contentType', value);
+};
 
 const open = ref(false);
 
@@ -118,16 +131,23 @@ const allPrivacyOptions = computed(() => {
     return fromApi.length > 0 ? fromApi : props.publishConfig?.privacyLevelOptions ?? [];
 });
 
-// Branded content cannot be private (TikTok compliance).
-const privacyOptions = computed(() =>
-    brandContentToggle.value
-        ? allPrivacyOptions.value.filter((o: string) => o !== 'SELF_ONLY')
-        : allPrivacyOptions.value,
-);
+// Render every option creator_info returns. SELF_ONLY is shown but disabled when
+// Branded Content is checked (TikTok UX Guideline Point 3b — must show interaction,
+// not hide it).
+const privacyOptions = computed(() => allPrivacyOptions.value);
+
+const isSelfOnlyDisabled = (option: string): boolean =>
+    option === 'SELF_ONLY' && brandContentToggle.value;
 
 const commentDisabled = computed(() => Boolean(props.creatorInfo?.comment_disabled));
 const duetDisabled = computed(() => Boolean(props.creatorInfo?.duet_disabled));
 const stitchDisabled = computed(() => Boolean(props.creatorInfo?.stitch_disabled));
+
+// Derive from the user's explicit variant choice (contentType), not from attached
+// media. The variant selector is the single source of truth — user picks it, the
+// gating responds immediately, and validation enforces media↔content_type matching.
+const isPhotoPost = computed(() => props.contentType === ContentType.TikTokPhoto);
+const isVideoPost = computed(() => props.contentType === ContentType.TikTokVideo);
 
 // Max video duration check (when creator_info is available and we have duration).
 const maxDurationSec = computed(() => props.creatorInfo?.max_video_post_duration_sec ?? null);
@@ -152,9 +172,12 @@ const promotionalTitleKey = computed(() =>
 );
 
 // If user flips branded content ON while privacy is SELF_ONLY, clear it so they must re-pick.
+// Surface a toast so the user understands why the field reset (TikTok UX Guideline Point 3b
+// requires informing the user when an auto-switch happens).
 watch(brandContentToggle, (value) => {
     if (value && privacyLevel.value === 'SELF_ONLY') {
         privacyLevel.value = '';
+        toast.warning(trans('posts.form.tiktok.branded_cleared_private'));
     }
 });
 
@@ -191,10 +214,25 @@ watch(
         </button>
 
         <div v-if="open" class="space-y-5 border-t-2 border-foreground/10 px-4 pb-4 pt-4">
-            <p v-if="creatorInfoLoading" class="flex items-center gap-2 text-xs font-medium text-foreground/60">
-                <span class="inline-block size-3 animate-pulse rounded-full bg-foreground/30" />
-                {{ $t('posts.form.tiktok.creator_info_loading') }}
-            </p>
+            <!-- Variant: Video / Photo carousel -->
+            <div class="space-y-2">
+                <p class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.form.tiktok.variant_label') }}</p>
+                <div class="flex flex-wrap gap-2">
+                    <button
+                        v-for="variant in variants"
+                        :key="variant.value"
+                        type="button"
+                        class="cursor-pointer rounded-full border-2 px-3 py-1 text-xs font-bold uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                        :class="contentType === variant.value
+                            ? 'border-foreground bg-violet-100 text-foreground shadow-2xs'
+                            : 'border-foreground/30 text-foreground/70 hover:border-foreground hover:text-foreground'"
+                        :disabled="props.disabled"
+                        @click="pickVariant(variant.value)"
+                    >
+                        {{ $t(variant.labelKey) }}
+                    </button>
+                </div>
+            </div>
 
             <!-- Creator identity -->
             <div v-if="socialAccount" class="flex items-center gap-3 rounded-lg bg-foreground/5 p-3">
@@ -220,22 +258,35 @@ watch(
                         <SelectValue :placeholder="$t('posts.form.tiktok.privacy_placeholder')" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem v-for="option in privacyOptions" :key="option" :value="option">
+                        <SelectItem
+                            v-for="option in privacyOptions"
+                            :key="option"
+                            :value="option"
+                            :disabled="isSelfOnlyDisabled(option)"
+                            :title="isSelfOnlyDisabled(option) ? $t('posts.form.tiktok.privacy.private_disabled_branded') : undefined"
+                        >
                             {{ $t(privacyLabelKey[option] ?? option) }}
                         </SelectItem>
                     </SelectContent>
                 </Select>
                 <p class="text-xs font-medium text-foreground/60">{{ $t("posts.form.tiktok.privacy_hint") }}</p>
+                <p
+                    v-if="brandContentToggle"
+                    class="flex items-start gap-1.5 rounded-md border-2 border-foreground bg-amber-50 p-2 text-xs font-semibold text-amber-800"
+                >
+                    <IconAlertTriangle class="mt-0.5 size-3.5 shrink-0" />
+                    {{ $t('posts.form.tiktok.privacy.private_disabled_branded') }}
+                </p>
             </div>
 
             <!-- Max duration warning -->
-            <p v-if="exceedsMaxDuration" class="flex items-start gap-2 rounded-lg border-2 border-foreground bg-rose-50 p-2 text-xs font-semibold text-rose-700">
+            <p v-if="isVideoPost && exceedsMaxDuration" class="flex items-start gap-2 rounded-lg border-2 border-foreground bg-rose-50 p-2 text-xs font-semibold text-rose-700">
                 <IconAlertTriangle class="mt-0.5 size-3.5 shrink-0" />
                 {{ $t('posts.form.tiktok.max_duration_exceeded', { duration: String(videoDurationSec ?? 0), max: String(maxDurationSec ?? 0) }) }}
             </p>
 
             <!-- Auto Add Music (photos only) -->
-            <div class="space-y-2">
+            <div v-if="isPhotoPost" class="space-y-2">
                 <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t("posts.form.tiktok.auto_add_music") }}</Label>
                 <Select v-model="autoAddMusic" :disabled="props.disabled">
                     <SelectTrigger class="w-full">
@@ -257,21 +308,23 @@ watch(
                         <Checkbox v-model="allowComments" :disabled="props.disabled || commentDisabled" />
                         {{ $t('posts.form.tiktok.comments') }}
                     </label>
-                    <label class="flex items-center gap-2 text-sm" :class="{ 'opacity-50': duetDisabled }" :title="duetDisabled ? $t('posts.form.tiktok.interaction_disabled_by_creator') : ''">
-                        <Checkbox v-model="allowDuet" :disabled="props.disabled || duetDisabled" />
-                        {{ $t('posts.form.tiktok.duet') }}
-                    </label>
-                    <label class="flex items-center gap-2 text-sm" :class="{ 'opacity-50': stitchDisabled }" :title="stitchDisabled ? $t('posts.form.tiktok.interaction_disabled_by_creator') : ''">
-                        <Checkbox v-model="allowStitch" :disabled="props.disabled || stitchDisabled" />
-                        {{ $t('posts.form.tiktok.stitch') }}
-                    </label>
+                    <template v-if="!isPhotoPost">
+                        <label class="flex items-center gap-2 text-sm" :class="{ 'opacity-50': duetDisabled }" :title="duetDisabled ? $t('posts.form.tiktok.interaction_disabled_by_creator') : ''">
+                            <Checkbox v-model="allowDuet" :disabled="props.disabled || duetDisabled" />
+                            {{ $t('posts.form.tiktok.duet') }}
+                        </label>
+                        <label class="flex items-center gap-2 text-sm" :class="{ 'opacity-50': stitchDisabled }" :title="stitchDisabled ? $t('posts.form.tiktok.interaction_disabled_by_creator') : ''">
+                            <Checkbox v-model="allowStitch" :disabled="props.disabled || stitchDisabled" />
+                            {{ $t('posts.form.tiktok.stitch') }}
+                        </label>
+                    </template>
                 </div>
             </div>
 
             <div class="border-t-2 border-foreground/10" />
 
             <!-- Video made with AI (independent) -->
-            <label class="flex items-center gap-2 text-sm">
+            <label v-if="!isPhotoPost" class="flex items-center gap-2 text-sm">
                 <Checkbox v-model="isAigc" :disabled="props.disabled" />
                 {{ $t('posts.form.tiktok.is_aigc') }}
             </label>
@@ -317,19 +370,10 @@ watch(
                 </div>
             </div>
 
-            <!-- Compliance declaration -->
-            <p v-if="hasAnyBrandToggle" class="text-xs text-muted-foreground">
+            <!-- Compliance declaration — always visible per TikTok UX guideline Point 2/4 -->
+            <p class="text-xs text-muted-foreground">
                 {{ $t('posts.form.tiktok.compliance.agree') }}
-                <a
-                    :href="publishConfig?.musicUsageConfirmationUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="font-bold text-primary underline-offset-2 hover:underline"
-                >
-                    {{ $t('posts.form.tiktok.compliance.music_usage') }}
-                </a>
                 <template v-if="brandContentToggle">
-                    {{ ' ' + $t('posts.form.tiktok.compliance.and') + ' ' }}
                     <a
                         :href="publishConfig?.brandedContentPolicyUrl"
                         target="_blank"
@@ -338,7 +382,16 @@ watch(
                     >
                         {{ $t('posts.form.tiktok.compliance.branded_policy') }}
                     </a>
+                    {{ ' ' + $t('posts.form.tiktok.compliance.and') + ' ' }}
                 </template>
+                <a
+                    :href="publishConfig?.musicUsageConfirmationUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="font-bold text-primary underline-offset-2 hover:underline"
+                >
+                    {{ $t('posts.form.tiktok.compliance.music_usage') }}
+                </a>
             </p>
         </div>
     </div>

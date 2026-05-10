@@ -111,6 +111,7 @@ class PostPlatformFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'platform' => Platform::TikTok,
             'content_type' => ContentType::TikTokVideo,
+            'meta' => ['privacy_level' => 'SELF_ONLY'],
         ]);
     }
 

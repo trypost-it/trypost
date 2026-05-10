@@ -232,7 +232,16 @@ class PostController extends Controller
             }
         }
 
-        $tiktokAccounts = $socialAccounts->where('platform', Platform::TikTok);
+        $tiktokCreatorInfos = $socialAccounts
+            ->where('platform', Platform::TikTok)
+            ->mapWithKeys(fn ($account) => [
+                $account->id => rescue(
+                    fn () => app(TikTokCreatorInfo::class)->fetch($account),
+                    null,
+                    report: false,
+                ),
+            ])
+            ->filter();
 
         return Inertia::render('posts/Edit', [
             'workspace' => $workspace,
@@ -240,13 +249,7 @@ class PostController extends Controller
             'socialAccounts' => $socialAccounts,
             'platformConfigs' => $platformConfigs,
             'pinterestBoards' => $pinterestBoards,
-            'tiktokCreatorInfos' => Inertia::defer(fn () => $tiktokAccounts->mapWithKeys(fn ($account) => [
-                $account->id => rescue(
-                    fn () => app(TikTokCreatorInfo::class)->fetch($account),
-                    null,
-                    report: false,
-                ),
-            ])->filter()),
+            'tiktokCreatorInfos' => $tiktokCreatorInfos,
             'labels' => $labels,
             'signatures' => $signatures,
             'authUserId' => $request->user()->id,

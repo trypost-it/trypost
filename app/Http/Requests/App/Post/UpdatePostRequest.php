@@ -6,9 +6,11 @@ namespace App\Http\Requests\App\Post;
 
 use App\Enums\Post\Status;
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\SocialAccount\Platform;
 use App\Rules\ContentTypeCompatibleWithMedia;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdatePostRequest extends FormRequest
 {
@@ -70,13 +72,40 @@ class UpdatePostRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+    public function withValidator(Validator $validator): void
     {
-        return [
-            'status.required' => 'The post status is required.',
-            'status.in' => 'Invalid post status.',
-            'platforms.*.content_type.in' => 'Invalid content type.',
-            'scheduled_at.after' => 'The scheduled date must be in the future.',
-        ];
+        $validator->after(function ($validator): void {
+            if (! $this->isPublishingOrScheduling()) {
+                return;
+            }
+
+            $platforms = $this->input('platforms', []);
+            $ids = collect($platforms)->pluck('id')->filter()->all();
+
+            $platformsById = $this->route('post')
+                ->postPlatforms()
+                ->whereIn('id', $ids)
+                ->pluck('platform', 'id');
+
+            foreach ($platforms as $i => $platform) {
+                $platformEnum = $platformsById[data_get($platform, 'id')] ?? null;
+                if ($platformEnum === Platform::TikTok
+                    && blank(data_get($platform, 'meta.privacy_level'))) {
+                    $validator->errors()->add(
+                        "platforms.{$i}.meta.privacy_level",
+                        trans('posts.form.tiktok.privacy_required'),
+                    );
+                }
+            }
+        });
+    }
+
+    private function isPublishingOrScheduling(): bool
+    {
+        return in_array(
+            $this->input('status'),
+            [Status::Scheduled->value, Status::Publishing->value],
+            true,
+        );
     }
 }

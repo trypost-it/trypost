@@ -99,69 +99,6 @@ Tired of paying $30–$200/month per user for a scheduler? Tired of your content
 | **Self-host** | Free forever. [Installation guide &rarr;](https://trypost.it/docs/getting-started/installation) |
 | **Run with AI assistants** | [Connect Claude / Cursor / ChatGPT via MCP &rarr;](https://trypost.it/docs/mcp) |
 
-## Run with Docker (recommended for contributors)
-
-A single command brings up the full stack — Laravel app, Postgres, Redis, Mailpit, Reverb (websockets), Horizon (queue dashboard), and the scheduler — with no host PHP or Node prerequisites:
-
-```bash
-git clone https://github.com/trypost-it/trypost.git
-cd trypost
-docker compose up --build
-```
-
-First boot takes ~3–4 minutes (composer install, npm ci, asset build, migrations). Subsequent boots are seconds. When the app container reports healthy, open <http://localhost:8000>.
-
-**Mail UI** at <http://localhost:8025>. **Vite HMR** on `:5173`. **Reverb websocket** on `:8080`.
-
-### Common commands
-
-```bash
-# Artisan, Composer, Pest
-docker compose exec app php artisan tinker
-docker compose exec app php artisan test --compact
-docker compose exec app composer require some/package
-
-# View logs (one stream per process)
-docker compose logs -f app
-
-# Stop the stack
-docker compose down
-
-# Wipe all data (db, redis, vendor, node_modules)
-docker compose down -v
-```
-
-### Customizing your environment
-
-Compose merges `compose.override.yaml` (gitignored, personal) on top of the committed `compose.yaml`. Copy the example and edit:
-
-```bash
-cp compose.override.yaml.example compose.override.yaml
-```
-
-Common tweaks (port forwarding, Xdebug, UID/GID alignment) are documented inline in that file.
-
-### Troubleshooting
-
-- **Port already in use** — set `APP_PORT`, `VITE_PORT`, `FORWARD_DB_PORT`, `FORWARD_MAILPIT_UI_PORT` in your shell or `.env`, or use `compose.override.yaml`.
-- **Files written by container show as root-owned (Linux)** — pass your UID/GID at build time:
-  ```bash
-  UID=$(id -u) GID=$(id -g) docker compose up --build
-  ```
-- **Vite HMR not connecting** — confirm `:5173` is forwarded and not blocked by your firewall; check `docker compose logs app` for the Vite process output.
-- **First boot is stuck** — composer install + npm ci run the first time only. Watch progress with `docker compose logs -f app`. Don't Ctrl-C in the first 3–4 minutes.
-- **Reset everything** — `docker compose down -v && docker compose up --build` re-runs migrations and re-seeds dependencies.
-
-### Production image
-
-The same `docker/Dockerfile` exposes a `production` target for self-hosters:
-
-```bash
-docker build --target production -t trypost:latest -f docker/Dockerfile .
-```
-
-The production image bakes in `composer install --no-dev`, `npm run build`, SSR build, and a hardened OpCache profile. Note that `VITE_REVERB_HOST` is baked into the JS bundle at image build time — set it for your deployment hostname before building.
-
 ## Contributing
 
 We love contributions, no matter how small. Pick an [issue](https://github.com/trypost-it/trypost/issues), say hi in [Discussions](https://github.com/trypost-it/trypost/discussions), or just open a PR with what you'd like to see.

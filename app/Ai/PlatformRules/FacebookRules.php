@@ -16,7 +16,7 @@ class FacebookRules implements Contract
     public function specs(): array
     {
         return [
-            'max_content_length' => 63206,
+            'max_content_length' => 10000,
             'max_images' => 10,
             'text_only_allowed' => true,
             'formats' => [
@@ -30,7 +30,7 @@ class FacebookRules implements Contract
     public function summary(): string
     {
         return <<<'TXT'
-Facebook: caption up to 63k chars but short posts perform better. Text-only allowed.
+Facebook: caption up to 10k chars but short posts perform better. Text-only allowed.
 - Post: flexible aspect ratio, up to 10 images/videos.
 - Reel: vertical 9:16 video only, up to 90s.
 - Story: vertical 9:16, single image/video, ephemeral.

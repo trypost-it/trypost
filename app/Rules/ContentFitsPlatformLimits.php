@@ -41,7 +41,7 @@ class ContentFitsPlatformLimits implements ValidationRule
             }
 
             $over = $platform->contentOverflow($content);
-            if ($over === null) {
+            if ($over === 0) {
                 continue;
             }
 

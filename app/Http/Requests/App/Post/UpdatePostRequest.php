@@ -34,7 +34,7 @@ class UpdatePostRequest extends FormRequest
             'content' => [
                 'nullable',
                 'string',
-                'max:63206',
+                'max:10000',
                 Rule::when(
                     $enforcesMediaCompatibility,
                     [new ContentFitsPlatformLimits($this->resolveSelectedPlatforms())]

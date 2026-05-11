@@ -35,7 +35,7 @@ class UpdatePostTool extends Tool
 
         $validated = $request->validate([
             'post_id' => ['required', 'uuid'],
-            'content' => ['nullable', 'string', 'max:63206'],
+            'content' => ['nullable', 'string', 'max:10000'],
             'scheduled_at' => ['nullable', 'date', 'after:now'],
             'status' => ['sometimes', 'string', Rule::in([Status::Draft->value, Status::Scheduled->value])],
             'label_ids' => ['sometimes', 'array'],

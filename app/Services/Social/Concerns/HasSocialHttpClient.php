@@ -16,7 +16,7 @@ trait HasSocialHttpClient
     {
         $content = $postPlatform->post->content ?? '';
 
-        if ($postPlatform->platform->contentOverflow($content) === null) {
+        if ($postPlatform->platform->contentOverflow($content) === 0) {
             return;
         }
 

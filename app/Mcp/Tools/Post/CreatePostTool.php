@@ -24,7 +24,7 @@ class CreatePostTool extends Tool
         $workspace = $request->user()->currentWorkspace;
 
         $validated = $request->validate([
-            'content' => ['nullable', 'string', 'max:63206'],
+            'content' => ['nullable', 'string', 'max:10000'],
             'scheduled_at' => ['nullable', 'date', 'after:now'],
             'label_ids' => ['sometimes', 'array'],
             'label_ids.*' => ['uuid', Rule::exists('workspace_labels', 'id')->where('workspace_id', $workspace->id)],

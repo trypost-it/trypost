@@ -47,6 +47,7 @@ return [
         'drag_to_reorder' => 'Arraste para reordenar',
         'caption' => 'Legenda',
         'write_caption' => 'Escreva sua legenda...',
+        'content_exceeds_platform' => ':platform: longo demais por :over caracteres (máx :limit).',
         'tiktok' => [
             'settings' => 'Configurações do TikTok',
             'variant_label' => 'Tipo de publicação',

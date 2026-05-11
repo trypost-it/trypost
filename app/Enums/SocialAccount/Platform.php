@@ -123,6 +123,19 @@ enum Platform: string
     }
 
     /**
+     * Number of characters the given content exceeds this platform's hard cap,
+     * or null when it fits. Single source of truth for content-length checks —
+     * used both at schedule/publish-validation time and at publish time itself
+     * so the two paths can never drift apart.
+     */
+    public function contentOverflow(string $content): ?int
+    {
+        $over = mb_strlen($content) - $this->maxContentLength();
+
+        return $over > 0 ? $over : null;
+    }
+
+    /**
      * Recommended target length (in characters) for AI-generated posts. This
      * is the engagement sweet spot — much shorter than the platform's hard
      * `maxContentLength()`. Use this to instruct the LLM at generation time;

@@ -95,3 +95,130 @@ test('saving a tiktok post as draft without privacy_level skips the privacy_leve
 
     $response->assertSessionDoesntHaveErrors(['platforms.0.meta.privacy_level']);
 });
+
+test('scheduling a threads post over 500 chars is rejected with the platform name', function () {
+    $threadsAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Threads,
+    ]);
+    $threadsPlatform = PostPlatform::factory()->threads()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $threadsAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Scheduled->value,
+            'content' => str_repeat('a', 537),
+            'scheduled_at' => now()->addDay()->toIso8601String(),
+            'platforms' => [
+                [
+                    'id' => $threadsPlatform->id,
+                    'content_type' => ContentType::ThreadsPost->value,
+                    'meta' => [],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionHasErrors('content');
+    expect(session('errors')->get('content')[0])
+        ->toContain('Threads')
+        ->toContain('500')
+        ->toContain('37'); // over by 37
+});
+
+test('scheduling a threads post within 500 chars passes content-length validation', function () {
+    $threadsAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Threads,
+    ]);
+    $threadsPlatform = PostPlatform::factory()->threads()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $threadsAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Scheduled->value,
+            'content' => str_repeat('a', 500),
+            'scheduled_at' => now()->addDay()->toIso8601String(),
+            'platforms' => [
+                [
+                    'id' => $threadsPlatform->id,
+                    'content_type' => ContentType::ThreadsPost->value,
+                    'meta' => [],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionDoesntHaveErrors('content');
+});
+
+test('saving an over-limit threads post as draft skips the content-length rule', function () {
+    $threadsAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Threads,
+    ]);
+    $threadsPlatform = PostPlatform::factory()->threads()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $threadsAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Draft->value,
+            'content' => str_repeat('a', 1000),
+            'platforms' => [
+                [
+                    'id' => $threadsPlatform->id,
+                    'content_type' => ContentType::ThreadsPost->value,
+                    'meta' => [],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionDoesntHaveErrors('content');
+});
+
+test('scheduling across multiple platforms enforces the strictest content-length cap', function () {
+    $facebookAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Facebook,
+    ]);
+    $facebookPlatform = PostPlatform::factory()->facebook()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $facebookAccount->id,
+    ]);
+
+    $threadsAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Threads,
+    ]);
+    $threadsPlatform = PostPlatform::factory()->threads()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $threadsAccount->id,
+    ]);
+
+    // 600 chars: fine for Facebook (63206 cap), over for Threads (500 cap).
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Scheduled->value,
+            'content' => str_repeat('a', 600),
+            'scheduled_at' => now()->addDay()->toIso8601String(),
+            'platforms' => [
+                [
+                    'id' => $facebookPlatform->id,
+                    'content_type' => ContentType::FacebookPost->value,
+                    'meta' => [],
+                ],
+                [
+                    'id' => $threadsPlatform->id,
+                    'content_type' => ContentType::ThreadsPost->value,
+                    'meta' => [],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionHasErrors('content');
+    expect(session('errors')->get('content')[0])->toContain('Threads');
+});

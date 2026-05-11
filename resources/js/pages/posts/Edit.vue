@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { usePostEcho } from '@/composables/echo/usePostEcho';
 import { getMediaItemIssue } from '@/composables/useMedia';
 import { getMediaRulesForContentType } from '@/composables/useMediaRules';
+import { getPlatformLabel } from '@/composables/usePlatformLogo';
 import dayjs from '@/dayjs';
 import debounce from '@/debounce';
 import { Platform } from '@/enums/platform';
@@ -279,17 +280,33 @@ const tiktokComplianceValid = computed(() => {
     });
 });
 
+const contentLengthOverflows = computed(() => {
+    const len = content.value.length;
+    return platformLimits.value
+        .filter((p) => len > p.maxLength)
+        .map((p) => ({ platform: p.platform, limit: p.maxLength, over: len - p.maxLength }));
+});
+
 const canSchedule = computed(
-    () => mediaCompliancePerPlatformValid.value && tiktokComplianceValid.value,
+    () => mediaCompliancePerPlatformValid.value
+        && tiktokComplianceValid.value
+        && contentLengthOverflows.value.length === 0,
 );
 
 const postActionTooltip = computed(() => {
     if (canSchedule.value) return '';
 
-    // Collect platform-specific media compatibility issues.
-    const reasons = post.value.post_platforms
+    const mediaReasons = post.value.post_platforms
         .filter((pp) => selectedPlatformIds.value.includes(pp.id) && platformIssues.value[pp.id])
         .map((pp) => `${pp.platform_name ?? pp.platform}: ${platformIssues.value[pp.id]}`);
+
+    const lengthReasons = contentLengthOverflows.value.map((overflow) => trans('posts.form.content_exceeds_platform', {
+        platform: getPlatformLabel(overflow.platform),
+        limit: String(overflow.limit),
+        over: String(overflow.over),
+    }));
+
+    const reasons = [...mediaReasons, ...lengthReasons];
 
     if (reasons.length > 0) return reasons.join('\n');
 

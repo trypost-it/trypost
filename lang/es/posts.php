@@ -47,6 +47,7 @@ return [
         'drag_to_reorder' => 'Arrastra para reordenar',
         'caption' => 'Descripción',
         'write_caption' => 'Escribe tu descripción...',
+        'content_exceeds_platform' => ':platform: demasiado largo por :over caracteres (máx :limit).',
         'tiktok' => [
             'settings' => 'Configuración de TikTok',
             'variant_label' => 'Tipo de publicación',

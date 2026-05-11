@@ -47,6 +47,7 @@ return [
         'drag_to_reorder' => 'Drag to reorder',
         'caption' => 'Caption',
         'write_caption' => 'Write your caption...',
+        'content_exceeds_platform' => ':platform: too long by :over chars (max :limit).',
         'tiktok' => [
             'settings' => 'TikTok Settings',
             'variant_label' => 'Post type',

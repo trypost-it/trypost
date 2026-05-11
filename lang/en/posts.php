@@ -275,6 +275,9 @@ return [
         'publishing' => 'Publishing...',
         'publishing_overlay_title' => 'Your post is being published',
         'publishing_overlay_subtitle' => 'This can take a few moments. You can safely leave this page.',
+        'scheduled_overlay_title' => 'This post is scheduled',
+        'scheduled_overlay_subtitle' => 'Scheduled for :date. Unschedule it first to make changes.',
+        'unschedule_cta' => 'Unschedule to edit',
 
         'tabs' => [
             'preview' => 'Preview',

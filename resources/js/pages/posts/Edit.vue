@@ -103,10 +103,14 @@ const props = defineProps<{
 }>();
 
 const post = computed(() => props.post);
+// Terminal states the user cannot recover from — delete, navigate, but never edit.
 const isReadOnly = computed(() => ['publishing', 'published', 'partially_published'].includes(post.value.status));
 const isPublishing = computed(() => post.value.status === 'publishing');
 const isPublished = computed(() => ['published', 'partially_published'].includes(post.value.status));
 const isScheduled = computed(() => post.value.status === 'scheduled');
+// Locked states — terminal + scheduled. Field edits and auto-save suppressed;
+// user must unschedule to re-enter draft and edit.
+const isLocked = computed(() => isReadOnly.value || isScheduled.value);
 
 // Content
 const content = ref(post.value.content || '');
@@ -375,7 +379,7 @@ const deleteModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const editorSidebarRef = ref<InstanceType<typeof PostEditorSidebar> | null>(null);
 
 const togglePlatform = (platformId: string) => {
-    if (isReadOnly.value) return;
+    if (isLocked.value) return;
     const index = selectedPlatformIds.value.indexOf(platformId);
     if (index === -1) {
         // For platforms with a variant picker, snap the post-platform's
@@ -413,7 +417,7 @@ const getSubmitData = () => {
 };
 
 const save = () => {
-    if (isSubmitting.value || isReadOnly.value || isSaving.value) return;
+    if (isSubmitting.value || isLocked.value || isSaving.value) return;
 
     const data = getSubmitData();
 
@@ -434,13 +438,13 @@ const save = () => {
 };
 
 const debouncedSave = debounce(() => {
-    if (!isReadOnly.value && !isSubmitting.value) {
+    if (!isLocked.value && !isSubmitting.value) {
         save();
     }
 }, 1500);
 
 const triggerAutosave = () => {
-    if (!isReadOnly.value) {
+    if (!isLocked.value) {
         showSaved.value = false;
         debouncedSave();
     }
@@ -515,7 +519,36 @@ usePostEcho(post.value.id, '.post.comment.created', (e: any) => {
 
     <AppLayout :full-width="true">
         <div class="flex flex-col flex-1 min-h-0">
-            <header class="flex shrink-0 items-center justify-between gap-3 border-b-2 border-foreground bg-card px-4 py-3 md:px-6">
+            <header
+                v-if="isScheduled"
+                class="flex shrink-0 items-center gap-3 border-b-2 border-foreground bg-violet-100 px-4 py-3 md:px-6"
+            >
+                <div class="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border-2 border-foreground bg-violet-200">
+                    <IconCalendar class="size-4 text-foreground" stroke-width="2" />
+                </div>
+                <div class="flex-1 leading-tight">
+                    <p class="text-sm font-semibold text-foreground">
+                        {{ $t('posts.edit.scheduled_overlay_title') }}
+                    </p>
+                    <p class="text-xs text-foreground/70">
+                        {{ $t('posts.edit.scheduled_overlay_subtitle', { date: pickTimeLabel }) }}
+                    </p>
+                </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    class="bg-background hover:bg-violet-50"
+                    :disabled="isSubmitting"
+                    @click="unschedulePost"
+                >
+                    {{ $t('posts.edit.unschedule_cta') }}
+                </Button>
+            </header>
+
+            <header
+                v-else
+                class="flex shrink-0 items-center justify-between gap-3 border-b-2 border-foreground bg-card px-4 py-3 md:px-6"
+            >
                 <div class="flex items-center gap-3 pl-12 md:pl-0">
                     <span v-if="isSaving" class="flex items-center gap-1.5 text-xs font-semibold text-foreground/70">
                         <IconLoader2 class="size-3.5 animate-spin" />
@@ -529,7 +562,7 @@ usePostEcho(post.value.id, '.post.comment.created', (e: any) => {
                         <IconCircleCheck class="size-3.5" stroke-width="2.5" />
                         {{ $t('posts.edit.status.published') }}
                     </span>
-                    <span v-else-if="!isScheduled" class="flex items-center gap-1.5 text-xs font-semibold text-foreground/60">
+                    <span v-else class="flex items-center gap-1.5 text-xs font-semibold text-foreground/60">
                         <span class="size-2 rounded-full bg-foreground/40" />
                         {{ $t('posts.edit.draft') }}
                     </span>
@@ -554,53 +587,30 @@ usePostEcho(post.value.id, '.post.comment.created', (e: any) => {
                         </Tooltip>
                     </TooltipProvider>
 
-                    <template v-if="isScheduled">
-                        <PickTimePopover
-                            v-model="scheduledDateTime"
-                            :disabled="isSubmitting"
-                            show-remove
-                            @confirm="hasPickedTime = true"
-                            @remove="unschedulePost"
-                        >
-                            <Button
-                                type="button"
-                                variant="outline"
-                                class="bg-violet-100 hover:bg-violet-200"
-                                :disabled="isSubmitting"
-                            >
-                                <IconCalendar class="size-4 text-violet-700" />
-                                <span class="font-bold text-violet-900">
-                                    {{ $t('posts.edit.scheduled_for', { date: pickTimeLabel }) }}
-                                </span>
-                            </Button>
-                        </PickTimePopover>
-                    </template>
-                    <template v-else>
-                        <PickTimePopover
-                            v-model="scheduledDateTime"
-                            :disabled="isPostActionDisabled"
-                            @confirm="hasPickedTime = true"
-                        >
-                            <Button
-                                type="button"
-                                variant="outline"
-                                :disabled="isPostActionDisabled"
-                                :title="postActionTooltip"
-                            >
-                                <IconCalendar class="size-4" />
-                                {{ pickTimeLabel }}
-                            </Button>
-                        </PickTimePopover>
-
+                    <PickTimePopover
+                        v-model="scheduledDateTime"
+                        :disabled="isPostActionDisabled"
+                        @confirm="hasPickedTime = true"
+                    >
                         <Button
                             type="button"
+                            variant="outline"
                             :disabled="isPostActionDisabled"
                             :title="postActionTooltip"
-                            @click="submit(hasPickedTime ? 'scheduled' : 'publishing')"
                         >
-                            {{ hasPickedTime ? $t('posts.edit.schedule') : $t('posts.edit.post_now') }}
+                            <IconCalendar class="size-4" />
+                            {{ pickTimeLabel }}
                         </Button>
-                    </template>
+                    </PickTimePopover>
+
+                    <Button
+                        type="button"
+                        :disabled="isPostActionDisabled"
+                        :title="postActionTooltip"
+                        @click="submit(hasPickedTime ? 'scheduled' : 'publishing')"
+                    >
+                        {{ hasPickedTime ? $t('posts.edit.schedule') : $t('posts.edit.post_now') }}
+                    </Button>
                 </div>
             </header>
 
@@ -622,7 +632,10 @@ usePostEcho(post.value.id, '.post.comment.created', (e: any) => {
                         <p class="mt-1 text-sm text-foreground/70">{{ $t('posts.edit.publishing_overlay_subtitle') }}</p>
                     </div>
                 </div>
-                <div class="flex h-full">
+                <div
+                    class="flex h-full"
+                    :class="{ 'pointer-events-none select-none opacity-60': isScheduled }"
+                >
                     <div class="w-full overflow-y-auto lg:w-2/3 lg:border-r-2 lg:border-foreground">
                         <PostEditorComposer
                             v-model:content="content"
@@ -651,7 +664,7 @@ usePostEcho(post.value.id, '.post.comment.created', (e: any) => {
                             :labels="labels"
                             :selected-label-ids="selectedLabelIds"
                             :tiktok-creator-infos="tiktokCreatorInfos"
-                            :is-read-only="isReadOnly"
+                            :is-read-only="isLocked"
                             :auth-user-id="authUserId"
                             :initial-highlight-comment-id="initialHighlightCommentId"
                             @toggle-platform="togglePlatform"

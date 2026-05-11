@@ -275,6 +275,9 @@ return [
         'publishing' => 'Publicando...',
         'publishing_overlay_title' => 'Seu post está sendo publicado',
         'publishing_overlay_subtitle' => 'Isso pode levar alguns instantes. Você pode sair desta página sem problemas.',
+        'scheduled_overlay_title' => 'Este post está agendado',
+        'scheduled_overlay_subtitle' => 'Agendado para :date. Desagende para fazer alterações.',
+        'unschedule_cta' => 'Desagendar para editar',
 
         'tabs' => [
             'preview' => 'Pré-visualização',

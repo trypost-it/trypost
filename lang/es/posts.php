@@ -275,6 +275,9 @@ return [
         'publishing' => 'Publicando...',
         'publishing_overlay_title' => 'Tu publicación se está enviando',
         'publishing_overlay_subtitle' => 'Esto puede tardar unos momentos. Puedes salir de esta página sin problemas.',
+        'scheduled_overlay_title' => 'Esta publicación está programada',
+        'scheduled_overlay_subtitle' => 'Programada para :date. Cancela la programación para hacer cambios.',
+        'unschedule_cta' => 'Cancelar para editar',
 
         'tabs' => [
             'preview' => 'Vista previa',

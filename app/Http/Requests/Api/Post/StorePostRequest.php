@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Requests\Api\Post;
 
 use App\Enums\PostPlatform\ContentType;
+use App\Enums\SocialAccount\Platform;
+use App\Models\SocialAccount;
+use App\Rules\ContentFitsPlatformLimits;
 use App\Rules\ContentTypeMatchesPlatform;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class StorePostRequest extends FormRequest
@@ -21,7 +25,15 @@ class StorePostRequest extends FormRequest
         $workspaceId = $this->user()->currentWorkspace->id;
 
         return [
-            'content' => ['nullable', 'string', 'max:63206'],
+            'content' => [
+                'nullable',
+                'string',
+                'max:10000',
+                Rule::when(
+                    $this->filled('scheduled_at'),
+                    [new ContentFitsPlatformLimits($this->resolveSelectedPlatforms($workspaceId))]
+                ),
+            ],
             'media' => ['sometimes', 'array'],
             'platforms' => ['required', 'array', 'min:1'],
             'platforms.*.social_account_id' => [
@@ -44,5 +56,21 @@ class StorePostRequest extends FormRequest
                 Rule::exists('workspace_labels', 'id')->where('workspace_id', $workspaceId),
             ],
         ];
+    }
+
+    /**
+     * @return Collection<int|string, Platform>
+     */
+    private function resolveSelectedPlatforms(string $workspaceId): Collection
+    {
+        $accountIds = collect($this->input('platforms', []))->pluck('social_account_id')->filter()->all();
+        if (empty($accountIds)) {
+            return collect();
+        }
+
+        return SocialAccount::query()
+            ->where('workspace_id', $workspaceId)
+            ->whereIn('id', $accountIds)
+            ->pluck('platform', 'id');
     }
 }

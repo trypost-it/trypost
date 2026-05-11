@@ -60,7 +60,7 @@ test('platform has correct max content length', function () {
     expect(Platform::X->maxContentLength())->toBe(280);
     expect(Platform::TikTok->maxContentLength())->toBe(2200);
     expect(Platform::YouTube->maxContentLength())->toBe(100);
-    expect(Platform::Facebook->maxContentLength())->toBe(63206);
+    expect(Platform::Facebook->maxContentLength())->toBe(10000);
     expect(Platform::Instagram->maxContentLength())->toBe(2200);
     expect(Platform::Threads->maxContentLength())->toBe(500);
     expect(Platform::Pinterest->maxContentLength())->toBe(800);

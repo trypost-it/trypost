@@ -47,6 +47,7 @@ return [
         'drag_to_reorder' => 'Drag to reorder',
         'caption' => 'Caption',
         'write_caption' => 'Write your caption...',
+        'content_exceeds_platform' => ':platform: too long by :over chars (max :limit).',
         'tiktok' => [
             'settings' => 'TikTok Settings',
             'variant_label' => 'Post type',
@@ -233,7 +234,6 @@ return [
         'cancel' => 'Cancel',
         'delete' => 'Delete',
         'schedule_for' => 'Schedule for',
-        'scheduled_for' => 'Scheduled · :date',
         'schedule_date' => 'Schedule date',
         'unschedule' => 'Unschedule',
         'saving' => 'Saving...',
@@ -274,6 +274,9 @@ return [
         'publishing' => 'Publishing...',
         'publishing_overlay_title' => 'Your post is being published',
         'publishing_overlay_subtitle' => 'This can take a few moments. You can safely leave this page.',
+        'scheduled_overlay_title' => 'This post is scheduled',
+        'scheduled_overlay_subtitle' => 'Scheduled for :date. Unschedule it first to make changes.',
+        'unschedule_cta' => 'Unschedule to edit',
 
         'tabs' => [
             'preview' => 'Preview',

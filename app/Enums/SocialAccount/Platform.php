@@ -99,7 +99,9 @@ enum Platform: string
      *    (publisher derives title from the first line via `buildTitle`), and
      *    Shorts UX only shows ~100 chars before "more" — capping at 100 keeps
      *    posts appropriate for the format.
-     *  - Facebook text status: 63206
+     *  - Facebook text status: 10000 (API allows 63206; we cap below
+     *    that — 63k-char posts are unrealistic and emoji-heavy content
+     *    risks overflowing the TEXT column's 65535-byte ceiling)
      *  - Instagram feed caption: 2200
      *  - Threads: 500
      *  - Pinterest pin description: 800 (title is 100, not modeled here)
@@ -113,13 +115,24 @@ enum Platform: string
             self::X => 280,
             self::TikTok => 2200,
             self::YouTube => 100,
-            self::Facebook => 63206,
+            self::Facebook => 10000,
             self::Instagram, self::InstagramFacebook => 2200,
             self::Threads => 500,
             self::Pinterest => 800,
             self::Bluesky => 300,
             self::Mastodon => 500,
         };
+    }
+
+    /**
+     * Number of characters by which the given content exceeds this platform's
+     * hard cap. Returns 0 when it fits. Single source of truth for content-
+     * length checks — used both at schedule-validation time and at publish
+     * time itself so the two paths can never drift apart.
+     */
+    public function contentOverflow(string $content): int
+    {
+        return max(0, mb_strlen($content) - $this->maxContentLength());
     }
 
     /**

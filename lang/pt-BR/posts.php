@@ -47,6 +47,7 @@ return [
         'drag_to_reorder' => 'Arraste para reordenar',
         'caption' => 'Legenda',
         'write_caption' => 'Escreva sua legenda...',
+        'content_exceeds_platform' => ':platform: longo demais por :over caracteres (máx :limit).',
         'tiktok' => [
             'settings' => 'Configurações do TikTok',
             'variant_label' => 'Tipo de publicação',
@@ -229,7 +230,6 @@ return [
         'schedule' => 'Agendar',
         'delete' => 'Excluir',
         'schedule_for' => 'Agendar para',
-        'scheduled_for' => 'Agendado · :date',
         'unschedule' => 'Desagendar',
         'saving' => 'Salvando...',
         'saved' => 'Salvo',
@@ -274,6 +274,9 @@ return [
         'publishing' => 'Publicando...',
         'publishing_overlay_title' => 'Seu post está sendo publicado',
         'publishing_overlay_subtitle' => 'Isso pode levar alguns instantes. Você pode sair desta página sem problemas.',
+        'scheduled_overlay_title' => 'Este post está agendado',
+        'scheduled_overlay_subtitle' => 'Agendado para :date. Desagende para fazer alterações.',
+        'unschedule_cta' => 'Desagendar para editar',
 
         'tabs' => [
             'preview' => 'Pré-visualização',

@@ -7,8 +7,10 @@ namespace App\Http\Requests\App\Post;
 use App\Enums\Post\Status;
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
+use App\Rules\ContentFitsPlatformLimits;
 use App\Rules\ContentTypeCompatibleWithMedia;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -29,7 +31,15 @@ class UpdatePostRequest extends FormRequest
 
         return [
             'status' => ['required', 'string', Rule::in([Status::Draft->value, Status::Scheduled->value, Status::Publishing->value])],
-            'content' => ['nullable', 'string', 'max:63206'],
+            'content' => [
+                'nullable',
+                'string',
+                'max:10000',
+                Rule::when(
+                    $enforcesMediaCompatibility,
+                    [new ContentFitsPlatformLimits($this->resolveSelectedPlatforms())]
+                ),
+            ],
             'media' => ['sometimes', 'array'],
             'media.*.id' => ['required', 'string'],
             'media.*.path' => ['required', 'string', 'max:500'],
@@ -107,5 +117,21 @@ class UpdatePostRequest extends FormRequest
             [Status::Scheduled->value, Status::Publishing->value],
             true,
         );
+    }
+
+    /**
+     * @return Collection<int|string, Platform>
+     */
+    private function resolveSelectedPlatforms(): Collection
+    {
+        $ids = collect($this->input('platforms', []))->pluck('id')->filter()->all();
+        if (empty($ids)) {
+            return collect();
+        }
+
+        return $this->route('post')
+            ->postPlatforms()
+            ->whereIn('id', $ids)
+            ->pluck('platform', 'id');
     }
 }

@@ -307,6 +307,96 @@ it('rejects creating a post with content_type not in the enum', function () {
         ->assertJsonValidationErrors(['platforms.0.content_type']);
 });
 
+it('rejects scheduling an over-limit threads post via the api store', function () {
+    $threadsAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Threads,
+    ]);
+
+    $response = $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store'), [
+            'content' => str_repeat('a', 537),
+            'scheduled_at' => now()->addDay()->toIso8601String(),
+            'platforms' => [
+                ['social_account_id' => $threadsAccount->id, 'content_type' => ContentType::ThreadsPost->value],
+            ],
+        ]);
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['content']);
+    expect($response->json('errors.content.0'))
+        ->toContain('Threads')
+        ->toContain('500')
+        ->toContain('37');
+});
+
+it('accepts creating an over-limit draft (no scheduled_at) via the api store', function () {
+    $threadsAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Threads,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->postJson(route('api.posts.store'), [
+            'content' => str_repeat('a', 1000),
+            'platforms' => [
+                ['social_account_id' => $threadsAccount->id, 'content_type' => ContentType::ThreadsPost->value],
+            ],
+        ])
+        ->assertCreated();
+});
+
+it('rejects scheduling an over-limit threads post via the api update', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+    $threadsAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Threads,
+    ]);
+    $threadsPlatform = PostPlatform::factory()->threads()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $threadsAccount->id,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [
+            'status' => PostStatus::Scheduled->value,
+            'content' => str_repeat('a', 600),
+            'scheduled_at' => now()->addDay()->toIso8601String(),
+            'platforms' => [
+                ['id' => $threadsPlatform->id, 'content_type' => ContentType::ThreadsPost->value],
+            ],
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['content']);
+});
+
+it('saving an over-limit threads post as draft via api skips the content-length check', function () {
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+    $threadsAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Threads,
+    ]);
+    $threadsPlatform = PostPlatform::factory()->threads()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $threadsAccount->id,
+    ]);
+
+    $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])
+        ->putJson(route('api.posts.update', $post), [
+            'status' => PostStatus::Draft->value,
+            'content' => str_repeat('a', 1000),
+            'platforms' => [
+                ['id' => $threadsPlatform->id, 'content_type' => ContentType::ThreadsPost->value],
+            ],
+        ])
+        ->assertSuccessful();
+});
+
 it('rejects creating a post when content_type does not match the social account platform', function () {
     // x_post on a LinkedIn account — ContentTypeMatchesPlatform should reject.
     $this->withHeaders(['Authorization' => 'Bearer '.$this->plainToken])

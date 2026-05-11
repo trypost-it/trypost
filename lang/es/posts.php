@@ -47,6 +47,7 @@ return [
         'drag_to_reorder' => 'Arrastra para reordenar',
         'caption' => 'Descripción',
         'write_caption' => 'Escribe tu descripción...',
+        'content_exceeds_platform' => ':platform: demasiado largo por :over caracteres (máx :limit).',
         'tiktok' => [
             'settings' => 'Configuración de TikTok',
             'variant_label' => 'Tipo de publicación',
@@ -229,7 +230,6 @@ return [
         'schedule' => 'Programar',
         'delete' => 'Eliminar',
         'schedule_for' => 'Programar para',
-        'scheduled_for' => 'Programado · :date',
         'unschedule' => 'Desprogramar',
         'saving' => 'Guardando...',
         'saved' => 'Guardado',
@@ -274,6 +274,9 @@ return [
         'publishing' => 'Publicando...',
         'publishing_overlay_title' => 'Tu publicación se está enviando',
         'publishing_overlay_subtitle' => 'Esto puede tardar unos momentos. Puedes salir de esta página sin problemas.',
+        'scheduled_overlay_title' => 'Esta publicación está programada',
+        'scheduled_overlay_subtitle' => 'Programada para :date. Cancela la programación para hacer cambios.',
+        'unschedule_cta' => 'Cancelar para editar',
 
         'tabs' => [
             'preview' => 'Vista previa',

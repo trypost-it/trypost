@@ -14,14 +14,18 @@ trait HasSocialHttpClient
 {
     protected function validateContentLength(PostPlatform $postPlatform): void
     {
-        $maxLength = $postPlatform->platform->maxContentLength();
-        $contentLength = mb_strlen($postPlatform->post->content ?? '');
+        $content = $postPlatform->post->content ?? '';
 
-        if ($contentLength > $maxLength) {
-            throw new \Exception(
-                "Content exceeds {$postPlatform->platform->label()} limit of {$maxLength} characters ({$contentLength} provided)."
-            );
+        if ($postPlatform->platform->contentOverflow($content) === 0) {
+            return;
         }
+
+        $maxLength = $postPlatform->platform->maxContentLength();
+        $contentLength = mb_strlen($content);
+
+        throw new \Exception(
+            "Content exceeds {$postPlatform->platform->label()} limit of {$maxLength} characters ({$contentLength} provided)."
+        );
     }
 
     protected function refreshTokenWithLock(SocialAccount $account, callable $refreshFn): void

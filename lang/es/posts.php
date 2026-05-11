@@ -230,7 +230,6 @@ return [
         'schedule' => 'Programar',
         'delete' => 'Eliminar',
         'schedule_for' => 'Programar para',
-        'scheduled_for' => 'Programado · :date',
         'unschedule' => 'Desprogramar',
         'saving' => 'Guardando...',
         'saved' => 'Guardado',

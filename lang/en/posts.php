@@ -234,7 +234,6 @@ return [
         'cancel' => 'Cancel',
         'delete' => 'Delete',
         'schedule_for' => 'Schedule for',
-        'scheduled_for' => 'Scheduled · :date',
         'schedule_date' => 'Schedule date',
         'unschedule' => 'Unschedule',
         'saving' => 'Saving...',

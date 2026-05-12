@@ -212,36 +212,54 @@ class FacebookPublisher
 
     private function publishReel(string $pageId, string $accessToken, ?string $content, $media): array
     {
-        // Upload video as reel
-        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/video_reels", [
+        // Phase 1 (start) — graph endpoint returns video_id + upload_url.
+        $startResponse = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/video_reels", [
             'upload_phase' => 'start',
             'access_token' => $accessToken,
         ]);
 
-        if ($response->failed()) {
+        if ($startResponse->failed()) {
             Log::error('Facebook reel upload start failed', [
-                'status' => $response->status(),
-                'body' => $this->redactResponseBody($response->body()),
+                'status' => $startResponse->status(),
+                'body' => $this->redactResponseBody($startResponse->body()),
             ]);
-            $this->handleApiError($response);
+            $this->handleApiError($startResponse);
         }
 
-        $data = $response->json();
-        $videoId = data_get($data, 'video_id');
+        $startData = $startResponse->json();
+        $videoId = data_get($startData, 'video_id');
+        $uploadUrl = data_get($startData, 'upload_url');
 
-        // Upload the video file (Facebook accepts URL in video_file_chunk)
-        $uploadResponse = $this->socialHttp()->post("{$this->baseUrl}/{$videoId}", [
-            'upload_phase' => 'transfer',
-            'video_file_chunk' => $media->url,
-            'access_token' => $accessToken,
-        ]);
+        if (! $videoId || ! $uploadUrl) {
+            Log::error('Facebook reel start did not return video_id/upload_url', [
+                'body' => $this->redactResponseBody($startResponse->body()),
+            ]);
+            $this->handleApiError($startResponse);
+        }
+
+        // Phase 2 (transfer, hosted-file flow) — POST to upload_url on
+        // rupload.facebook.com with `file_url` in the JSON body and
+        // `Authorization: OAuth …` header. The previous implementation
+        // POSTed to the graph endpoint with a made-up `video_file_chunk`
+        // body field; Facebook accepted the request but never fetched
+        // the video, so finish failed with error_subcode 1363130
+        // ("Video Upload Is Missing").
+        $uploadResponse = $this->socialHttp()
+            ->withHeaders(['Authorization' => "OAuth {$accessToken}"])
+            ->asJson()
+            ->post($uploadUrl, [
+                'file_url' => $media->url,
+            ]);
 
         if ($uploadResponse->failed()) {
-            Log::error('Facebook reel upload transfer failed', ['body' => $this->redactResponseBody($uploadResponse->body())]);
+            Log::error('Facebook reel upload transfer failed', [
+                'status' => $uploadResponse->status(),
+                'body' => $this->redactResponseBody($uploadResponse->body()),
+            ]);
             $this->handleApiError($uploadResponse);
         }
 
-        // Finish and publish the reel
+        // Phase 3 (finish) — publish the reel.
         $finishResponse = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/video_reels", [
             'upload_phase' => 'finish',
             'video_id' => $videoId,

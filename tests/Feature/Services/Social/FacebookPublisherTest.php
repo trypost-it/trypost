@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
+use App\Exceptions\Social\FacebookPublishException;
 use App\Exceptions\TokenExpiredException;
 use App\Models\Post;
 use App\Models\PostPlatform;
@@ -179,10 +180,12 @@ test('facebook publisher can publish reel', function () {
 
     Http::fake([
         '*/page_123/video_reels' => Http::sequence()
-            ->push(['video_id' => 'reel_video_123'], 200)
+            ->push([
+                'video_id' => 'reel_video_123',
+                'upload_url' => 'https://rupload.facebook.com/video-upload/v25.0/reel_video_123',
+            ], 200)
             ->push(['id' => 'reel_123', 'success' => true], 200),
-        '*/reel_video_123' => Http::response(['success' => true], 200),
-        '*' => Http::response('', 200),
+        '*rupload.facebook.com/*' => Http::response(['success' => true], 200),
     ]);
 
     $result = $this->publisher->publish($this->postPlatform);
@@ -190,6 +193,45 @@ test('facebook publisher can publish reel', function () {
     expect($result)->toHaveKey('id');
     expect($result['id'])->toBe('reel_123');
     expect($result['url'])->toBe('https://www.facebook.com/reel/reel_123');
+
+    // Assert the transfer phase: POST to upload_url (rupload host) with
+    // file_url JSON body and OAuth header — not to the graph endpoint
+    // with the (legacy/wrong) video_file_chunk body param.
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), 'rupload.facebook.com')) {
+            return false;
+        }
+
+        return $request['file_url'] === 'https://example.com/media/2026-01/reel.mp4'
+            && str_starts_with($request->header('Authorization')[0] ?? '', 'OAuth ');
+    });
+});
+
+test('facebook publisher fails reel publish when start does not return upload_url', function () {
+    $this->postPlatform->update(['content_type' => ContentType::FacebookReel]);
+
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-reel',
+                'path' => 'media/2026-01/reel.mp4',
+                'url' => 'https://example.com/media/2026-01/reel.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'reel.mp4',
+            ],
+        ],
+    ]);
+
+    // Missing upload_url in the start response — should not silently
+    // proceed to a broken transfer (which is what the old code did).
+    Http::fake([
+        '*/page_123/video_reels' => Http::response([
+            'video_id' => 'reel_video_123',
+        ], 200),
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(FacebookPublishException::class);
 });
 
 test('facebook publisher can publish image story', function () {
@@ -376,10 +418,12 @@ test('facebook publisher cleans up temp files after reel upload', function () {
 
     Http::fake([
         '*/page_123/video_reels' => Http::sequence()
-            ->push(['video_id' => 'reel_video_cleanup_123'], 200)
+            ->push([
+                'video_id' => 'reel_video_cleanup_123',
+                'upload_url' => 'https://rupload.facebook.com/video-upload/v25.0/reel_video_cleanup_123',
+            ], 200)
             ->push(['id' => 'reel_cleanup_456', 'success' => true], 200),
-        '*/reel_video_cleanup_123' => Http::response(['success' => true], 200),
-        '*' => Http::response('', 200),
+        '*rupload.facebook.com/*' => Http::response(['success' => true], 200),
     ]);
 
     $this->publisher->publish($this->postPlatform);

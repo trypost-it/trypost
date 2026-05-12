@@ -96,9 +96,11 @@ else
     php artisan event:clear
 fi
 
-# 12) Permissions.
+# 12) Permissions. Production php-fpm pool runs as www-data (Alpine default),
+# so storage and bootstrap/cache must be writable by that user — Laravel
+# needs to write session files, view cache, log files, etc.
 if [ "${TARGET}" = "production" ]; then
-    chown -R app:app storage bootstrap/cache
+    chown -R www-data:www-data storage bootstrap/cache
 else
     # Dev: ensure UID-mapped user owns runtime dirs.
     APP_UID="${UID:-1000}"

@@ -29,12 +29,14 @@ RUN apk add --no-cache \
         libpng-dev \
         libjpeg-turbo-dev \
         freetype-dev \
+        libwebp-dev \
+        libavif-dev \
         libzip-dev \
         oniguruma-dev \
         icu-dev \
         linux-headers \
         $PHPIZE_DEPS \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_pgsql \
         pgsql \
@@ -81,35 +83,61 @@ RUN composer install \
         --no-interaction
 
 # ----------------------------------------------------------------------------
-# Stage 4: wayfinder-gen — generate TS route helpers (needs PHP + Laravel)
+# Stage 4: asset-build — wayfinder TS gen + Vite + Inertia SSR build
+#
+# PHP and Node together in one stage because @laravel/vite-plugin-wayfinder
+# invokes `php artisan wayfinder:generate` during vite build — splitting
+# the stages would mean the vite phase has no PHP available.
+#
+# Vite inlines VITE_* values into the JS bundle at build time. Pass them
+# as build args (--build-arg VITE_REVERB_APP_KEY=...) so the bundle reaches
+# the browser with the correct Reverb/PostHog config. Runtime env vars on
+# the container have no effect on the already-compiled bundle.
 # ----------------------------------------------------------------------------
-FROM composer-deps AS wayfinder-gen
+FROM composer-deps AS asset-build
+
+# Node 22 for Vite + npm scripts.
+RUN apk add --no-cache nodejs npm
+
+ARG VITE_APP_NAME=TryPost
+ARG VITE_REVERB_APP_KEY=
+ARG VITE_REVERB_HOST=localhost
+ARG VITE_REVERB_PORT=8080
+ARG VITE_REVERB_SCHEME=http
+ARG VITE_POSTHOG_ENABLED=false
+ARG VITE_POSTHOG_API_KEY=
+ARG VITE_POSTHOG_HOST=https://us.i.posthog.com
+
+# Stub PHP envs so artisan can boot (overridden at runtime).
+ENV APP_KEY=base64:c3R1Yi13YXlmaW5kZXItZ2VuLWtleS1mb3ItYnVpbGRpbmctYXNzZXRzMA== \
+    APP_ENV=production \
+    APP_DEBUG=false \
+    APP_URL=http://localhost \
+    VITE_APP_NAME=${VITE_APP_NAME} \
+    VITE_REVERB_APP_KEY=${VITE_REVERB_APP_KEY} \
+    VITE_REVERB_HOST=${VITE_REVERB_HOST} \
+    VITE_REVERB_PORT=${VITE_REVERB_PORT} \
+    VITE_REVERB_SCHEME=${VITE_REVERB_SCHEME} \
+    VITE_POSTHOG_ENABLED=${VITE_POSTHOG_ENABLED} \
+    VITE_POSTHOG_API_KEY=${VITE_POSTHOG_API_KEY} \
+    VITE_POSTHOG_HOST=${VITE_POSTHOG_HOST}
 
 COPY --from=composer-deps /var/www/html/vendor ./vendor
 COPY . .
 
-# Stub env so artisan can boot; overridden at runtime.
-ENV APP_KEY=base64:c3R1Yi13YXlmaW5kZXItZ2VuLWtleS1mb3ItYnVpbGRpbmctYXNzZXRzMA== \
-    APP_ENV=production \
-    APP_DEBUG=false
+# Ensure Laravel runtime dirs exist — .dockerignore strips their contents
+# (correct: caches shouldn't bloat builds), but artisan boot needs the dirs.
+RUN mkdir -p storage/framework/cache/data \
+             storage/framework/sessions \
+             storage/framework/views \
+             storage/logs \
+             bootstrap/cache
 
 RUN composer dump-autoload --no-scripts --optimize \
-    && php artisan wayfinder:generate --with-form
-
-# ----------------------------------------------------------------------------
-# Stage 5: asset-build — Vite + Inertia SSR build
-# ----------------------------------------------------------------------------
-FROM node:${NODE_VERSION}-alpine AS asset-build
-
-WORKDIR /var/www/html
-
-COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
-
-# Pull source + freshly generated wayfinder TS from previous stage.
-COPY --from=wayfinder-gen /var/www/html /var/www/html
-
-RUN npm run build && npm run build:ssr
+    && php artisan wayfinder:generate --with-form \
+    && npm ci --no-audit --no-fund \
+    && npm run build \
+    && npm run build:ssr
 
 # ----------------------------------------------------------------------------
 # Stage 6: dev — local development image (bind-mount the source at runtime)
@@ -148,9 +176,9 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 # ----------------------------------------------------------------------------
 FROM system-base AS production
 
-# Non-root runtime user (fixed UID; overridable per orchestrator if needed).
-RUN addgroup -g 1000 -S app \
-    && adduser -u 1000 -S app -G app -h /home/app
+# php-fpm runs as www-data (Alpine default pool config) — that's the user
+# storage and bootstrap/cache must be owned by, so Laravel can write logs,
+# session files, view cache, etc.
 
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/php.prod.ini /usr/local/etc/php/conf.d/99-trypost.ini
@@ -158,16 +186,21 @@ COPY docker/supervisord.prod.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Production composer deps only.
+# Application source + generated wayfinder TS + built assets — all from
+# asset-build (the merged stage that ran php artisan wayfinder:generate,
+# npm run build, and npm run build:ssr).
+COPY --from=asset-build /var/www/html /var/www/html
+
+# Replace the dev-equipped vendor/ with production-only deps. composer-deps-prod
+# is built independently and is much smaller (no phpunit, no debugbar, no pail,
+# no pint). Also wipe bootstrap/cache/*.php — package:discover ran with dev
+# deps and recorded providers (Pail, Telescope etc) that no longer exist;
+# Laravel rediscovers cleanly at first boot.
+RUN rm -rf /var/www/html/vendor /var/www/html/bootstrap/cache/*.php
 COPY --from=composer-deps-prod /var/www/html/vendor /var/www/html/vendor
 
-# Application source + generated wayfinder TS + built assets.
-COPY --from=wayfinder-gen /var/www/html /var/www/html
-COPY --from=asset-build /var/www/html/public/build /var/www/html/public/build
-COPY --from=asset-build /var/www/html/bootstrap/ssr /var/www/html/bootstrap/ssr
-
 RUN composer dump-autoload --optimize --classmap-authoritative --no-scripts \
-    && chown -R app:app /var/www/html/storage /var/www/html/bootstrap/cache
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 ENV TRYPOST_TARGET=production
 

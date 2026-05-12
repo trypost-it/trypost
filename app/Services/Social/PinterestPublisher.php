@@ -8,6 +8,7 @@ use App\Enums\PostPlatform\ContentType;
 use App\Enums\SocialAccount\Platform;
 use App\Exceptions\Social\ErrorCategory;
 use App\Exceptions\Social\PinterestPublishException;
+use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Media\MediaOptimizer;
@@ -413,8 +414,10 @@ class PinterestPublisher
             ]);
 
         if ($response->failed()) {
-            Log::error('Pinterest token refresh failed', ['body' => $this->redactResponseBody($response->body())]);
-            $this->handleApiError($response);
+            throw new TokenExpiredException(
+                message: data_get($response->json(), 'error_description', 'Failed to refresh Pinterest token'),
+                platformErrorCode: (string) $response->status(),
+            );
         }
 
         $data = $response->json();

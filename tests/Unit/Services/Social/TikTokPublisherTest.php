@@ -237,6 +237,31 @@ test('tiktok publisher throws exception when no refresh token available', functi
         ->toThrow(TokenExpiredException::class, 'No refresh token available for TikTok account');
 });
 
+test('tiktok publisher throws TokenExpiredException when refresh_token is rejected', function () {
+    $this->socialAccount->update(['token_expires_at' => now()->subHour()]);
+
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/test-video.mp4',
+                'url' => 'https://example.com/media/2026-01/test-video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'test-video.mp4',
+            ],
+        ],
+    ]);
+
+    Http::fake([
+        '*/oauth/token/' => Http::response([
+            'error' => ['code' => 'invalid_grant', 'message' => 'Refresh token expired'],
+        ], 400),
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(TokenExpiredException::class, 'Refresh token expired');
+});
+
 test('tiktok publisher throws exception for unsupported media type', function () {
     $this->post->update([
         'media' => [

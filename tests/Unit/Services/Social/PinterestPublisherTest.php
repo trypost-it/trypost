@@ -307,6 +307,32 @@ test('pinterest publisher refreshes token when expired', function () {
     expect($this->socialAccount->access_token)->toBe('new-access-token');
 });
 
+test('pinterest publisher throws TokenExpiredException when refresh_token is rejected', function () {
+    $this->socialAccount->update(['token_expires_at' => now()->subHour()]);
+
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
+    ]);
+
+    Http::fake([
+        '*/v5/oauth/token' => Http::response([
+            'error' => 'invalid_request',
+            'error_description' => 'Refresh token expired',
+        ], 400),
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(TokenExpiredException::class, 'Refresh token expired');
+});
+
 test('pinterest publisher includes title and link when provided', function () {
     $this->postPlatform->update([
         'meta' => [

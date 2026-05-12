@@ -447,7 +447,10 @@ class LinkedInPublisher
         ]);
 
         if ($response->failed()) {
-            $this->handleApiError($response);
+            throw new TokenExpiredException(
+                message: data_get($response->json(), 'error_description', 'Failed to refresh LinkedIn token'),
+                platformErrorCode: (string) $response->status(),
+            );
         }
 
         $data = $response->json();

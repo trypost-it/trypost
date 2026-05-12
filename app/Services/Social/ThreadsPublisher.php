@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Exceptions\Social\ThreadsPublishException;
+use App\Exceptions\TokenExpiredException;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Services\Social\Concerns\HasSocialHttpClient;
@@ -311,8 +312,10 @@ class ThreadsPublisher
         ]);
 
         if ($response->failed()) {
-            Log::error('Threads token refresh failed', ['body' => $this->redactResponseBody($response->body())]);
-            $this->handleApiError($response);
+            throw new TokenExpiredException(
+                message: data_get($response->json(), 'error.message', 'Failed to refresh Threads token'),
+                platformErrorCode: (string) $response->status(),
+            );
         }
 
         $data = $response->json();

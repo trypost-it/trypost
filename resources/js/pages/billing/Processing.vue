@@ -9,6 +9,7 @@ import type { Auth } from '@/types';
 
 const props = defineProps<{
     subscriptionActive: boolean;
+    conversion?: { value: number; currency: string; transaction_id: string } | null;
 }>();
 
 const page = usePage();
@@ -40,10 +41,13 @@ watch(
 
         const plan = (page.props.auth as Auth | undefined)?.plan;
         if (plan) {
-            trackPurchase({
-                name: plan.name,
-                interval: plan.interval,
-            });
+            trackPurchase(
+                {
+                    name: plan.name,
+                    interval: plan.interval,
+                },
+                props.conversion ?? null,
+            );
         }
 
         goHome();

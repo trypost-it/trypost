@@ -4,19 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Ai\PlatformRules\BlueskyRules;
-use App\Ai\PlatformRules\FacebookRules;
-use App\Ai\PlatformRules\InstagramRules;
-use App\Ai\PlatformRules\LinkedInRules;
-use App\Ai\PlatformRules\MastodonRules;
-use App\Ai\PlatformRules\PinterestRules;
-use App\Ai\PlatformRules\Registry;
-use App\Ai\PlatformRules\ThreadsRules;
-use App\Ai\PlatformRules\TikTokRules;
-use App\Ai\PlatformRules\XRules;
-use App\Ai\PlatformRules\YouTubeRules;
 use App\Ai\Providers\ExtendedGeminiProvider;
-use App\Enums\SocialAccount\Platform;
 use App\Listeners\StripeEventListener;
 use App\Models\AccessToken;
 use App\Models\Account;
@@ -97,7 +85,6 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->configureMorphMap();
         $this->configureAi();
-        $this->configurePlatformRules();
         $this->configurePostHog();
         $this->configureRateLimiting();
         $this->configureSocialite();
@@ -134,31 +121,6 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(Dispatcher::class),
             );
         });
-    }
-
-    protected function configurePlatformRules(): void
-    {
-        $map = [
-            Platform::Instagram->value => InstagramRules::class,
-            Platform::InstagramFacebook->value => InstagramRules::class,
-            Platform::Facebook->value => FacebookRules::class,
-            Platform::X->value => XRules::class,
-            Platform::TikTok->value => TikTokRules::class,
-            Platform::YouTube->value => YouTubeRules::class,
-            Platform::LinkedIn->value => LinkedInRules::class,
-            Platform::LinkedInPage->value => LinkedInRules::class,
-            Platform::Threads->value => ThreadsRules::class,
-            Platform::Pinterest->value => PinterestRules::class,
-            Platform::Bluesky->value => BlueskyRules::class,
-            Platform::Mastodon->value => MastodonRules::class,
-        ];
-
-        foreach ($map as $value => $class) {
-            Registry::register(
-                Platform::from($value),
-                $class,
-            );
-        }
     }
 
     protected function configureMorphMap(): void

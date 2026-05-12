@@ -28,7 +28,7 @@ class ConnectionVerifier
         // refresh, so proactive refreshes during races cause false-positive
         // disconnects even though the access_token still works fine.
         if ($account->is_token_expired) {
-            $this->refreshTokenIfNeeded($account);
+            $this->refreshToken($account);
 
             return $this->callVerifyEndpoint($account);
         }
@@ -39,7 +39,7 @@ class ConnectionVerifier
             // Verify returned 401: the access_token is actually invalid.
             // Refresh and retry once with the new token.
             try {
-                $this->refreshTokenIfNeeded($account);
+                $this->refreshToken($account);
             } catch (TokenExpiredException) {
                 throw $e;
             }
@@ -69,11 +69,14 @@ class ConnectionVerifier
     }
 
     /**
-     * Refresh token based on platform type.
+     * Refresh the account's token via the platform-specific OAuth flow.
+     * Callers that want the smart "try access_token first" behavior should
+     * use verify() instead. This method always attempts a refresh under
+     * the per-account lock and throws TokenExpiredException on failure.
      *
      * @throws TokenExpiredException if refresh fails
      */
-    private function refreshTokenIfNeeded(SocialAccount $account): void
+    public function refreshToken(SocialAccount $account): void
     {
         $lock = Cache::lock("token_refresh:{$account->id}", 30);
 

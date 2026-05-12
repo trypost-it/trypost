@@ -45,8 +45,24 @@ const startGeneration = async () => {
     }
 };
 
+// The streamer agent shares the structured-output prompt template with
+// PostContentGenerator, so what comes through the stream is a JSON object
+// like {"content": "...", "image_title": "...", ...}. We only want the
+// content field — and only once the JSON is complete (mid-stream the parse
+// fails and we show nothing, avoiding the typewriter-of-JSON effect).
+const previewText = computed(() => {
+    if (! text.value) return '';
+    try {
+        const parsed = JSON.parse(text.value);
+        if (parsed && typeof parsed.content === 'string') return parsed.content;
+    } catch {
+        // Mid-stream the JSON is incomplete — leave preview empty.
+    }
+    return '';
+});
+
 const apply = () => {
-    emit('apply', text.value);
+    emit('apply', previewText.value);
     open.value = false;
 };
 
@@ -56,7 +72,7 @@ const retry = () => {
     startGeneration();
 };
 
-const canApply = computed(() => status.value === 'completed' && text.value.trim().length > 0);
+const canApply = computed(() => status.value === 'completed' && previewText.value.trim().length > 0);
 const canRetry = computed(() => status.value === 'completed' || status.value === 'failed');
 
 watch(open, () => {
@@ -88,15 +104,16 @@ watch(open, () => {
 
                 <div v-if="status !== 'idle'" class="grid gap-2">
                     <Label class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.ai.generate.preview_label') }}</Label>
-                    <div class="min-h-[120px] whitespace-pre-wrap rounded-lg border-2 border-foreground bg-card px-3 py-2 text-sm font-medium text-foreground shadow-2xs">{{ text || '...' }}</div>
+                    <div class="min-h-[120px] whitespace-pre-wrap rounded-lg border-2 border-foreground bg-card px-3 py-2 text-sm font-medium text-foreground shadow-2xs">{{ previewText || '...' }}</div>
                     <p v-if="status === 'failed'" class="text-xs font-semibold text-rose-700">{{ errorMessage }}</p>
                 </div>
             </div>
 
             <DialogFooter>
                 <Button
-                    v-if="status === 'idle'"
-                    :disabled="! prompt.trim() || dispatching"
+                    v-if="status === 'idle' || status === 'streaming'"
+                    :loading="dispatching || status === 'streaming'"
+                    :disabled="! prompt.trim()"
                     @click="startGeneration"
                 >
                     {{ $t('posts.ai.generate.start') }}

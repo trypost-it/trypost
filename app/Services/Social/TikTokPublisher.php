@@ -330,8 +330,10 @@ class TikTokPublisher
         ]);
 
         if ($response->failed()) {
-            Log::error('TikTok token refresh failed', ['body' => $this->redactResponseBody($response->body())]);
-            $this->handleApiError($response);
+            throw new TokenExpiredException(
+                message: data_get($response->json(), 'error.message', 'Failed to refresh TikTok token'),
+                platformErrorCode: (string) $response->status(),
+            );
         }
 
         $data = $response->json();

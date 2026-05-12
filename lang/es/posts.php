@@ -472,6 +472,7 @@ return [
     'errors' => [
         'account_disconnected' => 'Cuenta social desconectada',
         'account_inactive' => 'Cuenta social desactivada',
+        'account_token_expired' => 'Sesión de la cuenta social expirada — reconecta la cuenta',
     ],
 
     'delete' => [

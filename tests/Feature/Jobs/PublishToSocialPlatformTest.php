@@ -187,6 +187,27 @@ test('publish to social platform skips publishing when account is disconnected',
     expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_disconnected'));
 });
 
+test('publish to social platform skips publishing when account token is expired', function () {
+    Event::fake();
+
+    $this->socialAccount->update([
+        'status' => AccountStatus::TokenExpired,
+        'disconnected_at' => now(),
+    ]);
+
+    $publisher = Mockery::mock(LinkedInPublisher::class);
+    $publisher->shouldNotReceive('publish');
+
+    $this->app->instance(LinkedInPublisher::class, $publisher);
+
+    (new PublishToSocialPlatform($this->postPlatform))->handle();
+
+    $this->postPlatform->refresh();
+    expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
+    expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_token_expired'));
+    expect($this->postPlatform->error_context['category'])->toBe('token_expired');
+});
+
 test('publish to social platform skips publishing when account is inactive', function () {
     Event::fake();
 
@@ -202,27 +223,6 @@ test('publish to social platform skips publishing when account is inactive', fun
     $this->postPlatform->refresh();
     expect($this->postPlatform->status)->toBe(PlatformStatus::Failed);
     expect($this->postPlatform->error_message)->toBe(__('posts.errors.account_inactive'));
-});
-
-test('publish to social platform attempts publishing when account token is expired', function () {
-    Event::fake();
-
-    $this->socialAccount->update([
-        'status' => AccountStatus::TokenExpired,
-    ]);
-
-    $publisher = Mockery::mock(LinkedInPublisher::class);
-    $publisher->shouldReceive('publish')->andReturn([
-        'id' => 'post-123',
-        'url' => 'https://linkedin.com/post/123',
-    ]);
-
-    $this->app->instance(LinkedInPublisher::class, $publisher);
-
-    (new PublishToSocialPlatform($this->postPlatform))->handle();
-
-    $this->postPlatform->refresh();
-    expect($this->postPlatform->status)->toBe(PlatformStatus::Published);
 });
 
 test('publish to social platform dispatches success notification when all platforms published', function () {

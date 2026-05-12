@@ -80,8 +80,10 @@ class VerifyWorkspaceConnections implements ShouldQueue
                     'disconnected_at' => now(),
                 ]);
             } else {
-                // First failure — mark as TokenExpired (softer state)
-                $account->markAsTokenExpired($e->getMessage());
+                // First failure — mark as TokenExpired (softer state).
+                // Suppress per-account notification; the batch notifyOwner()
+                // sends a single summary email for all failures at the end.
+                $account->markAsTokenExpired($e->getMessage(), notify: false);
             }
 
             return false;

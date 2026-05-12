@@ -237,6 +237,19 @@ test('threads publisher refreshes token when expired', function () {
     expect($this->socialAccount->access_token)->toBe('new-long-lived-token');
 });
 
+test('threads publisher throws TokenExpiredException when refresh_token is rejected', function () {
+    $this->socialAccount->update(['token_expires_at' => now()->subHour()]);
+
+    Http::fake([
+        'https://graph.threads.net/refresh_access_token*' => Http::response([
+            'error' => ['message' => 'Token is invalid', 'code' => 190],
+        ], 400),
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(TokenExpiredException::class, 'Token is invalid');
+});
+
 test('threads publisher waits for media processing', function () {
     $this->post->update([
         'media' => [

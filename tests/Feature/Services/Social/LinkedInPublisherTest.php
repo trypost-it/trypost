@@ -141,6 +141,20 @@ test('linkedin publisher throws exception when no refresh token available', func
         ->toThrow(TokenExpiredException::class, 'No refresh token available for LinkedIn account');
 });
 
+test('linkedin publisher throws TokenExpiredException when refresh_token is rejected', function () {
+    $this->socialAccount->update(['token_expires_at' => now()->subHour()]);
+
+    Http::fake([
+        'https://www.linkedin.com/oauth/v2/accessToken' => Http::response([
+            'error' => 'invalid_grant',
+            'error_description' => 'The refresh token is invalid',
+        ], 400),
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(TokenExpiredException::class, 'The refresh token is invalid');
+});
+
 test('linkedin publisher handles empty content', function () {
     $this->post->update(['content' => '']);
 

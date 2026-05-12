@@ -130,7 +130,7 @@ class SocialAccount extends Model
 
     public function markAsDisconnected(string $errorMessage): void
     {
-        $lock = Cache::lock("social_account_disconnect:{$this->id}", 10);
+        $lock = Cache::lock("social_account_status:{$this->id}", 10);
 
         if ($lock->get()) {
             try {
@@ -144,16 +144,18 @@ class SocialAccount extends Model
                 ]);
 
                 if ($wasConnected && $this->workspace->owner) {
-                    $platformName = $this->platform->label();
-                    $accountName = $this->username ?? $this->display_name;
+                    $placeholders = [
+                        'platform' => $this->platform->label(),
+                        'account' => '@'.($this->username ?? $this->display_name),
+                    ];
 
                     SendNotification::dispatch(
                         user: $this->workspace->owner,
                         workspaceId: $this->workspace_id,
                         type: Type::AccountDisconnected,
                         channel: Channel::Both,
-                        title: "{$platformName} account disconnected",
-                        body: "@{$accountName} needs to be reconnected",
+                        title: __('notifications.account_disconnected.title', $placeholders),
+                        body: __('notifications.account_disconnected.body', $placeholders),
                         data: ['social_account_id' => $this->id],
                         mailable: new AccountDisconnected($this),
                     );
@@ -166,7 +168,7 @@ class SocialAccount extends Model
 
     public function markAsTokenExpired(string $errorMessage, bool $notify = true): void
     {
-        $lock = Cache::lock("social_account_token_expired:{$this->id}", 10);
+        $lock = Cache::lock("social_account_status:{$this->id}", 10);
 
         if (! $lock->get()) {
             return;
@@ -183,16 +185,18 @@ class SocialAccount extends Model
             ]);
 
             if ($notify && $wasUsable && $this->workspace->owner) {
-                $platformName = $this->platform->label();
-                $accountName = $this->username ?? $this->display_name;
+                $placeholders = [
+                    'platform' => $this->platform->label(),
+                    'account' => '@'.($this->username ?? $this->display_name),
+                ];
 
                 SendNotification::dispatch(
                     user: $this->workspace->owner,
                     workspaceId: $this->workspace_id,
                     type: Type::AccountDisconnected,
                     channel: Channel::Both,
-                    title: "{$platformName} account needs to be reconnected",
-                    body: "@{$accountName} session expired — please reconnect to keep posting",
+                    title: __('notifications.account_token_expired.title', $placeholders),
+                    body: __('notifications.account_token_expired.body', $placeholders),
                     data: ['social_account_id' => $this->id],
                     mailable: new AccountDisconnected($this),
                 );

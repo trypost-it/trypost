@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Stripe\Exception\ApiErrorException as StripeApiErrorException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class BillingController extends Controller
@@ -66,7 +67,7 @@ class BillingController extends Controller
             ->trialDays(config('cashier.trial_days'));
 
         $checkoutSession = $subscription->checkout([
-            'success_url' => route('app.billing.processing'),
+            'success_url' => route('app.billing.processing').'?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url' => route('app.subscribe'),
         ]);
 
@@ -80,10 +81,47 @@ class BillingController extends Controller
         }
 
         $account = $request->user()->account;
+        $sessionId = $request->query('session_id');
 
         return Inertia::render('billing/Processing', [
             'subscriptionActive' => $account && $account->subscribed(Account::SUBSCRIPTION_NAME),
+            'conversion' => is_string($sessionId) && $sessionId !== '' && $account?->stripe_id
+                ? fn () => $this->buildConversionData($account, $sessionId)
+                : null,
         ]);
+    }
+
+    /**
+     * @return array{value: float, currency: string, transaction_id: string}|null
+     */
+    private function buildConversionData(Account $account, string $sessionId): ?array
+    {
+        try {
+            $session = $account->stripe()->checkout->sessions->retrieve(
+                $sessionId,
+                ['expand' => ['line_items.data.price']],
+            );
+        } catch (StripeApiErrorException) {
+            return null;
+        }
+
+        if (data_get($session, 'customer') !== $account->stripe_id) {
+            return null;
+        }
+
+        $unitAmount = data_get($session, 'line_items.data.0.price.unit_amount');
+        $currency = data_get($session, 'line_items.data.0.price.currency');
+        $transactionId = data_get($session, 'id');
+
+        if (! is_int($unitAmount) || ! is_string($currency) || ! is_string($transactionId)) {
+            return null;
+        }
+
+        return [
+            'value' => $unitAmount / 100,
+            'currency' => strtoupper($currency),
+            'transaction_id' => $transactionId,
+        ];
     }
 
     public function index(Request $request): Response|RedirectResponse

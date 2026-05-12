@@ -117,7 +117,30 @@ test('billing processing shows processing page', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('billing/Processing', false)
         ->has('subscriptionActive')
+        ->where('conversion', null)
     );
+});
+
+test('billing processing exposes null conversion when session_id query param is missing', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $response = $this->actingAs($this->user)
+        ->get(route('app.billing.processing', ['session_id' => '']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->where('conversion', null));
+});
+
+test('billing processing exposes null conversion when account has no stripe_id', function () {
+    config(['trypost.self_hosted' => false]);
+
+    expect($this->account->stripe_id)->toBeNull();
+
+    $response = $this->actingAs($this->user)
+        ->get(route('app.billing.processing', ['session_id' => 'cs_test_123']));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->where('conversion', null));
 });
 
 test('shared auth.plan exposes name slug and interval via AuthPlanResource', function () {

@@ -233,7 +233,43 @@ test('facebook publisher fails reel publish when start does not return upload_ur
     ]);
 
     expect(fn () => $this->publisher->publish($this->postPlatform))
-        ->toThrow(FacebookPublishException::class);
+        ->toThrow(
+            FacebookPublishException::class,
+            'Facebook did not return upload_url for reel start.'
+        );
+});
+
+test('facebook publisher fails reel publish with typed exception when media download fails', function () {
+    $this->postPlatform->update(['content_type' => ContentType::FacebookReel]);
+
+    $this->post->update([
+        'media' => [
+            [
+                'id' => 'test-media-reel',
+                'path' => 'media/2026-01/reel.mp4',
+                'url' => 'https://example.com/media/2026-01/reel.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'reel.mp4',
+            ],
+        ],
+    ]);
+
+    // start succeeds, but the media URL returns 404 — should surface as
+    // a typed FacebookPublishException (ServerError) instead of leaking
+    // a generic Exception that would land in the 'unknown' bucket.
+    Http::fake([
+        '*/page_123/video_reels' => Http::response([
+            'video_id' => 'reel_video_123',
+            'upload_url' => 'https://rupload.facebook.com/video-upload/v25.0/reel_video_123',
+        ], 200),
+        '*example.com/media/*' => Http::response('', 404),
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(
+            FacebookPublishException::class,
+            'Could not download media for Facebook reel.'
+        );
 });
 
 test('facebook publisher can publish image story', function () {

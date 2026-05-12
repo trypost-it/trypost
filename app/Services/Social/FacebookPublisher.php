@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Social;
 
 use App\Enums\PostPlatform\ContentType;
+use App\Exceptions\Social\ErrorCategory;
 use App\Exceptions\Social\FacebookPublishException;
 use App\Models\PostPlatform;
 use App\Services\Social\Concerns\HasSocialHttpClient;
@@ -220,10 +221,6 @@ class FacebookPublisher
         ]);
 
         if ($startResponse->failed()) {
-            Log::error('Facebook reel upload start failed', [
-                'status' => $startResponse->status(),
-                'body' => $this->redactResponseBody($startResponse->body()),
-            ]);
             $this->handleApiError($startResponse);
         }
 
@@ -232,10 +229,12 @@ class FacebookPublisher
         $uploadUrl = data_get($startData, 'upload_url');
 
         if (! $videoId || ! $uploadUrl) {
-            Log::error('Facebook reel start did not return video_id/upload_url', [
-                'body' => $this->redactResponseBody($startResponse->body()),
-            ]);
-            $this->handleApiError($startResponse);
+            throw new FacebookPublishException(
+                userMessage: 'Facebook did not return upload_url for reel start.',
+                category: ErrorCategory::ServerError,
+                platformErrorCode: null,
+                rawResponse: $startResponse->body(),
+            );
         }
 
         // Phase 2 (transfer, local-file flow) — download our hosted
@@ -252,29 +251,39 @@ class FacebookPublisher
                 ->get($media->url);
 
             if ($download->failed()) {
-                throw new \Exception('Failed to download reel media: HTTP '.$download->status());
+                throw new FacebookPublishException(
+                    userMessage: 'Could not download media for Facebook reel.',
+                    category: ErrorCategory::ServerError,
+                    platformErrorCode: (string) $download->status(),
+                    rawResponse: null,
+                );
             }
 
             $fileSize = filesize($tempFile);
+            $stream = fopen($tempFile, 'rb');
 
-            $uploadResponse = Http::withHeaders([
-                'Authorization' => "OAuth {$accessToken}",
-                'Offset' => '0',
-                'file_size' => (string) $fileSize,
-            ])
-                ->timeout(600)
-                ->withBody(file_get_contents($tempFile), $media->mime_type ?? 'video/mp4')
-                ->post($uploadUrl);
+            try {
+                $uploadResponse = Http::withHeaders([
+                    'Authorization' => "OAuth {$accessToken}",
+                    'Offset' => '0',
+                    'file_size' => (string) $fileSize,
+                ])
+                    ->timeout(600)
+                    ->withBody($stream, $media->mime_type ?? 'video/mp4')
+                    ->post($uploadUrl);
+            } finally {
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            }
 
             if ($uploadResponse->failed()) {
-                Log::error('Facebook reel upload transfer failed', [
-                    'status' => $uploadResponse->status(),
-                    'body' => $this->redactResponseBody($uploadResponse->body()),
-                ]);
                 $this->handleApiError($uploadResponse);
             }
         } finally {
-            @unlink($tempFile);
+            if (! unlink($tempFile)) {
+                Log::warning('Facebook reel temp file cleanup failed', ['path' => $tempFile]);
+            }
         }
 
         // Phase 3 (finish) — publish the reel.
@@ -287,9 +296,6 @@ class FacebookPublisher
         ]);
 
         if ($finishResponse->failed()) {
-            Log::error('Facebook reel finish failed', [
-                'body' => $this->redactResponseBody($finishResponse->body()),
-            ]);
             $this->handleApiError($finishResponse);
         }
 

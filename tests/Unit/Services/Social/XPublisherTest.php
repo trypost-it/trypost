@@ -182,6 +182,20 @@ test('x publisher throws exception when no refresh token available', function ()
         ->toThrow(TokenExpiredException::class, 'No refresh token available for X account');
 });
 
+test('x publisher throws TokenExpiredException when refresh_token is rejected by X', function () {
+    $this->socialAccount->update(['token_expires_at' => now()->subHour()]);
+
+    Http::fake([
+        'https://api.x.com/2/oauth2/token' => Http::response([
+            'error' => 'invalid_request',
+            'error_description' => 'Value passed for the token was invalid.',
+        ], 400),
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(TokenExpiredException::class, 'Value passed for the token was invalid.');
+});
+
 test('x publisher handles gif upload with processing', function () {
     $this->post->update([
         'media' => [

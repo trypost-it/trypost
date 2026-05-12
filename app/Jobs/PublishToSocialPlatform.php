@@ -70,6 +70,17 @@ class PublishToSocialPlatform implements ShouldQueue
             return;
         }
 
+        if ($this->postPlatform->socialAccount->status === Status::TokenExpired) {
+            $this->postPlatform->markAsFailed(__('posts.errors.account_token_expired'), [
+                'category' => 'token_expired',
+                'failed_at' => now()->toIso8601String(),
+            ]);
+            $this->updatePostStatus();
+            $this->broadcastStatus();
+
+            return;
+        }
+
         $requiredScopes = $this->postPlatform->platform->requiredPublishScopes();
         $accountScopes = $this->postPlatform->socialAccount->scopes ?? [];
 

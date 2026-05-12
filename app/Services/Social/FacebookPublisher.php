@@ -9,6 +9,7 @@ use App\Exceptions\Social\FacebookPublishException;
 use App\Models\PostPlatform;
 use App\Services\Social\Concerns\HasSocialHttpClient;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class FacebookPublisher
@@ -237,26 +238,43 @@ class FacebookPublisher
             $this->handleApiError($startResponse);
         }
 
-        // Phase 2 (transfer, hosted-file flow) — POST to upload_url on
-        // rupload.facebook.com with `file_url` in the JSON body and
-        // `Authorization: OAuth …` header. The previous implementation
-        // POSTed to the graph endpoint with a made-up `video_file_chunk`
-        // body field; Facebook accepted the request but never fetched
-        // the video, so finish failed with error_subcode 1363130
-        // ("Video Upload Is Missing").
-        $uploadResponse = $this->socialHttp()
-            ->withHeaders(['Authorization' => "OAuth {$accessToken}"])
-            ->asJson()
-            ->post($uploadUrl, [
-                'file_url' => $media->url,
-            ]);
+        // Phase 2 (transfer, local-file flow) — download our hosted
+        // media then POST raw bytes to upload_url with the Offset and
+        // file_size headers Facebook requires (the docs describe a
+        // hosted-file shortcut with `file_url` in the body, but rupload
+        // rejects it with "Header Offset not convertable to unsigned
+        // long" — the headers are required either way).
+        $tempFile = tempnam(sys_get_temp_dir(), 'fb_reel_');
 
-        if ($uploadResponse->failed()) {
-            Log::error('Facebook reel upload transfer failed', [
-                'status' => $uploadResponse->status(),
-                'body' => $this->redactResponseBody($uploadResponse->body()),
-            ]);
-            $this->handleApiError($uploadResponse);
+        try {
+            $download = Http::withOptions(['sink' => $tempFile])
+                ->timeout(600)
+                ->get($media->url);
+
+            if ($download->failed()) {
+                throw new \Exception('Failed to download reel media: HTTP '.$download->status());
+            }
+
+            $fileSize = filesize($tempFile);
+
+            $uploadResponse = Http::withHeaders([
+                'Authorization' => "OAuth {$accessToken}",
+                'Offset' => '0',
+                'file_size' => (string) $fileSize,
+            ])
+                ->timeout(600)
+                ->withBody(file_get_contents($tempFile), $media->mime_type ?? 'video/mp4')
+                ->post($uploadUrl);
+
+            if ($uploadResponse->failed()) {
+                Log::error('Facebook reel upload transfer failed', [
+                    'status' => $uploadResponse->status(),
+                    'body' => $this->redactResponseBody($uploadResponse->body()),
+                ]);
+                $this->handleApiError($uploadResponse);
+            }
+        } finally {
+            @unlink($tempFile);
         }
 
         // Phase 3 (finish) — publish the reel.

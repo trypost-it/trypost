@@ -185,6 +185,7 @@ test('facebook publisher can publish reel', function () {
                 'upload_url' => 'https://rupload.facebook.com/video-upload/v25.0/reel_video_123',
             ], 200)
             ->push(['id' => 'reel_123', 'success' => true], 200),
+        '*example.com/media/*' => Http::response('fake-video-binary-content', 200),
         '*rupload.facebook.com/*' => Http::response(['success' => true], 200),
     ]);
 
@@ -194,15 +195,16 @@ test('facebook publisher can publish reel', function () {
     expect($result['id'])->toBe('reel_123');
     expect($result['url'])->toBe('https://www.facebook.com/reel/reel_123');
 
-    // Assert the transfer phase: POST to upload_url (rupload host) with
-    // file_url JSON body and OAuth header — not to the graph endpoint
-    // with the (legacy/wrong) video_file_chunk body param.
+    // Assert the transfer phase: POST raw bytes to upload_url (rupload
+    // host) with OAuth header and the required Offset + file_size
+    // headers Facebook's rupload validator demands.
     Http::assertSent(function ($request) {
         if (! str_contains($request->url(), 'rupload.facebook.com')) {
             return false;
         }
 
-        return $request['file_url'] === 'https://example.com/media/2026-01/reel.mp4'
+        return ($request->header('Offset')[0] ?? null) === '0'
+            && ($request->header('file_size')[0] ?? null) === (string) strlen('fake-video-binary-content')
             && str_starts_with($request->header('Authorization')[0] ?? '', 'OAuth ');
     });
 });
@@ -423,6 +425,7 @@ test('facebook publisher cleans up temp files after reel upload', function () {
                 'upload_url' => 'https://rupload.facebook.com/video-upload/v25.0/reel_video_cleanup_123',
             ], 200)
             ->push(['id' => 'reel_cleanup_456', 'success' => true], 200),
+        '*example.com/media/*' => Http::response('fake-video', 200),
         '*rupload.facebook.com/*' => Http::response(['success' => true], 200),
     ]);
 

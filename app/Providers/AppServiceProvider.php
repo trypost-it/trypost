@@ -4,19 +4,6 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Ai\PlatformRules\BlueskyRules;
-use App\Ai\PlatformRules\FacebookRules;
-use App\Ai\PlatformRules\InstagramRules;
-use App\Ai\PlatformRules\LinkedInRules;
-use App\Ai\PlatformRules\MastodonRules;
-use App\Ai\PlatformRules\PinterestRules;
-use App\Ai\PlatformRules\Registry;
-use App\Ai\PlatformRules\ThreadsRules;
-use App\Ai\PlatformRules\TikTokRules;
-use App\Ai\PlatformRules\XRules;
-use App\Ai\PlatformRules\YouTubeRules;
-use App\Ai\Providers\ExtendedGeminiProvider;
-use App\Enums\SocialAccount\Platform;
 use App\Listeners\StripeEventListener;
 use App\Models\AccessToken;
 use App\Models\Account;
@@ -45,7 +32,6 @@ use Carbon\CarbonImmutable;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
@@ -57,8 +43,6 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Laravel\Ai\Ai;
-use Laravel\Ai\Gateway\Gemini\GeminiGateway;
 use Laravel\Cashier\Cashier;
 use Laravel\Cashier\Events\WebhookReceived;
 use Laravel\Nightwatch\Facades\Nightwatch;
@@ -96,8 +80,6 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureMorphMap();
-        $this->configureAi();
-        $this->configurePlatformRules();
         $this->configurePostHog();
         $this->configureRateLimiting();
         $this->configureSocialite();
@@ -123,42 +105,6 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         Passport::authorizationView('mcp.authorize');
-    }
-
-    protected function configureAi(): void
-    {
-        Ai::extend('gemini', function ($app, array $config) {
-            return new ExtendedGeminiProvider(
-                new GeminiGateway($app['events']),
-                $config,
-                $app->make(Dispatcher::class),
-            );
-        });
-    }
-
-    protected function configurePlatformRules(): void
-    {
-        $map = [
-            Platform::Instagram->value => InstagramRules::class,
-            Platform::InstagramFacebook->value => InstagramRules::class,
-            Platform::Facebook->value => FacebookRules::class,
-            Platform::X->value => XRules::class,
-            Platform::TikTok->value => TikTokRules::class,
-            Platform::YouTube->value => YouTubeRules::class,
-            Platform::LinkedIn->value => LinkedInRules::class,
-            Platform::LinkedInPage->value => LinkedInRules::class,
-            Platform::Threads->value => ThreadsRules::class,
-            Platform::Pinterest->value => PinterestRules::class,
-            Platform::Bluesky->value => BlueskyRules::class,
-            Platform::Mastodon->value => MastodonRules::class,
-        ];
-
-        foreach ($map as $value => $class) {
-            Registry::register(
-                Platform::from($value),
-                $class,
-            );
-        }
     }
 
     protected function configureMorphMap(): void

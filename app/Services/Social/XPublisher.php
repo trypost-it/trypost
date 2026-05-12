@@ -205,8 +205,11 @@ class XPublisher
             throw new \Exception('No media_id returned from INIT');
         }
 
-        // APPEND - Read from temp file in 5MB chunks (memory-safe)
-        $chunkSize = 5 * 1024 * 1024;
+        // APPEND - Read from temp file in 1MB chunks. Matches the
+        // twitter-api-v2 SDK default and X's own quickstart examples;
+        // larger chunks (we previously used 5MB) trigger 413 at the X
+        // edge with an empty body, surfacing as "An unknown X error".
+        $chunkSize = 1024 * 1024;
         $handle = fopen($tempFile, 'r');
         $index = 0;
 
@@ -220,7 +223,7 @@ class XPublisher
 
                 $appendResponse = $this->socialHttp()->withToken($this->accessToken)
                     ->timeout(300)
-                    ->attach('media', $chunk, 'chunk'.$index)
+                    ->attach('media', $chunk, 'chunk'.$index, ['Content-Type' => $mimeType])
                     ->post("{$this->baseUrl}/media/upload/{$mediaId}/append", [
                         'segment_index' => $index,
                     ]);

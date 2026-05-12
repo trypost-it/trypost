@@ -77,6 +77,18 @@ test('HTTP 500 maps to ServerError category', function () {
         ->and($exception->userMessage)->toBe('X server error. Please try again later.');
 });
 
+test('HTTP 413 with empty body maps to MediaFormat category', function () {
+    $response = Http::response('', 413);
+
+    $fakeResponse = Http::fake(['*' => $response])->post('https://api.x.com/test');
+
+    $exception = XPublishException::fromApiResponse($fakeResponse);
+
+    expect($exception->category)->toBe(ErrorCategory::MediaFormat)
+        ->and($exception->userMessage)->toBe('Media chunk rejected by X (payload too large).')
+        ->and($exception->platformErrorCode)->toBe('413');
+});
+
 test('unknown type maps to Unknown category with detail as message', function () {
     $response = Http::response([
         'type' => 'https://api.x.com/2/problems/some-unknown-problem',

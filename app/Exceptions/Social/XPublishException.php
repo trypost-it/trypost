@@ -47,6 +47,15 @@ class XPublishException extends SocialPublishException
             );
         }
 
+        if ($statusCode === 413) {
+            return new static(
+                userMessage: 'Media chunk rejected by X (payload too large).',
+                category: ErrorCategory::MediaFormat,
+                platformErrorCode: (string) $statusCode,
+                rawResponse: $rawResponse,
+            );
+        }
+
         if (in_array($statusCode, [500, 502, 503, 504], true)) {
             return new static(
                 userMessage: 'X server error. Please try again later.',

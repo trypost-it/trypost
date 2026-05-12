@@ -11,8 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
-use Stripe\Exception\ApiErrorException as StripeApiErrorException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Throwable;
 
 class BillingController extends Controller
 {
@@ -101,7 +101,7 @@ class BillingController extends Controller
                 $sessionId,
                 ['expand' => ['line_items.data.price']],
             );
-        } catch (StripeApiErrorException) {
+        } catch (Throwable) {
             return null;
         }
 

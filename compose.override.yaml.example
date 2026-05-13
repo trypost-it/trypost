@@ -1,0 +1,52 @@
+# TryPost — Compose override example.
+#
+# Compose automatically merges `compose.override.yaml` (gitignored, per-developer)
+# on top of `compose.yaml`. Copy this file to start customizing:
+#
+#   cp compose.override.yaml.example compose.override.yaml
+#
+# Common overrides are commented below. Uncomment what you need.
+
+services:
+    app:
+        # Match container UID/GID to your host user (Linux contributors on
+        # systems where your UID isn't 1000).
+        # build:
+        #     args:
+        #         UID: 1001
+        #         GID: 1001
+
+        # Enable Xdebug (requires installing the extension via a Dockerfile
+        # tweak; left commented as a hint).
+        # environment:
+        #     XDEBUG_MODE: debug
+        #     XDEBUG_CONFIG: 'client_host=host.docker.internal'
+
+        # Forward additional ports if 8000/5173/8080 conflict with another
+        # service on your host.
+        # ports:
+        #     - '9000:80'
+
+    pgsql:
+        # Free up host port 5432 (e.g. when running another Postgres locally).
+        # ports:
+        #     - '54320:5432'
+
+    redis:
+        # ports:
+        #     - '63790:6379'
+
+    mailpit:
+        # Move the Mailpit UI off port 8025.
+        # ports:
+        #     - '8025:8025'
+        #     - '1025:1025'
+
+# Add additional services here — e.g. a Selenium container for Dusk tests:
+#
+#     selenium:
+#         image: selenium/standalone-chromium
+#         extra_hosts:
+#             - 'host.docker.internal:host-gateway'
+#         volumes:
+#             - '/dev/shm:/dev/shm'

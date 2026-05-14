@@ -13,9 +13,14 @@ export interface Workspace {
 
 export interface AuthPlan {
     id: string;
-    slug: string;
+    slug: 'free' | 'starter' | 'plus' | 'pro' | 'max';
     name: string;
     interval: 'monthly' | 'yearly';
+    allowed_networks: string[] | null;
+    can_use_ai: boolean;
+    can_use_analytics: boolean;
+    scheduled_posts_limit: number | null;
+    social_account_limit: number;
 }
 
 export interface AuthAccount {

@@ -50,6 +50,93 @@ test('posts index shows posts for current workspace', function () {
     );
 });
 
+test('posts index exposes workspace labels for filter dropdown', function () {
+    WorkspaceLabel::factory()->count(3)->create(['workspace_id' => $this->workspace->id]);
+    WorkspaceLabel::factory()->create(); // belongs to a different workspace; must not leak.
+
+    $response = $this->actingAs($this->user)->get(route('app.posts.index'));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('labels', 3)
+        ->where('filters.labels', [])
+    );
+});
+
+test('posts index filters posts by a single label id', function () {
+    $label = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $taggedPost = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+    $taggedPost->labels()->attach($label);
+
+    Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->get(route('app.posts.index', ['labels' => [$label->id]]));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('posts.data', 1)
+        ->where('posts.data.0.id', $taggedPost->id)
+        ->where('filters.labels', [$label->id])
+    );
+});
+
+test('posts index filters posts by multiple labels (OR semantics)', function () {
+    $marketing = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+    $sales = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+    $unrelated = WorkspaceLabel::factory()->create(['workspace_id' => $this->workspace->id]);
+
+    $postWithMarketing = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+    $postWithMarketing->labels()->attach($marketing);
+
+    $postWithSales = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+    $postWithSales->labels()->attach($sales);
+
+    $postWithUnrelated = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+    $postWithUnrelated->labels()->attach($unrelated);
+
+    $response = $this->actingAs($this->user)
+        ->get(route('app.posts.index', ['labels' => [$marketing->id, $sales->id]]));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('posts.data', 2)
+        ->where('filters.labels', [$marketing->id, $sales->id])
+    );
+});
+
+test('posts index ignores blank label query params', function () {
+    Post::factory()->count(2)->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->get(route('app.posts.index', ['labels' => ['']]));
+
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page
+        ->has('posts.data', 2)
+        ->where('filters.labels', [])
+    );
+});
+
 test('posts index redirects to create workspace if no workspace', function () {
     $this->user->update(['current_workspace_id' => null]);
 

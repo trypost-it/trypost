@@ -57,12 +57,24 @@ class PostController extends Controller
             $query->where('content', 'ilike', "%{$search}%");
         }
 
+        $labelIds = $request->collect('labels')
+            ->filter(fn ($id) => is_string($id) && $id !== '')
+            ->values()
+            ->all();
+
+        $query->when($labelIds, fn ($q) => $q->whereHas(
+            'labels',
+            fn ($q) => $q->whereIn('workspace_labels.id', $labelIds),
+        ));
+
         return Inertia::render('posts/Index', [
             'workspace' => $workspace,
             'posts' => Inertia::scroll(fn () => $query->latest('scheduled_at')->paginate(config('app.pagination.default'))),
             'currentStatus' => $status,
+            'labels' => $workspace->labels()->orderBy('name')->get(['id', 'name', 'color']),
             'filters' => [
                 'search' => $request->input('search', ''),
+                'labels' => $labelIds,
             ],
         ]);
     }

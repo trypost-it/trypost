@@ -9,6 +9,10 @@ return [
     'no_search_results' => 'No posts match your search',
     'try_different_search' => 'Try a different keyword or clear the search.',
     'start_creating' => 'Start by creating your first post.',
+    'filter_by_label' => 'Filter by label',
+    'label_search_placeholder' => 'Search labels...',
+    'no_labels' => 'No labels found.',
+    'clear_label_filter' => 'Clear label filter',
     'table' => [
         'post' => 'Post',
         'status' => 'Status',

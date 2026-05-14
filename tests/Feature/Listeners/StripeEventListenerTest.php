@@ -39,6 +39,23 @@ test('subscription created handles event without error', function () {
     expect(true)->toBeTrue();
 });
 
+test('subscription created clears the generic trial_ends_at on the account', function () {
+    $starter = Plan::query()->where('slug', 'starter')->firstOrFail();
+    $this->account->update(['trial_ends_at' => now()->addDays(3)]);
+
+    $this->listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.created',
+        'data' => ['object' => [
+            'customer' => 'cus_test123',
+            'id' => 'sub_123',
+            'status' => 'active',
+            'items' => ['data' => [['price' => ['id' => $starter->stripe_monthly_price_id]]]],
+        ]],
+    ]));
+
+    expect($this->account->fresh()->trial_ends_at)->toBeNull();
+});
+
 // ========================================
 // customer.subscription.updated
 // ========================================

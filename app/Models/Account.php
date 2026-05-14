@@ -9,6 +9,7 @@ use App\Features\MonthlyCreditsLimit;
 use App\Features\SocialAccountLimit;
 use App\Features\WorkspaceLimit;
 use App\Models\Traits\HasUsage;
+use Carbon\CarbonInterface;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,6 +31,11 @@ class Account extends Model
         'name',
         'billing_email',
         'plan_id',
+        'trial_ends_at',
+    ];
+
+    protected $casts = [
+        'trial_ends_at' => 'datetime',
     ];
 
     public function forgetPlanFeatureCache(): void
@@ -78,7 +84,22 @@ class Account extends Model
 
     public function isOnTrial(): bool
     {
-        return $this->subscription(self::SUBSCRIPTION_NAME)?->onTrial() ?? false;
+        if ($this->onGenericTrial()) {
+            return true;
+        }
+
+        return (bool) $this->subscription(self::SUBSCRIPTION_NAME)?->onTrial();
+    }
+
+    public function activeTrialEndsAt(): ?CarbonInterface
+    {
+        $subscription = $this->subscription(self::SUBSCRIPTION_NAME);
+
+        return match (true) {
+            (bool) $subscription?->onTrial() => $subscription->trial_ends_at,
+            $this->onGenericTrial() => $this->trial_ends_at,
+            default => null,
+        };
     }
 
     /**

@@ -107,7 +107,6 @@ test('subscribe page shows plans', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('billing/Subscribe', false)
         ->has('plans', $activePlanCount)
-        ->has('trialDays')
     );
 });
 

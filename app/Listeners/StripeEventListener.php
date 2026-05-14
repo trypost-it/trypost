@@ -52,7 +52,10 @@ class StripeEventListener
         $previousPlan = $account->plan?->name;
 
         if ($plan = $this->resolvePlanFromSubscriptionItems($payload, $account)) {
-            $account->update(['plan_id' => $plan->id]);
+            $account->update([
+                'plan_id' => $plan->id,
+                'trial_ends_at' => null,
+            ]);
             $account->forgetPlanFeatureCache();
         }
 

@@ -29,7 +29,6 @@ interface Highlight {
 
 defineProps<{
     plans: Plan[];
-    trialDays: number;
 }>();
 
 const isYearly = ref(true);
@@ -120,7 +119,7 @@ const planTones: Record<PlanSlug, string> = {
                     {{ $t('billing.subscribe.title') }}
                 </h1>
                 <p class="mx-auto max-w-2xl text-balance text-base text-muted-foreground sm:text-lg">
-                    {{ trans('billing.subscribe.description', { days: String(trialDays) }) }}
+                    {{ $t('billing.subscribe.description') }}
                 </p>
             </div>
         </div>
@@ -228,7 +227,7 @@ const planTones: Record<PlanSlug, string> = {
                         ]"
                         @click="selectPlan(plan)"
                     >
-                        {{ trans('billing.subscribe.start_trial', { days: String(trialDays) }) }}
+                        {{ $t('billing.subscribe.subscribe_cta') }}
                         <IconArrowRight class="size-4" />
                     </button>
 

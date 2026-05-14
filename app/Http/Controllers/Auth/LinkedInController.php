@@ -85,7 +85,8 @@ class LinkedInController extends SocialController
                     'access_token' => $socialUser->token,
                     'refresh_token' => $socialUser->refreshToken,
                     'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : null,
-                    'scopes' => $socialUser->approvedScopes ?? null,
+                    // LinkedIn returns scope CSV-joined but Socialite splits on space, so re-split here.
+                    'scopes' => explode(',', implode(',', $socialUser->approvedScopes)),
                     'status' => Status::Connected,
                     'error_message' => null,
                     'disconnected_at' => null,

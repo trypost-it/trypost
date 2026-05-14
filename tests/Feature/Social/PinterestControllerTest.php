@@ -74,6 +74,34 @@ test('pinterest oauth callback creates account', function () {
     ]);
 });
 
+test('pinterest oauth callback splits space-separated approvedScopes before saving', function () {
+    session(['social_connect_workspace' => $this->workspace->id]);
+
+    $socialiteUser = Mockery::mock(SocialiteUser::class);
+    $socialiteUser->shouldReceive('getId')->andReturn('pin-user-xyz');
+    $socialiteUser->shouldReceive('getNickname')->andReturn('pinuser');
+    $socialiteUser->shouldReceive('getName')->andReturn('Pin User');
+    $socialiteUser->shouldReceive('getAvatar')->andReturn(null);
+    $socialiteUser->token = 'test-access-token';
+    $socialiteUser->refreshToken = 'test-refresh-token';
+    $socialiteUser->expiresIn = 5184000;
+    // Pinterest's SocialiteProvider has scopeSeparator = ',' but Pinterest
+    // returns the granted scopes space-separated, so the provider doesn't
+    // split them and approvedScopes lands as a single-element array.
+    $socialiteUser->approvedScopes = ['boards:read boards:write pins:read pins:write user_accounts:read'];
+
+    Socialite::shouldReceive('driver')
+        ->with('pinterest')
+        ->andReturn(Mockery::mock(['user' => $socialiteUser]));
+
+    $this->actingAs($this->user)->get(route('app.social.pinterest.callback'));
+
+    $account = SocialAccount::where('platform_user_id', 'pin-user-xyz')->first();
+    expect($account->scopes)->toEqualCanonicalizing([
+        'boards:read', 'boards:write', 'pins:read', 'pins:write', 'user_accounts:read',
+    ]);
+});
+
 test('pinterest callback fails with expired session', function () {
     // No session data - simulating expired session
 

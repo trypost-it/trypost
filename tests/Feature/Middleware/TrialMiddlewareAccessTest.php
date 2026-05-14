@@ -54,7 +54,7 @@ test('user whose trial expired is redirected to subscribe', function () {
     $workspace->members()->attach($user->id, ['role' => Role::Member->value]);
     $user->update(['current_workspace_id' => $workspace->id]);
 
-    Carbon::setTestNow('2026-05-22 12:01:00');
+    Carbon::setTestNow('2026-05-21 12:01:00');
 
     $response = $this->actingAs($user->fresh())->get(route('app.accounts'));
 

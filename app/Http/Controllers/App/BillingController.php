@@ -138,8 +138,8 @@ class BillingController extends Controller
 
         return Inertia::render('settings/account/Billing', [
             'hasSubscription' => $account->subscribed(Account::SUBSCRIPTION_NAME),
-            'onTrial' => $subscription?->onTrial() ?? false,
-            'trialEndsAt' => $subscription?->trial_ends_at,
+            'onTrial' => $account->isOnTrial(),
+            'trialEndsAt' => $subscription?->trial_ends_at ?? $account->trial_ends_at,
             'subscription' => $subscription?->only([
                 'stripe_status',
                 'ends_at',

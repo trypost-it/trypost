@@ -135,6 +135,6 @@ return [
     |
     */
 
-    'trial_days' => env('CASHIER_TRIAL_DAYS', 8),
+    'trial_days' => env('CASHIER_TRIAL_DAYS', 7),
 
 ];

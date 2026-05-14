@@ -27,7 +27,7 @@ test('new signup gets a 7-day trial without card', function () {
     $starterPlan = Plan::where('slug', Slug::Starter)->firstOrFail();
 
     expect($user->account->plan_id)->toBe($starterPlan->id);
-    expect($user->account->trial_ends_at?->toDateTimeString())->toBe('2026-05-22 12:00:00');
+    expect($user->account->trial_ends_at?->toDateTimeString())->toBe('2026-05-21 12:00:00');
     expect($user->account->stripe_id)->toBeNull();
 });
 
@@ -57,7 +57,7 @@ test('account whose generic trial expired is not on trial', function () {
         'registration_ip' => '127.0.0.1',
     ]);
 
-    Carbon::setTestNow('2026-05-22 12:01:00');
+    Carbon::setTestNow('2026-05-21 12:01:00');
 
     expect($user->account->fresh()->isOnTrial())->toBeFalse();
 });

@@ -65,12 +65,6 @@ class LinkedInController extends SocialController
             // Fetch vanityName from LinkedIn API (not available via OpenID)
             $username = $this->fetchVanityName($socialUser->token);
 
-            Log::info('LinkedIn OAuth User Data', [
-                'nickname' => $socialUser->getNickname(),
-                'username' => $username,
-                'user' => $socialUser->user ?? [],
-            ]);
-
             $avatarPath = uploadFromUrl($socialUser->getAvatar());
 
             $account = $workspace->socialAccounts()->updateOrCreate(
@@ -114,11 +108,6 @@ class LinkedInController extends SocialController
                 ->get(config('trypost.platforms.linkedin.api').'/v2/me', [
                     'projection' => '(id,vanityName,localizedFirstName,localizedLastName)',
                 ]);
-
-            Log::info('LinkedIn /me API response', [
-                'status' => $response->status(),
-                'body' => $response->json(),
-            ]);
 
             if ($response->successful()) {
                 return $response->json('vanityName');

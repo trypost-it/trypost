@@ -65,12 +65,6 @@ class TikTokController extends SocialController
                 ->scopes($this->scopes)
                 ->user();
 
-            Log::info('TikTok OAuth User Data', [
-                'nickname' => $socialUser->getNickname(),
-                'user' => $socialUser->user ?? [],
-                'attributes' => $socialUser->attributes ?? [],
-            ]);
-
             // TikTok returns username via getNickname() when user.info.profile scope is included
             $username = $socialUser->getNickname();
             $avatarPath = uploadFromUrl($socialUser->getAvatar());

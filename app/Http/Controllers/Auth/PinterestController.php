@@ -60,13 +60,6 @@ class PinterestController extends SocialController
         try {
             $socialUser = Socialite::driver($this->driver)->user();
 
-            Log::info('Pinterest OAuth User Data', [
-                'id' => $socialUser->getId(),
-                'nickname' => $socialUser->getNickname(),
-                'name' => $socialUser->getName(),
-                'user' => $socialUser->user ?? [],
-            ]);
-
             $avatarPath = uploadFromUrl($socialUser->getAvatar());
 
             // Create new account

@@ -230,6 +230,12 @@ return [
             'viewer' => 'Viewer',
         ],
 
+        'remove_from_account_modal' => [
+            'title' => 'Remove from account',
+            'description' => 'This will permanently delete this user from your account. They will lose access to everything and the action cannot be undone.',
+            'action' => 'Remove from account',
+        ],
+
         'flash' => [
             'invite_sent' => 'Invite sent successfully!',
             'invite_deleted' => 'Invite deleted.',
@@ -239,6 +245,7 @@ return [
             'already_member' => 'You are already a member of this workspace.',
             'invite_accepted' => 'Welcome! You are now a member of the workspace.',
             'invite_declined' => 'Invite declined.',
+            'user_removed_from_account' => 'User permanently removed from account.',
         ],
     ],
 

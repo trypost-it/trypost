@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Features\BlockedNetworks;
+use App\Features\CanUseAi;
+use App\Features\CanUseAnalytics;
 use App\Features\MemberLimit;
 use App\Features\MonthlyCreditsLimit;
 use App\Features\SocialAccountLimit;
@@ -32,6 +35,15 @@ class Account extends Model
         'plan_id',
     ];
 
+    protected static function booted(): void
+    {
+        static::updated(function (self $account) {
+            if ($account->wasChanged('plan_id')) {
+                $account->forgetPlanFeatureCache();
+            }
+        });
+    }
+
     public function forgetPlanFeatureCache(): void
     {
         Feature::for($this)->forget([
@@ -39,6 +51,9 @@ class Account extends Model
             SocialAccountLimit::class,
             MemberLimit::class,
             MonthlyCreditsLimit::class,
+            CanUseAi::class,
+            CanUseAnalytics::class,
+            BlockedNetworks::class,
         ]);
     }
 

@@ -14,6 +14,7 @@ use App\Models\Workspace;
 use App\Services\Image\TemplateImageGenerator;
 use App\Services\PostTemplate\Registry;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -69,6 +70,17 @@ class PostTemplateController extends Controller
         $media = [];
 
         if ($socialAccount && $template->slides) {
+            // Image generation uses AI credits — gate this branch only. Text-only
+            // templates (no slides) bypass the AI gate entirely.
+            $gate = Gate::inspect('useAi', $workspace->account);
+            if ($gate->denied()) {
+                return response()->json([
+                    'message' => $gate->message(),
+                    'upgrade_required' => true,
+                    'reason' => $gate->code() ?? 'ai_disabled',
+                ], Response::HTTP_PAYMENT_REQUIRED);
+            }
+
             foreach ($template->slides as $slide) {
                 $rendered = $generator->render(
                     workspace: $workspace,

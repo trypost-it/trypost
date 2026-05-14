@@ -8,6 +8,8 @@ return [
     'add_social_title' => 'Connect a Social Account',
     'add_social_description' => 'Connect a social account to TryPost to start posting',
     'connect_cta' => 'Connect',
+    'upgrade_cta' => 'Upgrade',
+    'upgrade_to_connect' => 'Upgrade your plan to connect :platform',
     'no_accounts' => 'No accounts connected yet',
     'no_accounts_description' => 'Connect your social networks to start scheduling and publishing posts',
     'no_search_results' => 'No accounts match your search',

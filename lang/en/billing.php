@@ -40,6 +40,7 @@ return [
         'popular' => 'Most popular',
         'start_trial' => 'Start 7-day free trial',
         'prices' => [
+            'free' => ['monthly' => '$0', 'yearly_per_month' => '$0', 'yearly' => '$0'],
             'starter' => ['monthly' => '$19', 'yearly_per_month' => '$16', 'yearly' => '$190'],
             'plus' => ['monthly' => '$29', 'yearly_per_month' => '$24', 'yearly' => '$290'],
             'pro' => ['monthly' => '$49', 'yearly_per_month' => '$41', 'yearly' => '$490'],
@@ -52,6 +53,7 @@ return [
             'credits' => ':count AI credits/mo',
         ],
         'credit_tooltips' => [
+            'free' => 'No AI credits on the Free plan.',
             'starter' => 'Roughly 150 medium-length posts plus 5 AI images per month.',
             'plus' => 'Roughly 300 medium-length posts plus 10 AI images per month.',
             'pro' => 'Roughly 700 medium-length posts plus 30 AI images per month.',
@@ -98,7 +100,13 @@ return [
             'social_accounts' => 'Cannot switch to :plan: you have :count social accounts but the plan only allows :limit.',
             'members' => 'Cannot switch to :plan: you have :count team members (including invites) but the plan only allows :limit.',
         ],
+        'ai_disabled' => 'AI features are not available on the Free plan. Upgrade to unlock.',
         'credits_exhausted' => 'Out of AI credits — your monthly :limit allowance has been used. Upgrade your plan or wait until next month.',
+        'x_disabled' => 'Connecting X/Twitter accounts is not available on the Free plan. Upgrade to unlock.',
+        'scheduled_post_limit' => 'Free plan allows up to :limit scheduled posts. Upgrade for unlimited scheduling.',
+        'analytics_disabled' => 'Analytics is not available on the Free plan. Upgrade to unlock.',
+        'brand_analyzer_rate_limited' => 'Too many brand analysis requests. Please try again in 24 hours.',
+        'cannot_swap_to_free' => 'Cannot downgrade to Free via plan swap. Cancel your subscription to switch to Free.',
     ],
 
     'processing' => [

@@ -24,10 +24,6 @@ class AuthPlanResource
             'slug' => $plan->slug->value,
             'name' => $plan->name,
             'interval' => $interval,
-            'allowed_networks' => $plan->allowed_networks,
-            'can_use_ai' => $plan->can_use_ai,
-            'can_use_analytics' => $plan->can_use_analytics,
-            'scheduled_posts_limit' => $plan->scheduled_posts_limit,
             'social_account_limit' => $plan->social_account_limit,
         ];
     }

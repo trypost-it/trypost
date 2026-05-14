@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\App;
 
+use App\Enums\Plan\Slug;
+use App\Http\Requests\App\Billing\CheckoutRequest;
+use App\Http\Requests\App\Billing\SwapRequest;
 use App\Models\Account;
 use App\Models\Plan;
 use Illuminate\Http\RedirectResponse;
@@ -29,12 +32,12 @@ class BillingController extends Controller
         }
 
         return Inertia::render('billing/Subscribe', [
-            'plans' => Plan::active()->orderBy('sort')->get(),
+            'plans' => Plan::active()->where('slug', '!=', Slug::Free)->orderBy('sort')->get(),
             'trialDays' => config('cashier.trial_days'),
         ]);
     }
 
-    public function checkout(Request $request, Plan $plan): SymfonyResponse|RedirectResponse
+    public function checkout(CheckoutRequest $request, Plan $plan): SymfonyResponse|RedirectResponse
     {
         if (config('trypost.self_hosted')) {
             return redirect()->route('app.calendar');
@@ -45,11 +48,7 @@ class BillingController extends Controller
 
         abort_unless($user->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
 
-        $request->validate([
-            'price_id' => ['required', 'string'],
-        ]);
-
-        $priceId = $request->input('price_id');
+        $priceId = $request->validated('price_id');
 
         abort_unless(
             $priceId === $plan->stripe_monthly_price_id || $priceId === $plan->stripe_yearly_price_id,
@@ -145,7 +144,7 @@ class BillingController extends Controller
                 'ends_at',
             ]),
             'plan' => $account->plan,
-            'plans' => Plan::active()->orderBy('sort')->get(),
+            'plans' => Plan::active()->where('slug', '!=', Slug::Free)->orderBy('sort')->get(),
             'invoices' => $account->invoices()->map(fn ($invoice) => [
                 'id' => $invoice->id,
                 'date' => $invoice->date(),
@@ -157,7 +156,7 @@ class BillingController extends Controller
         ]);
     }
 
-    public function swap(Request $request, Plan $plan): RedirectResponse
+    public function swap(SwapRequest $request, Plan $plan): RedirectResponse
     {
         if (config('trypost.self_hosted')) {
             return redirect()->route('app.calendar');
@@ -168,11 +167,13 @@ class BillingController extends Controller
         abort_unless($request->user()->isAccountOwner(), SymfonyResponse::HTTP_FORBIDDEN);
         abort_unless($account->subscribed(Account::SUBSCRIPTION_NAME), 422, 'No active subscription');
 
-        $request->validate([
-            'price_id' => ['required', 'string'],
-        ]);
+        $authorization = Gate::inspect('swapPlan', [$account, $plan]);
 
-        $priceId = $request->input('price_id');
+        if ($authorization->denied()) {
+            return back()->with('flash.error', $authorization->message());
+        }
+
+        $priceId = $request->validated('price_id');
         $subscription = $account->subscription(Account::SUBSCRIPTION_NAME);
 
         abort_unless(
@@ -180,12 +181,6 @@ class BillingController extends Controller
             422,
             'Invalid price for this plan',
         );
-
-        $authorization = Gate::inspect('swapPlan', [$account, $plan]);
-
-        if ($authorization->denied()) {
-            return back()->with('flash.error', $authorization->message());
-        }
 
         $subscription->swap($priceId);
         $account->update(['plan_id' => $plan->id]);

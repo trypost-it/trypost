@@ -8,6 +8,8 @@ return [
     'add_social_title' => 'Conectar una Cuenta Social',
     'add_social_description' => 'Conecta una cuenta social a TryPost para empezar a publicar',
     'connect_cta' => 'Conectar',
+    'upgrade_cta' => 'Actualizar',
+    'upgrade_to_connect' => 'Actualiza tu plan para conectar :platform',
     'no_accounts' => 'No hay cuentas conectadas todavía',
     'no_accounts_description' => 'Conecta tus redes sociales para empezar a programar y publicar posts',
     'no_search_results' => 'Ninguna cuenta coincide con tu búsqueda',

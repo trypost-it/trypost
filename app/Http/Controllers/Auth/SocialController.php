@@ -40,10 +40,21 @@ class SocialController extends Controller
             return;
         }
 
-        $limit = Feature::for($workspace->account)->value(SocialAccountLimit::class);
+        $limit = (int) Feature::for($workspace->account)->value(SocialAccountLimit::class);
+        $current = $workspace->socialAccounts()->count();
 
-        if ($workspace->socialAccounts()->count() >= $limit) {
-            abort(SymfonyResponse::HTTP_FORBIDDEN, __('accounts.limit_reached'));
+        if ($current >= $limit) {
+            if (request()->wantsJson()) {
+                abort(response()->json([
+                    'message' => __('billing.flash.social_account_limit'),
+                    'upgrade_required' => true,
+                    'reason' => 'social_account_limit',
+                    'limit' => $limit,
+                    'current' => $current,
+                ], SymfonyResponse::HTTP_PAYMENT_REQUIRED));
+            }
+
+            abort(redirect()->route('app.subscribe')->with('upgrade_reason', 'social_account_limit'));
         }
     }
 

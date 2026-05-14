@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Features;
 
+use App\Enums\Plan\Slug;
 use App\Models\Account;
 
 class ScheduledPostsLimit
@@ -12,6 +13,9 @@ class ScheduledPostsLimit
 
     public function resolve(Account $scope): ?int
     {
-        return $scope->plan?->scheduled_posts_limit;
+        return match ($scope->plan?->slug) {
+            Slug::Free => 15,
+            default => null,
+        };
     }
 }

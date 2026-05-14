@@ -11,6 +11,7 @@ import { initializeDataLayer } from './datalayer';
 import dayjs from './dayjs';
 import { capturePageview, initializePostHog, syncPostHogContext } from './posthog';
 import type { Auth } from './types';
+import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 
 configureEcho({
     broadcaster: 'reverb',
@@ -55,6 +56,24 @@ createInertiaApp({
         router.on('navigate', (event) => {
             syncPostHogContext(event.detail.page);
             capturePageview();
+        });
+
+        // Global 402 interceptor: wire upgrade_required responses to UpgradeDialog.
+        router.on('httpException', (event: any) => {
+            const response = event.detail?.response;
+            if (response?.status !== 402) return;
+
+            const data = response.data;
+            if (!data?.upgrade_required) return;
+
+            const { openUpgrade } = useUpgradeDialog();
+            const info =
+                data.limit !== undefined && data.current !== undefined
+                    ? { limit: data.limit as number, current: data.current as number }
+                    : undefined;
+
+            openUpgrade(data.reason as string | undefined, info);
+            event.preventDefault();
         });
 
         createApp({ render: () => h(App, props) })

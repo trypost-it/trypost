@@ -7,12 +7,14 @@ namespace App\Http\Controllers\App;
 use App\Actions\Invite\CreateInvite;
 use App\Actions\Invite\DeleteInvite;
 use App\Actions\Invite\RemoveMember;
+use App\Actions\User\RemoveUserFromAccount;
 use App\Enums\UserWorkspace\Role as WorkspaceRole;
 use App\Http\Requests\App\Invite\StoreWorkspaceInviteRequest;
+use App\Http\Requests\App\Workspace\UpdateMemberRoleRequest;
 use App\Models\Invite;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -133,7 +135,27 @@ class WorkspaceInviteController extends Controller
         return back();
     }
 
-    public function updateRole(Request $request, string $userId): RedirectResponse
+    public function removeFromAccount(Request $request, User $user): RedirectResponse
+    {
+        $account = $request->user()->account;
+
+        if ($request->user()->id !== $account->owner_id) {
+            abort(403);
+        }
+
+        try {
+            RemoveUserFromAccount::execute($account, $user);
+        } catch (\DomainException $e) {
+            return back()->withErrors(['user' => $e->getMessage()]);
+        }
+
+        session()->flash('flash.banner', __('settings.members.flash.user_removed_from_account'));
+        session()->flash('flash.bannerStyle', 'success');
+
+        return back();
+    }
+
+    public function updateRole(UpdateMemberRoleRequest $request, string $userId): RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
@@ -148,9 +170,7 @@ class WorkspaceInviteController extends Controller
             return back()->withErrors(['role' => 'Cannot change the account owner role.']);
         }
 
-        $validated = $request->validate([
-            'role' => ['required', Rule::in(array_column(WorkspaceRole::cases(), 'value'))],
-        ]);
+        $validated = $request->validated();
 
         $workspace->members()->updateExistingPivot($userId, [
             'role' => data_get($validated, 'role'),

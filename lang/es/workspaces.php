@@ -54,6 +54,20 @@ return [
 
     'limit_reached' => 'Has alcanzado el límite de workspaces de tu plan.',
 
+    'delete' => [
+        'title' => 'Eliminar workspace',
+        'description' => 'Esta acción es permanente y no se puede deshacer.',
+        'impact_title' => 'Lo siguiente será eliminado permanentemente:',
+        'impact' => [
+            'posts' => '{0} Sin publicaciones|{1} :count publicación|[2,*] :count publicaciones',
+            'social_accounts' => '{0} Sin cuentas conectadas|{1} :count cuenta conectada|[2,*] :count cuentas conectadas',
+            'labels' => '{0} Sin etiquetas|{1} :count etiqueta|[2,*] :count etiquetas',
+            'signatures' => '{0} Sin firmas|{1} :count firma|[2,*] :count firmas',
+            'members' => '{0} Sin miembros|{1} :count miembro perderá el acceso|[2,*] :count miembros perderán el acceso',
+        ],
+        'confirm' => 'Eliminar workspace permanentemente',
+    ],
+
     'flash' => [
         'deleted' => 'Workspace eliminado correctamente.',
     ],

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Enums\SocialAccount\Platform as SocialPlatform;
+use App\Features\BlockedNetworks;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Laravel\Pennant\Feature;
 use Symfony\Component\HttpFoundation\Response;
 
 class XController extends SocialController
@@ -32,6 +34,20 @@ class XController extends SocialController
 
         if (! $workspace) {
             return redirect()->route('app.workspaces.create');
+        }
+
+        $blockedNetworks = Feature::for($workspace->account)->value(BlockedNetworks::class);
+
+        if (in_array('x', $blockedNetworks, true)) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => __('billing.flash.x_disabled'),
+                    'upgrade_required' => true,
+                    'reason' => 'network_disabled',
+                ], Response::HTTP_PAYMENT_REQUIRED);
+            }
+
+            return redirect()->route('app.subscribe')->with('upgrade_reason', 'network_disabled');
         }
 
         $this->authorize('manageAccounts', $workspace);

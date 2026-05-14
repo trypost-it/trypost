@@ -54,6 +54,10 @@ test('featureLimits returns plan-resolved limits', function () {
         'socialAccountLimit' => $plan->social_account_limit,
         'memberLimit' => $plan->member_limit,
         'monthlyCreditsLimit' => $plan->monthly_credits_limit,
+        'canUseAi' => true,
+        'canUseAnalytics' => true,
+        'blockedNetworks' => [],
+        'scheduledPostsLimit' => null,
     ]);
 });
 

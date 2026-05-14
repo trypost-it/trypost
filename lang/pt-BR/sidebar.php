@@ -26,6 +26,7 @@ return [
     ],
 
     'analytics' => 'Analytics',
+    'upgrade_to_use_analytics' => 'Faça upgrade do seu plano para acessar o analytics',
     'settings' => 'Configurações',
 
     'posts' => [

@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 use App\Enums\Plan\Slug;
 use App\Models\Plan;
+use Database\Seeders\PlanSeeder;
 
-test('plan casts new feature columns correctly', function () {
+beforeEach(function () {
+    $this->seed(PlanSeeder::class);
+});
+
+test('plan casts legacy columns correctly', function () {
     $plan = Plan::where('slug', Slug::Free)->firstOrFail();
-    $plan->update([
-        'allowed_networks' => ['linkedin', 'instagram'],
-        'can_use_ai' => false,
-        'can_use_analytics' => false,
-        'scheduled_posts_limit' => 15,
-    ]);
 
-    $plan->refresh();
-
-    expect($plan->allowed_networks)->toBe(['linkedin', 'instagram']);
-    expect($plan->can_use_ai)->toBeFalse();
-    expect($plan->can_use_analytics)->toBeFalse();
-    expect($plan->scheduled_posts_limit)->toBe(15);
+    expect($plan->slug)->toBe(Slug::Free);
+    expect($plan->social_account_limit)->toBeInt();
+    expect($plan->member_limit)->toBeInt();
+    expect($plan->workspace_limit)->toBeInt();
+    expect($plan->monthly_credits_limit)->toBeInt();
+    expect($plan->sort)->toBeInt();
+    expect($plan->is_archived)->toBeBool();
 });

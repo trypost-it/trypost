@@ -4,6 +4,7 @@ import {
     IconGripVertical,
     IconHash,
     IconLibraryPhoto,
+    IconLock,
     IconMoodSmile,
     IconSparkles,
     IconTrash,
@@ -20,6 +21,7 @@ import SignaturesModal from '@/components/posts/SignaturesModal.vue';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { formatBytes } from '@/composables/useMedia';
+import { useFeatureAccess } from '@/composables/useFeatureAccess';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 
 interface MediaItem {
@@ -63,9 +65,21 @@ const emit = defineEmits<{
     (e: 'open-ai-review'): void;
 }>();
 
+const { canUseAi, requireAi } = useFeatureAccess();
+
 const emojiOpen = ref(false);
 const mediaPickerDialog = ref<InstanceType<typeof MediaPickerDialog> | null>(null);
 const signaturesModal = ref<InstanceType<typeof SignaturesModal> | null>(null);
+
+const onAiGenerateClick = () => {
+    if (!requireAi()) return;
+    emit('open-ai-generate');
+};
+
+const onAiReviewClick = () => {
+    if (!requireAi()) return;
+    emit('open-ai-review');
+};
 
 const dragMediaIndex = ref<number | null>(null);
 const dragOverIndex = ref<number | null>(null);
@@ -360,10 +374,14 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                         <TooltipTrigger as-child>
                             <button
                                 type="button"
-                                class="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:-translate-y-0.5 hover:bg-violet-100 hover:shadow-sm"
-                                @click="emit('open-ai-generate')"
+                                :class="[
+                                    'inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:-translate-y-0.5 hover:bg-violet-100 hover:shadow-sm',
+                                    !canUseAi ? 'opacity-60' : '',
+                                ]"
+                                @click="onAiGenerateClick"
                             >
-                                <IconSparkles class="size-4" />
+                                <IconLock v-if="!canUseAi" class="size-4" />
+                                <IconSparkles v-else class="size-4" />
                             </button>
                         </TooltipTrigger>
                         <TooltipContent>{{ $t('posts.ai.generate.button_tooltip') }}</TooltipContent>
@@ -375,10 +393,14 @@ const issueLabel = (reason: string): string => trans(`posts.form.warnings.${reas
                         <TooltipTrigger as-child>
                             <button
                                 type="button"
-                                class="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:-translate-y-0.5 hover:bg-violet-100 hover:shadow-sm"
-                                @click="emit('open-ai-review')"
+                                :class="[
+                                    'inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border-2 border-foreground bg-card text-foreground shadow-2xs transition-all hover:-translate-y-0.5 hover:bg-violet-100 hover:shadow-sm',
+                                    !canUseAi ? 'opacity-60' : '',
+                                ]"
+                                @click="onAiReviewClick"
                             >
-                                <IconWriting class="size-4" />
+                                <IconLock v-if="!canUseAi" class="size-4" />
+                                <IconWriting v-else class="size-4" />
                             </button>
                         </TooltipTrigger>
                         <TooltipContent>{{ $t('posts.ai.review.button_tooltip') }}</TooltipContent>

@@ -24,7 +24,11 @@ class PostAiReviewController extends Controller
 
         $gate = Gate::inspect('useAi', $workspace->account);
         if ($gate->denied()) {
-            return response()->json(['message' => $gate->message()], Response::HTTP_PAYMENT_REQUIRED);
+            return response()->json([
+                'message' => $gate->message(),
+                'upgrade_required' => true,
+                'reason' => $gate->code() ?? 'ai_disabled',
+            ], Response::HTTP_PAYMENT_REQUIRED);
         }
 
         $agent = new PostContentReviewer(workspace: $workspace);

@@ -26,10 +26,6 @@ class Plan extends Model
         'member_limit',
         'workspace_limit',
         'monthly_credits_limit',
-        'allowed_networks',
-        'can_use_ai',
-        'can_use_analytics',
-        'scheduled_posts_limit',
         'sort',
         'is_archived',
     ];
@@ -43,10 +39,6 @@ class Plan extends Model
             'member_limit' => 'integer',
             'workspace_limit' => 'integer',
             'monthly_credits_limit' => 'integer',
-            'allowed_networks' => 'array',
-            'can_use_ai' => 'boolean',
-            'can_use_analytics' => 'boolean',
-            'scheduled_posts_limit' => 'integer',
             'sort' => 'integer',
         ];
     }

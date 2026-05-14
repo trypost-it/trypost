@@ -6,6 +6,7 @@ use App\Http\Controllers\App\AnalyticsController;
 use App\Http\Controllers\App\ApiKeyController;
 use App\Http\Controllers\App\AssetController;
 use App\Http\Controllers\App\BillingController;
+use App\Http\Controllers\App\ComplianceController;
 use App\Http\Controllers\App\GiphyController;
 use App\Http\Controllers\App\NotificationController;
 use App\Http\Controllers\App\PostAiCreateController;
@@ -40,6 +41,8 @@ use App\Http\Controllers\Auth\TikTokController;
 use App\Http\Controllers\Auth\XController;
 use App\Http\Controllers\Auth\YouTubeController;
 use App\Http\Middleware\App\EnsureAccountReady;
+use App\Http\Middleware\App\EnsureAnalyticsAccess;
+use App\Http\Middleware\App\EnsurePlanCompliance;
 use Illuminate\Support\Facades\Route;
 
 // Subscription selection (requires auth but not subscription)
@@ -118,10 +121,14 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Routes that require active subscription and completed onboarding
-Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
+Route::middleware(['auth', EnsureAccountReady::class, EnsurePlanCompliance::class])->group(function () {
+    // Plan compliance page (always reachable — middleware exempts this route)
+    Route::get('plan-compliance', [ComplianceController::class, 'index'])->name('app.compliance.index');
+
     // Workspaces
     Route::get('workspaces', [WorkspaceController::class, 'index'])->name('app.workspaces.index');
     Route::post('workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('app.workspaces.switch');
+    Route::get('workspaces/{workspace}/deletion-impact', [WorkspaceController::class, 'deletionImpact'])->name('app.workspaces.deletion-impact');
     Route::delete('workspaces/{workspace}', [WorkspaceController::class, 'destroy'])->name('app.workspaces.destroy');
 
     // Workspace settings
@@ -139,8 +146,10 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::put('accounts/{account}/toggle', [SocialController::class, 'toggleActive'])->name('app.accounts.toggle');
 
     // Analytics
-    Route::get('analytics', [AnalyticsController::class, 'index'])->name('app.analytics');
-    Route::get('analytics/{account}', [AnalyticsController::class, 'show'])->name('app.analytics.show');
+    Route::middleware(EnsureAnalyticsAccess::class)->group(function () {
+        Route::get('analytics', [AnalyticsController::class, 'index'])->name('app.analytics');
+        Route::get('analytics/{account}', [AnalyticsController::class, 'show'])->name('app.analytics.show');
+    });
 
     // Calendar
     Route::get('calendar', [PostController::class, 'calendar'])->name('app.calendar');
@@ -179,6 +188,7 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::delete('settings/workspace/members/invites/{invite}', [WorkspaceInviteController::class, 'destroy'])->name('app.invites.destroy');
     Route::delete('settings/workspace/members/{user}', [WorkspaceInviteController::class, 'removeMember'])->name('app.members.remove');
     Route::put('settings/workspace/members/{user}/role', [WorkspaceInviteController::class, 'updateRole'])->name('app.members.update-role');
+    Route::delete('settings/account/members/{user}', [WorkspaceInviteController::class, 'removeFromAccount'])->name('app.account.members.remove');
 
     // Signatures
     Route::get('signatures', [WorkspaceSignatureController::class, 'index'])->name('app.signatures.index');
@@ -191,8 +201,8 @@ Route::middleware(['auth', EnsureAccountReady::class])->group(function () {
     Route::get('assets/search', [AssetController::class, 'search'])->name('app.assets.search');
     Route::post('assets', [AssetController::class, 'store'])->name('app.assets.store');
     Route::post('assets/chunked', [AssetController::class, 'storeChunked'])->name('app.assets.store-chunked');
-    Route::post('assets/from-url', [AssetController::class, 'storeFromUrl'])->name('app.assets.store-from-url');
     Route::delete('assets/{media}', [AssetController::class, 'destroy'])->name('app.assets.destroy');
+    Route::post('assets/from-url', [AssetController::class, 'storeFromUrl'])->name('app.assets.store-from-url');
     Route::get('assets/unsplash/search', [UnsplashController::class, 'search'])->name('app.assets.unsplash.search');
     Route::get('assets/unsplash/trending', [UnsplashController::class, 'trending'])->name('app.assets.unsplash.trending');
     Route::get('assets/giphy/search', [GiphyController::class, 'search'])->name('app.assets.giphy.search');

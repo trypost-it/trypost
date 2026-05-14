@@ -32,3 +32,31 @@ test('cancelled subscription drops account back to free plan', function () {
 
     expect($account->fresh()->plan_id)->toBe($freePlan->id);
 });
+
+test('subscription created event flips account from free to paid', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $freePlan = Plan::where('slug', Slug::Free)->firstOrFail();
+    $starterPlan = Plan::where('slug', Slug::Starter)->firstOrFail();
+
+    $starterPlan->update(['stripe_monthly_price_id' => 'price_test_starter_monthly']);
+
+    $account = Account::factory()->create([
+        'plan_id' => $freePlan->id,
+        'stripe_id' => 'cus_test_'.fake()->uuid(),
+    ]);
+
+    $listener = app(StripeEventListener::class);
+    $listener->handle(new WebhookReceived([
+        'type' => 'customer.subscription.created',
+        'data' => ['object' => [
+            'customer' => $account->stripe_id,
+            'status' => 'trialing',
+            'items' => ['data' => [
+                ['price' => ['id' => 'price_test_starter_monthly']],
+            ]],
+        ]],
+    ]));
+
+    expect($account->fresh()->plan_id)->toBe($starterPlan->id);
+});

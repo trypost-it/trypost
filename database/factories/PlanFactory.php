@@ -29,10 +29,6 @@ class PlanFactory extends Factory
             'member_limit' => fake()->randomElement([1, 3, 10, 50]),
             'workspace_limit' => fake()->randomElement([1, 3, 10, 50]),
             'monthly_credits_limit' => fake()->randomElement([1000, 2000, 5000, 15000]),
-            'allowed_networks' => null,
-            'can_use_ai' => true,
-            'can_use_analytics' => true,
-            'scheduled_posts_limit' => null,
             'sort' => 0,
             'is_archived' => false,
         ];

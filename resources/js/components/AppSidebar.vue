@@ -9,6 +9,7 @@ import {
     IconFileCheck,
     IconFileText,
     IconHash,
+    IconLock,
     IconPhoto,
     IconPencil,
     IconPlus,
@@ -35,11 +36,13 @@ import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
+    SidebarGroup,
     SidebarHeader,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useActiveUrl } from '@/composables/useActiveUrl';
 import { useFeatureAccess } from '@/composables/useFeatureAccess';
 import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
@@ -60,16 +63,11 @@ const page = usePage();
 const currentWorkspace = computed<Workspace | null>(() => page.props.auth.currentWorkspace as Workspace | null);
 const workspaces = computed<Workspace[]>(() => page.props.auth.workspaces as Workspace[]);
 
-const mainNavItems = computed<NavItem[]>(() => [
+const calendarNavItems = computed<NavItem[]>(() => [
     {
         title: trans('sidebar.posts.calendar'),
         href: calendar.url(),
         icon: IconCalendar,
-    },
-    {
-        title: trans('sidebar.analytics'),
-        href: analytics.url(),
-        icon: IconChartBar,
     },
 ]);
 
@@ -126,13 +124,14 @@ const switchWorkspace = (workspaceId: string) => {
     });
 };
 
-const { canCreateWorkspace } = useFeatureAccess();
+const { canCreateWorkspace, canUseAnalytics, navigateOrUpgrade } = useFeatureAccess();
 const { openUpgrade } = useUpgradeDialog();
+
 const { urlIsActive } = useActiveUrl();
 
 const handleCreateWorkspace = () => {
     if (!canCreateWorkspace.value) {
-        openUpgrade(trans('billing.upgrade_dialog.reasons.workspace_limit'));
+        openUpgrade('workspace_limit');
         return;
     }
     router.visit(createWorkspaceRoute.url());
@@ -194,7 +193,42 @@ const handleCreateWorkspace = () => {
                 </Link>
             </div>
 
-            <NavMain v-if="currentWorkspace" :items="mainNavItems" />
+            <NavMain v-if="currentWorkspace" :items="calendarNavItems" />
+            <SidebarGroup v-if="currentWorkspace" class="px-2 py-0">
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            as-child
+                            :is-active="urlIsActive(analytics.url())"
+                            :tooltip="$t('sidebar.analytics')"
+                            :class="!canUseAnalytics ? 'opacity-70' : ''"
+                        >
+                            <button
+                                type="button"
+                                class="w-full"
+                                @click="navigateOrUpgrade(analytics.url(), canUseAnalytics, 'analytics_disabled')"
+                            >
+                                <IconChartBar />
+                                <span>{{ $t('sidebar.analytics') }}</span>
+                                <Tooltip v-if="!canUseAnalytics">
+                                    <TooltipTrigger as-child>
+                                        <span
+                                            class="ml-auto inline-flex cursor-help"
+                                            :aria-label="$t('sidebar.upgrade_to_use_analytics')"
+                                            @click.stop="navigateOrUpgrade(analytics.url(), canUseAnalytics, 'analytics_disabled')"
+                                        >
+                                            <IconLock class="size-3.5 opacity-60" />
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {{ $t('sidebar.upgrade_to_use_analytics') }}
+                                    </TooltipContent>
+                                </Tooltip>
+                            </button>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
             <NavMain v-if="currentWorkspace" :items="postsNavItems" :label="$t('sidebar.groups.posts')" />
             <NavMain v-if="currentWorkspace" :items="workspaceNavItems" :label="$t('sidebar.groups.workspace')" />
         </SidebarContent>

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\Plan\Slug;
+use App\Features\CanUseAi;
 use App\Features\MonthlyCreditsLimit;
 use App\Models\Account;
 use App\Models\AiUsageLog;
@@ -35,13 +37,17 @@ class AccountPolicy
             return Response::allow();
         }
 
+        if (! Feature::for($account)->value(CanUseAi::class)) {
+            return Response::deny(__('billing.flash.ai_disabled'), 'ai_disabled');
+        }
+
         $limit = (int) Feature::for($account)->value(MonthlyCreditsLimit::class);
         $used = AiUsageLog::monthlyCredits($account->id);
 
         if ($used >= $limit) {
             return Response::deny(__('billing.flash.credits_exhausted', [
                 'limit' => (string) $limit,
-            ]));
+            ]), 'credits_exhausted');
         }
 
         return Response::allow();
@@ -57,6 +63,10 @@ class AccountPolicy
     {
         if ($user->id !== $account->owner_id) {
             return Response::deny(__('billing.flash.cannot_manage'));
+        }
+
+        if ($plan->slug === Slug::Free) {
+            return Response::deny(__('billing.flash.cannot_swap_to_free'), 'cannot_swap_to_free');
         }
 
         $usage = $account->usage();

@@ -31,6 +31,42 @@ interface Highlight {
 }
 
 const { open, reason, closeUpgrade } = useUpgradeDialog();
+
+const reasonCopyMap = computed<Record<string, { title: string; body: string }>>(() => ({
+    ai_disabled: {
+        title: trans('upgrade.ai.title'),
+        body: trans('upgrade.ai.body'),
+    },
+    analytics_disabled: {
+        title: trans('upgrade.analytics.title'),
+        body: trans('upgrade.analytics.body'),
+    },
+    network_disabled: {
+        title: trans('upgrade.network.title'),
+        body: trans('upgrade.network.body'),
+    },
+    social_account_limit: {
+        title: trans('upgrade.social_limit.title'),
+        body: trans('upgrade.social_limit.body'),
+    },
+    scheduled_post_limit: {
+        title: trans('upgrade.queue_limit.title'),
+        body: trans('upgrade.queue_limit.body'),
+    },
+    workspace_limit: {
+        title: trans('upgrade.workspace_limit.title'),
+        body: trans('upgrade.workspace_limit.body'),
+    },
+    member_limit: {
+        title: trans('upgrade.member_limit.title'),
+        body: trans('upgrade.member_limit.body'),
+    },
+}));
+
+const currentCopy = computed(() => reasonCopyMap.value[reason.value ?? ''] ?? {
+    title: trans('upgrade.default.title'),
+    body: trans('upgrade.default.body'),
+});
 const { usage } = useFeatureAccess();
 const page = usePage();
 
@@ -158,17 +194,20 @@ const onOpenChange = (value: boolean) => {
 
 <template>
     <Dialog :open="open" @update:open="onOpenChange">
-        <DialogContent class="w-[95vw] gap-0 p-0 sm:max-w-6xl">
+        <DialogContent
+            class="z-[100] w-[95vw] gap-0 p-0 sm:max-w-6xl"
+            overlay-class="z-[99]"
+        >
             <TooltipProvider :delay-duration="150">
                 <div class="px-6 pt-6 text-center">
                     <DialogTitle
                         class="text-3xl font-semibold leading-tight"
                         style="font-family: var(--font-display)"
                     >
-                        {{ $t('billing.upgrade_dialog.title') }}
+                        {{ reason ? currentCopy.title : $t('billing.upgrade_dialog.title') }}
                     </DialogTitle>
                     <DialogDescription class="mx-auto mt-2 max-w-2xl text-balance text-base text-foreground/70">
-                        {{ reason ?? $t('billing.upgrade_dialog.description') }}
+                        {{ reason ? currentCopy.body : $t('billing.upgrade_dialog.description') }}
                     </DialogDescription>
                 </div>
 

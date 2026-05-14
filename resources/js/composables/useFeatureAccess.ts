@@ -1,28 +1,17 @@
-import { usePage } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
-import type { Usage } from '@/types';
-
-interface Plan {
-    id: string;
-    slug: string;
-    name: string;
-}
-
-interface Features {
-    workspaceLimit: number;
-    socialAccountLimit: number;
-    memberLimit: number;
-    monthlyCreditsLimit: number;
-}
+import type { AuthFeatures, AuthPlan, Usage } from '@/types';
+import { useUpgradeDialog } from './useUpgradeDialog';
 
 export const useFeatureAccess = () => {
     const page = usePage();
+    const { openUpgrade } = useUpgradeDialog();
 
     const isSelfHosted = computed(() => page.props.selfHosted as boolean);
-    const plan = computed<Plan | null>(() => (page.props.auth as { plan: Plan | null }).plan ?? null);
+    const plan = computed<AuthPlan | null>(() => (page.props.auth as { plan: AuthPlan | null }).plan ?? null);
     const usage = computed<Usage | null>(() => (page.props.usage as Usage | null) ?? null);
-    const features = computed<Features | null>(() => (page.props.features as Features | null) ?? null);
+    const features = computed<AuthFeatures | null>(() => (page.props.features as AuthFeatures | null) ?? null);
 
     const workspaceLimit = computed(() => features.value?.workspaceLimit ?? 1);
     const socialAccountLimit = computed(() => features.value?.socialAccountLimit ?? 1);
@@ -53,6 +42,58 @@ export const useFeatureAccess = () => {
         return usage.value.creditsUsed < monthlyCreditsLimit.value;
     });
 
+    const canUseAi = computed(() => {
+        if (isSelfHosted.value) return true;
+        return features.value?.canUseAi ?? false;
+    });
+
+    const canUseAnalytics = computed(() => {
+        if (isSelfHosted.value) return true;
+        return features.value?.canUseAnalytics ?? false;
+    });
+
+    const canConnectNetwork = (slug: string): boolean => {
+        if (isSelfHosted.value) return true;
+        const blocked = features.value?.blockedNetworks;
+        if (!Array.isArray(blocked)) return true;
+        return !blocked.includes(slug);
+    };
+
+    const requireAi = (): boolean => {
+        if (canUseAi.value) return true;
+        openUpgrade('ai_disabled');
+        return false;
+    };
+
+    const requireAnalytics = (): boolean => {
+        if (canUseAnalytics.value) return true;
+        openUpgrade('analytics_disabled');
+        return false;
+    };
+
+    const requireNetwork = (slug: string): boolean => {
+        if (canConnectNetwork(slug)) return true;
+        openUpgrade('network_disabled');
+        return false;
+    };
+
+    /**
+     * Navigate to a URL if the gate passes, otherwise open the upgrade dialog.
+     * Single click handler for any gated sidebar/menu item.
+     */
+    const navigateOrUpgrade = (
+        url: string,
+        gate: boolean | (() => boolean),
+        reason: string,
+    ): void => {
+        const allowed = typeof gate === 'function' ? gate() : gate;
+        if (!allowed) {
+            openUpgrade(reason);
+            return;
+        }
+        router.visit(url);
+    };
+
     return {
         plan,
         usage,
@@ -66,5 +107,12 @@ export const useFeatureAccess = () => {
         canConnectSocialAccount,
         canInviteMember,
         hasCreditsLeft,
+        canUseAi,
+        canUseAnalytics,
+        canConnectNetwork,
+        requireAi,
+        requireAnalytics,
+        requireNetwork,
+        navigateOrUpgrade,
     };
 };

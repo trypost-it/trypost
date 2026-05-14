@@ -6,12 +6,15 @@ namespace App\Actions\Post;
 
 use App\Enums\Post\Action as PostAction;
 use App\Enums\Post\Status as PostStatus;
+use App\Features\ScheduledPostsLimit;
 use App\Jobs\PublishPost;
 use App\Models\Post;
 use App\Models\Workspace;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Laravel\Pennant\Feature;
+use Symfony\Component\HttpFoundation\Response;
 
 class UpdatePost
 {
@@ -29,12 +32,40 @@ class UpdatePost
             $scheduledAt = Carbon::parse(data_get($data, 'scheduled_at'))->utc();
         }
 
-        $status = data_get($data, 'status', $post->status);
+        $rawStatus = data_get($data, 'status');
+        $status = $rawStatus instanceof PostStatus
+            ? $rawStatus
+            : ($rawStatus !== null ? PostStatus::from($rawStatus) : $post->status);
+
+        if ($status === PostStatus::Scheduled && $scheduledAt && $scheduledAt->isFuture()) {
+            $limit = Feature::for($workspace->account)->value(ScheduledPostsLimit::class);
+
+            if ($limit !== null) {
+                $current = Post::where('workspace_id', $workspace->id)
+                    ->where('status', PostStatus::Scheduled)
+                    ->where('scheduled_at', '>', now())
+                    ->when(
+                        $post->status === PostStatus::Scheduled,
+                        fn ($q) => $q->where('id', '!=', $post->id),
+                    )
+                    ->count();
+
+                if ($current >= $limit) {
+                    abort(response()->json([
+                        'message' => __('billing.flash.scheduled_post_limit', ['limit' => $limit]),
+                        'upgrade_required' => true,
+                        'reason' => 'scheduled_post_limit',
+                        'limit' => $limit,
+                        'current' => $current,
+                    ], Response::HTTP_PAYMENT_REQUIRED));
+                }
+            }
+        }
 
         $post->update([
             'content' => data_get($data, 'content', $post->content),
             'media' => data_get($data, 'media', $post->media),
-            'status' => $status === PostStatus::Publishing->value ? PostStatus::Publishing : $status,
+            'status' => $status === PostStatus::Publishing ? PostStatus::Publishing : $status,
             'scheduled_at' => $scheduledAt,
         ]);
 
@@ -68,14 +99,14 @@ class UpdatePost
             });
         }
 
-        if ($status === PostStatus::Publishing->value) {
+        if ($status === PostStatus::Publishing) {
             $post->update(['scheduled_at' => now()]);
             PublishPost::dispatch($post);
 
             return ['post' => $post, 'action' => PostAction::Publishing];
         }
 
-        if ($status === PostStatus::Scheduled->value) {
+        if ($status === PostStatus::Scheduled) {
             return ['post' => $post, 'action' => PostAction::Scheduled];
         }
 

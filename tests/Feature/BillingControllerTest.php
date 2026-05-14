@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Enums\Plan\Slug;
 use App\Enums\UserWorkspace\Role;
 use App\Models\Account;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\Workspace;
+use Database\Seeders\PlanSeeder;
 
 beforeEach(function () {
     $this->account = Account::factory()->create();
@@ -298,4 +300,31 @@ test('swap requires authentication', function () {
     $response = $this->post(route('app.billing.swap', $plan));
 
     $response->assertRedirect(route('login'));
+});
+
+test('cannot swap to free plan', function () {
+    config(['trypost.self_hosted' => false]);
+    $this->seed(PlanSeeder::class);
+
+    $freePlan = Plan::where('slug', Slug::Free)->firstOrFail();
+    $plusPlan = Plan::where('slug', Slug::Plus)->firstOrFail();
+
+    $this->account->update(['plan_id' => $plusPlan->id]);
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_plus_monthly',
+    ]);
+
+    $this->user->unsetRelation('account');
+
+    $response = $this->actingAs($this->user)
+        ->from(route('app.billing.index'))
+        ->post(route('app.billing.swap', $freePlan), [
+            'price_id' => 'any_price_id',
+        ]);
+
+    $response->assertRedirect(route('app.billing.index'));
+    $response->assertSessionHas('flash.error', __('billing.flash.cannot_swap_to_free'));
 });

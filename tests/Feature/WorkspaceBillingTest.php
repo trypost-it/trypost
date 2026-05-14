@@ -101,7 +101,7 @@ test('billing page is not accessible by non-owner member', function () {
 test('subscribe page shows plans', function () {
     config(['trypost.self_hosted' => false]);
 
-    $activePlanCount = Plan::active()->count();
+    $activePlanCount = Plan::active()->where('slug', '!=', PlanSlug::Free)->count();
 
     $response = $this->actingAs($this->user)->get(route('app.subscribe'));
 

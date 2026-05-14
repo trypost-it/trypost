@@ -40,6 +40,7 @@ return [
         'popular' => 'Más popular',
         'start_trial' => 'Comenzar prueba de 7 días',
         'prices' => [
+            'free' => ['monthly' => '$0', 'yearly_per_month' => '$0', 'yearly' => '$0'],
             'starter' => ['monthly' => '$19', 'yearly_per_month' => '$16', 'yearly' => '$190'],
             'plus' => ['monthly' => '$29', 'yearly_per_month' => '$24', 'yearly' => '$290'],
             'pro' => ['monthly' => '$49', 'yearly_per_month' => '$41', 'yearly' => '$490'],
@@ -52,6 +53,7 @@ return [
             'credits' => ':count créditos IA/mes',
         ],
         'credit_tooltips' => [
+            'free' => 'Sin créditos de IA en el plan Free.',
             'starter' => 'En promedio 150 posts de largo medio + 5 imágenes IA por mes.',
             'plus' => 'En promedio 300 posts de largo medio + 10 imágenes IA por mes.',
             'pro' => 'En promedio 700 posts de largo medio + 30 imágenes IA por mes.',
@@ -98,7 +100,13 @@ return [
             'social_accounts' => 'No puedes cambiar a :plan: tienes :count cuentas sociales pero el plan solo permite :limit.',
             'members' => 'No puedes cambiar a :plan: tienes :count miembros (incluyendo invitaciones) pero el plan solo permite :limit.',
         ],
+        'ai_disabled' => 'Las funciones de IA no están disponibles en el plan gratuito. Actualiza para desbloquear.',
         'credits_exhausted' => 'Sin créditos de IA — has usado tus :limit créditos mensuales. Mejora tu plan o espera hasta el próximo mes.',
+        'x_disabled' => 'La conexión de cuentas X/Twitter no está disponible en el plan gratuito. Actualiza para desbloquear.',
+        'scheduled_post_limit' => 'El plan gratuito permite hasta :limit posts programados. Actualiza para programación ilimitada.',
+        'analytics_disabled' => 'Analytics no está disponible en el plan gratuito. Actualiza para desbloquear.',
+        'brand_analyzer_rate_limited' => 'Demasiadas solicitudes de análisis de marca. Inténtalo de nuevo en 24 horas.',
+        'cannot_swap_to_free' => 'No puedes hacer downgrade al plan gratuito mediante un cambio de plan. Cancela tu suscripción para cambiar al gratuito.',
     ],
 
     'processing' => [

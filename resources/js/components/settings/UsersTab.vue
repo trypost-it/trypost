@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { IconClock, IconDots, IconShield, IconTrash, IconUser } from '@tabler/icons-vue';
-import { trans } from 'laravel-vue-i18n';
+import { IconClock, IconDots, IconShield, IconTrash, IconUser, IconUserOff } from '@tabler/icons-vue';
 import { ref } from 'vue';
 
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
@@ -13,6 +12,7 @@ import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -27,6 +27,7 @@ import { useFeatureAccess } from '@/composables/useFeatureAccess';
 import { useUpgradeDialog } from '@/composables/useUpgradeDialog';
 import { WorkspaceRole } from '@/enums/workspace-role';
 import { destroy as destroyInvite } from '@/routes/app/invites';
+import { remove as removeFromAccountRoute } from '@/routes/app/account/members';
 import { remove as removeMemberRoute, updateRole } from '@/routes/app/members';
 
 interface Member {
@@ -42,13 +43,21 @@ interface Invitation {
     role: string;
 }
 
+interface Owner {
+    id: string | null;
+    name: string | null;
+    email: string | null;
+}
+
 defineProps<{
     members: Member[];
     invitations: Invitation[];
+    owner?: Owner;
 }>();
 
 const inviteDialogOpen = ref(false);
 const removeMemberModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
+const removeFromAccountModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 const cancelInvitationModal = ref<InstanceType<typeof ConfirmDeleteModal> | null>(null);
 
 const { canInviteMember } = useFeatureAccess();
@@ -56,7 +65,7 @@ const { openUpgrade } = useUpgradeDialog();
 
 const handleInviteClick = () => {
     if (!canInviteMember.value) {
-        openUpgrade(trans('billing.upgrade_dialog.reasons.member_limit'));
+        openUpgrade('member_limit');
         return;
     }
     inviteDialogOpen.value = true;
@@ -127,6 +136,15 @@ const changeRole = (member: Member, role: string) => {
                                     <IconTrash class="size-4" />
                                     {{ $t('settings.members.remove') }}
                                 </DropdownMenuItem>
+                                <DropdownMenuSeparator v-if="!owner || member.id !== owner.id" />
+                                <DropdownMenuItem
+                                    v-if="!owner || member.id !== owner.id"
+                                    variant="destructive"
+                                    @click="removeFromAccountModal?.open({ url: removeFromAccountRoute.url(member.id) })"
+                                >
+                                    <IconUserOff class="size-4" />
+                                    {{ $t('settings.members.remove_from_account_modal.action') }}
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </TableCell>
@@ -168,6 +186,13 @@ const changeRole = (member: Member, role: string) => {
             :title="$t('settings.members.remove_modal.title')"
             :description="$t('settings.members.remove_modal.description')"
             :action="$t('settings.members.remove_modal.action')"
+        />
+
+        <ConfirmDeleteModal
+            ref="removeFromAccountModal"
+            :title="$t('settings.members.remove_from_account_modal.title')"
+            :description="$t('settings.members.remove_from_account_modal.description')"
+            :action="$t('settings.members.remove_from_account_modal.action')"
         />
 
         <ConfirmDeleteModal

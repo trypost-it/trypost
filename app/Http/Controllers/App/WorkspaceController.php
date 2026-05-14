@@ -7,10 +7,13 @@ namespace App\Http\Controllers\App;
 use App\Actions\Ai\AutofillBrand;
 use App\Actions\Workspace\CreateWorkspace;
 use App\Actions\Workspace\DeleteWorkspace;
+use App\Actions\Workspace\WorkspaceDeletionImpact;
 use App\Enums\Workspace\BrandFont;
 use App\Enums\Workspace\ImageStyle;
+use App\Http\Requests\App\Workspace\AutofillBrandRequest;
 use App\Http\Requests\App\Workspace\StoreWorkspaceRequest;
 use App\Http\Requests\App\Workspace\UpdateWorkspaceRequest;
+use App\Http\Requests\App\Workspace\UploadLogoRequest;
 use App\Http\Resources\App\WorkspaceMemberResource;
 use App\Models\Account;
 use App\Models\Workspace;
@@ -19,8 +22,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
@@ -84,26 +88,39 @@ class WorkspaceController extends Controller
         ]);
     }
 
-    public function autofillBrand(Request $request, AutofillBrand $autofill): JsonResponse
+    public function autofillBrand(AutofillBrandRequest $request, AutofillBrand $autofill): JsonResponse
     {
-        $validated = $request->validate([
-            'url' => ['required', 'string', 'max:255'],
-        ]);
+        $validated = $request->validated();
+
+        $url = data_get($validated, 'url');
+
+        $cacheKey = 'brand-analyzer:'.md5($url);
+        if ($cached = Cache::get($cacheKey)) {
+            return response()->json($cached);
+        }
+
+        $rateLimitKey = "brand-analyzer:{$request->ip()}";
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            return response()->json(
+                ['message' => __('billing.flash.brand_analyzer_rate_limited')],
+                SymfonyResponse::HTTP_TOO_MANY_REQUESTS,
+            );
+        }
+        RateLimiter::hit($rateLimitKey, 86400);
 
         $user = $request->user();
 
-        $gate = Gate::inspect('useAi', $user->account);
-        if ($gate->denied()) {
-            return response()->json(['message' => $gate->message()], SymfonyResponse::HTTP_PAYMENT_REQUIRED);
-        }
-
         try {
-            $metadata = $autofill(data_get($validated, 'url'), $user->currentWorkspace, $user->id);
+            $metadata = $autofill($url, $user->currentWorkspace, $user->id);
         } catch (RuntimeException $e) {
             return response()->json(['message' => $e->getMessage()], SymfonyResponse::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        return response()->json($metadata->toArray());
+        $result = $metadata->toArray();
+
+        Cache::put($cacheKey, $result, now()->addDays(7));
+
+        return response()->json($result);
     }
 
     public function store(StoreWorkspaceRequest $request, LogoAttacher $logoAttacher): RedirectResponse
@@ -181,15 +198,11 @@ class WorkspaceController extends Controller
         ]);
     }
 
-    public function uploadLogo(Request $request): RedirectResponse
+    public function uploadLogo(UploadLogoRequest $request): RedirectResponse
     {
         $workspace = $request->user()->currentWorkspace;
 
         $this->authorize('update', $workspace);
-
-        $request->validate([
-            'photo' => ['required', 'image', 'max:2048'],
-        ]);
 
         $workspace->clearMediaCollection('logo');
         $workspace->addMedia($request->file('photo'), 'logo');
@@ -224,6 +237,13 @@ class WorkspaceController extends Controller
         $workspace->update($request->validated());
 
         return back()->with('flash.success', __('settings.flash.workspace_updated'));
+    }
+
+    public function deletionImpact(Request $request, Workspace $workspace): JsonResponse
+    {
+        $this->authorize('delete', $workspace);
+
+        return response()->json(WorkspaceDeletionImpact::execute($workspace));
     }
 
     public function destroy(Request $request, Workspace $workspace): RedirectResponse

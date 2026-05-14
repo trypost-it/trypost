@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models\Traits;
 
+use App\Features\BlockedNetworks;
+use App\Features\CanUseAi;
+use App\Features\CanUseAnalytics;
 use App\Features\MemberLimit;
 use App\Features\MonthlyCreditsLimit;
+use App\Features\ScheduledPostsLimit;
 use App\Features\SocialAccountLimit;
 use App\Features\WorkspaceLimit;
 use App\Models\AiUsageLog;
@@ -53,15 +57,21 @@ trait HasUsage
     }
 
     /**
-     * @return array{workspaceLimit: int, socialAccountLimit: int, memberLimit: int, monthlyCreditsLimit: int}
+     * @return array{workspaceLimit: int, socialAccountLimit: int, memberLimit: int, monthlyCreditsLimit: int, canUseAi: bool, canUseAnalytics: bool, blockedNetworks: array<int, string>, scheduledPostsLimit: int|null}
      */
     public function featureLimits(): array
     {
+        $pennant = Feature::for($this);
+
         return [
-            'workspaceLimit' => Feature::for($this)->value(WorkspaceLimit::class),
-            'socialAccountLimit' => Feature::for($this)->value(SocialAccountLimit::class),
-            'memberLimit' => Feature::for($this)->value(MemberLimit::class),
-            'monthlyCreditsLimit' => Feature::for($this)->value(MonthlyCreditsLimit::class),
+            'workspaceLimit' => $pennant->value(WorkspaceLimit::class),
+            'socialAccountLimit' => $pennant->value(SocialAccountLimit::class),
+            'memberLimit' => $pennant->value(MemberLimit::class),
+            'monthlyCreditsLimit' => $pennant->value(MonthlyCreditsLimit::class),
+            'canUseAi' => $pennant->value(CanUseAi::class),
+            'canUseAnalytics' => $pennant->value(CanUseAnalytics::class),
+            'blockedNetworks' => $pennant->value(BlockedNetworks::class),
+            'scheduledPostsLimit' => $pennant->value(ScheduledPostsLimit::class),
         ];
     }
 

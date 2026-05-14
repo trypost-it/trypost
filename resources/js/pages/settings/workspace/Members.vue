@@ -62,7 +62,7 @@ const tabs = computed(() => [
 
             <SettingsTabsNav :tabs="tabs" active="members" />
 
-            <UsersTab :members="members" :invitations="invites" />
+            <UsersTab :members="members" :invitations="invites" :owner="owner" />
         </div>
     </AppLayout>
 </template>

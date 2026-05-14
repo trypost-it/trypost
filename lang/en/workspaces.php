@@ -54,6 +54,20 @@ return [
 
     'limit_reached' => 'You have reached your plan limit for workspaces.',
 
+    'delete' => [
+        'title' => 'Delete workspace',
+        'description' => 'This action is permanent and cannot be undone.',
+        'impact_title' => 'The following will be permanently deleted:',
+        'impact' => [
+            'posts' => '{0} No posts|{1} :count post|[2,*] :count posts',
+            'social_accounts' => '{0} No connected accounts|{1} :count connected account|[2,*] :count connected accounts',
+            'labels' => '{0} No labels|{1} :count label|[2,*] :count labels',
+            'signatures' => '{0} No signatures|{1} :count signature|[2,*] :count signatures',
+            'members' => '{0} No team members|{1} :count team member will lose access|[2,*] :count team members will lose access',
+        ],
+        'confirm' => 'Permanently delete workspace',
+    ],
+
     'flash' => [
         'deleted' => 'Workspace deleted successfully.',
     ],

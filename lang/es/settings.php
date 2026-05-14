@@ -223,6 +223,12 @@ return [
             'action' => 'Cancelar invitación',
         ],
 
+        'remove_from_account_modal' => [
+            'title' => 'Eliminar de la cuenta',
+            'description' => 'Esto eliminará permanentemente a este usuario de tu cuenta. Perderá acceso a todo y la acción no se puede deshacer.',
+            'action' => 'Eliminar de la cuenta',
+        ],
+
         'roles' => [
             'owner' => 'Propietario',
             'admin' => 'Administrador',
@@ -239,6 +245,7 @@ return [
             'already_member' => 'Ya eres miembro de este workspace.',
             'invite_accepted' => '¡Bienvenido! Ahora eres miembro del workspace.',
             'invite_declined' => 'Invitación rechazada.',
+            'user_removed_from_account' => 'Usuario eliminado permanentemente de la cuenta.',
         ],
     ],
 

@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
+import { IconDots, IconTrash } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
+import { ref } from 'vue';
 
+import DeleteWorkspaceModal from '@/components/workspaces/DeleteWorkspaceModal.vue';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import { create as createWorkspace, switchMethod } from '@/routes/app/workspaces';
 
@@ -22,6 +31,8 @@ interface Props {
 }
 
 defineProps<Props>();
+
+const deleteModal = ref<InstanceType<typeof DeleteWorkspaceModal> | null>(null);
 
 const switchToWorkspace = (workspace: Workspace) => {
     router.post(switchMethod.url(workspace.id), {}, {
@@ -60,6 +71,22 @@ const switchToWorkspace = (workspace: Workspace) => {
                 <Badge v-if="workspace.id === currentWorkspaceId" variant="secondary" class="shrink-0">
                     {{ $t('workspaces.current') }}
                 </Badge>
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child @click.stop>
+                        <Button variant="ghost" size="icon" class="size-8 shrink-0">
+                            <IconDots class="size-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" @click.stop>
+                        <DropdownMenuItem
+                            variant="destructive"
+                            @click="deleteModal?.open(workspace)"
+                        >
+                            <IconTrash class="size-4" />
+                            {{ $t('workspaces.delete.confirm') }}
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </div>
 
@@ -68,5 +95,7 @@ const switchToWorkspace = (workspace: Workspace) => {
                 {{ $t('workspaces.create.submit') }}
             </Button>
         </Link>
+
+        <DeleteWorkspaceModal ref="deleteModal" />
     </AuthLayout>
 </template>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
-import { IconPlus } from '@tabler/icons-vue';
+import { IconLock, IconPlus } from '@tabler/icons-vue';
 import { trans } from 'laravel-vue-i18n';
 import { onMounted, onUnmounted } from 'vue';
 
@@ -12,6 +12,25 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useFeatureAccess } from '@/composables/useFeatureAccess';
+import * as blueskyRoutes from '@/routes/App/Social/bluesky';
+import * as facebookRoutes from '@/routes/App/Social/facebook';
+import * as instagramRoutes from '@/routes/App/Social/instagram';
+import * as instagramFacebookRoutes from '@/routes/App/Social/instagram-facebook';
+import * as linkedinRoutes from '@/routes/App/Social/linkedin';
+import * as linkedinPageRoutes from '@/routes/App/Social/linkedin-page';
+import * as mastodonRoutes from '@/routes/App/Social/mastodon';
+import * as pinterestRoutes from '@/routes/App/Social/pinterest';
+import * as threadsRoutes from '@/routes/App/Social/threads';
+import * as tiktokRoutes from '@/routes/App/Social/tiktok';
+import * as xRoutes from '@/routes/App/Social/x';
+import * as youtubeRoutes from '@/routes/App/Social/youtube';
 
 export interface AvailablePlatform {
     value: string;
@@ -24,6 +43,8 @@ defineProps<{
 }>();
 
 const open = defineModel<boolean>('open', { default: false });
+
+const { canConnectNetwork, requireNetwork } = useFeatureAccess();
 
 const getPlatformDescription = (platform: string): string =>
     trans(`accounts.descriptions.${platform}`);
@@ -50,8 +71,28 @@ const platformTheme: Record<string, { bg: string; rotate: string; image: string 
 const themeFor = (value: string) =>
     platformTheme[value] ?? { bg: 'bg-muted', rotate: '', image: '' };
 
+const platformConnectUrls: Record<string, string> = {
+    bluesky: blueskyRoutes.connect.url(),
+    facebook: facebookRoutes.connect.url(),
+    instagram: instagramRoutes.connect.url(),
+    'instagram-facebook': instagramFacebookRoutes.connect.url(),
+    linkedin: linkedinRoutes.connect.url(),
+    'linkedin-page': linkedinPageRoutes.connect.url(),
+    mastodon: mastodonRoutes.connect.url(),
+    pinterest: pinterestRoutes.connect.url(),
+    threads: threadsRoutes.connect.url(),
+    tiktok: tiktokRoutes.connect.url(),
+    x: xRoutes.connect.url(),
+    youtube: youtubeRoutes.connect.url(),
+};
+
+const requestUpgradeAndClose = (platformValue: string) => {
+    requireNetwork(platformValue);
+    open.value = false;
+};
+
 const openOAuthPopup = (platformValue: string) => {
-    const url = `/connect/${platformValue}`;
+    const url = platformConnectUrls[platformValue] ?? `/connect/${platformValue}`;
     const width = 600;
     const height = 700;
     const left = window.screenX + (window.outerWidth - width) / 2;
@@ -96,10 +137,31 @@ onUnmounted(() => {
                 <div
                     v-for="platform in platforms"
                     :key="platform.value"
-                    class="group relative flex flex-col items-center gap-3 rounded-xl border-2 border-foreground bg-card p-4 text-center shadow-xs transition-shadow hover:shadow-md"
+                    :class="[
+                        'group relative flex flex-col items-center gap-3 rounded-xl border-2 border-foreground bg-card p-4 text-center shadow-xs transition-shadow hover:shadow-md',
+                        !canConnectNetwork(platform.value) ? 'opacity-70' : '',
+                    ]"
                 >
+                    <!-- Lock badge for gated networks (hover tooltip explains why) -->
+                    <TooltipProvider v-if="!canConnectNetwork(platform.value)" :delay-duration="100">
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <span
+                                    class="absolute -top-2 -right-2 inline-flex size-6 cursor-help items-center justify-center rounded-full border-2 border-foreground bg-amber-200 text-foreground shadow-2xs"
+                                    :aria-label="$t('accounts.upgrade_to_connect', { platform: platform.label })"
+                                >
+                                    <IconLock class="size-3.5" stroke-width="3" />
+                                </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                {{ $t('accounts.upgrade_to_connect', { platform: platform.label }) }}
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+
                     <!-- "+" sticker badge appears only on hover so the grid doesn't feel cluttered. -->
                     <span
+                        v-else
                         class="pointer-events-none absolute -top-2 -right-2 inline-flex size-6 items-center justify-center rounded-full border-2 border-foreground bg-violet-200 text-foreground opacity-0 shadow-2xs transition-all group-hover:rotate-90 group-hover:scale-110 group-hover:opacity-100"
                         aria-hidden="true"
                     >
@@ -134,6 +196,15 @@ onUnmounted(() => {
                     </div>
 
                     <Button
+                        v-if="!canConnectNetwork(platform.value)"
+                        size="sm"
+                        class="mt-auto w-full bg-amber-300 font-semibold text-foreground hover:bg-amber-400"
+                        @click="requestUpgradeAndClose(platform.value)"
+                    >
+                        {{ $t('accounts.upgrade_cta') }}
+                    </Button>
+                    <Button
+                        v-else
                         size="sm"
                         class="mt-auto w-full"
                         @click="openOAuthPopup(platform.value)"

@@ -6,6 +6,7 @@ namespace App\Enums\Plan;
 
 enum Slug: string
 {
+    case Free = 'free';
     case Starter = 'starter';
     case Plus = 'plus';
     case Pro = 'pro';
@@ -14,6 +15,7 @@ enum Slug: string
     public function label(): string
     {
         return match ($this) {
+            self::Free => 'Free',
             self::Starter => 'Starter',
             self::Plus => 'Plus',
             self::Pro => 'Pro',

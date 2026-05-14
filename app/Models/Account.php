@@ -76,6 +76,15 @@ class Account extends Model
         return $this->subscribed(self::SUBSCRIPTION_NAME);
     }
 
+    public function hasUsableAccess(): bool
+    {
+        if (config('trypost.self_hosted')) {
+            return true;
+        }
+
+        return $this->plan_id !== null;
+    }
+
     public function isOnTrial(): bool
     {
         return $this->subscription(self::SUBSCRIPTION_NAME)?->onTrial() ?? false;

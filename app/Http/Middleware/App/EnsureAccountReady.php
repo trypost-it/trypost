@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware\App;
 
-use App\Models\Account;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,7 +23,7 @@ class EnsureAccountReady
 
         $account = $user->account;
 
-        if (! config('trypost.self_hosted') && (! $account || ! $account->subscribed(Account::SUBSCRIPTION_NAME))) {
+        if (! $account || ! $account->hasUsableAccess()) {
             return redirect()->route('app.subscribe');
         }
 

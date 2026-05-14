@@ -5,11 +5,12 @@ return [
 
     'upgrade_dialog' => [
         'title' => 'Upgrade your plan',
-        'description' => 'Pick a plan that fits your needs.',
+        'description' => 'Start with a 7-day free trial. No charge until your trial ends.',
+        'description_paid' => 'Upgrade or change your plan. Switching takes effect immediately.',
         'current_plan' => 'Current plan',
         'current_short' => 'Current',
         'current_badge' => 'Current',
-        'subscribe' => 'Subscribe',
+        'subscribe' => 'Start 7-day free trial',
         'switch' => 'Switch to this plan',
         'switch_short' => 'Switch',
         'switch_to_yearly' => 'Switch to yearly',

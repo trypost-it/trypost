@@ -5,11 +5,12 @@ return [
 
     'upgrade_dialog' => [
         'title' => 'Actualiza tu plan',
-        'description' => 'Elige un plan que se adapte a tus necesidades.',
+        'description' => 'Comienza con 7 días gratis. Sin cargo hasta que termine tu prueba.',
+        'description_paid' => 'Actualiza o cambia tu plan. El cambio se aplica inmediatamente.',
         'current_plan' => 'Plan actual',
         'current_short' => 'Actual',
         'current_badge' => 'Actual',
-        'subscribe' => 'Suscribirse',
+        'subscribe' => 'Comenzar prueba de 7 días',
         'switch' => 'Cambiar a este plan',
         'switch_short' => 'Cambiar',
         'switch_to_yearly' => 'Cambiar a anual',

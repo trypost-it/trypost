@@ -83,8 +83,6 @@ const selected = defineModel<PickedMedia[]>('selected', { default: () => [] });
 
 const isPicker = computed(() => props.mode === 'picker');
 
-const activeTab = ref('uploads');
-
 const lightbox = ref<InstanceType<typeof ImagePreviewDialog> | null>(null);
 
 const handleAssetClick = (asset: AssetMedia) => {
@@ -589,7 +587,7 @@ onUnmounted(() => {
 
 <template>
     <div>
-        <Tabs v-model="activeTab">
+        <Tabs default-value="uploads">
             <TabsList>
                 <TabsTrigger value="uploads">{{ trans('assets.tabs.my_uploads') }}</TabsTrigger>
                 <TabsTrigger value="stock">{{ trans('assets.tabs.stock_photos') }}</TabsTrigger>

@@ -63,9 +63,20 @@ const reasonCopyMap = computed<Record<string, { title: string; body: string }>>(
     },
 }));
 
-const currentCopy = computed(() => reasonCopyMap.value[reason.value ?? ''] ?? {
-    title: trans('upgrade.default.title'),
-    body: trans('upgrade.default.body'),
+const dialogTitle = computed(() => {
+    if (reason.value) {
+        return reasonCopyMap.value[reason.value]?.title ?? trans('upgrade.default.title');
+    }
+    return trans('billing.upgrade_dialog.title');
+});
+
+const dialogDescription = computed(() => {
+    if (reason.value) {
+        return reasonCopyMap.value[reason.value]?.body ?? trans('upgrade.default.body');
+    }
+    return hasActiveSubscription.value
+        ? trans('billing.upgrade_dialog.description_paid')
+        : trans('billing.upgrade_dialog.description');
 });
 const { usage } = useFeatureAccess();
 const page = usePage();
@@ -204,10 +215,10 @@ const onOpenChange = (value: boolean) => {
                         class="text-3xl font-semibold leading-tight"
                         style="font-family: var(--font-display)"
                     >
-                        {{ reason ? currentCopy.title : $t('billing.upgrade_dialog.title') }}
+                        {{ dialogTitle }}
                     </DialogTitle>
                     <DialogDescription class="mx-auto mt-2 max-w-2xl text-balance text-base text-foreground/70">
-                        {{ reason ? currentCopy.body : $t('billing.upgrade_dialog.description') }}
+                        {{ dialogDescription }}
                     </DialogDescription>
                 </div>
 

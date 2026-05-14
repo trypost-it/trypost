@@ -17,6 +17,21 @@ class PlanSeeder extends Seeder
     {
         $plans = [
             [
+                'slug' => Slug::Free,
+                'name' => 'Free',
+                'stripe_monthly_price_id' => null,
+                'stripe_yearly_price_id' => null,
+                'social_account_limit' => 1,
+                'member_limit' => 1,
+                'workspace_limit' => 1,
+                'monthly_credits_limit' => 0,
+                'allowed_networks' => ['linkedin', 'instagram', 'facebook', 'tiktok', 'youtube', 'threads', 'pinterest', 'bluesky', 'mastodon'],
+                'can_use_ai' => false,
+                'can_use_analytics' => false,
+                'scheduled_posts_limit' => 15,
+                'sort' => 0,
+            ],
+            [
                 'slug' => Slug::Starter,
                 'name' => 'Starter',
                 'stripe_monthly_price_id' => env('STRIPE_STARTER_MONTHLY'),
@@ -25,6 +40,10 @@ class PlanSeeder extends Seeder
                 'member_limit' => 1,
                 'workspace_limit' => 1,
                 'monthly_credits_limit' => 1000,
+                'allowed_networks' => null,
+                'can_use_ai' => true,
+                'can_use_analytics' => true,
+                'scheduled_posts_limit' => null,
                 'sort' => 1,
             ],
             [
@@ -36,6 +55,10 @@ class PlanSeeder extends Seeder
                 'member_limit' => 5,
                 'workspace_limit' => 5,
                 'monthly_credits_limit' => 2000,
+                'allowed_networks' => null,
+                'can_use_ai' => true,
+                'can_use_analytics' => true,
+                'scheduled_posts_limit' => null,
                 'sort' => 2,
             ],
             [
@@ -47,6 +70,10 @@ class PlanSeeder extends Seeder
                 'member_limit' => 15,
                 'workspace_limit' => 15,
                 'monthly_credits_limit' => 5000,
+                'allowed_networks' => null,
+                'can_use_ai' => true,
+                'can_use_analytics' => true,
+                'scheduled_posts_limit' => null,
                 'sort' => 3,
             ],
             [
@@ -58,6 +85,10 @@ class PlanSeeder extends Seeder
                 'member_limit' => 20,
                 'workspace_limit' => 50,
                 'monthly_credits_limit' => 15000,
+                'allowed_networks' => null,
+                'can_use_ai' => true,
+                'can_use_analytics' => true,
+                'scheduled_posts_limit' => null,
                 'sort' => 4,
             ],
         ];

@@ -212,3 +212,59 @@ test('does not sync across different workspaces', function () {
     // Should NOT have been synced because it's in a different workspace
     expect($pageAccountOtherWorkspace->access_token)->toBe('old-access-token');
 });
+
+test('does not sync across different LinkedIn admins inside the same workspace', function () {
+    // Scenario: multi-user workspace. Owner connects their own LinkedIn
+    // (personal + page they admin); a teammate later connects their
+    // company's LinkedIn Page that they admin. Two distinct LinkedIn
+    // user identities coexist in the same workspace and must NOT share
+    // tokens — each token belongs to whoever authorized it at LinkedIn.
+
+    $ownerLinkedInId = 'linkedin-user-owner';
+    $clientLinkedInId = 'linkedin-user-client';
+
+    $ownerPersonal = SocialAccount::factory()->linkedin()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform_user_id' => $ownerLinkedInId,
+        'access_token' => 'owner-new-access-token',
+        'refresh_token' => 'owner-new-refresh-token',
+        'token_expires_at' => now()->addDays(60),
+    ]);
+
+    $ownerPage = SocialAccount::factory()->linkedinPage()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform_user_id' => 'org-owner',
+        'access_token' => 'owner-old-access-token',
+        'refresh_token' => 'owner-old-refresh-token',
+        'meta' => [
+            'organization_id' => 'org-owner',
+            'admin_user_id' => $ownerLinkedInId,
+            'admin_name' => 'Owner',
+        ],
+    ]);
+
+    $clientPage = SocialAccount::factory()->linkedinPage()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform_user_id' => 'org-client',
+        'access_token' => 'client-untouched-access-token',
+        'refresh_token' => 'client-untouched-refresh-token',
+        'meta' => [
+            'organization_id' => 'org-client',
+            'admin_user_id' => $clientLinkedInId,
+            'admin_name' => 'Client',
+        ],
+    ]);
+
+    $this->synchronizer->syncTokens($ownerPersonal);
+
+    // Owner's own page got the new token.
+    $ownerPage->refresh();
+    expect($ownerPage->access_token)->toBe('owner-new-access-token');
+    expect($ownerPage->refresh_token)->toBe('owner-new-refresh-token');
+
+    // Client's page (different admin_user_id) was NOT touched even
+    // though it lives in the same workspace.
+    $clientPage->refresh();
+    expect($clientPage->access_token)->toBe('client-untouched-access-token');
+    expect($clientPage->refresh_token)->toBe('client-untouched-refresh-token');
+});

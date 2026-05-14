@@ -8,6 +8,7 @@ import { create as createPost, destroy as destroyPost, duplicate as duplicatePos
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import LabelBadge from '@/components/labels/LabelBadge.vue';
+import LabelFilter from '@/components/labels/LabelFilter.vue';
 import PageHeader from '@/components/PageHeader.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -85,29 +86,38 @@ interface Props {
     workspace: Workspace;
     posts: ScrollPosts;
     currentStatus: string | null;
+    labels: Label[];
     filters: {
         search: string;
+        labels: string[];
     };
 }
 
 const props = defineProps<Props>();
 
 const searchQuery = ref(props.filters.search);
+const selectedLabelIds = ref<string[]>(props.filters.labels ?? []);
 
-const search = debounce(() => {
+const buildFilterUrl = () => {
     const url = props.currentStatus ? postsIndex.url(props.currentStatus) : postsIndex.url();
     router.get(
         url,
-        { search: searchQuery.value || undefined },
+        {
+            search: searchQuery.value || undefined,
+            labels: selectedLabelIds.value.length ? selectedLabelIds.value : undefined,
+        },
         {
             preserveState: true,
             preserveScroll: true,
             replace: true,
         },
     );
-}, 300);
+};
+
+const search = debounce(buildFilterUrl, 300);
 
 watch(searchQuery, () => search());
+watch(selectedLabelIds, () => buildFilterUrl(), { deep: true });
 
 const pageTitle = computed(() => {
     if (props.currentStatus) {
@@ -148,6 +158,8 @@ const handleCopyId = (post: Post) => copyToClipboard(post.id, trans('posts.actio
 
 const hasActiveSearch = computed(() => Boolean(searchQuery.value?.trim()));
 
+const hasActiveFilters = computed(() => hasActiveSearch.value || selectedLabelIds.value.length > 0);
+
 const refreshPosts = () => router.reload({ only: ['posts'], reset: ['posts'] });
 
 useWorkspaceEcho(
@@ -165,13 +177,17 @@ useWorkspaceEcho(
 
             <!-- Toolbar -->
             <div class="flex items-center justify-between gap-3">
-                <div class="relative">
-                    <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/60" />
-                    <Input
-                        v-model="searchQuery"
-                        :placeholder="trans('posts.search')"
-                        class="w-64 pl-9"
-                    />
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <IconSearch class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-foreground/60" />
+                        <Input
+                            v-model="searchQuery"
+                            :placeholder="trans('posts.search')"
+                            class="w-64 pl-9"
+                        />
+                    </div>
+
+                    <LabelFilter v-if="labels.length" v-model="selectedLabelIds" :labels="labels" />
                 </div>
 
                 <Link :href="createPost.url()">
@@ -182,8 +198,8 @@ useWorkspaceEcho(
             <EmptyState
                 v-if="posts.data.length === 0"
                 :icon="IconFileText"
-                :title="hasActiveSearch ? $t('posts.no_search_results') : $t('posts.no_posts')"
-                :description="hasActiveSearch ? $t('posts.try_different_search') : $t('posts.start_creating')"
+                :title="hasActiveFilters ? $t('posts.no_search_results') : $t('posts.no_posts')"
+                :description="hasActiveFilters ? $t('posts.try_different_search') : $t('posts.start_creating')"
             />
 
             <div v-else>

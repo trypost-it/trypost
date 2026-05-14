@@ -9,6 +9,10 @@ return [
     'no_search_results' => 'Nenhum post corresponde à sua busca',
     'try_different_search' => 'Tente outra palavra-chave ou limpe a busca.',
     'start_creating' => 'Comece criando seu primeiro post.',
+    'filter_by_label' => 'Filtrar por label',
+    'label_search_placeholder' => 'Buscar labels...',
+    'no_labels' => 'Nenhuma label encontrada.',
+    'clear_label_filter' => 'Limpar filtro de labels',
     'table' => [
         'post' => 'Post',
         'status' => 'Status',

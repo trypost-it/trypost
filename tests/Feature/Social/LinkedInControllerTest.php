@@ -84,6 +84,42 @@ test('linkedin oauth callback creates account', function () {
     ]);
 });
 
+test('linkedin oauth callback splits comma-separated approvedScopes before saving', function () {
+    session(['social_connect_workspace' => $this->workspace->id]);
+
+    $socialiteUser = Mockery::mock(SocialiteUser::class);
+    $socialiteUser->shouldReceive('getId')->andReturn('abc123xyz');
+    $socialiteUser->shouldReceive('getNickname')->andReturn(null);
+    $socialiteUser->shouldReceive('getName')->andReturn('John Doe');
+    $socialiteUser->shouldReceive('getAvatar')->andReturn(null);
+    $socialiteUser->token = 'test-access-token';
+    $socialiteUser->refreshToken = 'test-refresh-token';
+    $socialiteUser->expiresIn = 5184000;
+    // LinkedIn returns scopes comma-separated; Socialite's LinkedInProvider
+    // splits on space (the OAuth 2.0 default), so approvedScopes lands as
+    // a single-element array with the whole CSV inside. The save path
+    // must normalize back to individual tokens.
+    $socialiteUser->approvedScopes = ['email,openid,profile,r_basicprofile,w_member_social'];
+
+    Socialite::shouldReceive('driver')
+        ->with('linkedin')
+        ->andReturn(Mockery::mock(['user' => $socialiteUser]));
+
+    Http::fake([
+        'https://api.linkedin.com/v2/me*' => Http::response([
+            'id' => 'abc123xyz',
+            'vanityName' => 'johndoe',
+        ], 200),
+    ]);
+
+    $this->actingAs($this->user)->get(route('app.social.linkedin.callback'));
+
+    $account = SocialAccount::where('platform_user_id', 'abc123xyz')->first();
+    expect($account->scopes)->toEqualCanonicalizing([
+        'email', 'openid', 'profile', 'r_basicprofile', 'w_member_social',
+    ]);
+});
+
 test('linkedin callback fails with expired session', function () {
     // No session data - simulating expired session
 

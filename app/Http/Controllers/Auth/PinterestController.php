@@ -79,7 +79,8 @@ class PinterestController extends SocialController
                 'access_token' => $socialUser->token,
                 'refresh_token' => $socialUser->refreshToken,
                 'token_expires_at' => $socialUser->expiresIn ? now()->addSeconds($socialUser->expiresIn) : now()->addDays(30),
-                'scopes' => $socialUser->approvedScopes ?? $this->scopes,
+                // Pinterest returns scopes space-joined but Socialite doesn't split them, so re-split here.
+                'scopes' => explode(' ', implode(' ', $socialUser->approvedScopes)),
                 'status' => Status::Connected,
             ]);
 

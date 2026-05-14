@@ -27,7 +27,7 @@ class CreateUser
                 'name' => data_get($data, 'name')."'s Account",
                 'billing_email' => data_get($data, 'email'),
                 'plan_id' => Plan::where('slug', Slug::Starter)->value('id'),
-                'trial_ends_at' => now()->addDays(config('cashier.trial_days', 7)),
+                'trial_ends_at' => now()->addDays(config('cashier.trial_days')),
             ]);
 
             $user = User::create(array_merge([

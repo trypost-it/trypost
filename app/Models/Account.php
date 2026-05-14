@@ -30,6 +30,11 @@ class Account extends Model
         'name',
         'billing_email',
         'plan_id',
+        'trial_ends_at',
+    ];
+
+    protected $casts = [
+        'trial_ends_at' => 'datetime',
     ];
 
     public function forgetPlanFeatureCache(): void
@@ -78,7 +83,11 @@ class Account extends Model
 
     public function isOnTrial(): bool
     {
-        return $this->subscription(self::SUBSCRIPTION_NAME)?->onTrial() ?? false;
+        if ($this->onGenericTrial()) {
+            return true;
+        }
+
+        return (bool) $this->subscription(self::SUBSCRIPTION_NAME)?->onTrial();
     }
 
     /**

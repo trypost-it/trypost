@@ -103,6 +103,7 @@ class LinkedInPageController extends SocialController
                     'token' => $socialUser->token,
                     'refresh_token' => $socialUser->refreshToken,
                     'expires_in' => $socialUser->expiresIn,
+                    'approved_scopes' => $socialUser->approvedScopes ?? [],
                     'organizations' => $organizations,
                     'reconnect_id' => session('linkedin_page_reconnect_id'),
                 ],
@@ -182,6 +183,8 @@ class LinkedInPageController extends SocialController
                         'access_token' => $pendingData['token'],
                         'refresh_token' => $pendingData['refresh_token'],
                         'token_expires_at' => $pendingData['expires_in'] ? now()->addSeconds($pendingData['expires_in']) : null,
+                        // LinkedIn returns scope CSV-joined but Socialite splits on space, so re-split here.
+                        'scopes' => explode(',', implode(',', $pendingData['approved_scopes'] ?? [])),
                         'meta' => [
                             'organization_id' => $request->organization_id,
                             'admin_user_id' => $pendingData['user_id'],
@@ -211,6 +214,8 @@ class LinkedInPageController extends SocialController
                     'access_token' => $pendingData['token'],
                     'refresh_token' => $pendingData['refresh_token'],
                     'token_expires_at' => $pendingData['expires_in'] ? now()->addSeconds($pendingData['expires_in']) : null,
+                    // LinkedIn returns scope CSV-joined but Socialite splits on space, so re-split here.
+                    'scopes' => explode(',', implode(',', $pendingData['approved_scopes'] ?? [])),
                     'status' => Status::Connected,
                     'error_message' => null,
                     'disconnected_at' => null,

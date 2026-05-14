@@ -166,6 +166,40 @@ test('linkedin page select creates account', function () {
     ]);
 });
 
+test('linkedin page select splits comma-separated approvedScopes before saving', function () {
+    session([
+        'linkedin_page_pending' => [
+            'workspace_id' => $this->workspace->id,
+            'user_id' => 'user123',
+            'name' => 'John Doe',
+            'avatar' => null,
+            'token' => 'test-access-token',
+            'refresh_token' => 'test-refresh-token',
+            'expires_in' => 5184000,
+            // Simulates what Socialite returns for LinkedIn (CSV-joined into
+            // a single array element because the provider splits on space).
+            'approved_scopes' => ['email,openid,profile,w_organization_social,r_organization_social,rw_organization_admin,w_member_social'],
+            'organizations' => [
+                ['id' => 999888, 'name' => 'Scope Company', 'vanity_name' => 'scopeco', 'logo' => null],
+            ],
+        ],
+    ]);
+
+    $this->actingAs($this->user)->post(route('app.social.linkedin-page.select'), [
+        'organization_id' => 999888,
+        'organization_name' => 'Scope Company',
+        'organization_vanity_name' => 'scopeco',
+        'organization_logo' => null,
+    ]);
+
+    $account = SocialAccount::where('platform_user_id', 999888)->first();
+    expect($account->scopes)->toEqualCanonicalizing([
+        'email', 'openid', 'profile',
+        'w_organization_social', 'r_organization_social',
+        'rw_organization_admin', 'w_member_social',
+    ]);
+});
+
 test('linkedin page select fails with expired session', function () {
     // No session data
 

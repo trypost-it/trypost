@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Actions\User;
 
+use App\Enums\Plan\Slug;
 use App\Jobs\PostHog\SyncUser;
 use App\Models\Account;
+use App\Models\Plan;
 use App\Models\User;
 use App\Services\PostHogService;
 use Illuminate\Support\Facades\DB;
@@ -21,9 +23,12 @@ class CreateUser
         $user = DB::transaction(function () use ($data, $utmParameters): User {
             $isInviteRegistration = data_get($data, 'is_invite', false);
 
+            $freePlanId = Plan::where('slug', Slug::Free)->value('id');
+
             $account = Account::create([
                 'name' => data_get($data, 'name')."'s Account",
                 'billing_email' => data_get($data, 'email'),
+                'plan_id' => $freePlanId,
             ]);
 
             $user = User::create(array_merge([

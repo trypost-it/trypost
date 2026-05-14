@@ -91,10 +91,6 @@ class Account extends Model
         return (bool) $this->subscription(self::SUBSCRIPTION_NAME)?->onTrial();
     }
 
-    /**
-     * The end date of whichever trial is currently active (subscription trial
-     * or generic trial), or null if the account is not on any trial.
-     */
     public function activeTrialEndsAt(): ?CarbonInterface
     {
         $subscription = $this->subscription(self::SUBSCRIPTION_NAME);

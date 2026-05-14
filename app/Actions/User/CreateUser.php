@@ -23,14 +23,11 @@ class CreateUser
         $user = DB::transaction(function () use ($data, $utmParameters): User {
             $isInviteRegistration = data_get($data, 'is_invite', false);
 
-            $starterPlanId = Plan::where('slug', Slug::Starter)->value('id');
-            $trialEndsAt = now()->addDays(config('cashier.trial_days', 7));
-
             $account = Account::create([
                 'name' => data_get($data, 'name')."'s Account",
                 'billing_email' => data_get($data, 'email'),
-                'plan_id' => $starterPlanId,
-                'trial_ends_at' => $trialEndsAt,
+                'plan_id' => Plan::where('slug', Slug::Starter)->value('id'),
+                'trial_ends_at' => now()->addDays(config('cashier.trial_days', 7)),
             ]);
 
             $user = User::create(array_merge([

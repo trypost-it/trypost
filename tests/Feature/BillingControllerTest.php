@@ -38,7 +38,6 @@ test('subscribe shows subscription page', function () {
     $response->assertInertia(fn ($page) => $page
         ->component('billing/Subscribe', false)
         ->has('plans')
-        ->has('trialDays')
     );
 });
 
@@ -90,6 +89,73 @@ test('billing index shows billing dashboard', function () {
         ->has('hasSubscription')
         ->has('plan')
         ->has('plans')
+    );
+});
+
+test('billing index exposes onTrial=true and trialEndsAt for generic-trial-only account', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $endsAt = now()->addDays(7)->startOfSecond();
+    $this->account->update(['trial_ends_at' => $endsAt]);
+
+    $response = $this->actingAs($this->user->fresh())->get(route('app.billing.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('settings/account/Billing', false)
+        ->where('hasSubscription', false)
+        ->where('onTrial', true)
+        ->where('trialEndsAt', $endsAt->toIso8601ZuluString('microsecond'))
+    );
+});
+
+test('billing index exposes onTrial=true and trialEndsAt for subscription-trial account', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $subscriptionEndsAt = now()->addDays(5)->startOfSecond();
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'trialing',
+        'stripe_price' => 'price_123',
+        'trial_ends_at' => $subscriptionEndsAt,
+    ]);
+
+    $response = $this->actingAs($this->user->fresh())->get(route('app.billing.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('hasSubscription', true)
+        ->where('onTrial', true)
+        ->where('trialEndsAt', $subscriptionEndsAt->toIso8601ZuluString('microsecond'))
+    );
+});
+
+test('billing index exposes onTrial=false and trialEndsAt=null for paying subscribed user', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $this->account->subscriptions()->create([
+        'type' => Account::SUBSCRIPTION_NAME,
+        'stripe_id' => 'sub_test_'.fake()->uuid(),
+        'stripe_status' => 'active',
+        'stripe_price' => 'price_123',
+    ]);
+
+    $response = $this->actingAs($this->user->fresh())->get(route('app.billing.index'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->where('hasSubscription', true)
+        ->where('onTrial', false)
+        ->where('trialEndsAt', null)
+    );
+});
+
+test('subscribe page does not expose trialDays prop anymore', function () {
+    config(['trypost.self_hosted' => false]);
+
+    $response = $this->actingAs($this->user)->get(route('app.subscribe'));
+
+    $response->assertInertia(fn ($page) => $page
+        ->component('billing/Subscribe', false)
+        ->missing('trialDays')
     );
 });
 

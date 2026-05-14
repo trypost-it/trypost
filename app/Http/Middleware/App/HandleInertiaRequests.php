@@ -61,7 +61,6 @@ class HandleInertiaRequests extends Middleware
             'selfHosted' => $isSelfHosted,
             'googleAuthEnabled' => config('trypost.google_auth_enabled'),
             'githubAuthEnabled' => config('trypost.github_auth_enabled'),
-            'trialDays' => config('cashier.trial_days'),
         ];
     }
 }

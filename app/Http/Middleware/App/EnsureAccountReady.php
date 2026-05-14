@@ -27,7 +27,7 @@ class EnsureAccountReady
         if (! config('trypost.self_hosted')) {
             $hasAccess = $account && (
                 $account->subscribed(Account::SUBSCRIPTION_NAME)
-                || $account->onGenericTrial()
+                || $account->isOnTrial()
             );
 
             if (! $hasAccess) {

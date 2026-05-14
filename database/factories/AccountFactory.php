@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\Plan\Slug;
 use App\Models\Account;
+use App\Models\Plan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,6 +23,7 @@ class AccountFactory extends Factory
     {
         return [
             'name' => fake()->company(),
+            'plan_id' => fn () => Plan::where('slug', Slug::Plus)->value('id'),
         ];
     }
 }

@@ -12,7 +12,7 @@ beforeEach(function () {
 });
 
 test('redirects to subscribe when account has no active subscription', function () {
-    $account = Account::factory()->create();
+    $account = Account::factory()->create(['plan_id' => null]);
     $user = User::factory()->create(['account_id' => $account->id]);
 
     $this->actingAs($user)

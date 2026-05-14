@@ -55,7 +55,9 @@ test('ensure subscribed middleware passes in self hosted mode', function () {
 test('ensure subscribed middleware redirects without subscription in saas mode', function () {
     config(['trypost.self_hosted' => false]);
 
-    $response = $this->actingAs($this->user)->get(route('app.calendar'));
+    $this->account->update(['plan_id' => null]);
+
+    $response = $this->actingAs($this->user->fresh())->get(route('app.calendar'));
 
     $response->assertRedirect(route('app.subscribe'));
 });
@@ -132,7 +134,7 @@ test('create workspace is blocked when account hits plan limit in saas mode', fu
     ]);
 
     // Starter plan: workspace_limit = 1; the user already owns 1 workspace (from beforeEach).
-    $response = $this->actingAs($this->user)
+    $response = $this->actingAs($this->user->fresh())
         ->from(route('app.calendar'))
         ->get(route('app.workspaces.create'));
 
@@ -171,7 +173,7 @@ test('store workspace is blocked when account hits plan limit in saas mode', fun
     ]);
 
     // Starter plan: workspace_limit = 1; the user already owns 1 workspace.
-    $response = $this->actingAs($this->user)->post(route('app.workspaces.store'), [
+    $response = $this->actingAs($this->user->fresh())->post(route('app.workspaces.store'), [
         'name' => 'Second workspace',
     ]);
 

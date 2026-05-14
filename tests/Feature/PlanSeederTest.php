@@ -6,8 +6,8 @@ use App\Enums\Plan\Slug;
 use App\Models\Plan;
 use Database\Seeders\PlanSeeder;
 
-test('seeder creates 4 plans', function () {
-    expect(Plan::count())->toBe(4);
+test('seeder creates 5 plans', function () {
+    expect(Plan::count())->toBe(5);
 });
 
 test('seeder creates plans with correct limits', function () {
@@ -33,13 +33,13 @@ test('seeder creates plans with correct limits', function () {
 test('seeder is idempotent', function () {
     $this->seed(PlanSeeder::class);
 
-    expect(Plan::count())->toBe(4);
+    expect(Plan::count())->toBe(5);
 });
 
 test('active scope excludes archived plans', function () {
     $plan = Plan::where('slug', Slug::Starter)->first();
     $plan->update(['is_archived' => true]);
 
-    expect(Plan::active()->count())->toBe(3)
-        ->and(Plan::count())->toBe(4);
+    expect(Plan::active()->count())->toBe(4)
+        ->and(Plan::count())->toBe(5);
 });

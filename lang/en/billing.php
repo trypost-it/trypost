@@ -26,8 +26,7 @@ return [
         'page_title' => 'Choose your plan',
         'eyebrow' => 'Pricing',
         'title' => 'Choose the right plan for you',
-        'description' => 'Start with a 7-day free trial. No charge until your trial ends.',
-        'trial_info' => '7-day free trial, then billed automatically',
+        'description' => 'Pick the plan that fits you. Billed monthly or annually.',
         'monthly' => 'Monthly',
         'yearly' => 'Yearly',
         'per_month' => 'monthly',
@@ -38,7 +37,7 @@ return [
         'everything_in' => 'Everything in :plan, plus:',
         'save_months' => '2 months free',
         'popular' => 'Most popular',
-        'start_trial' => 'Start 7-day free trial',
+        'subscribe_cta' => 'Subscribe',
         'prices' => [
             'starter' => ['monthly' => '$19', 'yearly_per_month' => '$16', 'yearly' => '$190'],
             'plus' => ['monthly' => '$29', 'yearly_per_month' => '$24', 'yearly' => '$290'],

@@ -30,7 +30,6 @@ class BillingController extends Controller
 
         return Inertia::render('billing/Subscribe', [
             'plans' => Plan::active()->orderBy('sort')->get(),
-            'trialDays' => config('cashier.trial_days'),
         ]);
     }
 
@@ -63,8 +62,7 @@ class BillingController extends Controller
         ]);
 
         $subscription = $account->newSubscription(Account::SUBSCRIPTION_NAME, $priceId)
-            ->allowPromotionCodes()
-            ->trialDays(config('cashier.trial_days'));
+            ->allowPromotionCodes();
 
         $checkoutSession = $subscription->checkout([
             'success_url' => route('app.billing.processing').'?session_id={CHECKOUT_SESSION_ID}',

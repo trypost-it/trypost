@@ -26,8 +26,7 @@ return [
         'page_title' => 'Elige tu plan',
         'eyebrow' => 'Precios',
         'title' => 'Elige el plan ideal para ti',
-        'description' => 'Comienza con 7 días gratis. Sin cargo hasta que termine tu prueba.',
-        'trial_info' => 'Prueba gratuita de 7 días, luego se cobra automáticamente',
+        'description' => 'Elige el plan que te queda. Facturación mensual o anual.',
         'monthly' => 'Mensual',
         'yearly' => 'Anual',
         'per_month' => 'mensual',
@@ -38,7 +37,7 @@ return [
         'everything_in' => 'Todo lo de :plan, más:',
         'save_months' => '2 meses gratis',
         'popular' => 'Más popular',
-        'start_trial' => 'Comenzar prueba de 7 días',
+        'subscribe_cta' => 'Suscribirse',
         'prices' => [
             'starter' => ['monthly' => '$19', 'yearly_per_month' => '$16', 'yearly' => '$190'],
             'plus' => ['monthly' => '$29', 'yearly_per_month' => '$24', 'yearly' => '$290'],

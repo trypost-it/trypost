@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Plan\Slug;
 use App\Enums\PostHog\BillingEvent;
 use App\Features\WorkspaceLimit;
 use App\Jobs\PostHog\TrackBilling;
@@ -315,8 +316,9 @@ test('subscription created syncs plan from price ids on first activation', funct
     expect($this->account->fresh()->plan_id)->toBe($pro->id);
 });
 
-test('subscription deleted clears the account plan_id', function () {
+test('subscription deleted sets the account plan_id to the free plan', function () {
     $starter = Plan::query()->where('slug', 'starter')->firstOrFail();
+    $freePlan = Plan::query()->where('slug', Slug::Free)->firstOrFail();
     $this->account->update(['plan_id' => $starter->id]);
 
     $this->listener->handle(new WebhookReceived([
@@ -324,11 +326,12 @@ test('subscription deleted clears the account plan_id', function () {
         'data' => ['object' => ['customer' => 'cus_test123', 'status' => 'canceled']],
     ]));
 
-    expect($this->account->fresh()->plan_id)->toBeNull();
+    expect($this->account->fresh()->plan_id)->toBe($freePlan->id);
 });
 
-test('subscription deleted is idempotent when plan_id is already null', function () {
-    $this->account->update(['plan_id' => null]);
+test('subscription deleted is idempotent when plan_id is already the free plan', function () {
+    $freePlan = Plan::query()->where('slug', Slug::Free)->firstOrFail();
+    $this->account->update(['plan_id' => $freePlan->id]);
 
     Bus::fake([TrackBilling::class]);
 
@@ -337,7 +340,7 @@ test('subscription deleted is idempotent when plan_id is already null', function
         'data' => ['object' => ['customer' => 'cus_test123']],
     ]));
 
-    expect($this->account->fresh()->plan_id)->toBeNull();
+    expect($this->account->fresh()->plan_id)->toBe($freePlan->id);
 
     // Re-delivery of a cancellation must not produce a duplicate
     // 'subscription.cancelled' event downstream.

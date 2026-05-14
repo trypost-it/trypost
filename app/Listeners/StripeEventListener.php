@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Listeners;
 
+use App\Enums\Plan\Slug;
 use App\Enums\PostHog\BillingEvent;
 use App\Jobs\PostHog\TrackBilling;
 use App\Models\Account;
@@ -79,13 +80,15 @@ class StripeEventListener
      */
     protected function handleSubscriptionDeleted(Account $account, array $payload): void
     {
-        if ($account->plan_id === null) {
+        $freePlanId = Plan::where('slug', Slug::Free)->value('id');
+
+        if ($account->plan_id === $freePlanId) {
             return;
         }
 
         $previousPlan = $account->plan?->name;
 
-        $account->update(['plan_id' => null]);
+        $account->update(['plan_id' => $freePlanId]);
         $account->forgetPlanFeatureCache();
 
         $this->trackPlanChange($account, BillingEvent::Cancelled, $previousPlan, $payload);

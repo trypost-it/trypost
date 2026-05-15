@@ -471,7 +471,6 @@ return [
 
     'flash' => [
         'scheduled' => '¡Post programado correctamente!',
-        'publishing' => '¡El post se está publicando! Puede tardar unos minutos en procesarse y aparecer en cada plataforma.',
         'deleted' => '¡Post eliminado correctamente!',
         'duplicated' => 'Post duplicado como borrador.',
         'cannot_edit_published' => 'Los posts publicados no se pueden editar.',

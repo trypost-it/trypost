@@ -471,7 +471,6 @@ return [
 
     'flash' => [
         'scheduled' => 'Post scheduled successfully!',
-        'publishing' => 'Post is being published! It may take a few minutes to process and appear on each platform.',
         'deleted' => 'Post deleted successfully!',
         'duplicated' => 'Post duplicated as a draft.',
         'cannot_edit_published' => 'Published posts cannot be edited.',

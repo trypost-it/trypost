@@ -474,6 +474,7 @@ return [
         'deleted' => 'Post excluído com sucesso!',
         'duplicated' => 'Post duplicado como rascunho.',
         'cannot_edit_published' => 'Posts publicados não podem ser editados.',
+        'cannot_edit_finalized' => 'Este post já foi processado e não pode ser republicado. Duplique-o para tentar de novo.',
         'cannot_delete_published' => 'Posts publicados não podem ser excluídos.',
         'connect_first' => 'Conecte pelo menos uma rede social antes de criar um post.',
     ],

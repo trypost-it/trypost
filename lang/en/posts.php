@@ -474,6 +474,7 @@ return [
         'deleted' => 'Post deleted successfully!',
         'duplicated' => 'Post duplicated as a draft.',
         'cannot_edit_published' => 'Published posts cannot be edited.',
+        'cannot_edit_finalized' => 'This post has already been processed and cannot be re-published. Duplicate it to try again.',
         'cannot_delete_published' => 'Published posts cannot be deleted.',
         'connect_first' => 'Connect at least one social network before creating a post.',
     ],

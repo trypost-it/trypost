@@ -499,3 +499,125 @@ test('facebook publisher can publish single image with null content', function (
 
     expect($result['id'])->toBe('post-123');
 });
+
+test('single image post without caption omits message from payload', function () {
+    $this->post->update([
+        'content' => null,
+        'media' => [
+            [
+                'id' => 'test-media-id',
+                'path' => 'media/2026-01/image.jpg',
+                'url' => 'https://example.com/media/2026-01/image.jpg',
+                'mime_type' => 'image/jpeg',
+                'original_filename' => 'image.jpg',
+            ],
+        ],
+    ]);
+
+    Http::fake([
+        '*/page_123/photos' => Http::response(['id' => 'photo-123', 'post_id' => 'post-123'], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), '/page_123/photos')
+            && ! array_key_exists('message', $request->data());
+    });
+});
+
+test('multi-image post without caption omits message from payload', function () {
+    $mediaItems = [];
+    for ($i = 1; $i <= 2; $i++) {
+        $mediaItems[] = [
+            'id' => "test-media-{$i}",
+            'path' => "media/2026-01/image{$i}.jpg",
+            'url' => "https://example.com/media/2026-01/image{$i}.jpg",
+            'mime_type' => 'image/jpeg',
+            'original_filename' => "image{$i}.jpg",
+        ];
+    }
+
+    $this->post->update(['content' => null, 'media' => $mediaItems]);
+
+    Http::fake([
+        '*/page_123/photos' => Http::sequence()
+            ->push(['id' => 'photo_1'], 200)
+            ->push(['id' => 'photo_2'], 200),
+        '*/page_123/feed' => Http::response(['id' => 'multi_post_789'], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), '/page_123/feed')
+            && ! array_key_exists('message', $request->data());
+    });
+});
+
+test('video post without description omits description from payload', function () {
+    $this->post->update([
+        'content' => null,
+        'media' => [
+            [
+                'id' => 'test-media-video',
+                'path' => 'media/2026-01/video.mp4',
+                'url' => 'https://example.com/media/2026-01/video.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'video.mp4',
+            ],
+        ],
+    ]);
+
+    Http::fake([
+        '*/page_123/videos' => Http::response(['id' => 'video_123'], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    Http::assertSent(function ($request) {
+        return str_contains($request->url(), '/page_123/videos')
+            && ! array_key_exists('description', $request->data());
+    });
+});
+
+test('reel post without description omits description from payload (finish phase)', function () {
+    $this->postPlatform->update(['content_type' => ContentType::FacebookReel]);
+
+    $this->post->update([
+        'content' => null,
+        'media' => [
+            [
+                'id' => 'test-media-reel',
+                'path' => 'media/2026-01/reel.mp4',
+                'url' => 'https://example.com/media/2026-01/reel.mp4',
+                'mime_type' => 'video/mp4',
+                'original_filename' => 'reel.mp4',
+            ],
+        ],
+    ]);
+
+    Http::fake([
+        '*/page_123/video_reels' => Http::sequence()
+            ->push([
+                'video_id' => 'reel_video_123',
+                'upload_url' => 'https://rupload.facebook.com/video-upload/v25.0/reel_video_123',
+            ], 200)
+            ->push(['id' => 'reel_123', 'success' => true], 200),
+        '*example.com/media/*' => Http::response('fake-video-binary-content', 200),
+        '*rupload.facebook.com/*' => Http::response(['success' => true], 200),
+    ]);
+
+    $this->publisher->publish($this->postPlatform);
+
+    Http::assertSent(function ($request) {
+        if (! str_contains($request->url(), '/page_123/video_reels')) {
+            return false;
+        }
+
+        $data = $request->data();
+
+        return data_get($data, 'upload_phase') === 'finish'
+            && ! array_key_exists('description', $data);
+    });
+});

@@ -54,7 +54,7 @@ class UpdatePostTool extends Tool
 
         $result = UpdatePost::execute($workspace, $post, $payload);
 
-        if (data_get($result, 'action') === PostAction::AlreadyPublished) {
+        if (in_array(data_get($result, 'action'), [PostAction::AlreadyPublished, PostAction::Finalized], true)) {
             return Response::error('Cannot edit a published post.');
         }
 

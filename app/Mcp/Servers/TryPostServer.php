@@ -12,6 +12,7 @@ use App\Mcp\Tools\Label\DeleteLabelTool;
 use App\Mcp\Tools\Label\ListLabelsTool;
 use App\Mcp\Tools\Label\UpdateLabelTool;
 use App\Mcp\Tools\Platform\ListContentTypesTool;
+use App\Mcp\Tools\Post\AttachMediaFromUploadTool;
 use App\Mcp\Tools\Post\AttachMediaFromUrlTool;
 use App\Mcp\Tools\Post\CreatePostTool;
 use App\Mcp\Tools\Post\DeletePostTool;
@@ -52,6 +53,7 @@ class TryPostServer extends Server
         DeletePostTool::class,
         AttachMediaFromUrlTool::class,
         RequestMediaUploadTool::class,
+        AttachMediaFromUploadTool::class,
         GetPostMetricsTool::class,
 
         // Platforms (read-only metadata)

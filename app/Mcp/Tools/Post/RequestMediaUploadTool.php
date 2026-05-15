@@ -31,7 +31,7 @@ class RequestMediaUploadTool extends Tool
         $uploadUrl = URL::temporarySignedRoute(
             'api.uploads.store',
             $expiresAt,
-            ['token' => $token, 'ws' => $workspaceId],
+            ['token' => $token, 'workspace_id' => $workspaceId],
         );
 
         return Response::structured([

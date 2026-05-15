@@ -26,7 +26,7 @@ function signedUploadUrl(Workspace $ws, string $token, ?int $expiresInMinutes = 
     return URL::temporarySignedRoute(
         'api.uploads.store',
         now()->addMinutes($expiresInMinutes),
-        ['token' => $token, 'ws' => $ws->id],
+        ['token' => $token, 'workspace_id' => $ws->id],
     );
 }
 
@@ -56,7 +56,7 @@ test('rejects unsigned request', function () {
     $token = (string) Str::uuid();
     $file = UploadedFile::fake()->image('shot.png', 50, 50);
 
-    $response = $this->postJson(route('api.uploads.store', ['token' => $token, 'ws' => $this->workspace->id]), [
+    $response = $this->postJson(route('api.uploads.store', ['token' => $token, 'workspace_id' => $this->workspace->id]), [
         'media' => $file,
     ]);
 
@@ -70,7 +70,7 @@ test('rejects tampered workspace_id', function () {
     $file = UploadedFile::fake()->image('shot.png', 50, 50);
 
     $url = signedUploadUrl($this->workspace, $token);
-    $tampered = str_replace("ws={$this->workspace->id}", "ws={$other->id}", $url);
+    $tampered = str_replace("workspace_id={$this->workspace->id}", "workspace_id={$other->id}", $url);
 
     $response = $this->postJson($tampered, ['media' => $file]);
 
@@ -84,7 +84,7 @@ test('rejects expired URL', function () {
     $url = URL::temporarySignedRoute(
         'api.uploads.store',
         now()->subMinute(),
-        ['token' => $token, 'ws' => $this->workspace->id],
+        ['token' => $token, 'workspace_id' => $this->workspace->id],
     );
 
     $response = $this->postJson($url, ['media' => $file]);

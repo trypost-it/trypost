@@ -34,6 +34,7 @@ class Media extends Model
         'size',
         'order',
         'meta',
+        'upload_token',
     ];
 
     protected function casts(): array

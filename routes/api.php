@@ -8,8 +8,14 @@ use App\Http\Controllers\Api\PlatformController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\SignatureController;
 use App\Http\Controllers\Api\SocialAccountController;
+use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
+
+Route::post('/uploads/{token}', [UploadController::class, 'store'])
+    ->middleware(['signed', 'throttle:10,1'])
+    ->where('token', '[0-9a-f-]{36}')
+    ->name('api.uploads.store');
 
 Route::middleware(['auth:api', 'workspace.token', 'throttle:api'])->group(function () {
     // Posts

@@ -471,7 +471,6 @@ return [
 
     'flash' => [
         'scheduled' => 'Post agendado com sucesso!',
-        'publishing' => 'Post está sendo publicado! Pode levar alguns minutos para processar e aparecer em cada plataforma.',
         'deleted' => 'Post excluído com sucesso!',
         'duplicated' => 'Post duplicado como rascunho.',
         'cannot_edit_published' => 'Posts publicados não podem ser editados.',

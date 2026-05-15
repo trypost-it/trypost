@@ -290,9 +290,6 @@ class PostController extends Controller
         }
 
         if ($action === PostAction::Publishing) {
-            session()->flash('flash.banner', __('posts.flash.publishing'));
-            session()->flash('flash.bannerStyle', 'success');
-
             return redirect()->route('app.posts.show', $post);
         }
 

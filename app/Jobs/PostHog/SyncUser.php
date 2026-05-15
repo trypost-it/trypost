@@ -31,10 +31,7 @@ class SyncUser implements ShouldQueue
             return;
         }
 
-        $user = User::with([
-            'account.plan',
-            'currentWorkspace' => fn ($query) => $query->withCount('socialAccounts'),
-        ])->find($this->userId);
+        $user = User::find($this->userId);
 
         if (! $user) {
             return;
@@ -46,32 +43,11 @@ class SyncUser implements ShouldQueue
             '$set_once' => ['signed_up_at' => $user->created_at?->toIso8601String()],
         ]);
 
-        if ($account = $user->account) {
-            $usage = $account->usage();
-
-            $postHog->groupIdentify('account', (string) $account->id, [
-                'name' => $account->name,
-                'plan' => $account->plan?->name,
-                'plan_slug' => $account->plan?->slug->value,
-                'has_active_subscription' => $account->hasActiveSubscription(),
-                'is_on_trial' => $account->isOnTrial(),
-                'workspaces_count' => $usage['workspaceCount'],
-                'members_count' => $usage['memberCount'],
-                'social_accounts_count' => $usage['socialAccountCount'],
-                'posts_count' => $usage['postCount'],
-                'pending_invites_count' => $usage['pendingInviteCount'],
-                'credits_used' => $usage['creditsUsed'],
-                'created_at' => $account->created_at?->toIso8601String(),
-            ]);
-        }
-
-        if ($workspace = $user->currentWorkspace) {
-            $postHog->groupIdentify('workspace', (string) $workspace->id, [
-                'name' => $workspace->name,
-                'account_id' => (string) $workspace->account_id,
-                'social_accounts_count' => (int) $workspace->social_accounts_count,
-                'created_at' => $workspace->created_at?->toIso8601String(),
-            ]);
+        if ($user->account_id) {
+            SyncAccountUsage::dispatch(
+                (string) $user->account_id,
+                $user->current_workspace_id ? (string) $user->current_workspace_id : null,
+            );
         }
     }
 }

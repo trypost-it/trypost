@@ -3,11 +3,10 @@
 declare(strict_types=1);
 
 use App\Jobs\PostHog\SendEvent;
+use App\Jobs\PostHog\SyncAccountUsage;
 use App\Jobs\PostHog\SyncUser;
 use App\Models\Account;
 use App\Models\Plan;
-use App\Models\Post;
-use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\PostHogService;
@@ -55,69 +54,31 @@ test('handle identifies the user with email, name and signed_up_at', function ()
     });
 });
 
-test('handle group-identifies the account with usage metrics', function () {
-    $workspace = Workspace::factory()->create([
-        'account_id' => $this->account->id,
-        'user_id' => $this->user->id,
-    ]);
-    SocialAccount::factory()->count(2)->create(['workspace_id' => $workspace->id]);
-    Post::factory()->count(3)->create([
-        'workspace_id' => $workspace->id,
-        'user_id' => $this->user->id,
-    ]);
-
+test('handle dispatches SyncAccountUsage with the user account id', function () {
     Queue::fake();
 
     (new SyncUser((string) $this->user->id))->handle(app(PostHogService::class));
 
-    Queue::assertPushed(SendEvent::class, function ($job) {
-        if ($job->method !== 'groupIdentify' || $job->payload['groupType'] !== 'account') {
-            return false;
-        }
-
-        $props = $job->payload['properties'];
-
-        return $job->payload['groupKey'] === (string) $this->account->id
-            && $props['workspaces_count'] === 1
-            && $props['social_accounts_count'] === 2
-            && $props['posts_count'] === 3
-            && $props['members_count'] === 1
-            && array_key_exists('plan', $props)
-            && array_key_exists('has_active_subscription', $props)
-            && array_key_exists('is_on_trial', $props);
+    Queue::assertPushed(SyncAccountUsage::class, function ($job) {
+        return $job->accountId === (string) $this->account->id
+            && $job->workspaceId === null;
     });
 });
 
-test('handle group-identifies the current workspace when set', function () {
+test('handle dispatches SyncAccountUsage with the current workspace when set', function () {
     $workspace = Workspace::factory()->create([
         'account_id' => $this->account->id,
         'user_id' => $this->user->id,
     ]);
-    SocialAccount::factory()->create(['workspace_id' => $workspace->id]);
     $this->user->update(['current_workspace_id' => $workspace->id]);
 
     Queue::fake();
 
     (new SyncUser((string) $this->user->id))->handle(app(PostHogService::class));
 
-    Queue::assertPushed(SendEvent::class, function ($job) use ($workspace) {
-        return $job->method === 'groupIdentify'
-            && $job->payload['groupType'] === 'workspace'
-            && $job->payload['groupKey'] === (string) $workspace->id
-            && $job->payload['properties']['account_id'] === (string) $this->account->id
-            && $job->payload['properties']['social_accounts_count'] === 1;
-    });
-});
-
-test('handle skips workspace group identify when user has no current workspace', function () {
-    $this->user->update(['current_workspace_id' => null]);
-
-    Queue::fake();
-
-    (new SyncUser((string) $this->user->id))->handle(app(PostHogService::class));
-
-    Queue::assertNotPushed(SendEvent::class, function ($job) {
-        return $job->method === 'groupIdentify' && $job->payload['groupType'] === 'workspace';
+    Queue::assertPushed(SyncAccountUsage::class, function ($job) use ($workspace) {
+        return $job->accountId === (string) $this->account->id
+            && $job->workspaceId === (string) $workspace->id;
     });
 });
 

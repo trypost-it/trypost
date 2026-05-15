@@ -290,9 +290,6 @@ class PostController extends Controller
         }
 
         if ($action === PostAction::Publishing) {
-            // No flash banner here — Show.vue already displays a full-screen
-            // 'publishing in progress' overlay while post.status is 'publishing',
-            // which is clearer than a transient toast saying the same thing.
             return redirect()->route('app.posts.show', $post);
         }
 

@@ -24,7 +24,7 @@ beforeEach(function () {
 
     $this->token = (string) Str::uuid();
     $this->media = Media::factory()->create([
-        'mediable_type' => Workspace::class,
+        'mediable_type' => (new Workspace)->getMorphClass(),
         'mediable_id' => $this->workspace->id,
         'collection' => 'assets',
         'upload_token' => $this->token,
@@ -48,7 +48,7 @@ test('rejects a token from a different workspace', function () {
 
     $foreignToken = (string) Str::uuid();
     Media::factory()->create([
-        'mediable_type' => Workspace::class,
+        'mediable_type' => (new Workspace)->getMorphClass(),
         'mediable_id' => $otherWs->id,
         'collection' => 'assets',
         'upload_token' => $foreignToken,

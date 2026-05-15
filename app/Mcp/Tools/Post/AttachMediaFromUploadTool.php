@@ -36,7 +36,7 @@ class AttachMediaFromUploadTool extends Tool
 
         $media = Media::query()
             ->where('upload_token', data_get($validated, 'upload_token'))
-            ->where('mediable_type', Workspace::class)
+            ->where('mediable_type', (new Workspace)->getMorphClass())
             ->where('mediable_id', $workspaceId)
             ->first();
 

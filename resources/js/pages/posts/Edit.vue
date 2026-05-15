@@ -88,7 +88,7 @@ const props = defineProps<{
     post: Post;
     socialAccounts: SocialAccount[];
     platformConfigs: Record<string, any>;
-    pinterestBoards: any[];
+    pinterestBoards: Record<string, Array<{ id: string; name: string }>>;
     tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
     labels: { id: string; name: string; color: string }[];
     signatures: { id: string; name: string; content: string }[];
@@ -576,6 +576,7 @@ usePostEcho(post.value.id, '.post.comment.created', (e: any) => {
                             :labels="labels"
                             :selected-label-ids="selectedLabelIds"
                             :tiktok-creator-infos="tiktokCreatorInfos"
+                            :pinterest-boards="pinterestBoards"
                             :is-read-only="isLocked"
                             :auth-user-id="authUserId"
                             :initial-highlight-comment-id="initialHighlightCommentId"

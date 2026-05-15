@@ -71,6 +71,7 @@ const props = defineProps<{
     labels: { id: string; name: string; color: string }[];
     selectedLabelIds: string[];
     tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
+    pinterestBoards?: Record<string, Array<{ id: string; name: string }>> | null;
     isReadOnly: boolean;
     authUserId: string;
     initialHighlightCommentId: string | null;
@@ -127,6 +128,7 @@ defineExpose({
                 :platform-content-types="platformContentTypes"
                 :platform-issues="platformIssues"
                 :tiktok-creator-infos="tiktokCreatorInfos"
+                :pinterest-boards="pinterestBoards"
                 :media="media"
                 @toggle-platform="(id) => emit('toggle-platform', id)"
                 @toggle-label="(id) => emit('toggle-label', id)"

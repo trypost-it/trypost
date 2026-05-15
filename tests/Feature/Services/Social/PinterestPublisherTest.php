@@ -113,6 +113,41 @@ test('pinterest publisher throws exception when no board id', function () {
         ->toThrow(Exception::class, 'Pinterest board_id is required');
 });
 
+test('pinterest publisher throws exception for carousel when no board id', function () {
+    $this->postPlatform->update([
+        'content_type' => ContentType::PinterestCarousel,
+        'meta' => [],
+    ]);
+    $this->socialAccount->update(['meta' => []]);
+
+    $this->post->update([
+        'media' => [
+            ['id' => 'm1', 'path' => 'media/img1.jpg', 'url' => 'https://example.com/img1.jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'img1.jpg'],
+            ['id' => 'm2', 'path' => 'media/img2.jpg', 'url' => 'https://example.com/img2.jpg', 'mime_type' => 'image/jpeg', 'original_filename' => 'img2.jpg'],
+        ],
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(Exception::class, 'Pinterest board_id is required');
+});
+
+test('pinterest publisher throws exception for video pin when no board id', function () {
+    $this->postPlatform->update([
+        'content_type' => ContentType::PinterestVideoPin,
+        'meta' => [],
+    ]);
+    $this->socialAccount->update(['meta' => []]);
+
+    $this->post->update([
+        'media' => [
+            ['id' => 'm1', 'path' => 'media/video.mp4', 'url' => 'https://example.com/video.mp4', 'mime_type' => 'video/mp4', 'original_filename' => 'video.mp4'],
+        ],
+    ]);
+
+    expect(fn () => $this->publisher->publish($this->postPlatform))
+        ->toThrow(Exception::class, 'Pinterest board_id is required');
+});
+
 test('pinterest publisher uses default board id from account', function () {
     $this->postPlatform->update(['meta' => []]); // No board_id in post meta
 

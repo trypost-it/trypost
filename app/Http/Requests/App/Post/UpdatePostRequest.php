@@ -77,6 +77,7 @@ class UpdatePostRequest extends FormRequest
             'platforms.*.meta.disclose' => ['sometimes', 'boolean'],
             'platforms.*.meta.brand_content_toggle' => ['sometimes', 'boolean'],
             'platforms.*.meta.brand_organic_toggle' => ['sometimes', 'boolean'],
+            'platforms.*.meta.board_id' => ['sometimes', 'nullable', 'string'],
             'label_ids' => ['sometimes', 'array'],
             'label_ids.*' => ['uuid', Rule::exists('workspace_labels', 'id')->where('workspace_id', $this->user()->currentWorkspace->id)],
         ];
@@ -104,6 +105,14 @@ class UpdatePostRequest extends FormRequest
                     $validator->errors()->add(
                         "platforms.{$i}.meta.privacy_level",
                         trans('posts.form.tiktok.privacy_required'),
+                    );
+                }
+
+                if ($platformEnum === Platform::Pinterest
+                    && blank(data_get($platform, 'meta.board_id'))) {
+                    $validator->errors()->add(
+                        "platforms.{$i}.meta.board_id",
+                        trans('posts.form.pinterest.board_required'),
                     );
                 }
             }

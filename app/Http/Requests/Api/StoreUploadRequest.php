@@ -24,11 +24,13 @@ class StoreUploadRequest extends FormRequest
             MediaType::Video->allowedMimeTypes(),
         ));
 
+        $maxKb = (int) config('trypost.mcp.upload.max_size_mb') * 1024;
+
         return [
             'media' => [
                 'required',
                 'file',
-                'max:51200',
+                "max:{$maxKb}",
                 "mimetypes:{$allowed}",
             ],
         ];

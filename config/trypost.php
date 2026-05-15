@@ -36,6 +36,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | MCP Media Upload
+    |--------------------------------------------------------------------------
+    |
+    | Settings for the MCP signed-URL upload flow. The hard cap is enforced
+    | per upload regardless of media type and is intentionally smaller than
+    | the per-type caps above because uploads flow through the app server.
+    |
+    */
+
+    'mcp' => [
+        'upload' => [
+            'max_size_mb' => (int) env('MCP_UPLOAD_MAX_SIZE_MB', 50),
+            'url_ttl_minutes' => (int) env('MCP_UPLOAD_URL_TTL_MINUTES', 15),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Google Authentication
     |--------------------------------------------------------------------------
     |

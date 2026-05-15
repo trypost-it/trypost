@@ -20,6 +20,7 @@ use App\Mcp\Tools\Post\GetPostTool;
 use App\Mcp\Tools\Post\ListPostsTool;
 use App\Mcp\Tools\Post\PreviewPostTool;
 use App\Mcp\Tools\Post\PublishPostTool;
+use App\Mcp\Tools\Post\RequestMediaUploadTool;
 use App\Mcp\Tools\Post\UpdatePostTool;
 use App\Mcp\Tools\Signature\CreateSignatureTool;
 use App\Mcp\Tools\Signature\DeleteSignatureTool;
@@ -50,6 +51,7 @@ class TryPostServer extends Server
         PreviewPostTool::class,
         DeletePostTool::class,
         AttachMediaFromUrlTool::class,
+        RequestMediaUploadTool::class,
         GetPostMetricsTool::class,
 
         // Platforms (read-only metadata)

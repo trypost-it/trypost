@@ -10,7 +10,9 @@ use App\Enums\SocialAccount\Platform as SocialPlatform;
 use App\Enums\SocialAccount\Status;
 use App\Jobs\SendNotification;
 use App\Mail\AccountDisconnected;
+use App\Observers\SocialAccountObserver;
 use Database\Factories\SocialAccountFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -21,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
+#[ObservedBy(SocialAccountObserver::class)]
 class SocialAccount extends Model
 {
     /** @use HasFactory<SocialAccountFactory> */

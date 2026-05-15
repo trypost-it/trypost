@@ -13,7 +13,7 @@ use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/uploads/{token}', [UploadController::class, 'store'])
-    ->middleware('signed')
+    ->middleware(['signed', 'throttle:10,1'])
     ->where('token', '[0-9a-f-]{36}')
     ->name('api.uploads.store');
 

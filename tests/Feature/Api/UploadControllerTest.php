@@ -121,3 +121,19 @@ test('rejects disallowed mime type', function () {
     $response->assertStatus(422);
     expect(Media::where('upload_token', $token)->exists())->toBeFalse();
 });
+
+test('rate limits floods from the same IP', function () {
+    for ($i = 0; $i < 10; $i++) {
+        $this->postJson(
+            signedUploadUrl($this->workspace, (string) Str::uuid()),
+            ['media' => UploadedFile::fake()->image("f{$i}.png", 16, 16)],
+        );
+    }
+
+    $response = $this->postJson(
+        signedUploadUrl($this->workspace, (string) Str::uuid()),
+        ['media' => UploadedFile::fake()->image('over.png', 16, 16)],
+    );
+
+    $response->assertStatus(429);
+});

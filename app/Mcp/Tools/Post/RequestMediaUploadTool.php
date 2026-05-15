@@ -22,8 +22,8 @@ class RequestMediaUploadTool extends Tool
         $user = $request->user();
         $workspaceId = $user->current_workspace_id;
 
-        $maxBytes = (int) config('trypost.mcp.upload.max_size_mb') * 1024 * 1024;
-        $ttlMinutes = (int) config('trypost.mcp.upload.url_ttl_minutes');
+        $maxBytes = (int) config('ai.mcp.upload.max_size_mb') * 1024 * 1024;
+        $ttlMinutes = (int) config('ai.mcp.upload.url_ttl_minutes');
 
         $token = (string) Str::uuid();
         $expiresAt = CarbonImmutable::now()->addMinutes($ttlMinutes);

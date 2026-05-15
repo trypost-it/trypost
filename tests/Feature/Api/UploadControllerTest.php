@@ -38,13 +38,18 @@ test('valid signed POST stores Media with upload_token', function () {
         'media' => $file,
     ]);
 
-    $response->assertCreated()
-        ->assertJsonStructure(['upload_token', 'media_id', 'type', 'mime_type', 'original_filename']);
-
     $media = Media::where('upload_token', $token)->first();
     expect($media)->not->toBeNull();
     expect($media->mediable_id)->toBe($this->workspace->id);
     expect($media->mediable_type)->toBe('workspace');
+
+    $response->assertCreated()
+        ->assertJson([
+            'upload_token' => $token,
+            'media_id' => $media->id,
+            'mime_type' => $media->mime_type,
+            'original_filename' => $media->original_filename,
+        ]);
 });
 
 test('rejects unsigned request', function () {

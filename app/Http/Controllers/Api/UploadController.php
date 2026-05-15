@@ -10,6 +10,7 @@ use App\Models\Media;
 use App\Models\Workspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
 
 class UploadController extends Controller
@@ -29,9 +30,13 @@ class UploadController extends Controller
 
         $workspace = Workspace::findOrFail((string) $request->query('ws'));
 
-        $media = $workspace->addMedia($request->file('media'), 'assets');
-        $media->upload_token = $token;
-        $media->save();
+        $media = DB::transaction(function () use ($workspace, $request, $token): Media {
+            $media = $workspace->addMedia($request->file('media'), 'assets');
+            $media->upload_token = $token;
+            $media->save();
+
+            return $media;
+        });
 
         return response()->json([
             'upload_token' => $token,

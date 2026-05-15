@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 import { Platform } from '@/enums/platform';
+import type { PinterestBoard } from '@/types';
 
 interface SocialAccount {
     id: string;
@@ -86,6 +87,7 @@ const props = defineProps<{
     platformContentTypes: Record<string, string>;
     platformIssues?: Record<string, string>;
     tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
+    pinterestBoards?: Record<string, PinterestBoard[]> | null;
     media?: MediaItem[];
 }>();
 
@@ -133,6 +135,9 @@ const getPublishConfig = (pp: PostPlatform): Record<string, any> | null =>
 
 const getCreatorInfo = (pp: PostPlatform): TikTokCreatorInfo | null =>
     pp.social_account_id ? props.tiktokCreatorInfos?.[pp.social_account_id] ?? null : null;
+
+const getBoards = (pp: PostPlatform): PinterestBoard[] =>
+    pp.social_account_id ? props.pinterestBoards?.[pp.social_account_id] ?? [] : [];
 
 const videoDurationSec = computed(() => {
     const video = props.media?.find((m) => m.type === 'video' || m.mime_type?.startsWith('video/'));
@@ -321,8 +326,11 @@ const getPlatformAvatar = (pp: PostPlatform): string | null =>
                 :social-account="pp.social_account"
                 :content-type="platformContentTypes[pp.id] ?? ''"
                 :media="media ?? []"
+                :boards="getBoards(pp)"
+                :meta="platformMeta[pp.id] ?? {}"
                 :disabled="isReadOnly"
                 @update:content-type="emit('update:platformContentType', pp.id, $event)"
+                @update:meta="emit('update:platformMeta', pp.id, $event)"
             />
         </div>
 

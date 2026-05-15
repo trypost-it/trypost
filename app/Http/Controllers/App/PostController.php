@@ -234,15 +234,15 @@ class PostController extends Controller
             $account->id => new PlatformConfigResource($account),
         ]);
 
-        $pinterestBoards = [];
-        $pinterestAccount = $socialAccounts->firstWhere('platform', Platform::Pinterest);
-        if ($pinterestAccount) {
-            try {
-                $pinterestBoards = app(PinterestPublisher::class)->getBoards($pinterestAccount);
-            } catch (\Exception $e) {
-                // Silently fail - boards will be empty
-            }
-        }
+        $pinterestBoards = $socialAccounts
+            ->where('platform', Platform::Pinterest)
+            ->mapWithKeys(fn ($account) => [
+                $account->id => rescue(
+                    fn () => app(PinterestPublisher::class)->getBoards($account),
+                    [],
+                    report: false,
+                ),
+            ]);
 
         $tiktokCreatorInfos = $socialAccounts
             ->where('platform', Platform::TikTok)

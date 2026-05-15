@@ -80,6 +80,276 @@ test('publishing a tiktok post with privacy_level passes privacy_level validatio
     $response->assertSessionDoesntHaveErrors(['platforms.0.meta.privacy_level']);
 });
 
+test('publishing a pinterest post without board_id is rejected', function () {
+    $pinterestAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Pinterest,
+    ]);
+    $pinterestPlatform = PostPlatform::factory()->pinterest()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $pinterestAccount->id,
+        'meta' => [],
+    ]);
+
+    $mediaPayload = [
+        [
+            'id' => 'test-image',
+            'path' => 'media/2026-01/pin.jpg',
+            'url' => 'https://example.com/media/2026-01/pin.jpg',
+            'type' => 'image',
+            'mime_type' => 'image/jpeg',
+            'original_filename' => 'pin.jpg',
+        ],
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Publishing->value,
+            'media' => $mediaPayload,
+            'platforms' => [
+                [
+                    'id' => $pinterestPlatform->id,
+                    'content_type' => ContentType::PinterestPin->value,
+                    'meta' => [],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionHasErrors('platforms.0.meta.board_id');
+});
+
+test('publishing a pinterest post with board_id passes board validation', function () {
+    $pinterestAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Pinterest,
+    ]);
+    $pinterestPlatform = PostPlatform::factory()->pinterest()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $pinterestAccount->id,
+        'meta' => [],
+    ]);
+
+    $mediaPayload = [
+        [
+            'id' => 'test-image',
+            'path' => 'media/2026-01/pin.jpg',
+            'url' => 'https://example.com/media/2026-01/pin.jpg',
+            'type' => 'image',
+            'mime_type' => 'image/jpeg',
+            'original_filename' => 'pin.jpg',
+        ],
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Publishing->value,
+            'media' => $mediaPayload,
+            'platforms' => [
+                [
+                    'id' => $pinterestPlatform->id,
+                    'content_type' => ContentType::PinterestPin->value,
+                    'meta' => ['board_id' => '123456789'],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionDoesntHaveErrors(['platforms.0.meta.board_id']);
+});
+
+test('scheduling a pinterest post without board_id is rejected', function () {
+    $pinterestAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Pinterest,
+    ]);
+    $pinterestPlatform = PostPlatform::factory()->pinterest()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $pinterestAccount->id,
+        'meta' => [],
+    ]);
+
+    $mediaPayload = [
+        [
+            'id' => 'test-image',
+            'path' => 'media/2026-01/pin.jpg',
+            'url' => 'https://example.com/media/2026-01/pin.jpg',
+            'type' => 'image',
+            'mime_type' => 'image/jpeg',
+            'original_filename' => 'pin.jpg',
+        ],
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Scheduled->value,
+            'scheduled_at' => now()->addDay()->toIso8601String(),
+            'media' => $mediaPayload,
+            'platforms' => [
+                [
+                    'id' => $pinterestPlatform->id,
+                    'content_type' => ContentType::PinterestPin->value,
+                    'meta' => [],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionHasErrors('platforms.0.meta.board_id');
+});
+
+test('publishing a pinterest carousel without board_id is rejected', function () {
+    $pinterestAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Pinterest,
+    ]);
+    $pinterestPlatform = PostPlatform::factory()->pinterestCarousel()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $pinterestAccount->id,
+        'meta' => [],
+    ]);
+
+    $mediaPayload = [
+        [
+            'id' => 'img-1',
+            'path' => 'media/2026-01/img1.jpg',
+            'url' => 'https://example.com/media/2026-01/img1.jpg',
+            'type' => 'image',
+            'mime_type' => 'image/jpeg',
+            'original_filename' => 'img1.jpg',
+        ],
+        [
+            'id' => 'img-2',
+            'path' => 'media/2026-01/img2.jpg',
+            'url' => 'https://example.com/media/2026-01/img2.jpg',
+            'type' => 'image',
+            'mime_type' => 'image/jpeg',
+            'original_filename' => 'img2.jpg',
+        ],
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Publishing->value,
+            'media' => $mediaPayload,
+            'platforms' => [
+                [
+                    'id' => $pinterestPlatform->id,
+                    'content_type' => ContentType::PinterestCarousel->value,
+                    'meta' => [],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionHasErrors('platforms.0.meta.board_id');
+});
+
+test('publishing a pinterest video pin without board_id is rejected', function () {
+    $pinterestAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Pinterest,
+    ]);
+    $pinterestPlatform = PostPlatform::factory()->pinterestVideoPin()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $pinterestAccount->id,
+        'meta' => [],
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Publishing->value,
+            'media' => $this->mediaPayload,
+            'platforms' => [
+                [
+                    'id' => $pinterestPlatform->id,
+                    'content_type' => ContentType::PinterestVideoPin->value,
+                    'meta' => [],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionHasErrors('platforms.0.meta.board_id');
+});
+
+test('pinterest board error does not block other platforms in multi-platform publish', function () {
+    $pinterestAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Pinterest,
+    ]);
+    $pinterestPlatform = PostPlatform::factory()->pinterest()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $pinterestAccount->id,
+        'meta' => [],
+    ]);
+
+    $linkedinAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::LinkedIn,
+    ]);
+    $linkedinPlatform = PostPlatform::factory()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $linkedinAccount->id,
+        'platform' => Platform::LinkedIn,
+        'content_type' => ContentType::LinkedInPost,
+        'meta' => [],
+    ]);
+
+    $mediaPayload = [
+        [
+            'id' => 'test-image',
+            'path' => 'media/2026-01/pin.jpg',
+            'url' => 'https://example.com/media/2026-01/pin.jpg',
+            'type' => 'image',
+            'mime_type' => 'image/jpeg',
+            'original_filename' => 'pin.jpg',
+        ],
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Publishing->value,
+            'media' => $mediaPayload,
+            'platforms' => [
+                [
+                    'id' => $pinterestPlatform->id,
+                    'content_type' => ContentType::PinterestPin->value,
+                    'meta' => [],
+                ],
+                [
+                    'id' => $linkedinPlatform->id,
+                    'content_type' => ContentType::LinkedInPost->value,
+                    'meta' => [],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionHasErrors('platforms.0.meta.board_id');
+    $response->assertSessionDoesntHaveErrors(['platforms.1.meta.board_id']);
+});
+
+test('saving a pinterest post as draft without board_id skips the board rule', function () {
+    $pinterestAccount = SocialAccount::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'platform' => Platform::Pinterest,
+    ]);
+    $pinterestPlatform = PostPlatform::factory()->pinterest()->create([
+        'post_id' => $this->post->id,
+        'social_account_id' => $pinterestAccount->id,
+        'meta' => [],
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->put(route('app.posts.update', $this->post), [
+            'status' => Status::Draft->value,
+            'platforms' => [
+                [
+                    'id' => $pinterestPlatform->id,
+                    'content_type' => ContentType::PinterestPin->value,
+                    'meta' => [],
+                ],
+            ],
+        ]);
+
+    $response->assertSessionDoesntHaveErrors(['platforms.0.meta.board_id']);
+});
+
 test('saving a tiktok post as draft without privacy_level skips the privacy_level rule', function () {
     $response = $this->actingAs($this->user)
         ->put(route('app.posts.update', $this->post), [

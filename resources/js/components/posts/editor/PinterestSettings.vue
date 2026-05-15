@@ -1,11 +1,24 @@
 <script setup lang="ts">
+import { usePage } from '@inertiajs/vue3';
 import { IconAlertTriangle, IconChevronDown, IconChevronUp } from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
+import InputError from '@/components/InputError.vue';
 import { Avatar } from '@/components/ui/avatar';
+import {
+    Combobox,
+    ComboboxAnchor,
+    ComboboxEmpty,
+    ComboboxGroup,
+    ComboboxInput,
+    ComboboxItem,
+    ComboboxList,
+    ComboboxTrigger,
+} from '@/components/ui/combobox';
 import { getMediaValidationWarning, type MediaItem } from '@/composables/useMedia';
 import { getPlatformLogo } from '@/composables/usePlatformLogo';
 import { ContentType } from '@/enums/content-type';
+import type { PinterestBoard } from '@/types';
 
 interface SocialAccount {
     id: string;
@@ -15,10 +28,17 @@ interface SocialAccount {
     avatar_url: string | null;
 }
 
+interface BoardOption {
+    value: string;
+    label: string;
+}
+
 interface Props {
     socialAccount: SocialAccount | null;
     contentType: string;
     media: MediaItem[];
+    boards: PinterestBoard[];
+    meta: Record<string, any>;
     disabled?: boolean;
 }
 
@@ -28,6 +48,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
     'update:contentType': [value: string];
+    'update:meta': [value: Record<string, any>];
 }>();
 
 const open = ref(false);
@@ -44,6 +65,26 @@ const pickVariant = (value: string) => {
 };
 
 const warning = computed(() => getMediaValidationWarning(props.contentType, props.media));
+
+const boardOptions = computed<BoardOption[]>(() =>
+    props.boards.map((b) => ({ value: b.id, label: b.name })),
+);
+
+const selectedBoard = computed<BoardOption | undefined>({
+    get: () => boardOptions.value.find((b) => b.value === props.meta?.board_id),
+    set: (board) => emit('update:meta', { ...props.meta, board_id: board?.value ?? null }),
+});
+
+// Surface the backend validation error keyed by platform index
+// (`platforms.0.meta.board_id`). Suffix match avoids threading the index
+// through props. Cleared as soon as a board is picked locally so the user
+// doesn't see a stale error after fixing the issue.
+const page = usePage();
+const boardError = computed<string | undefined>(() => {
+    if (props.meta?.board_id) return undefined;
+    const errors = (page.props.errors as Record<string, string> | undefined) ?? {};
+    return Object.entries(errors).find(([key]) => key.endsWith('.meta.board_id'))?.[1];
+});
 </script>
 
 <template>
@@ -97,6 +138,54 @@ const warning = computed(() => getMediaValidationWarning(props.contentType, prop
                         {{ $t(variant.labelKey) }}
                     </button>
                 </div>
+            </div>
+
+            <div class="space-y-2">
+                <p class="text-[11px] font-black uppercase tracking-widest text-foreground/60">{{ $t('posts.form.pinterest.board') }}</p>
+                <p
+                    v-if="boards.length === 0"
+                    class="flex items-start gap-2 rounded-lg border-2 border-foreground/30 bg-foreground/5 p-2 text-xs font-semibold text-foreground/60"
+                >
+                    <IconAlertTriangle class="mt-0.5 size-3.5 shrink-0" />
+                    {{ $t('posts.form.pinterest.no_boards') }}
+                </p>
+                <template v-else>
+                    <Combobox
+                        v-model="selectedBoard"
+                        :display-value="(b: BoardOption | undefined) => b?.label ?? ''"
+                        :disabled="disabled"
+                    >
+                        <ComboboxAnchor class="w-full">
+                            <ComboboxTrigger as-child>
+                                <button
+                                    type="button"
+                                    class="flex w-full items-center justify-between rounded-lg border-2 bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                                    :class="boardError ? 'border-rose-500' : 'border-foreground/30 hover:border-foreground'"
+                                    :disabled="disabled"
+                                >
+                                    <span :class="selectedBoard ? 'text-foreground' : 'text-foreground/50'">
+                                        {{ selectedBoard ? selectedBoard.label : $t('posts.form.pinterest.select_board') }}
+                                    </span>
+                                    <IconChevronDown class="size-4 shrink-0 text-foreground/60" />
+                                </button>
+                            </ComboboxTrigger>
+                        </ComboboxAnchor>
+                        <ComboboxList>
+                            <ComboboxInput :placeholder="$t('posts.form.pinterest.search_board')" />
+                            <ComboboxEmpty>{{ $t('posts.form.pinterest.no_board_found') }}</ComboboxEmpty>
+                            <ComboboxGroup>
+                                <ComboboxItem
+                                    v-for="board in boardOptions"
+                                    :key="board.value"
+                                    :value="board"
+                                >
+                                    {{ board.label }}
+                                </ComboboxItem>
+                            </ComboboxGroup>
+                        </ComboboxList>
+                    </Combobox>
+                    <InputError :message="boardError" />
+                </template>
             </div>
 
             <p

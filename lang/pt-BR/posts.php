@@ -147,6 +147,12 @@ return [
                 'video_pin' => 'Video Pin',
                 'carousel' => 'Carrossel',
             ],
+            'board' => 'Quadro',
+            'select_board' => 'Selecione um quadro',
+            'no_boards' => 'Nenhum quadro do Pinterest encontrado. Crie um na sua conta do Pinterest primeiro.',
+            'search_board' => 'Pesquisar quadros...',
+            'no_board_found' => 'Nenhum quadro encontrado.',
+            'board_required' => 'Selecione um quadro do Pinterest para publicar este post.',
         ],
         'warnings' => [
             'no_variant' => 'Escolha um tipo de publicação para continuar.',

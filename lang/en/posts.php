@@ -147,6 +147,12 @@ return [
                 'video_pin' => 'Video Pin',
                 'carousel' => 'Carousel',
             ],
+            'board' => 'Board',
+            'select_board' => 'Select a board',
+            'no_boards' => 'No Pinterest boards found. Create one in your Pinterest account first.',
+            'search_board' => 'Search boards...',
+            'no_board_found' => 'No board matches your search.',
+            'board_required' => 'Select a Pinterest board to publish this post.',
         ],
         'warnings' => [
             'no_variant' => 'Pick a post type to continue.',

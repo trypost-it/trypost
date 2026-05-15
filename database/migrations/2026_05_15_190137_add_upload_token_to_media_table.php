@@ -10,14 +10,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('medias', function (Blueprint $table) {
-            $table->uuid('upload_token')->nullable()->unique()->after('id');
+        Schema::table('medias', function (Blueprint $table): void {
+            $table->uuid('upload_token')->nullable()->unique();
         });
     }
 
     public function down(): void
     {
-        Schema::table('medias', function (Blueprint $table) {
+        Schema::table('medias', function (Blueprint $table): void {
             $table->dropUnique(['upload_token']);
             $table->dropColumn('upload_token');
         });

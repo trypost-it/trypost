@@ -5,6 +5,7 @@ import CommentsTab from '@/components/posts/editor/CommentsTab.vue';
 import PreviewTab from '@/components/posts/editor/PreviewTab.vue';
 import ScheduleTab from '@/components/posts/editor/ScheduleTab.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { PinterestBoard } from '@/types';
 
 interface MediaItem {
     id: string;
@@ -71,7 +72,7 @@ const props = defineProps<{
     labels: { id: string; name: string; color: string }[];
     selectedLabelIds: string[];
     tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
-    pinterestBoards?: Record<string, Array<{ id: string; name: string }>> | null;
+    pinterestBoards?: Record<string, PinterestBoard[]> | null;
     isReadOnly: boolean;
     authUserId: string;
     initialHighlightCommentId: string | null;

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getPlatformLabel, getPlatformLogo } from '@/composables/usePlatformLogo';
 import { Platform } from '@/enums/platform';
+import type { PinterestBoard } from '@/types';
 
 interface SocialAccount {
     id: string;
@@ -86,7 +87,7 @@ const props = defineProps<{
     platformContentTypes: Record<string, string>;
     platformIssues?: Record<string, string>;
     tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
-    pinterestBoards?: Record<string, Array<{ id: string; name: string }>> | null;
+    pinterestBoards?: Record<string, PinterestBoard[]> | null;
     media?: MediaItem[];
 }>();
 
@@ -135,7 +136,7 @@ const getPublishConfig = (pp: PostPlatform): Record<string, any> | null =>
 const getCreatorInfo = (pp: PostPlatform): TikTokCreatorInfo | null =>
     pp.social_account_id ? props.tiktokCreatorInfos?.[pp.social_account_id] ?? null : null;
 
-const getBoards = (pp: PostPlatform): Array<{ id: string; name: string }> =>
+const getBoards = (pp: PostPlatform): PinterestBoard[] =>
     pp.social_account_id ? props.pinterestBoards?.[pp.social_account_id] ?? [] : [];
 
 const videoDurationSec = computed(() => {

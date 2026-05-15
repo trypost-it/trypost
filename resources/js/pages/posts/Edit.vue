@@ -19,6 +19,7 @@ import debounce from '@/debounce';
 import { Platform } from '@/enums/platform';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { destroy as destroyPost, update as updatePost } from '@/routes/app/posts';
+import type { PinterestBoard } from '@/types';
 
 interface MediaItem {
     id: string;
@@ -88,7 +89,7 @@ const props = defineProps<{
     post: Post;
     socialAccounts: SocialAccount[];
     platformConfigs: Record<string, any>;
-    pinterestBoards: Record<string, Array<{ id: string; name: string }>>;
+    pinterestBoards: Record<string, PinterestBoard[]>;
     tiktokCreatorInfos?: Record<string, TikTokCreatorInfo> | null;
     labels: { id: string; name: string; color: string }[];
     signatures: { id: string; name: string; content: string }[];
@@ -276,6 +277,14 @@ const tiktokComplianceValid = computed(() => {
     });
 });
 
+// Pinterest needs a board_id selected to publish (the API rejects without it).
+const pinterestComplianceValid = computed(() => {
+    const pinterestPlatforms = post.value.post_platforms.filter(
+        (pp) => pp.platform === Platform.Pinterest && selectedPlatformIds.value.includes(pp.id),
+    );
+    return pinterestPlatforms.every((pp) => Boolean(platformMeta.value[pp.id]?.board_id));
+});
+
 const contentLengthOverflows = computed(() => {
     const len = content.value.length;
     return platformLimits.value
@@ -286,6 +295,7 @@ const contentLengthOverflows = computed(() => {
 const canSchedule = computed(
     () => mediaCompliancePerPlatformValid.value
         && tiktokComplianceValid.value
+        && pinterestComplianceValid.value
         && contentLengthOverflows.value.length === 0,
 );
 
@@ -319,6 +329,10 @@ const postActionTooltip = computed(() => {
 
     if (tiktokDisclosureIncomplete) {
         return trans('posts.form.tiktok.compliance_incomplete');
+    }
+
+    if (!pinterestComplianceValid.value) {
+        return trans('posts.form.pinterest.board_required');
     }
 
     return trans('posts.edit.compliance_incomplete');

@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { usePage } from '@inertiajs/vue3';
 import { IconAlertTriangle, IconChevronDown, IconChevronUp } from '@tabler/icons-vue';
 import { computed, ref } from 'vue';
 
+import InputError from '@/components/InputError.vue';
 import { Avatar } from '@/components/ui/avatar';
 import {
     Combobox,
@@ -16,6 +18,7 @@ import {
 import { getMediaValidationWarning, type MediaItem } from '@/composables/useMedia';
 import { getPlatformLogo } from '@/composables/usePlatformLogo';
 import { ContentType } from '@/enums/content-type';
+import type { PinterestBoard } from '@/types';
 
 interface SocialAccount {
     id: string;
@@ -34,7 +37,7 @@ interface Props {
     socialAccount: SocialAccount | null;
     contentType: string;
     media: MediaItem[];
-    boards: Array<{ id: string; name: string }>;
+    boards: PinterestBoard[];
     meta: Record<string, any>;
     disabled?: boolean;
 }
@@ -70,6 +73,17 @@ const boardOptions = computed<BoardOption[]>(() =>
 const selectedBoard = computed<BoardOption | undefined>({
     get: () => boardOptions.value.find((b) => b.value === props.meta?.board_id),
     set: (board) => emit('update:meta', { ...props.meta, board_id: board?.value ?? null }),
+});
+
+// Surface the backend validation error keyed by platform index
+// (`platforms.0.meta.board_id`). Suffix match avoids threading the index
+// through props. Cleared as soon as a board is picked locally so the user
+// doesn't see a stale error after fixing the issue.
+const page = usePage();
+const boardError = computed<string | undefined>(() => {
+    if (props.meta?.board_id) return undefined;
+    const errors = (page.props.errors as Record<string, string> | undefined) ?? {};
+    return Object.entries(errors).find(([key]) => key.endsWith('.meta.board_id'))?.[1];
 });
 </script>
 
@@ -135,40 +149,43 @@ const selectedBoard = computed<BoardOption | undefined>({
                     <IconAlertTriangle class="mt-0.5 size-3.5 shrink-0" />
                     {{ $t('posts.form.pinterest.no_boards') }}
                 </p>
-                <Combobox
-                    v-else
-                    v-model="selectedBoard"
-                    :display-value="(b: any) => b?.label ?? ''"
-                    :disabled="disabled"
-                >
-                    <ComboboxAnchor class="w-full">
-                        <ComboboxTrigger as-child>
-                            <button
-                                type="button"
-                                class="flex w-full items-center justify-between rounded-lg border-2 border-foreground/30 bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:border-foreground disabled:cursor-not-allowed disabled:opacity-50"
-                                :disabled="disabled"
-                            >
-                                <span :class="selectedBoard ? 'text-foreground' : 'text-foreground/50'">
-                                    {{ selectedBoard ? selectedBoard.label : $t('posts.form.pinterest.select_board') }}
-                                </span>
-                                <IconChevronDown class="size-4 shrink-0 text-foreground/60" />
-                            </button>
-                        </ComboboxTrigger>
-                    </ComboboxAnchor>
-                    <ComboboxList>
-                        <ComboboxInput :placeholder="$t('posts.form.pinterest.search_board')" />
-                        <ComboboxEmpty>{{ $t('posts.form.pinterest.no_board_found') }}</ComboboxEmpty>
-                        <ComboboxGroup>
-                            <ComboboxItem
-                                v-for="board in boardOptions"
-                                :key="board.value"
-                                :value="board"
-                            >
-                                {{ board.label }}
-                            </ComboboxItem>
-                        </ComboboxGroup>
-                    </ComboboxList>
-                </Combobox>
+                <template v-else>
+                    <Combobox
+                        v-model="selectedBoard"
+                        :display-value="(b: BoardOption | undefined) => b?.label ?? ''"
+                        :disabled="disabled"
+                    >
+                        <ComboboxAnchor class="w-full">
+                            <ComboboxTrigger as-child>
+                                <button
+                                    type="button"
+                                    class="flex w-full items-center justify-between rounded-lg border-2 bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                                    :class="boardError ? 'border-rose-500' : 'border-foreground/30 hover:border-foreground'"
+                                    :disabled="disabled"
+                                >
+                                    <span :class="selectedBoard ? 'text-foreground' : 'text-foreground/50'">
+                                        {{ selectedBoard ? selectedBoard.label : $t('posts.form.pinterest.select_board') }}
+                                    </span>
+                                    <IconChevronDown class="size-4 shrink-0 text-foreground/60" />
+                                </button>
+                            </ComboboxTrigger>
+                        </ComboboxAnchor>
+                        <ComboboxList>
+                            <ComboboxInput :placeholder="$t('posts.form.pinterest.search_board')" />
+                            <ComboboxEmpty>{{ $t('posts.form.pinterest.no_board_found') }}</ComboboxEmpty>
+                            <ComboboxGroup>
+                                <ComboboxItem
+                                    v-for="board in boardOptions"
+                                    :key="board.value"
+                                    :value="board"
+                                >
+                                    {{ board.label }}
+                                </ComboboxItem>
+                            </ComboboxGroup>
+                        </ComboboxList>
+                    </Combobox>
+                    <InputError :message="boardError" />
+                </template>
             </div>
 
             <p

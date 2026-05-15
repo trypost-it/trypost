@@ -20,8 +20,10 @@ class UpdatePost
      */
     public static function execute(Workspace $workspace, Post $post, array $data): array
     {
-        if ($post->status === PostStatus::Published) {
-            return ['post' => $post, 'action' => PostAction::AlreadyPublished];
+        $terminalStatuses = [PostStatus::Published, PostStatus::PartiallyPublished, PostStatus::Failed, PostStatus::Publishing];
+
+        if (in_array($post->status, $terminalStatuses, true)) {
+            return ['post' => $post, 'action' => PostAction::Finalized];
         }
 
         $scheduledAt = $post->scheduled_at;

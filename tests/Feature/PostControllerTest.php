@@ -7,12 +7,14 @@ use App\Enums\PostPlatform\ContentType;
 use App\Enums\PostPlatform\Status;
 use App\Enums\SocialAccount\Platform;
 use App\Enums\UserWorkspace\Role;
+use App\Jobs\PublishPost;
 use App\Models\Post;
 use App\Models\PostPlatform;
 use App\Models\SocialAccount;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Models\WorkspaceLabel;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 
@@ -308,7 +310,7 @@ test('edit post returns 404 for post from different workspace', function () {
 });
 
 test('edit redirects to show for non-editable statuses', function () {
-    foreach ([PostStatus::Published, PostStatus::PartiallyPublished, PostStatus::Publishing] as $status) {
+    foreach ([PostStatus::Published, PostStatus::PartiallyPublished, PostStatus::Publishing, PostStatus::Failed] as $status) {
         $post = Post::factory()->create([
             'workspace_id' => $this->workspace->id,
             'user_id' => $this->user->id,
@@ -326,8 +328,8 @@ test('edit redirects to show for non-editable statuses', function () {
     }
 });
 
-test('edit allows draft, scheduled, and failed posts', function () {
-    foreach ([PostStatus::Draft, PostStatus::Scheduled, PostStatus::Failed] as $status) {
+test('edit allows draft and scheduled posts', function () {
+    foreach ([PostStatus::Draft, PostStatus::Scheduled] as $status) {
         $post = Post::factory()->create([
             'workspace_id' => $this->workspace->id,
             'user_id' => $this->user->id,
@@ -413,6 +415,138 @@ test('update post cannot update published posts', function () {
     ]);
 
     $response->assertRedirect();
+});
+
+test('cannot re-publish a failed post', function () {
+    Bus::fake();
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Failed,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'publishing',
+        'content' => 'Test content',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content_type' => ContentType::LinkedInPost->value,
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('flash.bannerStyle', 'danger');
+
+    $post->refresh();
+    expect($post->status)->toBe(PostStatus::Failed);
+    Bus::assertNotDispatched(PublishPost::class);
+});
+
+test('cannot update a post in publishing state', function () {
+    Bus::fake();
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Publishing,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'draft',
+        'content' => 'Test content',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content_type' => ContentType::LinkedInPost->value,
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('flash.bannerStyle', 'danger');
+
+    $post->refresh();
+    expect($post->status)->toBe(PostStatus::Publishing);
+    Bus::assertNotDispatched(PublishPost::class);
+});
+
+test('cannot update a partially published post', function () {
+    Bus::fake();
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::PartiallyPublished,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'publishing',
+        'content' => 'Test content',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content_type' => ContentType::LinkedInPost->value,
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('flash.bannerStyle', 'danger');
+
+    $post->refresh();
+    expect($post->status)->toBe(PostStatus::PartiallyPublished);
+    Bus::assertNotDispatched(PublishPost::class);
+});
+
+test('cannot update a published post', function () {
+    Bus::fake();
+
+    $post = Post::factory()->create([
+        'workspace_id' => $this->workspace->id,
+        'user_id' => $this->user->id,
+        'status' => PostStatus::Published,
+    ]);
+
+    $postPlatform = PostPlatform::factory()->create([
+        'post_id' => $post->id,
+        'social_account_id' => $this->socialAccount->id,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('app.posts.update', $post), [
+        'status' => 'publishing',
+        'content' => 'Test content',
+        'platforms' => [
+            [
+                'id' => $postPlatform->id,
+                'content_type' => ContentType::LinkedInPost->value,
+            ],
+        ],
+    ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('flash.bannerStyle', 'danger');
+
+    $post->refresh();
+    expect($post->status)->toBe(PostStatus::Published);
+    Bus::assertNotDispatched(PublishPost::class);
 });
 
 test('publish now updates scheduled_at to current time', function () {

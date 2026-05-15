@@ -98,7 +98,7 @@ const props = defineProps<{
 
 const post = computed(() => props.post);
 // Terminal states the user cannot recover from — delete, navigate, but never edit.
-const isReadOnly = computed(() => ['publishing', 'published', 'partially_published'].includes(post.value.status));
+const isReadOnly = computed(() => ['publishing', 'published', 'partially_published', 'failed'].includes(post.value.status));
 const isPublishing = computed(() => post.value.status === 'publishing');
 const isScheduled = computed(() => post.value.status === 'scheduled');
 // Locked states — terminal + scheduled. Field edits and auto-save suppressed;

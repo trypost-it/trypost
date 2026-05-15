@@ -102,11 +102,16 @@ class FacebookPublisher
 
     private function publishSingleImagePost(string $pageId, string $accessToken, ?string $content, $media): array
     {
-        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/photos", [
-            'message' => $content,
+        $payload = [
             'url' => $media->url,
             'access_token' => $accessToken,
-        ]);
+        ];
+
+        if (! empty($content)) {
+            $payload['message'] = $content;
+        }
+
+        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/photos", $payload);
 
         if ($response->failed()) {
             Log::error('Facebook single image post failed', [
@@ -159,9 +164,12 @@ class FacebookPublisher
 
         // Create the post with attached media
         $postData = [
-            'message' => $content,
             'access_token' => $accessToken,
         ];
+
+        if (! empty($content)) {
+            $postData['message'] = $content;
+        }
 
         foreach ($attachedMedia as $index => $media) {
             $postData["attached_media[{$index}]"] = json_encode($media);
@@ -188,12 +196,16 @@ class FacebookPublisher
 
     private function publishVideoPost(string $pageId, string $accessToken, ?string $content, $media): array
     {
-        // Use resumable upload for videos
-        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/videos", [
-            'description' => $content,
+        $payload = [
             'file_url' => $media->url,
             'access_token' => $accessToken,
-        ]);
+        ];
+
+        if (! empty($content)) {
+            $payload['description'] = $content;
+        }
+
+        $response = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/videos", $payload);
 
         if ($response->failed()) {
             Log::error('Facebook video post failed', [
@@ -287,13 +299,18 @@ class FacebookPublisher
         }
 
         // Phase 3 (finish) — publish the reel.
-        $finishResponse = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/video_reels", [
+        $finishPayload = [
             'upload_phase' => 'finish',
             'video_id' => $videoId,
             'video_state' => 'PUBLISHED',
-            'description' => $content,
             'access_token' => $accessToken,
-        ]);
+        ];
+
+        if (! empty($content)) {
+            $finishPayload['description'] = $content;
+        }
+
+        $finishResponse = $this->socialHttp()->post("{$this->baseUrl}/{$pageId}/video_reels", $finishPayload);
 
         if ($finishResponse->failed()) {
             $this->handleApiError($finishResponse);

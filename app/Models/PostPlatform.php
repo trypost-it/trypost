@@ -102,6 +102,8 @@ class PostPlatform extends Model
             'platform_post_id' => $platformPostId,
             'platform_url' => $platformUrl,
             'published_at' => $now,
+            'error_message' => null,
+            'error_context' => null,
         ]);
 
         $this->socialAccount?->update(['last_used_at' => $now]);
@@ -113,6 +115,8 @@ class PostPlatform extends Model
             'status' => Status::Failed,
             'error_message' => $errorMessage,
             'error_context' => $errorContext,
+            'platform_post_id' => null,
+            'platform_url' => null,
         ]);
     }
 }
